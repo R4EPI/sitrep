@@ -5,8 +5,11 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(dplyr)
 library(knitr)
+
+library(dplyr)
+library(r4epi)
+library(incidence)
 ```
 
 This is a test document to gather functions and code snippets that eventually will evolve into an outbreak report template (+ package(s)).
@@ -21,6 +24,7 @@ linelist <- outbreaks::fluH7N9_china_2013
 
 ```{r}
 linelist_cleaned <- linelist %>%
+  rename(sex = gender) %>% 
   mutate(age = as.integer(age)) %>%
   mutate(age_group = cut(age, breaks = c(0, 5, 10, 30, 50, 80), right = FALSE))
 ```
@@ -30,14 +34,79 @@ linelist_cleaned <- linelist %>%
 
 * [Who is affected: how many in total; male or female; young, adult or old? What are the links between affected people – work place, school, social gathering?  Is there a high rate of illness in contacts?  Is there a high rate of illness in health workers? You may want to include:  a bar chart showing case numbers or incidence by age group and sex; attack rates (AR); and numbers of deaths (in suspected and confirmed cases), mortality rates and/or case fatality ratio (CFR)]  
 
+#### Age
+
+Cases by sex
+
+```{r}
+linelist_cleaned %>%
+  group_by(sex) %>%
+  summarise(cases = n()) %>%
+  kable()
+```
+
+Cases by age group
+
+```{r}
+linelist_cleaned %>%
+  group_by(age_group) %>%
+  summarise(cases = n()) %>%
+  kable()
+```
+
+Age pyramid
+
+
+```{r}
+by_age <- group_by(linelist_cleaned, age_group, sex) %>%
+  filter(!is.na(sex)) %>%
+  summarise(n = n()) %>%
+  mutate(n = ifelse(sex == "m", -1, 1) * n)
+
+plot_age_pyramid(by_age)
+```
+
+
+CFR 
+
+```{r}
+known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
+deaths <- sum(known_status$outcome == "Death")
+population <- length(linelist_cleaned$outcome)
+```
+
+
+```{r}
+case_fatality_rate(deaths, population) %>% knitr::kable()
+```
+
+
+CFR by age group
+
+```{r}
+group_by(known_status, age_group) %>%
+  do({
+    deaths <- sum(.$outcome == "Death")
+    population <- length(.$outcome)
+    case_fatality_rate(deaths, population)
+  }) %>%
+  arrange(desc(lower)) %>%
+  knitr::kable()
+```
+
+#### Mortality
+
+
+Mortality rate per 100,000:
+
+```{r}
+mortality_rate(deaths, population, multiplier = 10^4) %>%
+  kable()
+```
 
 ### Time
 
 * [When did the cases fall ill? Are numbers increasing or stable? You may want to include an Epi curve (bar chart showing number of new (suspected and confirmed) cases each day/week) ]
-
-```{r}
-library(incidence)
-```
 
 
 ```{r}
@@ -51,7 +120,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black")
 ```{r}
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
                         interval = 7, 
-                        groups = linelist_cleaned$gender)
+                        groups = linelist_cleaned$sex)
 plot(inc_week_7, show_cases = TRUE, border = "black")
 ```
 
@@ -59,4 +128,47 @@ plot(inc_week_7, show_cases = TRUE, border = "black")
 ### Place
 
 *  [Across what area: one or several villages, all from same school, etc. You may want to include a map of the distribution of cases; attack rates by location]
+
+
+#### Quick and simple map with ggmap
+
+Just WIP. Not sure if ggmap is a good approach.
+
+```{r, message=FALSE}
+bb <- osmdata::getbb("Western Area Urban, Sierra Leone")
+
+# generate artificual coords
+
+ll_geo <- linelist_cleaned %>% 
+  mutate(Longitude = runif(nrow(linelist_cleaned), bb[1, 1], bb[1, 2]),
+         Latitude = runif(nrow(linelist_cleaned), bb[2, 1], bb[2, 2]))
+
+library(ggmap)
+b <- get_map(as.numeric(bb), maptype="toner-lite", source="stamen")
+ggmap(b) + 
+  geom_point(data = ll_geo, aes(x = Longitude, y = Latitude, color = outcome))
+```
+
+
+
+#### Mortality rate per district
+
+```{r}
+# let's generate some artificial population data
+population <- distinct(linelist_cleaned, province)
+population$population <- as.integer(runif(nrow(population), min = 10^3, max = 10^5))
+
+linelist_cleaned %>%
+  filter(!is.na(outcome)) %>%
+  group_by(province) %>%
+  do({
+    province <- as.character(.$province[1])
+    deaths <- sum(.$outcome == "Death")
+    pop <- population[population$province == province, "population"]
+    mortality_rate(deaths, pop, multiplier = 10^3)
+  }) %>%
+  mutate_if(is.numeric, funs(round(., digits = 2))) %>%
+  kable(col.names = c("Province", "Number of cases", "Population",
+                      "Incidence per 1000", "Lower 95% CI", "Upper 95% CI"))
+```
 

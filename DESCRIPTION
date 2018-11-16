@@ -12,3 +12,7 @@ Suggests:
     testthat,
     rmarkdown
 RoxygenNote: 6.1.0
+Imports: 
+    scales,
+    ggplot2,
+    binom
