@@ -1,0 +1,13 @@
+---
+title: "Mortality survey"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(knitr)
+```
+
+
+Just a placeholder at the moment.
