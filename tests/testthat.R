@@ -1,4 +1,4 @@
 library(testthat)
-library(coreml)
+library(r4epi)
 
-test_check("coreml")
+test_check("r4epi")

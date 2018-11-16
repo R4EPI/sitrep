@@ -1,0 +1,73 @@
+Outbreak report
+================
+
+This is a test document to gather functions and code snippets that
+eventually will evolve into an outbreak report template (+ package(s)).
+
+``` r
+# as a starting point
+linelist <- outbreaks::fluH7N9_china_2013
+```
+
+### Data preparation
+
+``` r
+linelist_cleaned <- linelist %>%
+  mutate(age = as.integer(age)) %>%
+  mutate(age_group = cut(age, breaks = c(0, 5, 10, 30, 50, 80), right = FALSE))
+```
+
+### Person
+
+  - \[Who is affected: how many in total; male or female; young, adult
+    or old? What are the links between affected people – work place,
+    school, social gathering? Is there a high rate of illness in
+    contacts? Is there a high rate of illness in health workers? You may
+    want to include: a bar chart showing case numbers or incidence by
+    age group and sex; attack rates (AR); and numbers of deaths (in
+    suspected and confirmed cases), mortality rates and/or case fatality
+    ratio (CFR)\]
+
+### Time
+
+  - \[When did the cases fall ill? Are numbers increasing or stable? You
+    may want to include an Epi curve (bar chart showing number of new
+    (suspected and confirmed) cases each day/week) \]
+
+<!-- end list -->
+
+``` r
+library(incidence)
+```
+
+``` r
+inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
+```
+
+    ## 10 missing observations were removed.
+
+``` r
+plot(inc_week_7, show_cases = TRUE, border = "black")
+```
+
+![](sample_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
+                        interval = 7, 
+                        groups = linelist_cleaned$gender)
+```
+
+    ## 10 missing observations were removed.
+
+``` r
+plot(inc_week_7, show_cases = TRUE, border = "black")
+```
+
+![](sample_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+### Place
+
+  - \[Across what area: one or several villages, all from same school,
+    etc. You may want to include a map of the distribution of cases;
+    attack rates by location\]

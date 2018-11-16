@@ -2,11 +2,15 @@
 % Please edit documentation in R/sample-size.R
 \name{sample_size_households}
 \alias{sample_size_households}
-\title{Take a sample size if children and convert it to households}
+\title{Take a sample size of children and convert it to households}
 \usage{
 sample_size_households(sample_size, avg_hh, prop_under_5, frac_6_59,
   non_response_rate = 0)
 }
 \description{
-Take a sample size if children and convert it to households
+Take a sample size of children and convert it to households
+}
+\references{
+Sampling Methods and Sample Size Calculation for the SMART Methodology
+<https://www.humanitarianresponse.info/sites/www.humanitarianresponse.info/files/documents/files/Sampling_Paper_June_2012.pdf>
 }

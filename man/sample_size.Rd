@@ -2,11 +2,15 @@
 % Please edit documentation in R/sample-size.R
 \name{sample_size}
 \alias{sample_size}
-\title{Compute a sample size for surveys}
+\title{Compute a sample size for a proportion}
 \usage{
 sample_size(population_size, expected_prevalence, precision, design_effect,
   alpha = 0.05)
 }
 \description{
-Compute a sample size for surveys
+Compute a sample size for a proportion
+}
+\references{
+This method is based on the work of Kevin M. Sullivan and Andrew G. Dean
+of OpenEpi.
 }
