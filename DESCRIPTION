@@ -1,0 +1,14 @@
+Type: Package
+Package: r4epi
+Title: Report templates and helper functions for EPI.
+Version: 0.1.0
+Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
+                    role = c("aut", "cre")))
+Description: Report templates and helper functions for EPI.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Suggests:
+    testthat,
+    rmarkdown
+RoxygenNote: 6.1.0
