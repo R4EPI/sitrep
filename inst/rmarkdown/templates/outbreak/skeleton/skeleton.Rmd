@@ -34,6 +34,7 @@ linelist_cleaned <- linelist %>%
 
 * [Who is affected: how many in total; male or female; young, adult or old? What are the links between affected people – work place, school, social gathering?  Is there a high rate of illness in contacts?  Is there a high rate of illness in health workers? You may want to include:  a bar chart showing case numbers or incidence by age group and sex; attack rates (AR); and numbers of deaths (in suspected and confirmed cases), mortality rates and/or case fatality ratio (CFR)]  
 
+
 #### Age
 
 Cases by sex
@@ -103,6 +104,25 @@ Mortality rate per 100,000:
 mortality_rate(deaths, population, multiplier = 10^4) %>%
   kable()
 ```
+
+
+#### 2x2 tables
+
+```{r}
+sex_table <- epitools::epitable(linelist$gender, linelist$outcome)
+sex_table
+```
+
+```{r}
+sex_rr <- epitools::riskratio(sex_table, correct = TRUE, method = "wald")
+sex_rr
+```
+
+
+```{r}
+epitools::oddsratio(sex_table, correction = TRUE, method = "wald")
+```
+
 
 ### Time
 
