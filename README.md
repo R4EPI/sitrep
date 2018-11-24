@@ -3,7 +3,12 @@
 
 # r4epi
 
-The goal of r4epi is to …
+The goal of r4epi is provide report templates for common epidemiological
+surveys and outbreak reports. The package further contains helper
+function that standardize certain analyses.
+
+The package is work in progress to test the idea of report templates
+within a central package. Anything can change or break at any time.
 
 ## Installation
 

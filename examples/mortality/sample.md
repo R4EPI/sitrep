@@ -1,16 +1,5 @@
----
-title: "Mortality survey"
-output: github_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(dplyr)
-library(knitr)
-library(r4epi)
-library(survey)
-```
-
+Mortality survey
+================
 
 Just a placeholder at the moment.
 
@@ -18,7 +7,7 @@ Just a placeholder at the moment.
 
 ## Sample Size
 
-```{r}
+``` r
 size <- sample_size(population_size = 10000,
                     precision = 0.005, 
                     design_effect = 1.5, 
@@ -26,33 +15,35 @@ size <- sample_size(population_size = 10000,
 size
 ```
 
-```{r}
+    ## [1] 1065
+
+``` r
 sample_size_households(size, 
                        avg_hh = 5, 
                        prop_under_5 = 0.15, 
                        frac_6_59 = 0.9, 
                        non_response_rate = 0.03)
-
 ```
 
+    ## [1] 1627
 
 ## Sampling
 
 ### Random sampling
 
-```{r}
+``` r
 # Insert some code to generate a random number sequence
 ```
 
 ### Cluster sampling
 
-```{r}
+``` r
 # Insert some example code to do cluster sampling
 ```
 
 # Study Findings
 
-```{r}
+``` r
 linelist <- outbreaks::fluH7N9_china_2013 %>% 
   group_by(province) %>% 
   filter(n() > 5) %>% 
@@ -66,19 +57,43 @@ design <- svydesign(ids = ~1,  #no cluster within strata
 
 # get totals
 svytotal(~outcome, design)
+```
 
+    ##                total     SE
+    ## outcomeDeath      27 3.9362
+    ## outcomeRecover    35 3.9362
+
+``` r
 # compute something by another group. E.g. the mean
 svyby(~outcome, ~gender, design, svymean)
+```
 
+    ##   gender outcomeDeath outcomeRecover se.outcomeDeath se.outcomeRecover
+    ## f      f    0.3529412      0.6470588      0.11713818        0.11713818
+    ## m      m    0.4651163      0.5348837      0.07686946        0.07686946
+
+``` r
 # you can also compute confidence intervals
 confint(svyby(~outcome, ~gender, design, svymean))
+```
+
+    ##                      2.5 %    97.5 %
+    ## f:outcomeDeath   0.1233546 0.5825278
+    ## m:outcomeDeath   0.3144549 0.6157776
+    ## f:outcomeRecover 0.4174722 0.8766454
+    ## m:outcomeRecover 0.3842224 0.6855451
+
+``` r
 confint(svytotal(~outcome, design))
 ```
 
+    ##                   2.5 %   97.5 %
+    ## outcomeDeath   19.28526 34.71474
+    ## outcomeRecover 27.28526 42.71474
 
 ## Demographics
 
-```{r}
+``` r
 linelist <- outbreaks::fluH7N9_china_2013 %>% 
   rename(sex = gender) %>% 
   mutate(age = as.integer(age)) %>%
@@ -88,3 +103,4 @@ linelist <- outbreaks::fluH7N9_china_2013 %>%
 plot_age_pyramid(linelist)
 ```
 
+![](sample_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->

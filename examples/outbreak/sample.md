@@ -66,12 +66,7 @@ linelist_cleaned %>%
 Age pyramid
 
 ``` r
-by_age <- group_by(linelist_cleaned, age_group, sex) %>%
-  filter(!is.na(sex)) %>%
-  summarise(n = n()) %>%
-  mutate(n = ifelse(sex == "m", -1, 1) * n)
-
-plot_age_pyramid(by_age)
+plot_age_pyramid(filter(linelist_cleaned, !is.na(sex)))
 ```
 
 ![](sample_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
@@ -126,6 +121,77 @@ mortality_rate(deaths, population, multiplier = 10^4) %>%
 | -----: | ---------: | -------------------: | -------: | -------: |
 |     32 |        136 |             2352.941 | 1718.861 | 3132.451 |
 
+#### 2x2 tables
+
+``` r
+sex_table <- epitools::epitable(linelist$gender, linelist$outcome)
+sex_table
+```
+
+    ##          Outcome
+    ## Predictor Death Recover
+    ##         f     9      12
+    ##         m    22      34
+
+``` r
+sex_rr <- epitools::riskratio(sex_table, correct = TRUE, method = "wald")
+sex_rr
+```
+
+    ## $data
+    ##          Outcome
+    ## Predictor Death Recover Total
+    ##     f         9      12    21
+    ##     m        22      34    56
+    ##     Total    31      46    77
+    ## 
+    ## $measure
+    ##          risk ratio with 95% C.I.
+    ## Predictor estimate     lower    upper
+    ##         f   1.0000        NA       NA
+    ##         m   1.0625 0.6938502 1.627017
+    ## 
+    ## $p.value
+    ##          two-sided
+    ## Predictor midp.exact fisher.exact chi.square
+    ##         f         NA           NA         NA
+    ##         m  0.7785528    0.7991337  0.9810788
+    ## 
+    ## $correction
+    ## [1] TRUE
+    ## 
+    ## attr(,"method")
+    ## [1] "Unconditional MLE & normal approximation (Wald) CI"
+
+``` r
+epitools::oddsratio(sex_table, correction = TRUE, method = "wald")
+```
+
+    ## $data
+    ##          Outcome
+    ## Predictor Death Recover Total
+    ##     f         9      12    21
+    ##     m        22      34    56
+    ##     Total    31      46    77
+    ## 
+    ## $measure
+    ##          odds ratio with 95% C.I.
+    ## Predictor estimate     lower    upper
+    ##         f 1.000000        NA       NA
+    ##         m 1.159091 0.4191651 3.205161
+    ## 
+    ## $p.value
+    ##          two-sided
+    ## Predictor midp.exact fisher.exact chi.square
+    ##         f         NA           NA         NA
+    ##         m  0.7785528    0.7991337  0.9810788
+    ## 
+    ## $correction
+    ## [1] TRUE
+    ## 
+    ## attr(,"method")
+    ## [1] "Unconditional MLE & normal approximation (Wald) CI"
+
 ### Time
 
   - \[When did the cases fall ill? Are numbers increasing or stable? You
@@ -144,7 +210,7 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
 plot(inc_week_7, show_cases = TRUE, border = "black")
 ```
 
-![](sample_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
@@ -158,7 +224,7 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset,
 plot(inc_week_7, show_cases = TRUE, border = "black")
 ```
 
-![](sample_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ### Place
 
@@ -185,7 +251,7 @@ ggmap(b) +
   geom_point(data = ll_geo, aes(x = Longitude, y = Latitude, color = outcome))
 ```
 
-![](sample_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 #### Mortality rate per district
 
@@ -210,14 +276,14 @@ linelist_cleaned %>%
 
 | Province | Number of cases | Population | Incidence per 1000 | Lower 95% CI | Upper 95% CI |
 | :------- | --------------: | ---------: | -----------------: | -----------: | -----------: |
-| Anhui    |               2 |      45382 |               0.04 |         0.01 |         0.16 |
-| Beijing  |               0 |      34583 |               0.00 |         0.00 |         0.11 |
-| Fujian   |               0 |      62671 |               0.00 |         0.00 |         0.06 |
-| Hebei    |               1 |      84527 |               0.01 |         0.00 |         0.07 |
-| Henan    |               1 |      83064 |               0.01 |         0.00 |         0.07 |
-| Hunan    |               1 |      10128 |               0.10 |         0.02 |         0.56 |
-| Jiangsu  |               4 |      51647 |               0.08 |         0.03 |         0.20 |
-| Jiangxi  |               1 |      18794 |               0.05 |         0.01 |         0.30 |
-| Shandong |               0 |      28045 |               0.00 |         0.00 |         0.14 |
-| Shanghai |              16 |      88120 |               0.18 |         0.11 |         0.29 |
-| Zhejiang |               6 |       3994 |               1.50 |         0.69 |         3.27 |
+| Anhui    |               2 |      97697 |               0.02 |         0.01 |         0.07 |
+| Beijing  |               0 |      35386 |               0.00 |         0.00 |         0.11 |
+| Fujian   |               0 |      71359 |               0.00 |         0.00 |         0.05 |
+| Hebei    |               1 |      11421 |               0.09 |         0.02 |         0.50 |
+| Henan    |               1 |      68450 |               0.01 |         0.00 |         0.08 |
+| Hunan    |               1 |       7844 |               0.13 |         0.02 |         0.72 |
+| Jiangsu  |               4 |       4354 |               0.92 |         0.36 |         2.36 |
+| Jiangxi  |               1 |      65194 |               0.02 |         0.00 |         0.09 |
+| Shandong |               0 |      16349 |               0.00 |         0.00 |         0.23 |
+| Shanghai |              16 |      84236 |               0.19 |         0.12 |         0.31 |
+| Zhejiang |               6 |      36040 |               0.17 |         0.08 |         0.36 |
