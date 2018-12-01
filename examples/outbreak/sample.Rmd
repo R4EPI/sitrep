@@ -4,31 +4,60 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 library(knitr)
-
 library(dplyr)
-library(r4epi)
+
+# epi packages
+library(epireports)
 library(incidence)
 ```
 
 This is a test document to gather functions and code snippets that eventually will evolve into an outbreak report template (+ package(s)).
 
 ```{r}
-# as a starting point
-linelist <- outbreaks::fluH7N9_china_2013
-```
+# read data from CSV
+#linelist_raw <- readr::read_csv("linelist.csv")
 
+# read data from Excel
+# linelist_raw <- readxl::read_xlsx
+
+linelist_raw <- outbreaks::fluH7N9_china_2013
 
 ### Data preparation
 
-```{r}
-linelist_cleaned <- linelist %>%
-  rename(sex = gender) %>% 
-  mutate(age = as.integer(age)) %>%
-  mutate(age_group = cut(age, breaks = c(0, 5, 10, 30, 50, 80), right = FALSE))
+# Here document everything you do to clean the data.
+
+
+# a good first step is to assign standard column names so that subsequent code
+# uses stable column names. 
+# in case the input data changes, you just need to fix the column mapping
+# TODO: showcase and recommend the linelist package
+
+linelist_cleaned <- linelist_raw
+cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+colnames(linelist_cleaned) <- cleaned_colnames
+
+# manually rename columns
+linelist_cleaned <- rename(linelist_cleaned, sex = gender)
 ```
 
+```{r}
+# Next, document anything to clean data. Use dplyr for that.
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(age = as.integer(age)) %>%
+  mutate(age_group = cut(age, breaks = c(0, 5, 10, 30, 50, 80), right = FALSE))
+
+# ... TODO: add some snippets for cleaing data
+```
+
+
+```{r}
+# You might want to remove columns and other personal data
+
+# remove the name columns
+linelist_cleaned$name <- NULL
+```
 
 ### Person
 
@@ -90,6 +119,13 @@ group_by(known_status, age_group) %>%
   knitr::kable()
 ```
 
+#### Attack rate
+
+```{r}
+attack_rate(nrow(linelist_cleaned), 10 * population)
+```
+
+
 #### Mortality
 
 
@@ -104,7 +140,7 @@ mortality_rate(deaths, population, multiplier = 10^4) %>%
 #### 2x2 tables
 
 ```{r}
-sex_table <- epitools::epitable(linelist$gender, linelist$outcome)
+sex_table <- epitools::epitable(linelist_cleaned$sex, linelist_cleaned$outcome)
 sex_table
 ```
 
@@ -152,7 +188,7 @@ Just WIP. Not sure if ggmap is a good approach.
 ```{r, message=FALSE}
 bb <- osmdata::getbb("Western Area Urban, Sierra Leone")
 
-# generate artificual coords
+# generate artificial coords
 
 ll_geo <- linelist_cleaned %>% 
   mutate(Longitude = runif(nrow(linelist_cleaned), bb[1, 1], bb[1, 2]),
@@ -163,7 +199,6 @@ b <- get_map(as.numeric(bb), maptype="toner-lite", source="stamen")
 ggmap(b) + 
   geom_point(data = ll_geo, aes(x = Longitude, y = Latitude, color = outcome))
 ```
-
 
 
 #### Mortality rate per district

@@ -4,20 +4,6 @@ Outbreak report
 This is a test document to gather functions and code snippets that
 eventually will evolve into an outbreak report template (+ package(s)).
 
-``` r
-# as a starting point
-linelist <- outbreaks::fluH7N9_china_2013
-```
-
-### Data preparation
-
-``` r
-linelist_cleaned <- linelist %>%
-  rename(sex = gender) %>% 
-  mutate(age = as.integer(age)) %>%
-  mutate(age_group = cut(age, breaks = c(0, 5, 10, 30, 50, 80), right = FALSE))
-```
-
 ### Person
 
   - \[Who is affected: how many in total; male or female; young, adult
@@ -33,13 +19,6 @@ linelist_cleaned <- linelist %>%
 
 Cases by sex
 
-``` r
-linelist_cleaned %>%
-  group_by(sex) %>%
-  summarise(cases = n()) %>%
-  kable()
-```
-
 | sex | cases |
 | :-- | ----: |
 | f   |    39 |
@@ -47,13 +26,6 @@ linelist_cleaned %>%
 | NA  |     2 |
 
 Cases by age group
-
-``` r
-linelist_cleaned %>%
-  group_by(age_group) %>%
-  summarise(cases = n()) %>%
-  kable()
-```
 
 | age\_group | cases |
 | :--------- | ----: |
@@ -65,40 +37,15 @@ linelist_cleaned %>%
 
 Age pyramid
 
-``` r
-plot_age_pyramid(filter(linelist_cleaned, !is.na(sex)))
-```
-
-![](sample_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 CFR
-
-``` r
-known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
-deaths <- sum(known_status$outcome == "Death")
-population <- length(linelist_cleaned$outcome)
-```
-
-``` r
-case_fatality_rate(deaths, population) %>% knitr::kable()
-```
 
 | deaths | population |       cfr |     lower |     upper |
 | -----: | ---------: | --------: | --------: | --------: |
 |     32 |        136 | 0.2352941 | 0.1718861 | 0.3132451 |
 
 CFR by age group
-
-``` r
-group_by(known_status, age_group) %>%
-  do({
-    deaths <- sum(.$outcome == "Death")
-    population <- length(.$outcome)
-    case_fatality_rate(deaths, population)
-  }) %>%
-  arrange(desc(lower)) %>%
-  knitr::kable()
-```
 
 | age\_group | deaths | population |       cfr |     lower |     upper |
 | :--------- | -----: | ---------: | --------: | --------: | --------: |
@@ -108,14 +55,14 @@ group_by(known_status, age_group) %>%
 | \[5,10)    |      2 |          6 | 0.3333333 | 0.0967714 | 0.7000067 |
 | \[0,5)     |      1 |          5 | 0.2000000 | 0.0362241 | 0.6244654 |
 
+#### Attack rate
+
+    ##   cases population cfr      lower     upper
+    ## 1   136       1360 0.1 0.08516522 0.1170881
+
 #### Mortality
 
 Mortality rate per 100,000:
-
-``` r
-mortality_rate(deaths, population, multiplier = 10^4) %>%
-  kable()
-```
 
 | deaths | population | mortality per 10 000 |    lower |    upper |
 | -----: | ---------: | -------------------: | -------: | -------: |
@@ -123,20 +70,10 @@ mortality_rate(deaths, population, multiplier = 10^4) %>%
 
 #### 2x2 tables
 
-``` r
-sex_table <- epitools::epitable(linelist$gender, linelist$outcome)
-sex_table
-```
-
     ##          Outcome
     ## Predictor Death Recover
     ##         f     9      12
     ##         m    22      34
-
-``` r
-sex_rr <- epitools::riskratio(sex_table, correct = TRUE, method = "wald")
-sex_rr
-```
 
     ## $data
     ##          Outcome
@@ -162,10 +99,6 @@ sex_rr
     ## 
     ## attr(,"method")
     ## [1] "Unconditional MLE & normal approximation (Wald) CI"
-
-``` r
-epitools::oddsratio(sex_table, correction = TRUE, method = "wald")
-```
 
     ## $data
     ##          Outcome
@@ -200,31 +133,13 @@ epitools::oddsratio(sex_table, correction = TRUE, method = "wald")
 
 <!-- end list -->
 
-``` r
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
-```
+    ## 10 missing observations were removed.
+
+![](sample_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
     ## 10 missing observations were removed.
 
-``` r
-plot(inc_week_7, show_cases = TRUE, border = "black")
-```
-
-![](sample_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
-
-``` r
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
-                        interval = 7, 
-                        groups = linelist_cleaned$sex)
-```
-
-    ## 10 missing observations were removed.
-
-``` r
-plot(inc_week_7, show_cases = TRUE, border = "black")
-```
-
-![](sample_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ### Place
 
@@ -234,56 +149,23 @@ plot(inc_week_7, show_cases = TRUE, border = "black")
 
 #### Quick and simple map with ggmap
 
-Just WIP. Not sure if ggmap is a good approach.
+Just WIP. Not sure if ggmap is a good
+approach.
 
-``` r
-bb <- osmdata::getbb("Western Area Urban, Sierra Leone")
-
-# generate artificual coords
-
-ll_geo <- linelist_cleaned %>% 
-  mutate(Longitude = runif(nrow(linelist_cleaned), bb[1, 1], bb[1, 2]),
-         Latitude = runif(nrow(linelist_cleaned), bb[2, 1], bb[2, 2]))
-
-library(ggmap)
-b <- get_map(as.numeric(bb), maptype="toner-lite", source="stamen")
-ggmap(b) + 
-  geom_point(data = ll_geo, aes(x = Longitude, y = Latitude, color = outcome))
-```
-
-![](sample_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 #### Mortality rate per district
 
-``` r
-# let's generate some artificial population data
-population <- distinct(linelist_cleaned, province)
-population$population <- as.integer(runif(nrow(population), min = 10^3, max = 10^5))
-
-linelist_cleaned %>%
-  filter(!is.na(outcome)) %>%
-  group_by(province) %>%
-  do({
-    province <- as.character(.$province[1])
-    deaths <- sum(.$outcome == "Death")
-    pop <- population[population$province == province, "population"]
-    mortality_rate(deaths, pop, multiplier = 10^3)
-  }) %>%
-  mutate_if(is.numeric, funs(round(., digits = 2))) %>%
-  kable(col.names = c("Province", "Number of cases", "Population",
-                      "Incidence per 1000", "Lower 95% CI", "Upper 95% CI"))
-```
-
 | Province | Number of cases | Population | Incidence per 1000 | Lower 95% CI | Upper 95% CI |
 | :------- | --------------: | ---------: | -----------------: | -----------: | -----------: |
-| Anhui    |               2 |      97697 |               0.02 |         0.01 |         0.07 |
-| Beijing  |               0 |      35386 |               0.00 |         0.00 |         0.11 |
-| Fujian   |               0 |      71359 |               0.00 |         0.00 |         0.05 |
-| Hebei    |               1 |      11421 |               0.09 |         0.02 |         0.50 |
-| Henan    |               1 |      68450 |               0.01 |         0.00 |         0.08 |
-| Hunan    |               1 |       7844 |               0.13 |         0.02 |         0.72 |
-| Jiangsu  |               4 |       4354 |               0.92 |         0.36 |         2.36 |
-| Jiangxi  |               1 |      65194 |               0.02 |         0.00 |         0.09 |
-| Shandong |               0 |      16349 |               0.00 |         0.00 |         0.23 |
-| Shanghai |              16 |      84236 |               0.19 |         0.12 |         0.31 |
-| Zhejiang |               6 |      36040 |               0.17 |         0.08 |         0.36 |
+| Anhui    |               2 |      36474 |               0.05 |         0.02 |         0.20 |
+| Beijing  |               0 |      37450 |               0.00 |         0.00 |         0.10 |
+| Fujian   |               0 |      33968 |               0.00 |         0.00 |         0.11 |
+| Hebei    |               1 |      26492 |               0.04 |         0.01 |         0.21 |
+| Henan    |               1 |       9270 |               0.11 |         0.02 |         0.61 |
+| Hunan    |               1 |      50269 |               0.02 |         0.00 |         0.11 |
+| Jiangsu  |               4 |      96828 |               0.04 |         0.02 |         0.11 |
+| Jiangxi  |               1 |       7086 |               0.14 |         0.02 |         0.80 |
+| Shandong |               0 |       2275 |               0.00 |         0.00 |         1.69 |
+| Shanghai |              16 |      32853 |               0.49 |         0.30 |         0.79 |
+| Zhejiang |               6 |      46222 |               0.13 |         0.06 |         0.28 |

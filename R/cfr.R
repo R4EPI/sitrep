@@ -1,10 +1,18 @@
 proportion <- function (x, n, conf_level = 0.95, multiplier = 1) {
+  stopifnot(is.numeric(conf_level), conf_level >= 0, conf_level <= 1)
   res <- binom::binom.wilson(x, n, conf.level = conf_level)
   res <- res[, c("x", "n", "mean", "lower", "upper")]
   colnames(res) <- c("x", "n", "prop", "lower", "upper")
   res$prop <- (x / n) * multiplier
   res$lower <- res$lower * multiplier
   res$upper <- res$upper * multiplier
+  res
+}
+
+#' @export
+attack_rate <- function(cases, population, conf_level = 0.95) {
+  res <- proportion(cases, population, conf_level = conf_level)
+  colnames(res) <- c("cases", "population", "cfr", "lower", "upper")
   res
 }
 

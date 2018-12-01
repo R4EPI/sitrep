@@ -1,4 +1,4 @@
 library(testthat)
-library(r4epi)
+library(epireports)
 
-test_check("r4epi")
+test_check("epireports")
