@@ -11,7 +11,7 @@ LazyData: true
 Suggests:
     testthat,
     rmarkdown
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Imports: 
     scales,
     ggplot2,
