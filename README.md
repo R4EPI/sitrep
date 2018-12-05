@@ -3,6 +3,11 @@
 
 # epireports
 
+[![Travis build
+status](https://travis-ci.org/R4EPI/epireports.svg?branch=master)](https://travis-ci.org/R4EPI/epireports)
+[![AppVeyor build
+status](https://ci.appveyor.com/api/projects/status/github/R4EPI/epireports?branch=master&svg=true)](https://ci.appveyor.com/project/R4EPI/epireports)
+
 The goal of epireports is provide report templates for common
 epidemiological surveys and outbreak reports. The package further
 contains helper function that standardize certain analyses.
