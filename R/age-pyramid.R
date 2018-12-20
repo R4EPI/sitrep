@@ -6,7 +6,7 @@ plot_age_pyramid <- function(data) {
   stopifnot(is.data.frame(data), c("age_group", "sex") %in% colnames(data))
   plot_data <- dplyr::group_by(data, .data$age_group, .data$sex)
   plot_data <- dplyr::summarise(plot_data, n = n())
-  max_n <- max(plot_data[["n"]])
+  max_n <- signif(max(plot_data[["n"]]), digits = -1)
   stopifnot(is.finite(max_n), max_n > 0)
   step_size <- ceiling(max_n / 5)
   sex_levels <- unique(data[["sex"]])
@@ -18,5 +18,8 @@ plot_age_pyramid <- function(data) {
     coord_flip() +
     scale_fill_manual(values = incidence::incidence_pal1(length(sex_levels))) +
     scale_y_continuous(limits = c(-max_n, max_n), breaks = seq(-max_n, max_n, step_size),
-                       label = abs(seq(-max_n, max_n, step_size)))
+                       label = abs(seq(-max_n, max_n, step_size))) + 
+    geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dashed", colour = "grey") +
+    labs(y = "Count (n)", x = "Age group (years)", fill = "Legend") + 
+    theme_classic()
 }
