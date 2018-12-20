@@ -11,7 +11,7 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1)
     
     count_data <- count_data %>% 
                     gather(variable, value, c(n, prop)) %>%
-                    unite(temp, !!as.name(grouper), variable, sep = "_") %>%
+                    unite(temp, !!grouper, variable, sep = "_") %>%
                     spread(temp, value)
     
   } else{
