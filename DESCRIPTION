@@ -15,5 +15,7 @@ RoxygenNote: 6.1.1
 Imports: 
     scales,
     ggplot2,
+    survey,
+    rlang,
     binom,
     incidence

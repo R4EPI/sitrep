@@ -11,8 +11,26 @@ library(epireports)
 library(survey)
 ```
 
+```{r, message=FALSE}
+# study_data_raw <- readxl::read_excel("...")
+study_data_raw <- outbreaks::fluH7N9_china_2013
 
-Just a placeholder at the moment.
+study_data_cleaned <- study_data_raw %>%
+  # some cleaning
+  mutate(age_in_years = as.integer(age),
+         age_group = cut(age_in_years, breaks = seq(0, 90, 5), right = FALSE),
+         sex = gender,
+         symp_Tuberculosis = runif(n()) < 0.5,
+         symp_Cancer = runif(n()) < 0.01,
+         symp_Mumps = runif(n()) < 0.1,
+         died = outcome == "Death") %>%
+  filter(!is.na(sex))
+```
+
+
+# Introduction
+
+# Study Design 
 
 # Sample Size and Sampling methods
 
@@ -52,39 +70,55 @@ sample_size_households(size,
 
 # Study Findings
 
+
 ```{r}
-linelist <- outbreaks::fluH7N9_china_2013 %>% 
-  group_by(province) %>% 
-  filter(n() > 5) %>% 
-  ungroup() %>% 
-  filter(!is.na(outcome))
-
-design <- svydesign(ids = ~1,  #no cluster within strata
-                    strata = ~province, # strata
-                    weights = ~ 1, # sampling weights
-                    data = linelist)
-
-# get totals
-svytotal(~outcome, design)
-
-# compute something by another group. E.g. the mean
-svyby(~outcome, ~gender, design, svymean)
-
-# you can also compute confidence intervals
-confint(svyby(~outcome, ~gender, design, svymean))
-confint(svytotal(~outcome, design))
+# we first need to create a survery design that reflects the study
+suvery_design <- svydesign(
+  ids = ~1, # no cluster ids
+  weights = NULL, #no sampling weights in this example
+  data = study_data_cleaned
+)
 ```
 
 
 ## Demographics
 
 ```{r}
-linelist <- outbreaks::fluH7N9_china_2013 %>% 
-  rename(sex = gender) %>% 
-  mutate(age = as.integer(age)) %>%
-  mutate(age_group = cut(age, breaks = seq(0, 90, 5), right = FALSE)) %>% 
-  filter(!is.na(sex))
-
-plot_age_pyramid(linelist)
+plot_age_pyramid(study_data_cleaned)
 ```
+
+## Morbitity
+
+```{r}
+# symptoms start with sym_
+
+cols <- colnames(study_data_cleaned)
+symptom_columns <- cols[grepl(pattern = "^sym", x = cols)]
+
+survey_ciprop_foreach_binary_variable(design = suvery_design, 
+                                      variables = symptom_columns) %>%
+  knitr::kable()
+```
+
+
+
+## Mortality
+
+
+```{r}
+suvery_ciprob(suvery_design, "died") %>%
+  knitr::kable()
+```
+
+```{r}
+suvery_ciprob_stratified(suvery_design, "died", "age_group") %>%
+  kable()
+```
+
+
+# Conclusions
+
+# Recommendations
+
+# References
 
