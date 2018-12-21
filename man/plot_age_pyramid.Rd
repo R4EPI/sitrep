@@ -4,7 +4,7 @@
 \alias{plot_age_pyramid}
 \title{Plot an age group}
 \usage{
-plot_age_pyramid(data)
+plot_age_pyramid(data, vertical_lines = FALSE)
 }
 \description{
 Plot an age group

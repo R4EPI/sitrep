@@ -16,17 +16,14 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1)
     
   } else{
     # get counts
-    count_data <- count_(df, outcome)
-    # get total 
-    total <- sum(count_data$n)
+    count_data <- count_(df, counter)
     
     count_data <- count_data %>% 
-                  rowwise() %>% 
-                  mutate(prop = round(n / total*multiplier, digits = digits))
+                  mutate(prop = round(n / sum(n)*multiplier, digits = digits))
 
   }
   
-  
+  count_data <- count_data %>%  mutate_at(2:ncol(.), funs(replace(., is.na(.), 0)))
   count_data
   
 }

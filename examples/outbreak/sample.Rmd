@@ -7,6 +7,7 @@ output: github_document
 knitr::opts_chunk$set(echo = FALSE)
 library(knitr)
 library(dplyr)
+library(ggplot2)
 
 # epi packages
 library(epireports)
@@ -67,8 +68,8 @@ lab_results <- linelist_cleaned %>%
                 )
 
 # generate some artificial population data
-population <- distinct(linelist_cleaned, province)
-population$population <- as.integer(runif(nrow(population), 
+population_data <- distinct(linelist_cleaned, province)
+population_data$population <- as.integer(runif(nrow(population_data), 
                                           min = 10^3, max = 10^5))
 
 
@@ -133,27 +134,49 @@ linelist_cleaned$name <- NULL
 ### Person
 
 * [Who is affected: how many in total; male or female; young, adult or old? What are the links between affected people – work place, school, social gathering?  Is there a high rate of illness in contacts?  Is there a high rate of illness in health workers? You may want to include:  a bar chart showing case numbers or incidence by age group and sex; attack rates (AR); and numbers of deaths (in suspected and confirmed cases), mortality rates and/or case fatality ratio (CFR)]  
-DO THE DESCRIPTIVES BASED ON CASE CLASSIFICATION STRATIFICATION ALSO
+
+
+
+In total there were `r nrow(linelist_cleaned)` cases. There were `r linelist_cleaned %>% filter(sex == "Female") %>% count()` females affected and `r linelist_cleaned %>% filter(sex == "Male") %>% count()` males. 
+
+The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% select(age_group)` years. 
+
 
 #### Age
 
 Cases by sex
 
 ```{r}
-linelist_cleaned %>%
-  group_by(sex) %>%
-  summarise(cases = n()) %>%
+descriptive(linelist_cleaned, "sex") %>%
   kable()
 ```
 
 Cases by age group
 
 ```{r}
-linelist_cleaned %>%
-  group_by(age_group) %>%
-  summarise(cases = n()) %>%
+descriptive(linelist_cleaned, "age_group") %>%
   kable()
 ```
+
+
+
+Cases by age group and definition 
+```{r}
+descriptive(linelist_cleaned, "age_group", "case_def") %>% 
+  kable()
+```
+
+
+
+
+Cases by age group and sex 
+```{r}
+descriptive(linelist_cleaned, "age_group", "sex") %>% 
+  kable()
+```
+
+
+
 
 Age pyramid
 
@@ -193,8 +216,11 @@ group_by(known_status, age_group) %>%
 #### Attack rate
 
 ```{r}
-attack_rate(nrow(linelist_cleaned), 10 * population)
+attack_rate(nrow(linelist_cleaned), 10 * population) %>% 
+  knitr::kable()
 ```
+
+
  ADD ATTACK RATE BY WEEK!!!!!
  
  Cummulative attack week as weeks go on 
@@ -206,26 +232,20 @@ attack_rate(nrow(linelist_cleaned), 10 * population)
 Mortality rate per 100,000:
 
 ```{r}
-mortality_rate(deaths, population, multiplier = 10^4) %>%
+mortality_rate(deaths, population, multiplier = 10^4, digits = 1) %>%
   kable()
 ```
 
 
 #### 2x2 tables
 
-```{r}
-sex_table <- epitools::epitable(linelist_cleaned$sex, linelist_cleaned$outcome)
-sex_table
-```
+```{r, message = FALSE}
+outcome <- linelist_cleaned$outcome == "Death"
+is_male <- linelist_cleaned$sex == "Male"
+is_child <- as.integer(linelist_cleaned$age) <= 12
 
-```{r}
-sex_rr <- epitools::riskratio(sex_table, correct = TRUE, method = "wald")
-sex_rr
-```
-
-
-```{r}
-epitools::oddsratio(sex_table, correction = TRUE, method = "wald")
+univariate_analysis(outcome, is_male, is_child) %>% 
+  knitr::kable()
 ```
 
 
@@ -234,21 +254,50 @@ epitools::oddsratio(sex_table, correction = TRUE, method = "wald")
 * [When did the cases fall ill? Are numbers increasing or stable? You may want to include an Epi curve (bar chart showing number of new (suspected and confirmed) cases each day/week) ]
 
 
-```{r}
+There were `r sum(is.na(linelist_cleaned$date_of_onset))` cases missing dates of onset. 
+
+```{r, message = FALSE}
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
 ```
 
-```{r}
+The peak of the outbreak was in `r data.frame(inc_week_7) %>% slice(which.max(counts)) %>% select(isoweeks)`. 
+
+```{r, message = FALSE}
+# plot your epicurve
 plot(inc_week_7, show_cases = TRUE, border = "black") + 
-  labs(x = "Calendar week", y = "Cases (n)")
+  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  theme_classic() + # give classic black/white graph 
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "Cases (n)", 
+       captions = "Source: MoH of China data on xx/yy/zzzz") + 
+  # change visuals of dates and remove legend title
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+        legend.title = element_blank()) + 
+  # change interval of date labels
+  scale_x_date(date_breaks = "1 week")
 ```
 
-```{r}
+You may also want to stratify by gender. 
+
+
+```{r, message = FALSE}
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
                         interval = 7, 
                         groups = linelist_cleaned$sex)
+
+
 plot(inc_week_7, show_cases = TRUE, border = "black") + 
-  labs(x = "Calendar week", y = "Cases (n)")
+  labs(x = "Calendar week", y = "Cases (n)") + 
+  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  theme_classic() + # give classic black/white graph 
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "Cases (n)", 
+       captions = "Source: MoH of China data on xx/yy/zzzz") + 
+  # change visuals of dates and remove legend title
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+        legend.title = element_blank()) + 
+  # change interval of date labels
+  scale_x_date(date_breaks = "1 week")
 ```
 
 
@@ -291,7 +340,7 @@ linelist_cleaned %>%
   do({
     province <- as.character(.$province[1])
     deaths <- sum(.$outcome == "Death")
-    pop <- population[population$province == province, "population"]
+    pop <- population_data[population_data$province == province, "population"]
     mortality_rate(deaths, pop, multiplier = 10^3)
   }) %>%
   mutate_if(is.numeric, funs(round(., digits = 2))) %>%

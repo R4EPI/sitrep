@@ -2,7 +2,7 @@
 #'
 #' @import ggplot2
 #' @export
-plot_age_pyramid <- function(data) {
+plot_age_pyramid <- function(data, vertical_lines = FALSE) {
   stopifnot(is.data.frame(data), c("age_group", "sex") %in% colnames(data))
   plot_data <- dplyr::group_by(data, .data$age_group, .data$sex)
   plot_data <- dplyr::summarise(plot_data, n = n())
@@ -12,14 +12,22 @@ plot_age_pyramid <- function(data) {
   sex_levels <- unique(data[["sex"]])
   stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
   plot_data[["n"]] <- ifelse(plot_data[["sex"]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
-  ggplot(plot_data) +
+  
+  pyramid <- ggplot(plot_data) +
     aes(x = age_group, y = n, fill = sex) +
     geom_bar(stat = "identity") +
     coord_flip() +
     scale_fill_manual(values = incidence::incidence_pal1(length(sex_levels))) +
     scale_y_continuous(limits = c(-max_n, max_n), breaks = seq(-max_n, max_n, step_size),
                        label = abs(seq(-max_n, max_n, step_size))) + 
-    geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dashed", colour = "grey") +
     labs(y = "Count (n)", x = "Age group (years)", fill = "Legend") + 
     theme_classic()
+  
+  if (vertical_lines == TRUE) {
+    pyramid <- pyramid + 
+      geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dashed", colour = "grey")
+  }
+  
+  pyramid
+
 }
