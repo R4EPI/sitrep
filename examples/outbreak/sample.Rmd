@@ -244,7 +244,7 @@ outcome <- linelist_cleaned$outcome == "Death"
 is_male <- linelist_cleaned$sex == "Male"
 is_child <- as.integer(linelist_cleaned$age) <= 12
 
-univariate_analysis(outcome, is_male, is_child) %>% 
+univariate_analysis(measure = "OR", digits = 3, outcome = outcome, is_male, is_child) %>% 
   knitr::kable()
 ```
 
