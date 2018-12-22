@@ -4,7 +4,16 @@
 \alias{univariate_analysis}
 \title{Produce risk ratios or odds ratios}
 \usage{
-univariate_analysis(outcome, ...)
+univariate_analysis(measure = "OR", digits = 3, outcome, ...)
+}
+\arguments{
+\item{measure}{Specify what you would like to calculated, options are "OR" or "RR"}
+
+\item{digits}{Specify number of decimal places}
+
+\item{outcome}{Vector of TRUE/FALSE from your outcome variable of interest}
+
+\item{...}{TRUE/FALSE vectors for the exposure variables of interest}
 }
 \description{
 Produce risk ratios or odds ratios

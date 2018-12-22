@@ -1,10 +1,14 @@
 #' Produce risk ratios or odds ratios 
+#' @param measure Specify what you would like to calculated, options are "OR" or "RR"
+#' @param digits Specify number of decimal places 
+#' @param outcome Vector of TRUE/FALSE from your outcome variable of interest
+#' @param ... TRUE/FALSE vectors for the exposure variables of interest
 #' @references Inspired by Daniel Gardiner, 
 #' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12)
 #' @export
 
 
-univariate_analysis <- function(outcome, ...) {
+univariate_analysis <- function(measure = "OR", digits = 3, outcome,  ...) {
   n <- length(outcome)
   predictors <- list(...)
   predictor_labels <- substitute(list(...))
@@ -19,26 +23,72 @@ univariate_analysis <- function(outcome, ...) {
     warning("Removed ", n_na_rows, " rows due to missing values")
   }
   
-  res <- lapply(predictors, function(predictor) {
-    table <- epitools::epitable(outcome[!na_rows], 
-                                predictor[!na_rows])    
-    #odds <- epitools::oddsratio(table, method = "wald") # what method?
-    rr <- epitools::riskratio(table, method = "wald")
-    midp_pval_rr <- rr$p.value[2L, 1L]
+  
+  
+  
+  
+  
+  
+  if (measure == "OR") {
+    
+    res <- lapply(predictors, function(predictor) {
+      table <- epitools::epitable(outcome[!na_rows], 
+                                  predictor[!na_rows])   
+    
+    
+    or <- epitools::oddsratio(table, method = "wald") # what method?
+    midp_pval_or <- round(or$p.value[2L, 1L], digits = digits)
     
     cbind(
       data.frame(
-        exp = rr$data[3L, 2L],
-        exp_cases = rr$data[2L, 2L],
-        exp_AR = round(rr$data[2L, 2L] / rr$data[3L, 2L], 1L),
-        unexp = rr$data[1L, 3L],
-        unexp_cases = rr$data[1L, 2L],
-        unexp_AR = round(rr$data[1L, 2L] / rr$data[1L, 3L], 1L)
+        exp_cases = or$data[2L, 2L],
+        cases = or$data[3L, 2L],
+        cases_odds = round(or$data[2L, 2L] / or$data[3L, 2L], digits = digits),
+        exp_noncases = or$data[2L, 1L],
+        noncases = or$data[3L, 1L],
+        noncases_odds = round(or$data[2L, 1L] / or$data[3L, 1L], digits = digits)
       ),
-      t(rr$measure[2L, ]),
+      t(round(or$measure[2L, ], digits = digits)),
+      data.frame(p_value = midp_pval_or)
+    )
+    
+    } )
+  
+    
+    }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  if (measure == "RR") {
+  res <- lapply(predictors, function(predictor) {
+    table <- epitools::epitable(outcome[!na_rows], 
+                                predictor[!na_rows])    
+    
+    rr <- epitools::riskratio(table, method = "wald")
+    midp_pval_rr <- round(rr$p.value[2L, 1L], digits = digits)
+    
+    cbind(
+      data.frame(
+        exp_cases = rr$data[2L, 2L],
+        exp = rr$data[2L, 3L],
+        exp_AR = round(rr$data[2L, 2L] / rr$data[2L, 3L], digits = digits),
+        unexp_cases = rr$data[1L, 2L],
+        unexp = rr$data[1L, 3L],
+        unexp_AR = round(rr$data[1L, 2L] / rr$data[1L, 3L], digits = digits)
+      ),
+      t(round(rr$measure[2L, ], digits = digits)),
       data.frame(p_value = midp_pval_rr)
     )
-  })
+    
+  
+  } ) }
   
   cbind(
     data.frame(exposure = predictor_labels),
