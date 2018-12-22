@@ -1,4 +1,9 @@
-#' Plot an age group
+#' Plot a population pyramid (age-sex) from a dataframe. 
+#' This assumes that your variables are called "age_group" and "sex", respectively. 
+#' @param data Your dataframe (e.g. linelist)
+#' @param vertical_lines If you would like to add dashed vertical lines to help 
+#' visual interpretation of numbers. Default is to not show (FALSE), 
+#' to turn on write TRUE. 
 #'
 #' @import ggplot2
 #' @export

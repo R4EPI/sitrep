@@ -2,10 +2,23 @@
 % Please edit documentation in R/descriptive-table.R
 \name{descriptive}
 \alias{descriptive}
-\title{Counts with proportions and totals table}
+\title{Produces counts with respective proportions from specified variables in a dataframe. 
+Option to add row and column totals}
 \usage{
 descriptive(df, counter, grouper = NA, multiplier = 100, digits = 1)
 }
+\arguments{
+\item{df}{A dataframe (e.g. your linelist)}
+
+\item{counter}{A name of the variable (in quotation marks) that you would like to have as rows.}
+
+\item{grouper}{A name of the variable (in quotation marks) that you would like to have as columns.}
+
+\item{multiplier}{What you would like to have your proportions as (default is per 100).}
+
+\item{digits}{The number of decimal places you would like in your proportions (default is 1).}
+}
 \description{
-Counts with proportions and totals table
+Produces counts with respective proportions from specified variables in a dataframe. 
+Option to add row and column totals
 }

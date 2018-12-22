@@ -1,9 +1,10 @@
-#' # Inspired by Daniel Gardiner
-#' https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12
+#' Produce risk ratios or odds ratios 
+#' @references Inspired by Daniel Gardiner, 
+#' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12)
 #' @export
 
 
-univariate_analysis <- function (outcome, ...) {
+univariate_analysis <- function(outcome, ...) {
   n <- length(outcome)
   predictors <- list(...)
   predictor_labels <- substitute(list(...))
@@ -11,14 +12,14 @@ univariate_analysis <- function (outcome, ...) {
   stopifnot(length(predictors) > 0L, 
             all(vapply(predictors, length, integer(1L)) == n),
             all(vapply(predictors, is.logical, logical(1L))))
-  na_rows <- Reduce(function (acc, el) acc | is.na(el), predictors, init = FALSE)
+  na_rows <- Reduce(function(acc, el) acc | is.na(el), predictors, init = FALSE)
   n_na_rows <- sum(na_rows)
   
   if (n_na_rows) {
     warning("Removed ", n_na_rows, " rows due to missing values")
   }
   
-  res <- lapply(predictors, function (predictor) {
+  res <- lapply(predictors, function(predictor) {
     table <- epitools::epitable(outcome[!na_rows], 
                                 predictor[!na_rows])    
     #odds <- epitools::oddsratio(table, method = "wald") # what method?

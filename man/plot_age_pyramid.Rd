@@ -2,10 +2,19 @@
 % Please edit documentation in R/age-pyramid.R
 \name{plot_age_pyramid}
 \alias{plot_age_pyramid}
-\title{Plot an age group}
+\title{Plot a population pyramid (age-sex) from a dataframe. 
+This assumes that your variables are called "age_group" and "sex", respectively.}
 \usage{
 plot_age_pyramid(data, vertical_lines = FALSE)
 }
+\arguments{
+\item{data}{Your dataframe (e.g. linelist)}
+
+\item{vertical_lines}{If you would like to add dashed vertical lines to help 
+visual interpretation of numbers. Default is to not show (FALSE), 
+to turn on write TRUE.}
+}
 \description{
-Plot an age group
+Plot a population pyramid (age-sex) from a dataframe. 
+This assumes that your variables are called "age_group" and "sex", respectively.
 }

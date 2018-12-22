@@ -1,5 +1,13 @@
 #' Create an age group variable
 #' either give distinct breaks or specify vals for sequence
+#' @param x Your age variable
+#' @param breakers A string. Age category breaks you can define within c(). Alternatively use "lower",
+#'  "upper" and "by" to set these breaks based on a sequence. 
+#' @param lower A number. The lowest age value you want to consider (default is 0) 
+#' @param upper A number. The highest age value you want to consider 
+#' @param by A number. The number of years you want between groups
+#' @param separator A character that you want to have between ages in group names. The default is "-" producing e.g. 0-10.
+#' @param above.char A character that you want to have after your highest age group. The default is "+" producing e.g. 80+
 #' @export
 
 

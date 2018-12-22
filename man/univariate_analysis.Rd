@@ -2,12 +2,14 @@
 % Please edit documentation in R/univariate-analysis.R
 \name{univariate_analysis}
 \alias{univariate_analysis}
-\title{# Inspired by Daniel Gardiner
-https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12}
+\title{Produce risk ratios or odds ratios}
 \usage{
 univariate_analysis(outcome, ...)
 }
 \description{
-# Inspired by Daniel Gardiner
-https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12
+Produce risk ratios or odds ratios
+}
+\references{
+Inspired by Daniel Gardiner, 
+see [github repo](https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12)
 }
