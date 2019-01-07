@@ -10,8 +10,8 @@ proportion <- function(x, n, conf_level = 0.95, multiplier = 100, digits = 1) {
 }
 
 #' @export
-attack_rate <- function(cases, population, conf_level = 0.95, digits = 1) {
-  res <- proportion(cases, population, conf_level = conf_level)
+attack_rate <- function(cases, population, multiplier, conf_level = 0.95, digits = 1) {
+  res <- proportion(cases, population, multiplier = multiplier, conf_level = conf_level, digits = digits)
   colnames(res) <- c("cases", "population", "ar", "lower", "upper")
   res
 }
@@ -25,7 +25,7 @@ case_fatality_rate <- function(deaths, population, conf_level = 0.95, digits = 1
 
 #' @export
 mortality_rate <- function(deaths, population,
-                            conf_level = 0.95, multiplier = 10^4, digits = 3) {
+                           conf_level = 0.95, multiplier = 10^4, digits = 3) {
   stopifnot(is.numeric(multiplier), length(multiplier) == 1L, multiplier > 0)
   # as in here https://www.cdc.gov/ophss/csels/dsepd/ss1978/lesson3/section3.html
   res <- proportion(deaths, population, conf_level = conf_level, multiplier = multiplier, digits = digits)

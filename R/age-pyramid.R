@@ -1,9 +1,9 @@
-#' Plot a population pyramid (age-sex) from a dataframe. 
-#' This assumes that your variables are called "age_group" and "sex", respectively. 
+#' Plot a population pyramid (age-sex) from a dataframe.
+#' This assumes that your variables are called "age_group" and "sex", respectively.
 #' @param data Your dataframe (e.g. linelist)
-#' @param vertical_lines If you would like to add dashed vertical lines to help 
-#' visual interpretation of numbers. Default is to not show (FALSE), 
-#' to turn on write TRUE. 
+#' @param vertical_lines If you would like to add dashed vertical lines to help
+#' visual interpretation of numbers. Default is to not show (FALSE),
+#' to turn on write TRUE.
 #'
 #' @import ggplot2
 #' @export
@@ -17,22 +17,23 @@ plot_age_pyramid <- function(data, vertical_lines = FALSE) {
   sex_levels <- unique(data[["sex"]])
   stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
   plot_data[["n"]] <- ifelse(plot_data[["sex"]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
-  
+
   pyramid <- ggplot(plot_data) +
     aes(x = age_group, y = n, fill = sex) +
     geom_bar(stat = "identity") +
     coord_flip() +
     scale_fill_manual(values = incidence::incidence_pal1(length(sex_levels))) +
-    scale_y_continuous(limits = c(-max_n, max_n), breaks = seq(-max_n, max_n, step_size),
-                       label = abs(seq(-max_n, max_n, step_size))) + 
-    labs(y = "Count (n)", x = "Age group (years)", fill = "Legend") + 
+    scale_y_continuous(
+      limits = c(-max_n, max_n), breaks = seq(-max_n, max_n, step_size),
+      label = abs(seq(-max_n, max_n, step_size))
+    ) +
+    labs(y = "Count (n)", x = "Age group (years)", fill = "Legend") +
     theme_classic()
-  
+
   if (vertical_lines == TRUE) {
-    pyramid <- pyramid + 
+    pyramid <- pyramid +
       geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dashed", colour = "grey")
   }
-  
-  pyramid
 
+  pyramid
 }
