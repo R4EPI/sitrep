@@ -45,11 +45,11 @@ definition
 
 | age\_group | Confirmed\_n | Confirmed\_prop | Possible\_n | Possible\_prop | Probable\_n | Probable\_prop |
 | :--------- | -----------: | --------------: | ----------: | -------------: | ----------: | -------------: |
-| 0-4        |            1 |             1.6 |           2 |            5.7 |           2 |            5.3 |
-| 5-9        |            4 |             6.3 |           1 |            2.9 |           3 |            7.9 |
-| 10-29      |           20 |            31.7 |          15 |           42.9 |          11 |           28.9 |
-| 30-49      |           28 |            44.4 |          13 |           37.1 |          15 |           39.5 |
-| 50-79      |           10 |            15.9 |           4 |           11.4 |           7 |           18.4 |
+| 0-4        |            3 |             4.4 |           1 |            2.9 |           1 |            3.0 |
+| 5-9        |            6 |             8.8 |           0 |            0.0 |           2 |            6.1 |
+| 10-29      |           25 |            36.8 |          11 |           31.4 |          10 |           30.3 |
+| 30-49      |           28 |            41.2 |          16 |           45.7 |          12 |           36.4 |
+| 50-79      |            6 |             8.8 |           7 |           20.0 |           8 |           24.2 |
 
 Cases by age group and
 sex
@@ -68,9 +68,11 @@ Age pyramid
 
 CFR
 
+The case fatality ratio among those with known outcomes is below
+
 | deaths | population |  cfr | lower | upper |
 | -----: | ---------: | ---: | ----: | ----: |
-|     32 |        136 | 23.5 |  17.2 |  31.3 |
+|     32 |         79 | 40.5 |  30.4 |  51.5 |
 
 CFR by age group
 
@@ -84,32 +86,70 @@ CFR by age group
 
 #### Attack rate
 
-| cases | population | ar | lower | upper |
-| ----: | ---------: | -: | ----: | ----: |
-|   136 |       1360 | 10 |   8.5 |  11.7 |
+The attack rate among per 100,000 population is below - based on
+available population data for the whole country.
 
-ADD ATTACK RATE BY WEEK\!\!\!\!\!
+| cases | population |   ar | lower | upper |
+| ----: | ---------: | ---: | ----: | ----: |
+|   136 |     612202 | 22.2 |  18.8 |  26.3 |
 
-Cummulative attack week as weeks go on and one that is sepereate counts
-for each week
+The below gives the attack rate per week.
+
+| cases | population |  ar | lower | upper |
+| ----: | ---------: | --: | ----: | ----: |
+|     1 |     612202 | 0.2 |   0.0 |   0.9 |
+|     1 |     612202 | 0.2 |   0.0 |   0.9 |
+|     3 |     612202 | 0.5 |   0.2 |   1.4 |
+|     2 |     612202 | 0.3 |   0.1 |   1.2 |
+|     7 |     612202 | 1.1 |   0.6 |   2.4 |
+|    18 |     612202 | 2.9 |   1.9 |   4.6 |
+|    28 |     612202 | 4.6 |   3.2 |   6.6 |
+|    37 |     612202 | 6.0 |   4.4 |   8.3 |
+|    19 |     612202 | 3.1 |   2.0 |   4.8 |
+|     5 |     612202 | 0.8 |   0.3 |   1.9 |
+|     2 |     612202 | 0.3 |   0.1 |   1.2 |
+|     1 |     612202 | 0.2 |   0.0 |   0.9 |
+|     1 |     612202 | 0.2 |   0.0 |   0.9 |
+|     1 |     612202 | 0.2 |   0.0 |   0.9 |
+|    10 |     612202 | 1.6 |   0.9 |   3.0 |
+
+The below gives the cummulative attack rate per week.
+
+| cases | population |   ar | lower | upper |
+| ----: | ---------: | ---: | ----: | ----: |
+|     1 |     612202 |  0.2 |   0.0 |   0.9 |
+|     2 |     612202 |  0.3 |   0.1 |   1.2 |
+|     5 |     612202 |  0.8 |   0.3 |   1.9 |
+|     7 |     612202 |  1.1 |   0.6 |   2.4 |
+|    14 |     612202 |  2.3 |   1.4 |   3.8 |
+|    32 |     612202 |  5.2 |   3.7 |   7.4 |
+|    60 |     612202 |  9.8 |   7.6 |  12.6 |
+|    97 |     612202 | 15.8 |  13.0 |  19.3 |
+|   116 |     612202 | 18.9 |  15.8 |  22.7 |
+|   121 |     612202 | 19.8 |  16.5 |  23.6 |
+|   123 |     612202 | 20.1 |  16.8 |  24.0 |
+|   124 |     612202 | 20.3 |  17.0 |  24.1 |
+|   125 |     612202 | 20.4 |  17.1 |  24.3 |
+|   126 |     612202 | 20.6 |  17.3 |  24.5 |
+|   136 |     612202 | 22.2 |  18.8 |  26.3 |
 
 #### Mortality
 
 Mortality rate per 100,000:
 
-| deaths | population | mortality per 10 000 |  lower |  upper |
-| -----: | ---------: | -------------------: | -----: | -----: |
-|     32 |        136 |               2352.9 | 1718.9 | 3132.5 |
+| deaths | population | mortality per 10 000 | lower | upper |
+| -----: | ---------: | -------------------: | ----: | ----: |
+|     32 |     612202 |                  0.5 |   0.4 |   0.7 |
 
 #### 2x2 tables
 
-    ## Warning in univariate_analysis(outcome, is_male, is_child): Removed 2 rows
-    ## due to missing values
+    ## Warning in univariate_analysis(measure = "OR", digits = 3, outcome =
+    ## outcome, : Removed 2 rows due to missing values
 
-| exposure  | exp | exp\_cases | exp\_AR | unexp | unexp\_cases | unexp\_AR |  estimate |     lower |    upper |  p\_value |
-| :-------- | --: | ---------: | ------: | ----: | -----------: | --------: | --------: | --------: | -------: | --------: |
-| is\_male  |  56 |         22 |     0.4 |    46 |           34 |       0.7 | 0.9601518 | 0.7233926 | 1.274400 | 0.7785528 |
-| is\_child |  14 |          3 |     0.2 |    46 |           11 |       0.2 | 0.4046921 | 0.1227969 | 1.333712 | 0.1225535 |
+| exposure  | exp\_cases | unexp\_cases | cases\_odds | exp\_noncases | unexp\_noncases | noncases\_odds | estimate | lower | upper | p\_value |
+| :-------- | ---------: | -----------: | ----------: | ------------: | --------------: | -------------: | -------: | ----: | ----: | -------: |
+| is\_male  |         22 |           34 |       0.647 |             9 |              12 |           0.75 |    0.863 | 0.312 | 2.386 |    0.779 |
+| is\_child |          3 |           11 |       0.273 |            28 |              35 |           0.80 |    0.341 | 0.087 | 1.341 |    0.123 |
 
 ### Time
 
@@ -121,11 +161,11 @@ There were 10 cases missing dates of onset.
 
 The peak of the outbreak was in 2013-W15.
 
-![](sample_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 You may also want to stratify by gender.
 
-![](sample_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ### Place
 
@@ -141,20 +181,20 @@ DO THIS WITH ALL OF CHINA FOR A CHOROPLETH USING GADM SHAPEFILES ALSO
 GET OSM TILES AND
 DATA
 
-![](sample_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](sample_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 #### Mortality rate per district
 
 | Province | Number of cases | Population | Incidence per 1000 | Lower 95% CI | Upper 95% CI |
 | :------- | --------------: | ---------: | -----------------: | -----------: | -----------: |
-| Anhui    |               2 |       7038 |               0.28 |         0.08 |         1.04 |
-| Beijing  |               0 |      55894 |               0.00 |         0.00 |         0.07 |
-| Fujian   |               0 |      91268 |               0.00 |         0.00 |         0.04 |
-| Hebei    |               1 |       7567 |               0.13 |         0.02 |         0.75 |
-| Henan    |               1 |      62594 |               0.02 |         0.00 |         0.09 |
-| Hunan    |               1 |      64220 |               0.02 |         0.00 |         0.09 |
-| Jiangsu  |               4 |      63452 |               0.06 |         0.02 |         0.16 |
-| Jiangxi  |               1 |       9022 |               0.11 |         0.02 |         0.63 |
-| Shandong |               0 |      96648 |               0.00 |         0.00 |         0.04 |
-| Shanghai |              16 |      96668 |               0.17 |         0.10 |         0.27 |
-| Zhejiang |               6 |      82173 |               0.07 |         0.03 |         0.16 |
+| Anhui    |               2 |      43177 |               0.05 |         0.01 |         0.17 |
+| Beijing  |               0 |      16297 |               0.00 |         0.00 |         0.24 |
+| Fujian   |               0 |      53657 |               0.00 |         0.00 |         0.07 |
+| Hebei    |               1 |      64536 |               0.02 |         0.00 |         0.09 |
+| Henan    |               1 |      56740 |               0.02 |         0.00 |         0.10 |
+| Hunan    |               1 |      60455 |               0.02 |         0.00 |         0.09 |
+| Jiangsu  |               4 |      80308 |               0.05 |         0.02 |         0.13 |
+| Jiangxi  |               1 |      19072 |               0.05 |         0.01 |         0.30 |
+| Shandong |               0 |      33510 |               0.00 |         0.00 |         0.12 |
+| Shanghai |              16 |      83121 |               0.19 |         0.12 |         0.31 |
+| Zhejiang |               6 |      25206 |               0.24 |         0.11 |         0.52 |

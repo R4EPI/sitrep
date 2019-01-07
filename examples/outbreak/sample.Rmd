@@ -188,10 +188,12 @@ plot_age_pyramid(filter(linelist_cleaned, !is.na(sex)))
 
 CFR 
 
+The case fatality ratio among those with known outcomes is below
+
 ```{r}
 known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
-deaths <- sum(known_status$outcome == "Death")
-population <- length(linelist_cleaned$outcome)
+deaths <- sum(linelist_cleaned$outcome == "Death", na.rm = TRUE)
+population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
 ```
 
 
@@ -215,16 +217,38 @@ group_by(known_status, age_group) %>%
 
 #### Attack rate
 
+The attack rate among per 100,000 population is below - based on available population data for the whole country. 
+
 ```{r}
-attack_rate(nrow(linelist_cleaned), 10 * population) %>% 
+# define population 
+population <- sum(population_data$population)
+
+attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>% 
   knitr::kable()
 ```
 
+The below gives the attack rate per week. 
+```{r}
+# cases for each week
+cases <- count(linelist_cleaned, epiweek)
 
- ADD ATTACK RATE BY WEEK!!!!!
+# attack rate for each week
+attack_rate(cases$n, population, multiplier = 100000) %>% 
+  knitr::kable()
+    
+```
  
- Cummulative attack week as weeks go on 
- and one that is sepereate counts for each week
+The below gives the cummulative attack rate per week. 
+
+```{r}
+cases <- count(linelist_cleaned, epiweek) %>% 
+  mutate(cummulative = cumsum(n))
+
+attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
+  knitr::kable()
+
+```
+
 
 #### Mortality
 
