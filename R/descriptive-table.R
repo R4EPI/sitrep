@@ -26,9 +26,14 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
       unite(temp, !!grouper, variable, sep = "_") %>%
       spread(temp, value)
   } else {
+    # Using rlang::sym() allows us to use quoted arguments
+    # If we wanted to go full NSE, we would use rlang::enquo() instead
+    sym_count  <- rlang::sym(counter)
     # get counts and props for just a single variable
-    count_data <- count_(df, counter) %>%
-      mutate(prop = round(n / sum(n) * multiplier, digits = digits))
+    count_data <- count(df, !!sym_count)
+    count_data <- mutate(count_data, 
+                         prop = round(n / sum(n) * multiplier, 
+                                      digits = digits))
   }
 
   # if there are NA counts, then change these to zero (except) in first col (which contains )
