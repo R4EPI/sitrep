@@ -19,6 +19,6 @@ univariate_analysis(measure = "OR", digits = 3, outcome, ...)
 Produce risk ratios or odds ratios
 }
 \references{
-Inspired by Daniel Gardiner, 
+Inspired by Daniel Gardiner,
 see [github repo](https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/descriptive-table.R
 \name{descriptive}
 \alias{descriptive}
-\title{Produces counts with respective proportions from specified variables in a dataframe. 
+\title{Produces counts with respective proportions from specified variables in a dataframe.
 Option to add row and column totals}
 \usage{
 descriptive(df, counter, grouper = NA, multiplier = 100, digits = 1,
@@ -24,6 +24,6 @@ descriptive(df, counter, grouper = NA, multiplier = 100, digits = 1,
 \item{rowtotals}{Add row totals (only sums counts)}
 }
 \description{
-Produces counts with respective proportions from specified variables in a dataframe. 
+Produces counts with respective proportions from specified variables in a dataframe.
 Option to add row and column totals
 }

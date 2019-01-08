@@ -16,4 +16,7 @@ Imports:
     scales,
     ggplot2,
     binom,
-    incidence
+    incidence,
+    rlang,
+    dplyr,
+    tidyr
