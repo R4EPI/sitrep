@@ -44,19 +44,14 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
   count_data <- mutate_at(count_data, 2:ncol(count_data), funs(replace(., is.na(.), 0)))
 
 
-  # if (coltotals == TRUE) {
-  #
-  #   #make available to dplyr
-  #   counter <- enquo(counter)
-  #
-  #   count_data <- count_data %>%
-  #     # change first column (with var levels) in to a character (for rbinding)
-  #     ungroup() %>%
-  #     mutate(!!counter := as.character(!!counter)) %>%
-  #     # cbind a dataframe with "total and the column sums), rbind that to bottom
-  #     rbind(cbind(!!counter := "Total",
-  #                 t(round(colSums(count_data[,2:ncol(count_data)], na.rm = TRUE), digits = 0))))
-  # }
+  if (coltotals == TRUE) {
+    count_data <- ungroup(count_data) 
+    # change first column (with var levels) in to a character (for rbinding)  
+    count_data <- dplyr::mutate(count_data, !!sym_count := as.character(!!sym_count))
+    # summarise all columns that are numeric, make first col "Total", bind as a row
+    count_data <- bind_rows(count_data, 
+                            summarise_all(count_data, funs(if (is.numeric(.)) sum(.) else "Total")))
+  }
 
   if (rowtotals == TRUE) {
     count_data <- 
@@ -64,7 +59,5 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
       mutate(count_data, 
              Total = rowSums(count_data[, grep("(_n$|^n$)", colnames(count_data))], na.rm = TRUE))
   }
-
-
   count_data
 }
