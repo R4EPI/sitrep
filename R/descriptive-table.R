@@ -48,8 +48,9 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
     # change first column (with var levels) in to a character (for rbinding)
     count_data <- dplyr::mutate(count_data, !!sym_count := as.character(!!sym_count))
     # summarise all columns that are numeric, make first col "Total", bind as a row
-    csummaries <- summarise_all(count_data, funs(if (is.numeric(.)) sum(.) else "Total"))
+    csummaries <- summarise_if(count_data, is.numeric, sum, na.rm = TRUE) 
     count_data <- dplyr::bind_rows(count_data, csummaries)
+    count_data[nrow(count_data), 1] <- "Total"
   }
 
   if (rowtotals == TRUE) {
