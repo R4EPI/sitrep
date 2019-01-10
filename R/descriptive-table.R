@@ -41,8 +41,7 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
   }
 
   # if there are NA counts, then change these to zero (except) in first col (which contains )
-  count_data <- mutate_at(count_data, 2:ncol(count_data), funs(replace(., is.na(.), 0)))
-
+  count_data[-1] <- lapply(count_data[-1], function(i) replace(i, is.na(i), 0))
 
   if (coltotals == TRUE) {
     count_data <- dplyr::ungroup(count_data)
