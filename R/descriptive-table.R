@@ -7,9 +7,9 @@
 #' @param digits The number of decimal places you would like in your proportions (default is 1).
 #' @param coltotals Add column totals on the end
 #' @param rowtotals Add row totals (only sums counts)
-#' @importFrom dplyr group_by count mutate mutate_at
+#' @importFrom dplyr group_by ungroup bind_rows summarise_all funs count mutate mutate_at
 #' @importFrom tidyr gather unite spread 
-#' @importFrom rlang sym "!!"
+#' @importFrom rlang sym "!!" ".data" ":="
 #' @export
 
 descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
@@ -25,32 +25,32 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
     count_data <- group_by(df, !!sym_group)
     count_data <- count(count_data, !!sym_count)
     count_data <- dplyr::mutate(count_data, 
-                                prop = round(n / sum(n) * multiplier, 
+                                prop = round(.data$n / sum(.data$n) * multiplier, 
                                              digits = digits))
 
     # change to wide format, to have "grouper" var levels as columns
-    count_data <- gather(count_data, variable, value, c(n, prop))
-    count_data <- unite(count_data, temp, !!sym_group, variable, sep = "_")
-    count_data <- spread(count_data, temp, value)
+    count_data <- gather(count_data, .data$variable, .data$value, c(.data$n, .data$prop))
+    count_data <- unite(count_data, .data$temp, !!sym_group, .data$variable, sep = "_")
+    count_data <- spread(count_data, .data$temp, .data$value)
   } else {
     # get counts and props for just a single variable
     count_data <- dplyr::count(df, !!sym_count)
     count_data <- dplyr::mutate(count_data, 
-                                prop = round(n / sum(n) * multiplier, 
+                                prop = round(.data$n / sum(.data$n) * multiplier, 
                                              digits = digits))
   }
 
   # if there are NA counts, then change these to zero (except) in first col (which contains )
-  count_data <- mutate_at(count_data, 2:ncol(count_data), funs(replace(., is.na(.), 0)))
+  count_data <- mutate_at(count_data, 2:ncol(count_data), funs(replace(.data, is.na(.data), 0)))
 
 
   if (coltotals == TRUE) {
-    count_data <- ungroup(count_data) 
+    count_data <- dplyr::ungroup(count_data) 
     # change first column (with var levels) in to a character (for rbinding)  
     count_data <- dplyr::mutate(count_data, !!sym_count := as.character(!!sym_count))
     # summarise all columns that are numeric, make first col "Total", bind as a row
-    count_data <- bind_rows(count_data, 
-                            summarise_all(count_data, funs(if (is.numeric(.)) sum(.) else "Total")))
+    csummaries <- summarise_all(count_data, funs(if (is.numeric(.data)) sum(.data) else "Total"))
+    count_data <- dplyr::bind_rows(count_data, csummaries)
   }
 
   if (rowtotals == TRUE) {

@@ -17,6 +17,7 @@ Imports:
     ggplot2,
     binom,
     incidence,
+    outbreaks,
     rlang,
     dplyr,
     tidyr
