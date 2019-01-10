@@ -5,15 +5,18 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-library(knitr)
-library(dplyr)
-library(ggplot2)
+
+# I guess most of these are loaded by epireports already... (can delete?)
+
+library(knitr) # for creating output doc
+library(dplyr) # for cleaning/shaping data
+library(ggplot2) # for plotting diagrams
 
 # epi packages
-library(epireports)
-library(incidence)
-library(ISOweek) 
-library(epitools)
+library(epireports) # for msf field epi functions
+library(incidence) # for epicurves
+library(ISOweek) # for creating epiweeks
+library(epitools) # for creating 2by2 tables 
 ```
 
 This is a test document to gather functions and code snippets that eventually will evolve into an outbreak report template (+ package(s)).
@@ -162,7 +165,7 @@ descriptive(linelist_cleaned, "age_group") %>%
 
 Cases by age group and definition 
 ```{r}
-descriptive(linelist_cleaned, "age_group", "case_def") %>% 
+descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
   kable()
 ```
 
@@ -179,8 +182,6 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 
 
 Age pyramid
-
-
 ```{r}
 plot_age_pyramid(filter(linelist_cleaned, !is.na(sex)))
 ```
@@ -203,7 +204,6 @@ case_fatality_rate(deaths, population) %>% knitr::kable()
 
 
 CFR by age group
-
 ```{r}
 group_by(known_status, age_group) %>%
   do({
@@ -239,7 +239,6 @@ attack_rate(cases$n, population, multiplier = 100000) %>%
 ```
  
 The below gives the cummulative attack rate per week. 
-
 ```{r}
 cases <- count(linelist_cleaned, epiweek) %>% 
   mutate(cummulative = cumsum(n))
@@ -261,7 +260,7 @@ mortality_rate(deaths, population, multiplier = 10^4, digits = 1) %>%
 ```
 
 
-#### 2x2 tables
+#### Univariate analyses (2-by-2 tables)
 
 ```{r, message = FALSE}
 outcome <- linelist_cleaned$outcome == "Death"
@@ -293,7 +292,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
   theme_classic() + # give classic black/white graph 
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
-       captions = "Source: MoH of China data on xx/yy/zzzz") + 
+       captions = "Source: MoH of China data on dd/mm/yyy") + 
   # change visuals of dates and remove legend title
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
         legend.title = element_blank()) + 
@@ -316,7 +315,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
   theme_classic() + # give classic black/white graph 
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
-       captions = "Source: MoH of China data on xx/yy/zzzz") + 
+       captions = "Source: MoH of China data on dd/mm/yyy") + 
   # change visuals of dates and remove legend title
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
         legend.title = element_blank()) + 
@@ -330,28 +329,171 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
 *  [Across what area: one or several villages, all from same school, etc. You may want to include a map of the distribution of cases; attack rates by location]
 
 
-#### Quick and simple map with ggmap
+#### Quick and simple map visualisation
 
-Just WIP. Not sure if ggmap is a good approach.
+The following is one example of how to use and display spatial data. 
 
-DO THIS WITH ALL OF CHINA FOR A CHOROPLETH USING GADM SHAPEFILES 
-ALSO GET OSM TILES AND DATA 
+```{r, message = FALSE}
+# spatial packages 
+# library(raster) # for downloading GADM shapefiles
+library(tmap) # for plotting maps
+library(tmaptools) # for tiles and spatial operations (kernel densities) 
+library(sf) # for manipulating spatial objects easily
+```
+
+
 
 
 ```{r, message=FALSE}
-bb <- osmdata::getbb("Western Area Urban, Sierra Leone")
 
-# generate artificial coords
+# reading in a shapefile 
+# map <- read_sf(here("mapfolder", "china.shp"))
 
-ll_geo <- linelist_cleaned %>% 
-  mutate(Longitude = runif(nrow(linelist_cleaned), bb[1, 1], bb[1, 2]),
-         Latitude = runif(nrow(linelist_cleaned), bb[2, 1], bb[2, 2]))
 
-library(ggmap)
-b <- get_map(as.numeric(bb), maptype = "toner-lite", source = "stamen")
-ggmap(b) + 
-  geom_point(data = ll_geo, aes(x = Longitude, y = Latitude, color = outcome))
+# download administrative boundaries 
+
+## view ISO3 codes for countries 
+# raster::getData("ISO3") 
+
+## retrieve province boundaries from the Global Administrative 
+## level = 1 specifies provinces 
+## must be possible to do this as sf directly no? Is available on GADM.org
+map <- raster::getData("GADM", country = "CN", level = 1)
+
+## changing GADM to a sf object 
+map <- st_as_sf(map)
+
 ```
+
+
+
+
+```{r}
+# subsetting shapefiles 
+
+# Subset map to provinces of interest
+mapsub <- map %>% filter(NAME_1 %in% unique(linelist_cleaned$province))
+
+# change projection of subset 
+mapsub <- set_projection(mapsub, current.projection = "longlat", projection = 4326, overwrite.current.projection = TRUE)
+
+# simplify the shapefile (small islands in china sea)
+mapsub <- simplify_shape(mapsub, fact = 1)
+```
+
+
+
+
+```{r}
+
+# get random points in provinces occuring 
+## CAN BE DELETED ONCE WE USE A BETTER DATASET
+## stupid work around because st_sample hasnt implemented exact number points yet
+
+## get points
+a <- st_sample(mapsub, nrow(linelist_cleaned), type = "random") %>% 
+  st_cast("POINT") %>% 
+  st_coordinates() %>% 
+  data.frame() %>%
+  setNames(c("lon", "lat"))
+
+## fix if too many or too few points
+if (nrow(a) < nrow(linelist_cleaned)) {
+  b <- matrix(rep.int(c(NA, NA), nrow(linelist_cleaned) - nrow(a)), ncol = 2)
+  colnames(b) <- c("lon", "lat")
+  a <- rbind(a, b)
+}
+
+if (nrow(a) > nrow(linelist_cleaned)) {
+  a <- a[1:nrow(linelist_cleaned), ]
+}
+
+## merge to linelist
+linelist_cleaned <- bind_cols(linelist_cleaned, a)
+
+```
+
+
+
+
+
+```{r, message=FALSE}
+# downloading basemap tiles 
+
+## view available basemaps at http://leaflet-extras.github.io/leaflet-providers/preview/
+## Not all available - we need to find a better option 
+osm_tiles <- tmaptools::read_osm(bb(mapsub, projection = "longlat"), ext = 1.05, type =  "osm")
+
+## Alternative specify box
+## If do not have a shapefile - choose based on coordinates (or name of place) 
+# osm_tiles <- tmaptools::read_osm(bb(xlim = c(108.78, 122.94), ylim = c(20.22, 42.61)))
+
+```
+
+
+
+```{r}
+
+# plot your basemap
+basemap <- tm_shape(osm_tiles) + # osm tiles
+  tm_raster() + #osm tiles as an image
+  tm_shape(mapsub) + # shapefile
+  tm_polygons(col = NA, alpha = 0) + # shapefile as polygon
+  tm_layout(frame = FALSE) + # remove frame around plot
+  tm_compass(position = c("right", "top")) + # add a north compass
+  tm_scale_bar(breaks = c(0,250, 500), size = 1) # add a scalebar
+
+# save basemap for later offline use  
+# save(basemap, file = here::here("base.rda"))
+
+# load basemap when need it offline
+# load(file = here::here("base.rda"))
+```
+
+
+```{r}
+# make linelist available for plotting 
+## this could probably be done directly in linelist_cleaned
+## unsure how other functions would react to an sf + dataframe obj though
+cases <- st_as_sf(linelist_cleaned, coords = c("lon", "lat"))
+cases <- set_projection(cases, current.projection = "longlat", projection = 4326)
+```
+
+
+```{r}
+# dotmap 
+basemap + 
+  tm_shape(cases) + 
+  tm_dots(col = "case_def",  
+          palette = "Dark2", size = 0.5, 
+          title = "Case definition") + 
+  tm_layout(legend.outside = TRUE)
+```
+
+
+```{r}
+# choropleth 
+
+## get counts by provinces 
+counts <- count(linelist_cleaned, province) 
+
+## merge population and get AR per 100000
+counts <- left_join(counts, population_data, by = "province") %>% 
+  mutate(AR = n/population * 100000)
+
+
+## add counts to map data 
+mapsub <- left_join(mapsub, counts, by = c("NAME_1" = "province"))
+
+# plot choropleth
+basemap + 
+  tm_shape(mapsub) + 
+  tm_polygons(col = "AR", 
+              border.col = "black", 
+              title = "AR per 100000 population") + 
+  tm_layout(legend.outside = TRUE)
+```
+
 
 
 #### Mortality rate per district
