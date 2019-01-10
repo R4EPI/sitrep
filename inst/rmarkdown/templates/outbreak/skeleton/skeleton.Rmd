@@ -1,6 +1,6 @@
 ---
 title: "Outbreak report"
-output: github_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -379,7 +379,7 @@ map <- st_as_sf(map)
 
 
 
-```{r, message = FALSE}
+```{r, message = FALSE, warning = FALSE}
 # subsetting shapefiles 
 
 # Subset map to provinces of interest
