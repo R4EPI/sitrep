@@ -19,7 +19,7 @@ Suggests:
     raster,
     sf, 
     tmap,
-    tmaptools,
+    tmaptools
 RoxygenNote: 6.1.1
 Imports: 
     scales,
