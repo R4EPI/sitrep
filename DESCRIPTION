@@ -15,7 +15,7 @@ Suggests:
     epitrix, 
     here, 
     ISOweek, 
-    openstreetmap,
+    OpenStreetMap,
     raster,
     sf, 
     tmap,
