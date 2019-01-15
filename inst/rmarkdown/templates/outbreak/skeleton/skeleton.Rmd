@@ -3,6 +3,19 @@ title: "Outbreak report"
 output: github_document
 ---
 
+
+# Introduction to this template
+This is a template which can be used to create an automated outbreak situation report. 
+
+- It is organised by time, place and person. 
+- You can type normal text in white spaces (such as here) and r-code in grey spaces (denoted by three backticks and r) (see [Rmarkdown introduction](https://rmarkdown.rstudio.com/articles_intro.html) and [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
+- Introductions and contents of sections are within square brackets "[...]" and can be deleted as appropriate 
+- Examples of inline code (to automate updating numbers, e.g. line 148), can similarly be removed/updated 
+- Code itself can be deleted, but as a word of caution: make sure you aren't deleting bits where variables are created/manipulated, or at least update them appropriatley
+- ADD LIST ON WHICH PACKAGES WILL BE USED FOR WHAT REASONS! AND HOW TO INSTALL
+- OTHER INFO TO ADD??
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(knitr) # for creating output doc
@@ -16,15 +29,7 @@ library(ISOweek) # for creating epiweeks
 library(epitools) # for creating 2by2 tables
 ```
 
-# Introduction to this template
-This is a template which can be used to create an automated outbreak situation report. 
 
-- It is organised by time, place and person. 
-- You can type normal text in white spaces (such as here) and r-code in grey spaces (denoted by three backticks and r) (see [Rmarkdown introduction](https://rmarkdown.rstudio.com/articles_intro.html) and [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
-- Introductions and contents of sections are within square brackets "[...]" and can be deleted as appropriate 
-- Examples of inline code (to automate updating numbers, e.g. line 148), can similarly be removed/updated 
-- Code itself can be deleted, but as a word of caution: make sure you aren't deleting bits where variables are created/manipulated, or at least update them appropriatley
-- OTHER INFO TO ADD??
 
 
 
@@ -37,24 +42,24 @@ This is a template which can be used to create an automated outbreak situation r
 
 linelist_raw <- outbreaks::fluH7N9_china_2013
 
-### Data preparation
-
-# Here document everything you do to clean the data.
-
+### Fixing variable names
 
 # a good first step is to assign standard column names so that subsequent code
 # uses stable column names. 
 # in case the input data changes, you just need to fix the column mapping
-# TODO: showcase and recommend the linelist package
 
-# make a copy of your original dataset 
+
+# make a copy of your original dataset and name it linelist_cleaned
 linelist_cleaned <- linelist_raw
-# define clean variable names
+
+# define clean variable names using clean_labels from the epitrix package
+# this function is preset rules for variable naming 
+# for example it changes spaces and dots to "_" and characters to lowercase
 cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
 # overwrite variable names with defined clean names
 colnames(linelist_cleaned) <- cleaned_colnames
 
-# alternatively you can manually rename columns
+# you can also change specific var names using the *rename* function
 linelist_cleaned <- rename(linelist_cleaned, sex = gender)
 ```
 
@@ -84,6 +89,48 @@ population_data$population <- as.integer(runif(nrow(population_data),
 
 
 ```
+
+
+
+
+
+# Browsing data
+
+```{r, eval = FALSE}
+
+# here are a few ways to do data explorations 
+
+# view the first ten rows of data
+head(linelist_cleaned, n = 10)
+
+# view your whole dataset interactivley (in an excel style format)
+## Remember that `View` needs to be written with a capital *V*
+View(linelist_cleaned)
+
+# overview of variable types and contents
+str(linelist_cleaned)
+
+# gives mean, median and max values of variables
+summary(linelist_cleaned)
+
+# view unique values contained in variables 
+unique(linelist_cleaned$sex)
+
+# another alternative is with the "summarytools package"
+# use the dfSummary function in combination with view
+# note that view is not capitalised with this package
+# install.packages("summarytools")
+# view(summarytools::dfSummary(linelist_cleaned))
+```
+
+
+
+
+
+
+
+
+
 
 
 
@@ -127,6 +174,7 @@ linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
 
 
 # ... TODO: add some snippets for cleaing data
+# TODO: showcase and recommend the linelist package
 ```
 
 
