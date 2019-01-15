@@ -23,7 +23,7 @@ Plot an age group
 
 set.seed(2018-01-15)
 ages <- cut(sample(80, 150, replace = TRUE),
-            breaks = c(0, 5, 10, 30, 50, 100), right = FALSE)
+            breaks = c(0, 5, 10, 30, 90), right = FALSE)
 sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
 ill  <- sample(0:1, 150, replace = TRUE)
 dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
