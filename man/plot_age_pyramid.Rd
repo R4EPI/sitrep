@@ -4,8 +4,29 @@
 \alias{plot_age_pyramid}
 \title{Plot an age group}
 \usage{
-plot_age_pyramid(data)
+plot_age_pyramid(data, age_group = "age_group", split_by = "sex")
+}
+\arguments{
+\item{data}{a data frame containing an age group column and a bivariate column 
+defining data to create either sides of the pyramid (defaults to "sex")}
+
+\item{age_group}{the name of a column in the data frame that defines the age
+group. Defaults to "age_group"}
+
+\item{split_by}{the name of a column in the data frame that defines the 
+the bivariate column. Defaults to "sex"}
 }
 \description{
 Plot an age group
+}
+\examples{
+
+set.seed(2018-01-15)
+ages <- cut(sample(80, 150, replace = TRUE),
+            breaks = c(0, 5, 10, 30, 50, 100), right = FALSE)
+sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
+ill  <- sample(0:1, 150, replace = TRUE)
+dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
+print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
+print(ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill"))
 }
