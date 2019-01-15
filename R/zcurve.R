@@ -1,4 +1,12 @@
+#' Create a curve comparing observed Z-scores to the WHO standard.
+#'
+#' @param zscore a numeric vector containing computed zscores
+#' @return a ggplot2 object
+#' @export
 #' @importFrom ggplot2 ggplot aes stat_function geom_density scale_x_continuous labs
+#' @examples
+#' dat <- rnorm(204) + runif(1) # slightly skewed
+#' zcurve(dat)
 zcurve <- function(zscore) {
 
   stopifnot(is.numeric(zscore))
