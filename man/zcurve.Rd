@@ -10,7 +10,7 @@ zcurve(zscore)
 \item{zscore}{a umeric vector containing computed zscores}
 }
 \value{
-a ggplot2 object
+a ggplot2 object that is customisable via the ggplot2 package.
 }
 \description{
 Create a curve comparing observed Z-scores to the WHO standard.

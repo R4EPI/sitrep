@@ -1,7 +1,7 @@
 #' Create a curve comparing observed Z-scores to the WHO standard.
 #'
 #' @param zscore a umeric vector containing computed zscores
-#' @return a ggplot2 object
+#' @return a ggplot2 object that is customisable via the ggplot2 package.
 #' @export
 #' @importFrom ggplot2 ggplot aes stat_function geom_density scale_x_continuous labs
 #' @examples
