@@ -7,7 +7,7 @@
 zcurve(zscore)
 }
 \arguments{
-\item{zscore}{a numeric vector containing computed zscores}
+\item{zscore}{a umeric vector containing computed zscores}
 }
 \value{
 a ggplot2 object
@@ -16,6 +16,9 @@ a ggplot2 object
 Create a curve comparing observed Z-scores to the WHO standard.
 }
 \examples{
+library("ggplot2")
 dat <- rnorm(204) + runif(1) # slightly skewed
-zcurve(dat)
+zcurve(dat) +
+  labs(title = "Weight-for-Height Z-scores") +
+  theme_classic()
 }

@@ -1,19 +1,21 @@
 #' Create a curve comparing observed Z-scores to the WHO standard.
 #'
-#' @param zscore a numeric vector containing computed zscores
+#' @param zscore a umeric vector containing computed zscores
 #' @return a ggplot2 object
 #' @export
 #' @importFrom ggplot2 ggplot aes stat_function geom_density scale_x_continuous labs
 #' @examples
+#' library("ggplot2")
 #' dat <- rnorm(204) + runif(1) # slightly skewed
-#' zcurve(dat)
+#' zcurve(dat) +
+#'   labs(title = "Weight-for-Height Z-scores") +
+#'   theme_classic()
 zcurve <- function(zscore) {
 
   stopifnot(is.numeric(zscore))
   dat <- data.frame(observed = zscore)
-  obs <- quote(observed)
   ggplot(dat) +
-    geom_density(aes(x = !!obs, color = "observed")) +
+    geom_density(aes(x = !!quote(observed), color = "observed")) +
     stat_function(fun = stats::dnorm, 
                   args = list(mean = 0, sd = 1),
                   mapping = aes(color = "WHO standard")
