@@ -1,9 +1,8 @@
 #' Plot an age group
 #'
-#' @param data a data frame containing an age group column and a bivariate column 
-#'   defining data to create either sides of the pyramid (defaults to "sex")
+#' @param data a data frame
 #' @param age_group the name of a column in the data frame that defines the age
-#'   group. Defaults to "age_group"
+#'   group categories. Defaults to "age_group"
 #' @param split_by the name of a column in the data frame that defines the 
 #'   the bivariate column. Defaults to "sex"
 #' @import ggplot2
@@ -16,8 +15,14 @@
 #' sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
 #' ill  <- sample(0:1, 150, replace = TRUE)
 #' dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
+#'
+#' # Create the age pyramid, stratifying by sex
 #' print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
-#' print(ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill"))
+#'
+#' # Stratify by case definition and customize with ggplot2
+#' ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
+#'   theme_bw(base_size = 16) +
+#'   labs(title = "Age groups by case definition")
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex") {
   stopifnot(is.data.frame(data), c(age_group, split_by) %in% colnames(data))
   data[[split_by]] <- as.character(data[[split_by]])
