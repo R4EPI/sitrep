@@ -2,6 +2,10 @@
 
 export(attack_rate)
 export(case_fatality_rate)
+export(fmt_ci)
+export(fmt_ci_df)
+export(fmt_pci)
+export(fmt_pci_df)
 export(mortality_rate)
 export(plot_age_pyramid)
 export(sample_size)
