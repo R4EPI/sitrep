@@ -8,7 +8,7 @@
 #' @param coltotals Add column totals on the end
 #' @param rowtotals Add row totals (only sums counts)
 #' @importFrom dplyr group_by ungroup bind_rows summarise_all funs count mutate mutate_at
-#' @importFrom tidyr gather unite spread
+#' @importFrom tidyr complete gather unite spread
 #' @importFrom rlang sym "!!" ".data" ":="
 #' @export
 
@@ -21,8 +21,14 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
   # if given two variables then group by the "grouper" var
   if (!is.na(grouper)) {
     sym_group <- rlang::sym(grouper)
+    tmp_var <- sprintf("hey%s", as.character(Sys.time()))
+    if (is.factor(df[[counter]])) {
+      levels(df[[counter]]) <- c(levels(df[[counter]]), tmp_var)
+    }
+    the_list <- setNames(list(tmp_var), counter)
     # produce count table with props column-wise (seperate for each "grouper" level)
-    count_data <- dplyr::group_by(df, !!sym_group)
+    count_data <- tidyr::complete(df, !!sym_group, fill = the_list)
+    count_data <- dplyr::group_by(count_data, !!sym_group)
     count_data <- dplyr::count(count_data, !!sym_count)
     count_data <- dplyr::mutate(count_data,
                                 prop = round(.data$n / sum(.data$n) * multiplier,
@@ -32,6 +38,7 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
     count_data <- tidyr::gather(count_data, key = "variable", value = "value", c(.data$n, .data$prop))
     count_data <- tidyr::unite(count_data, "temp", !!sym_group, .data$variable, sep = "_")
     count_data <- tidyr::spread(count_data, .data$temp, .data$value)
+    
   } else {
     # get counts and props for just a single variable
     count_data <- dplyr::count(df, !!sym_count)
@@ -39,7 +46,13 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
                                 prop = round(.data$n / sum(.data$n) * multiplier,
                                              digits = digits))
   }
+  # fill in the counting data that didn't make it
+  count_data <- tidyr::complete(count_data, !!sym_count)
 
+  if (!is.na(grouper)){
+    # filter out the dummy variable
+    count_data <- dplyr::filter(count_data, !!sym_count != tmp_var)
+  }
   # if there are NA counts, then change these to zero (except) in first col (which contains )
   count_data[-1] <- lapply(count_data[-1], function(i) replace(i, is.na(i), 0))
 
@@ -58,6 +71,10 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
       # add columns which have "_n" in the name
       mutate(count_data,
              Total = rowSums(count_data[, grep("(_n$|^n$)", colnames(count_data))], na.rm = TRUE))
+  }
+  if (!is.na(grouper) && is.factor(count_data[[counter]])) {
+    l <- levels(count_data[[counter]])
+    count_data[[counter]] <- factor(count_data[[counter]], levels = l[l != tmp_var])
   }
   count_data
 }
