@@ -164,7 +164,7 @@ linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex,
 
 # create a case definition variable 
 linelist_cleaned$case_def <- ifelse(linelist_cleaned$test_result == "Positive", 
-                                    "Confirmed", "Possible")
+                                    "Confirmed", "Suspected")
 linelist_cleaned$case_def[linelist_cleaned$case_def != "Confirmed" & 
                             linelist_cleaned$symptoms == "Yes"] <- "Probable"
 
@@ -181,7 +181,8 @@ linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
 ```{r}
 # You might want to remove columns and other personal data
 
-# remove the name columns
+# remove a hypothetical variable called "name" 
+# this var doesnt actually exist in our dataset
 linelist_cleaned$name <- NULL
 ```
 
@@ -234,6 +235,20 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 ```
 
 
+```{r, eval = FALSE}
+
+# you can also subset a descriptive table
+# for example to only have confirmed cases 
+descriptive(filter(linelist_cleaned, case_def == "Confirmed"), "age_group", "sex") %>% 
+  kable()
+
+
+# alternatively you could show a single age group 
+descriptive(filter(linelist_cleaned, age_group == "10-29"), "age_group", "sex") %>% 
+  kable()
+```
+
+
 
 
 Age pyramid
@@ -249,6 +264,8 @@ CFR
 The case fatality ratio among those with known outcomes is below
 
 ```{r}
+# define your input variables in advance to pass through CFR function
+# CHANGE TO DPLYR SYNTAX??
 known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
 deaths <- sum(linelist_cleaned$outcome == "Death", na.rm = TRUE)
 population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
@@ -256,6 +273,7 @@ population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
 
 
 ```{r}
+# use arguments from above to produce overal CFR
 case_fatality_rate(deaths, population) %>% knitr::kable()
 ```
 
@@ -263,15 +281,38 @@ case_fatality_rate(deaths, population) %>% knitr::kable()
 CFR by age group
 
 ```{r}
+# group by known outcome and agegroup 
 group_by(known_status, age_group) %>%
+  # for each grouping 
   do({
-    deaths <- sum(.$outcome == "Death")
-    population <- length(.$outcome)
-    case_fatality_rate(deaths, population)
+    deaths <- sum(.$outcome == "Death") # count num deaths 
+    population <- length(.$outcome) # count population
+    case_fatality_rate(deaths, population) # pass to function 
   }) %>%
-  arrange(desc(lower)) %>%
+  arrange(desc(lower)) %>% # sort by lower confidence interval
   knitr::kable()
 ```
+
+CFR by case definition 
+
+
+```{r}
+# group by known outcome and case definition 
+group_by(known_status, case_def) %>%
+  # for each grouping 
+  do({
+    deaths <- sum(.$outcome == "Death") # count num deaths 
+    population <- length(.$outcome) # count population
+    case_fatality_rate(deaths, population) # pass to function 
+  }) %>%
+  arrange(desc(lower)) %>% # sort by lower confidence interval
+  knitr::kable()
+```
+
+
+
+
+
 
 #### Attack rate
 
