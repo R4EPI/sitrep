@@ -583,6 +583,34 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
 
 #### Maps
 
+
+If you do not have spatial data available, it may be worth calculating attack rates by region. 
+
+```{r}
+# cases for each week
+cases <- count(linelist_cleaned, province)
+
+# merge population data 
+cases <- left_join(cases, population_data, by = "province")
+
+# attack rate for each week
+attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
+  # add the epiweek column to table
+  bind_cols(select(cases, province), .) %>% 
+  rename("Province" = province, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 100,000)" = ar, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) %>% 
+  knitr::kable()
+```
+
+
+
+
+
+
 The following is one example of how to use and display spatial data. 
 
 ```{r, message = FALSE, warning = FALSE}
