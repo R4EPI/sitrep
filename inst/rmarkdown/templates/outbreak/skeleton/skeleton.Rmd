@@ -94,10 +94,10 @@ population_data$population <- as.integer(runif(nrow(population_data),
 
 
 
-# Browsing data
+
 
 ```{r, eval = FALSE}
-
+# Browsing data
 # here are a few ways to do data explorations 
 
 # view the first ten rows of data
@@ -206,14 +206,21 @@ The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>
 Cases by sex
 
 ```{r}
+# get counts and proportions of cases by sex
 descriptive(linelist_cleaned, "sex") %>%
+  # change table column names 
+  # rename( new variable name = old variable name)
+  rename("Sex" = sex, "Cases (n)" = n,"Proportion (%)" =  prop) %>% 
   kable()
 ```
 
 Cases by age group
 
-```{r}
+```{r} 
+# get counts and proportions by age group
 descriptive(linelist_cleaned, "age_group") %>%
+  # change variable names 
+  rename("Age group (years)" = age_group, "Cases (n)" = n,"Proportion (%)" =  prop) %>% 
   kable()
 ```
 
@@ -221,7 +228,16 @@ descriptive(linelist_cleaned, "age_group") %>%
 
 Cases by age group and definition 
 ```{r}
+# get counts and props of age groups by case definition 
+# include column and row totals 
 descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
+  rename("Age group (years)" = age_group, 
+         "Confirmed cases (n)" = Confirmed_n, 
+         "%" = Confirmed_prop, 
+         "Probable cases (n)" = Probable_n, 
+         "%" = Probable_prop,
+         "Suspected cases (n)" = Suspected_n, 
+         "%" = Suspected_prop) %>% 
   kable()
 ```
 
@@ -231,6 +247,13 @@ descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtota
 Cases by age group and sex 
 ```{r}
 descriptive(linelist_cleaned, "age_group", "sex") %>% 
+  rename("Age group (years)" = age_group, 
+         "Female cases (n)" = Female_n, 
+         "%" = Female_prop, 
+         "Male cases (n)" = Male_n, 
+         "%" = Male_prop,
+         "Missing (n)" = NA_n, 
+         "%" = NA_prop) %>% 
   kable()
 ```
 
@@ -274,8 +297,37 @@ population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
 
 ```{r}
 # use arguments from above to produce overal CFR
-case_fatality_rate(deaths, population) %>% knitr::kable()
+case_fatality_rate(deaths, population) %>% 
+  rename("Deaths" = deaths, 
+         "Population" = population, 
+         "CFR (%)" = cfr, 
+         "Lower 95% CI" = lower,
+         "Upper 95% CI" = upper) %>% 
+  knitr::kable()
 ```
+
+CFR by sex 
+
+
+```{r}
+# group by known outcome and agegroup 
+group_by(known_status, sex) %>%
+  # for each grouping 
+  do({
+    deaths <- sum(.$outcome == "Death") # count num deaths 
+    population <- length(.$outcome) # count population
+    case_fatality_rate(deaths, population) # pass to function 
+  }) %>%
+  arrange(desc(lower)) %>% # sort by lower confidence interval
+  rename("Sex" = sex, 
+         "Deaths" = deaths, 
+         "Population" = population, 
+         "CFR (%)" = cfr, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) %>% 
+  knitr::kable()
+```
+
 
 
 CFR by age group
@@ -290,6 +342,12 @@ group_by(known_status, age_group) %>%
     case_fatality_rate(deaths, population) # pass to function 
   }) %>%
   arrange(desc(lower)) %>% # sort by lower confidence interval
+  rename("Age group (years)" = age_group, 
+         "Deaths" = deaths, 
+         "Population" = population, 
+         "CFR (%)" = cfr, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) %>% 
   knitr::kable()
 ```
 
@@ -306,6 +364,12 @@ group_by(known_status, case_def) %>%
     case_fatality_rate(deaths, population) # pass to function 
   }) %>%
   arrange(desc(lower)) %>% # sort by lower confidence interval
+  rename("Case definition" = case_def, 
+         "Deaths" = deaths, 
+         "Population" = population, 
+         "CFR (%)" = cfr, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) %>% 
   knitr::kable()
 ```
 
@@ -316,13 +380,18 @@ group_by(known_status, case_def) %>%
 
 #### Attack rate
 
-The attack rate among per 100,000 population is below - based on available population data for the whole country. 
+The attack rate per 100,000 population is below - based on available population data for the whole country. 
 
 ```{r}
 # define population 
 population <- sum(population_data$population)
 
 attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>% 
+  rename("Cases (n)" = cases,
+         "Population" = population, 
+         "AR (per 100,000)" = ar, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) %>% 
   knitr::kable()
 ```
 
@@ -333,6 +402,14 @@ cases <- count(linelist_cleaned, epiweek)
 
 # attack rate for each week
 attack_rate(cases$n, population, multiplier = 100000) %>% 
+  # add the epiweek column to table
+  bind_cols(select(cases, epiweek), .) %>% 
+  rename("Epiweek" = epiweek, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 100,000)" = ar, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) %>% 
   knitr::kable()
 ```
  
@@ -345,12 +422,19 @@ cases <- count(linelist_cleaned, epiweek) %>%
 
 # cummulative attack rate by week
 attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
+  # add the epiweek column to table
+  bind_cols(select(cases, epiweek), .) %>% 
+  rename("Epiweek" = epiweek, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 100,000)" = ar, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) %>% 
   knitr::kable()
 ```
 
 
 #### Mortality
-
 
 Mortality rate per 100,000:
 
@@ -362,12 +446,29 @@ mortality_rate(deaths, population, multiplier = 10^4, digits = 1) %>%
 
 #### 2x2 tables
 
-```{r, message = FALSE}
+```{r, message = FALSE, warning = FALSE}
 outcome <- linelist_cleaned$outcome == "Death"
 is_male <- linelist_cleaned$sex == "Male"
 is_child <- as.integer(linelist_cleaned$age) <= 12
 
-univariate_analysis(measure = "OR", digits = 3, outcome = outcome, is_male, is_child) %>% 
+univariate_analysis(measure = "OR", digits = 3, outcome = outcome, 
+                    is_male, is_child) %>% 
+  rename("Exposure" = exposure, 
+         "Exposed cases (n)" = exp_cases, 
+         "Unexposed cases (n)" = unexp_cases,  
+         "Case odds" = cases_odds,
+         "Exposed controls (n)" = exp_noncases, 
+         "Unexposed controls (n)" = unexp_noncases,
+         "Control odds" = noncases_odds,
+         "OR" = estimate,
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper, 
+         "p" = p_value
+         ) %>% 
+  # clean names of exposures 
+  mutate(Exposure = recode(Exposure, 
+                           is_male = "Sex (male)", 
+                           is_child = "Age (<12yrs)")) %>% 
   knitr::kable()
 ```
 
@@ -422,6 +523,57 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
   # change interval of date labels
   scale_x_date(date_breaks = "1 week")
 ```
+
+
+You could similarly stratify by case definition (or any other categorical variable!)
+
+
+```{r, message = FALSE}
+inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
+                        interval = 7, 
+                        groups = linelist_cleaned$case_def)
+
+
+plot(inc_week_7, show_cases = TRUE, border = "black") + 
+  labs(x = "Calendar week", y = "Cases (n)") + 
+  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  theme_classic() + # give classic black/white graph 
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "Cases (n)", 
+       captions = "Source: MoH of China data on xx/yy/zzzz") + 
+  # change visuals of dates and remove legend title
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+        legend.title = element_blank()) + 
+  # change interval of date labels
+  scale_x_date(date_breaks = "1 week")
+```
+
+
+Alternatively, you could stratify by sex among a subset of only confirmed cases. 
+
+
+```{r, message = FALSE}
+inc_week_7 <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def == "Confirmed"], 
+                        interval = 7, 
+                        groups = linelist_cleaned$sex[linelist_cleaned$case_def == "Confirmed"])
+
+
+plot(inc_week_7, show_cases = TRUE, border = "black") + 
+  labs(x = "Calendar week", y = "Cases (n)") + 
+  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  theme_classic() + # give classic black/white graph 
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "Cases (n)", 
+       captions = "Source: MoH of China data on xx/yy/zzzz") + 
+  # change visuals of dates and remove legend title
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+        legend.title = element_blank()) + 
+  # change interval of date labels
+  scale_x_date(date_breaks = "1 week")
+```
+
+
+
 
 
 ### Place
