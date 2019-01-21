@@ -1,2 +1,4 @@
 name: Vaccination coverage survey
+description: >
+  An automated vaccination coverage survey template
 create_dir: false
