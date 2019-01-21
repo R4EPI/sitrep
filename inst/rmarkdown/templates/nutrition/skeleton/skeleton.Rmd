@@ -9,5 +9,39 @@ library(dplyr)
 library(knitr)
 ```
 
+# EXCECUTIVE SUMMARY  
 
-Just a placeholder at the moment.
+**Introduction:** ...
+
+**Methods:** ...
+
+**Results and Finding:** ...
+
+**Recommendations:** ...
+
+# Background
+
+# Objectives of the survey 
+
+# Survey methodology
+
+## Data analysis:
+
+### Definitions and standards
+
+# Results
+
+## Characteristics of the sampled children
+
+## Anthropometric results (based on WHO standards 2006)
+
+
+
+# Discussion
+
+# Conclusions
+
+# Recommendations and priorities
+
+# Acknowledgements
+
