@@ -211,7 +211,7 @@ descriptive(linelist_cleaned, "sex") %>%
   # change table column names 
   # rename( new variable name = old variable name)
   rename("Sex" = sex, "Cases (n)" = n,"Proportion (%)" =  prop) %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 Cases by age group
@@ -221,7 +221,7 @@ Cases by age group
 descriptive(linelist_cleaned, "age_group") %>%
   # change variable names 
   rename("Age group (years)" = age_group, "Cases (n)" = n,"Proportion (%)" =  prop) %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 
@@ -238,7 +238,7 @@ descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtota
          "%" = Probable_prop,
          "Suspected cases (n)" = Suspected_n, 
          "%" = Suspected_prop) %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 
@@ -254,7 +254,7 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
          "%" = Male_prop,
          "Missing (n)" = NA_n, 
          "%" = NA_prop) %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 
@@ -263,12 +263,12 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 # you can also subset a descriptive table
 # for example to only have confirmed cases 
 descriptive(filter(linelist_cleaned, case_def == "Confirmed"), "age_group", "sex") %>% 
-  kable()
+  kable(digits = 2)
 
 
 # alternatively you could show a single age group 
 descriptive(filter(linelist_cleaned, age_group == "10-29"), "age_group", "sex") %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 
@@ -303,7 +303,7 @@ case_fatality_rate(deaths, population) %>%
          "CFR (%)" = cfr, 
          "Lower 95% CI" = lower,
          "Upper 95% CI" = upper) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 CFR by sex 
@@ -325,7 +325,7 @@ group_by(known_status, sex) %>%
          "CFR (%)" = cfr, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 
@@ -348,7 +348,7 @@ group_by(known_status, age_group) %>%
          "CFR (%)" = cfr, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 CFR by case definition 
@@ -370,7 +370,7 @@ group_by(known_status, case_def) %>%
          "CFR (%)" = cfr, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 
@@ -392,7 +392,7 @@ attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 The below gives the attack rate per week. 
@@ -410,7 +410,7 @@ attack_rate(cases$n, population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
  
 The below gives the cummulative attack rate per week. 
@@ -430,7 +430,7 @@ attack_rate(cases$cummulative, population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 
@@ -440,7 +440,7 @@ Mortality rate per 100,000:
 
 ```{r}
 mortality_rate(deaths, population, multiplier = 10^4, digits = 1) %>%
-  kable()
+  kable(digits = 2)
 ```
 
 
@@ -469,7 +469,7 @@ univariate_analysis(measure = "OR", digits = 3, outcome = outcome,
   mutate(Exposure = recode(Exposure, 
                            is_male = "Sex (male)", 
                            is_child = "Age (<12yrs)")) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 
@@ -603,7 +603,7 @@ attack_rate(cases$n, cases$population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 
