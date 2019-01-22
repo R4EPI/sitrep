@@ -1,5 +1,5 @@
 Type: Package
-Package: epireports
+Package: sitrep
 Title: Report templates and helper functions for EPI
 Version: 0.1.0
 Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
