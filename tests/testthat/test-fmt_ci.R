@@ -17,15 +17,15 @@ test_that("fmt_ci gives expected results", {
 })
 
 test_that("fmt_p*ci_df can take data frames", {
-  cfr100       <- data.frame(lapply(cfr, `/`, 100))
-  expect_identical(fmt_ci_df(cfr),        cfr_expected)
-  expect_identical(fmt_ci_df(cfr[-1], 2), cfr_expected)
-  expect_identical(fmt_pci_df(cfr100),    cfr_expected)
+  cfr100       <- data.frame(lapply(cfr, `*`, 100))
+  expect_identical(fmt_pci_df(cfr),        cfr_expected)
+  expect_identical(fmt_pci_df(cfr[-1], 2), cfr_expected)
+  expect_identical(fmt_ci_df(cfr100),      cfr_expected)
 })
 
-test_that("fmt_ci_df will produce multiple results when given multiple rows", {
+test_that("fmt_pci_df will produce multiple results when given multiple rows", {
   cfro <- rbind(cfr, setNames(pro, names(cfr)))
-  expect_length(fmt_ci_df(cfro), 2)
-  expect_identical(fmt_ci_df(cfro), c(cfr_expected, pro_expected))
+  expect_length(fmt_pci_df(cfro), 2)
+  expect_identical(fmt_pci_df(cfro), c(cfr_expected, pro_expected))
 })
 
