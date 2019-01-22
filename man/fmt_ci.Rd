@@ -27,21 +27,21 @@ fmt_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
 \item{x}{a data frame}
 }
 \value{
-a text string in the format of "e\% (CI l--u)"
+a text string in the format of "e% (CI l--u)"
 }
 \description{
 This function is mainly used for placing in the text fields of Rmarkdown
 reports. You can use it by writing it in something like this:
-\preformatted{The CFR for Bamako is `r fmt_pci(case_fatality_rate(10, 50))`}
-which will render like this: "The CFR for Bamako is 20.00\% (CI 11.24--33.04)"
+\code{The CFR for Bamako is `r fmt_pci(case_fatality_rate(10, 50))`},
+which will render like this: "The CFR for Bamako is 20.00% (CI 11.24--33.04)"
 }
 \examples{
 
 cfr <- case_fatality_rate(10, 50)
-fmt_ci_df(cfr)
-fmt_ci_df(cfr, d = 1)
+fmt_pci_df(cfr)
+fmt_pci_df(cfr, d = 1)
 # If the data starts at a different column, specify a different number
-fmt_ci_df(cfr[-1], 2, d = 1)
+fmt_pci_df(cfr[-1], 2, d = 1)
 
 # It's also possible to provide numbers directly
 fmt_ci(pi, pi - runif(1), pi + runif(1))
