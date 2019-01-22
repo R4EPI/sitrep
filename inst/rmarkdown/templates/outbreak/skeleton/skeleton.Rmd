@@ -33,7 +33,7 @@ library(epitools) # for creating 2by2 tables
 
 
 
-```{r}
+```{r read_data}
 # read data from CSV
 #linelist_raw <- readr::read_csv("linelist.csv")
 
@@ -64,7 +64,7 @@ linelist_cleaned <- rename(linelist_cleaned, sex = gender)
 ```
 
 
-```{r}
+```{r clean_data}
 # THIS CAN BE DELETED WHEN WE USE A DIFFERENT DATASET 
 # its just to be able to demonstrate posibilities
 
@@ -73,13 +73,13 @@ lab_results <- linelist_cleaned %>%
                 select(case_id) %>% 
                 mutate(test_result = sample(c("Positive", "Negative"),
                                             nrow(linelist_cleaned), 
-                                            replace = T), 
+                                            replace = TRUE), 
                        symptoms = sample(c("Yes", "No"),
                                             nrow(linelist_cleaned), 
-                                            replace = T),
+                                            replace = TRUE),
                        contact = sample(c("Yes", "No"),
                                             nrow(linelist_cleaned), 
-                                            replace = T)
+                                            replace = TRUE)
                 )
 
 # generate some artificial population data
@@ -96,7 +96,7 @@ population_data$population <- as.integer(runif(nrow(population_data),
 
 
 
-```{r, eval = FALSE}
+```{r browse_data, eval = FALSE}
 # Browsing data
 # here are a few ways to do data explorations 
 
@@ -105,7 +105,7 @@ head(linelist_cleaned, n = 10)
 
 # view your whole dataset interactivley (in an excel style format)
 ## Remember that `View` needs to be written with a capital *V*
-View(linelist_cleaned)
+if (interactive()) View(linelist_cleaned)
 
 # overview of variable types and contents
 str(linelist_cleaned)
@@ -135,7 +135,7 @@ unique(linelist_cleaned$sex)
 
 
 
-```{r}
+```{r merge_lab_results}
 # merging linelist with lab dataset 
 linelist_cleaned <- left_join(linelist_cleaned, lab_results, 
                               by = "case_id")
@@ -143,7 +143,7 @@ linelist_cleaned <- left_join(linelist_cleaned, lab_results,
 
 
 
-```{r}
+```{r standardise_data}
 # Next, document anything to clean data. Use dplyr for that.
 
 # create an age group variable by specifying categorical breaks
@@ -178,7 +178,7 @@ linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
 ```
 
 
-```{r}
+```{r remove_personally_identifiable_information}
 # You might want to remove columns and other personal data
 
 # remove a hypothetical variable called "name" 
@@ -205,7 +205,7 @@ The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>
 
 Cases by sex
 
-```{r}
+```{r describe_by_sex}
 # get counts and proportions of cases by sex
 descriptive(linelist_cleaned, "sex") %>%
   # change table column names 
@@ -214,9 +214,10 @@ descriptive(linelist_cleaned, "sex") %>%
   kable()
 ```
 
-Cases by age group
+Cases by age group.
 
-```{r} 
+
+```{r describe_by_age_group} 
 # get counts and proportions by age group
 descriptive(linelist_cleaned, "age_group") %>%
   # change variable names 
@@ -227,7 +228,8 @@ descriptive(linelist_cleaned, "age_group") %>%
 
 
 Cases by age group and definition 
-```{r}
+
+```{r describe_by_age_group_and_def}
 # get counts and props of age groups by case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
@@ -245,7 +247,8 @@ descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtota
 
 
 Cases by age group and sex 
-```{r}
+
+```{r describe_by_age_group_and_sex}
 descriptive(linelist_cleaned, "age_group", "sex") %>% 
   rename("Age group (years)" = age_group, 
          "Female cases (n)" = Female_n, 
@@ -258,7 +261,7 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 ```
 
 
-```{r, eval = FALSE}
+```{r filter_case_def_describe, eval = FALSE}
 
 # you can also subset a descriptive table
 # for example to only have confirmed cases 
@@ -277,7 +280,7 @@ descriptive(filter(linelist_cleaned, age_group == "10-29"), "age_group", "sex") 
 Age pyramid
 
 
-```{r}
+```{r, age_pyramid}
 plot_age_pyramid(filter(linelist_cleaned, !is.na(sex)))
 ```
 
@@ -286,7 +289,7 @@ CFR
 
 The case fatality ratio among those with known outcomes is below
 
-```{r}
+```{r, identify_deaths}
 # define your input variables in advance to pass through CFR function
 # CHANGE TO DPLYR SYNTAX??
 known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
@@ -295,7 +298,7 @@ population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
 ```
 
 
-```{r}
+```{r overall_cfr}
 # use arguments from above to produce overal CFR
 case_fatality_rate(deaths, population) %>% 
   rename("Deaths" = deaths, 
@@ -309,7 +312,7 @@ case_fatality_rate(deaths, population) %>%
 CFR by sex 
 
 
-```{r}
+```{r, cfr_by_sex}
 # group by known outcome and agegroup 
 group_by(known_status, sex) %>%
   # for each grouping 
@@ -332,7 +335,7 @@ group_by(known_status, sex) %>%
 
 CFR by age group
 
-```{r}
+```{r, cfr_by_age_group}
 # group by known outcome and agegroup 
 group_by(known_status, age_group) %>%
   # for each grouping 
@@ -354,7 +357,7 @@ group_by(known_status, age_group) %>%
 CFR by case definition 
 
 
-```{r}
+```{r cfr_by_case_def}
 # group by known outcome and case definition 
 group_by(known_status, case_def) %>%
   # for each grouping 
