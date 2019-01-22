@@ -1,4 +1,4 @@
 library(testthat)
-library(epireports)
+library(sitrep)
 
-test_check("epireports")
+test_check("sitrep")

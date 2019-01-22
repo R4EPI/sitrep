@@ -5,17 +5,18 @@
 \title{Plot a population pyramid (age-sex) from a dataframe.
 This assumes that your variables are called "age_group" and "sex", respectively.}
 \usage{
-plot_age_pyramid(data, age_group = "age_group", split_by = "sex", vertical_lines = FALSE)
+plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
+  vertical_lines = FALSE)
 }
 \arguments{
-\item{data}{a data frame}
+\item{data}{Your dataframe (e.g. linelist)}
 
 \item{age_group}{the name of a column in the data frame that defines the age
 group categories. Defaults to "age_group"}
 
 \item{split_by}{the name of a column in the data frame that defines the 
 the bivariate column. Defaults to "sex"}
-  
+
 \item{vertical_lines}{If you would like to add dashed vertical lines to help
 visual interpretation of numbers. Default is to not show (FALSE),
 to turn on write TRUE.}
