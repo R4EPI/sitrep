@@ -280,7 +280,7 @@ descriptive(filter(linelist_cleaned, age_group == "10-29"), "age_group", "sex") 
 Age pyramid
 
 
-```{r, age_pyramid}
+```{r age_pyramid}
 plot_age_pyramid(filter(linelist_cleaned, !is.na(sex)))
 ```
 
@@ -289,7 +289,7 @@ CFR
 
 The case fatality ratio among those with known outcomes is below
 
-```{r, identify_deaths}
+```{r identify_deaths}
 # define your input variables in advance to pass through CFR function
 # CHANGE TO DPLYR SYNTAX??
 known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
@@ -335,7 +335,7 @@ group_by(known_status, sex) %>%
 
 CFR by age group
 
-```{r, cfr_by_age_group}
+```{r cfr_by_age_group}
 # group by known outcome and agegroup 
 group_by(known_status, age_group) %>%
   # for each grouping 
@@ -385,7 +385,7 @@ group_by(known_status, case_def) %>%
 
 The attack rate per 100,000 population is below - based on available population data for the whole country. 
 
-```{r}
+```{r attack_rate}
 # define population 
 population <- sum(population_data$population)
 
@@ -399,7 +399,8 @@ attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>%
 ```
 
 The below gives the attack rate per week. 
-```{r}
+
+```{r attack_rate_per_week}
 # cases for each week
 cases <- count(linelist_cleaned, epiweek)
 
@@ -418,7 +419,7 @@ attack_rate(cases$n, population, multiplier = 100000) %>%
  
 The below gives the cummulative attack rate per week. 
 
-```{r}
+```{r cummulative_attack_rate_per_week}
 # cummulative counts by week
 cases <- count(linelist_cleaned, epiweek) %>% 
   mutate(cummulative = cumsum(n))
@@ -441,7 +442,7 @@ attack_rate(cases$cummulative, population, multiplier = 100000) %>%
 
 Mortality rate per 100,000:
 
-```{r}
+```{r mortality_rate}
 mortality_rate(deaths, population, multiplier = 10^4, digits = 1) %>%
   kable()
 ```
@@ -449,7 +450,7 @@ mortality_rate(deaths, population, multiplier = 10^4, digits = 1) %>%
 
 #### 2x2 tables
 
-```{r, message = FALSE, warning = FALSE}
+```{r two_by_two, message = FALSE, warning = FALSE}
 outcome <- linelist_cleaned$outcome == "Death"
 is_male <- linelist_cleaned$sex == "Male"
 is_child <- as.integer(linelist_cleaned$age) <= 12
@@ -483,13 +484,13 @@ univariate_analysis(measure = "OR", digits = 3, outcome = outcome,
 
 There were `r sum(is.na(linelist_cleaned$date_of_onset))` cases missing dates of onset. 
 
-```{r, message = FALSE}
+```{r create_incidence, message = FALSE}
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
 ```
 
-The peak of the outbreak was in `r data.frame(inc_week_7) %>% slice(which.max(counts)) %>% select(isoweeks)`. 
+The peak of the outbreak was in `r find_peak(inc_week_7)`
 
-```{r, message = FALSE}
+```{r epicurve, message = FALSE}
 # plot your epicurve
 plot(inc_week_7, show_cases = TRUE, border = "black") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
@@ -507,7 +508,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
 You may also want to stratify by gender. 
 
 
-```{r, message = FALSE}
+```{r incidence_by_gender, message = FALSE}
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
                         interval = 7, 
                         groups = linelist_cleaned$sex)
@@ -531,7 +532,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
 You could similarly stratify by case definition (or any other categorical variable!)
 
 
-```{r, message = FALSE}
+```{r incidence_by_case_def, message = FALSE}
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
                         interval = 7, 
                         groups = linelist_cleaned$case_def)
@@ -555,7 +556,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
 Alternatively, you could stratify by sex among a subset of only confirmed cases. 
 
 
-```{r, message = FALSE}
+```{r incidence_by_sex_confirmed, message = FALSE}
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def == "Confirmed"], 
                         interval = 7, 
                         groups = linelist_cleaned$sex[linelist_cleaned$case_def == "Confirmed"])
@@ -589,7 +590,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
 
 If you do not have spatial data available, it may be worth calculating attack rates by region. 
 
-```{r}
+```{r attack_rate_by_region}
 # cases for each week
 cases <- count(linelist_cleaned, province)
 
@@ -616,7 +617,7 @@ attack_rate(cases$n, cases$population, multiplier = 100000) %>%
 
 The following is one example of how to use and display spatial data. 
 
-```{r, message = FALSE, warning = FALSE}
+```{r spatial_packages, message = FALSE, warning = FALSE}
 # spatial packages 
 # library(raster) # for downloading GADM shapefiles
 library(tmap) # for plotting maps
@@ -627,7 +628,7 @@ library(sf) # for manipulating spatial objects easily
 
 
 
-```{r, message=FALSE}
+```{r download_spatial_maps, message=FALSE}
 
 # reading in a shapefile 
 # map <- read_sf(here("mapfolder", "china.shp"))
@@ -651,7 +652,7 @@ map <- st_as_sf(map)
 
 
 
-```{r, message = FALSE, warning = FALSE}
+```{r subset_shapefiles, message = FALSE, warning = FALSE}
 # subsetting shapefiles 
 
 # Subset map to provinces of interest
@@ -667,7 +668,7 @@ mapsub <- simplify_shape(mapsub, fact = 1)
 
 
 
-```{r, message = FALSE}
+```{r random_points, message = FALSE}
 
 # get random points in provinces occuring 
 ## CAN BE DELETED ONCE WE USE A BETTER DATASET
@@ -700,7 +701,7 @@ linelist_cleaned <- bind_cols(linelist_cleaned, a)
 
 
 
-```{r, message=FALSE}
+```{r download_tiles, message=FALSE}
 # downloading basemap tiles 
 
 ## view available basemaps at http://leaflet-extras.github.io/leaflet-providers/preview/
@@ -715,7 +716,7 @@ osm_tiles <- tmaptools::read_osm(bb(mapsub, projection = "longlat"), ext = 1.05,
 
 
 
-```{r, message = FALSE}
+```{r plot_map, message = FALSE}
 
 # plot your basemap
 basemap <- tm_shape(osm_tiles) + # osm tiles
@@ -734,7 +735,7 @@ basemap <- tm_shape(osm_tiles) + # osm tiles
 ```
 
 
-```{r, message = FALSE}
+```{r create_sf_from_linelist, message = FALSE}
 # make linelist available for plotting 
 ## this could probably be done directly in linelist_cleaned
 ## unsure how other functions would react to an sf + dataframe obj though
@@ -743,7 +744,7 @@ cases <- set_projection(cases, current.projection = "longlat", projection = 4326
 ```
 
 ##### Dot maps
-```{r, message = FALSE}
+```{r dot_maps, message = FALSE}
 # dotmap 
 basemap + 
   tm_shape(cases) + 
@@ -755,7 +756,7 @@ basemap +
 
 ##### Choropleth maps
 
-```{r, message = FALSE, warning = FALSE}
+```{r choropleth_maps, message = FALSE, warning = FALSE}
 # choropleth 
 
 ## get counts by provinces 
@@ -782,7 +783,7 @@ basemap +
 
 #### Mortality rate per district
 
-```{r}
+```{r mortality_rate_per_district}
 
 linelist_cleaned %>%
   filter(!is.na(outcome)) %>%
