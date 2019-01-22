@@ -14,7 +14,7 @@ plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
 \item{age_group}{the name of a column in the data frame that defines the age
 group categories. Defaults to "age_group"}
 
-\item{split_by}{the name of a column in the data frame that defines the 
+\item{split_by}{the name of a column in the data frame that defines the
 the bivariate column. Defaults to "sex"}
 
 \item{vertical_lines}{If you would like to add dashed vertical lines to help

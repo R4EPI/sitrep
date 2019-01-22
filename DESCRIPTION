@@ -33,3 +33,4 @@ Imports:
     dplyr,
     tidyr, 
     epitools
+Roxygen: list(markdown = TRUE)
