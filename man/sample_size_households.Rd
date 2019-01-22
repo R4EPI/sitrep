@@ -12,5 +12,5 @@ Take a sample size of children and convert it to households
 }
 \references{
 Sampling Methods and Sample Size Calculation for the SMART Methodology
-\url{https://www.humanitarianresponse.info/sites/www.humanitarianresponse.info/files/documents/files/Sampling_Paper_June_2012.pdf}
+<https://www.humanitarianresponse.info/sites/www.humanitarianresponse.info/files/documents/files/Sampling_Paper_June_2012.pdf>
 }
