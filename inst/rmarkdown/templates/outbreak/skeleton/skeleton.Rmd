@@ -355,7 +355,7 @@ linelist_cleaned %>%
             population = n()) %>%                # tally population
   do(bind_cols(age_group = .$age_group, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
   arrange(desc(lower)) %>%                       # sort by lower confidence interval
-  complete(age_group) %>%                        # Ensure all levels are represented
+  tidyr::complete(age_group) %>%                 # Ensure all levels are represented
   rename("Age group (years)" = age_group, 
          "Deaths" = deaths, 
          "Population" = population, 
@@ -377,7 +377,7 @@ linelist_cleaned %>%
             population = n()) %>%                # tally population
   do(bind_cols(case_def = .$case_def, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
   arrange(desc(lower)) %>%                       # sort by lower confidence interval
-  complete(case_def) %>%                         # Ensure all levels are represented
+  tidyr::complete(case_def) %>%                  # Ensure all levels are represented
   rename("Case definition" = case_def, 
          "Deaths" = deaths, 
          "Population" = population, 
@@ -618,7 +618,7 @@ attack_rate(cases$n, cases$population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable(digits = 2)
+  kable(digits = 2, format.args = list(big.mark = ","))
 ```
 
 
@@ -755,6 +755,7 @@ cases <- set_projection(cases, current.projection = "longlat", projection = 4326
 ```
 
 ##### Dot maps
+
 ```{r dot_maps, message = FALSE}
 # dotmap 
 basemap + 
@@ -803,7 +804,7 @@ linelist_cleaned %>%
             population = n()) %>%                # tally population
   do(bind_cols(province = .$province, mortality_rate(.$deaths, .$population, multiplier = 10^3))) %>% # calculate mortality rate
   arrange(desc(lower)) %>%                       # sort by lower confidence interval
-  complete(province) %>%                         # Ensure all levels are represented
+  tidyr::complete(province) %>%                  # Ensure all levels are represented
   rename("Province" = province, 
     "Number of deaths" = deaths, 
     "Population" = population,
@@ -811,6 +812,6 @@ linelist_cleaned %>%
     "Lower 95% CI" = lower, 
     "Upper 95% CI" = upper
   ) %>% 
-  kable(digits = 3)
+  kable(digits = 3, format.args = list(big.mark = ","))
 ```
 
