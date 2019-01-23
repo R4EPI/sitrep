@@ -44,15 +44,19 @@ library(epitools) # for creating 2by2 tables
 
 
 ```{r read_data}
-# read data from CSV
-#linelist_raw <- readr::read_csv("linelist.csv")
-
-# read data from Excel
-# linelist_raw <- readxl::read_xlsx
+## Read data ------------------------------------
+# CSV file
+# linelist_raw <- rio::import("linelist.csv")
+#
+# Excel file
+# linelist_raw <- rio::import("linelist.xlsx")
+#
+# Stata data file
+# linelist_raw <- rio::import("linelist.dat")
 
 linelist_raw <- outbreaks::fluH7N9_china_2013
 
-### Fixing variable names
+## Fixing variable names ----------------------
 
 # a good first step is to assign standard column names so that subsequent code
 # uses stable column names. 
