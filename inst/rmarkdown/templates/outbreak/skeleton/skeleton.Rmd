@@ -799,16 +799,20 @@ basemap +
 ```{r mortality_rate_per_district}
 
 linelist_cleaned %>%
-  filter(!is.na(outcome)) %>%
-  group_by(province) %>%
-  do({
-    province <- as.character(.$province[1])
-    deaths <- sum(.$outcome == "Death")
-    pop <- population_data[population_data$province == province, "population"]
-    mortality_rate(deaths, pop, multiplier = 10^3)
-  }) %>%
-  mutate_if(is.numeric, funs(round(., digits = 2))) %>%
-  kable(col.names = c("Province", "Number of cases", "Population",
-                      "Incidence per 1000", "Lower 95% CI", "Upper 95% CI"))
+  filter(!is.na(outcome)) %>%                     # remove missing outcomes
+  group_by(province) %>%                         # group the provinces
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # tally population
+  do(bind_cols(province = .$province, mortality_rate(.$deaths, .$population, multiplier = 10^3))) %>% # calculate mortality rate
+  arrange(desc(lower)) %>%                       # sort by lower confidence interval
+  complete(province) %>%                         # Ensure all levels are represented
+  rename("Province" = province, 
+    "Number of deaths" = deaths, 
+    "Population" = population,
+    "Mortality per 1,000" = `mortality per 1 000`, 
+    "Lower 95% CI" = lower, 
+    "Upper 95% CI" = upper
+  ) %>% 
+  kable(digits = 3)
 ```
 
