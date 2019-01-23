@@ -304,7 +304,7 @@ linelist_cleaned %>%
   filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
   summarise(deaths = sum(outcome == "Death"),    # tally deaths
             population = n()) %>%                # count population
-  do(case_fatality_rate(.$deaths, .$population)) # calculate case fatality rate
+  do(case_fatality_rate(.$deaths, .$population)) %>% # calculate case fatality rate
   rename("Deaths" = deaths,
          "Population" = population,
          "CFR (%)" = cfr,
@@ -387,11 +387,16 @@ linelist_cleaned %>%
 #### Attack rate
 
 The attack rate per 100,000 population is below - based on available population data for the whole country. 
-
-```{r attack_rate}
+```{r collect_variables}
 # define population 
 population <- sum(population_data$population)
+deaths     <- filter(linelist_cleaned, outcome == "Death") %>% nrow()
+# counts and cummulative counts by week
+cases <- count(linelist_cleaned, epiweek) %>% 
+  mutate(cummulative = cumsum(n))
+```
 
+```{r attack_rate}
 attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>% 
   rename("Cases (n)" = cases,
          "Population" = population, 
@@ -404,9 +409,6 @@ attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>%
 The below gives the attack rate per week. 
 
 ```{r attack_rate_per_week}
-# cases for each week
-cases <- count(linelist_cleaned, epiweek)
-
 # attack rate for each week
 attack_rate(cases$n, population, multiplier = 100000) %>% 
   # add the epiweek column to table
@@ -423,10 +425,6 @@ attack_rate(cases$n, population, multiplier = 100000) %>%
 The below gives the cummulative attack rate per week. 
 
 ```{r cummulative_attack_rate_per_week}
-# cummulative counts by week
-cases <- count(linelist_cleaned, epiweek) %>% 
-  mutate(cummulative = cumsum(n))
-
 # cummulative attack rate by week
 attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
   # add the epiweek column to table
