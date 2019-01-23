@@ -264,24 +264,25 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 ```{r filter_case_def_describe, eval = FALSE}
 
 # you can also subset a descriptive table
+#
 # for example to only have confirmed cases 
-descriptive(filter(linelist_cleaned, case_def == "Confirmed"), "age_group", "sex") %>% 
+filter(linelist_cleaned, case_def == "Confirmed") %>%
+  descriptive("age_group", "sex") %>% 
   kable(digits = 2)
 
 
 # alternatively you could show a single age group 
-descriptive(filter(linelist_cleaned, age_group == "10-29"), "age_group", "sex") %>% 
+filter(linelist_cleaned, age_group == "10-29") %>%
+  descriptive("age_group", "sex") %>% 
   kable(digits = 2)
 ```
-
-
 
 
 Age pyramid
 
 
 ```{r age_pyramid}
-plot_age_pyramid(filter(linelist_cleaned, !is.na(sex)))
+plot_age_pyramid(linelist_cleaned, age_group = "age_group", split_by = "sex")
 ```
 
 
@@ -291,7 +292,6 @@ The case fatality ratio among those with known outcomes is below
 
 ```{r identify_deaths}
 # define your input variables in advance to pass through CFR function
-# CHANGE TO DPLYR SYNTAX??
 known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
 deaths <- sum(linelist_cleaned$outcome == "Death", na.rm = TRUE)
 population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
@@ -300,28 +300,31 @@ population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
 
 ```{r overall_cfr}
 # use arguments from above to produce overal CFR
-case_fatality_rate(deaths, population) %>% 
-  rename("Deaths" = deaths, 
-         "Population" = population, 
-         "CFR (%)" = cfr, 
+linelist_cleaned %>% 
+  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # count population
+  do(case_fatality_rate(.$deaths, .$population)) # calculate case fatality rate
+  rename("Deaths" = deaths,
+         "Population" = population,
+         "CFR (%)" = cfr,
          "Lower 95% CI" = lower,
-         "Upper 95% CI" = upper) %>% 
-  knitr::kable(digits = 2)
+         "Upper 95% CI" = upper) %>%
+  knitr::kable(digits = 2)                       # print nicely with 2 digits
 ```
 
 CFR by sex 
 
 
 ```{r, cfr_by_sex}
-# group by known outcome and agegroup 
-group_by(known_status, sex) %>%
-  # for each grouping 
-  do({
-    deaths <- sum(.$outcome == "Death") # count num deaths 
-    population <- length(.$outcome) # count population
-    case_fatality_rate(deaths, population) # pass to function 
-  }) %>%
-  arrange(desc(lower)) %>% # sort by lower confidence interval
+# group by known outcome and sex
+linelist_cleaned %>% 
+  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  group_by(sex) %>%                              # group by sex
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # tally population
+  do(bind_cols(sex = .$sex, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  arrange(desc(lower)) %>%                       # sort by lower confidence interval
   rename("Sex" = sex, 
          "Deaths" = deaths, 
          "Population" = population, 
