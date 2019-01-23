@@ -26,14 +26,14 @@ report.
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, error = TRUE)
 options(knitr.kable.NA = "-")
 library(knitr) # for creating output doc
 library(dplyr) # for cleaning/shaping data
 library(ggplot2) # for plotting diagrams
 
 # epi packages
-library(epireports) # for msf field epi functions
+library(sitrep) # for msf field epi functions
 library(incidence) # for epicurves
 library(ISOweek) # for creating epiweeks
 library(epitools) # for creating 2by2 tables
