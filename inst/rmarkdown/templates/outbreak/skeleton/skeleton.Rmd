@@ -460,7 +460,7 @@ attack_rate(cases$cummulative, population, multiplier = 100000) %>%
 Mortality rate per 100,000:
 
 ```{r mortality_rate}
-mortality_rate(deaths, population, multiplier = 10^4, digits = 1) %>%
+mortality_rate(deaths, population, multiplier = 10^4) %>%
   kable(digits = 2)
 ```
 
