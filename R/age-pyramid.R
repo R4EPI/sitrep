@@ -3,7 +3,7 @@
 #' @param data Your dataframe (e.g. linelist)
 #' @param age_group the name of a column in the data frame that defines the age
 #'   group categories. Defaults to "age_group"
-#' @param split_by the name of a column in the data frame that defines the 
+#' @param split_by the name of a column in the data frame that defines the
 #'   the bivariate column. Defaults to "sex"
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (FALSE),
@@ -29,6 +29,12 @@
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", vertical_lines = FALSE) {
   stopifnot(is.data.frame(data), c(age_group, split_by) %in% colnames(data))
   data[[split_by]] <- as.character(data[[split_by]])
+  if (anyNA(data[[split_by]])) {
+    nas <- is.na(data[[split_by]])
+    warning(sprintf("removing %d observations with missing values in the %s column.",
+                    sum(nas), split_by))
+    data <- data[!nas, , drop = FALSE]
+  }
   ag <- rlang::sym(age_group)
   sb <- rlang::sym(split_by)
   plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
