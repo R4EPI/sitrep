@@ -298,14 +298,6 @@ CFR
 
 The case fatality ratio among those with known outcomes is below
 
-```{r identify_deaths}
-# define your input variables in advance to pass through CFR function
-known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
-deaths <- sum(linelist_cleaned$outcome == "Death", na.rm = TRUE)
-population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
-```
-
-
 ```{r overall_cfr}
 # use arguments from above to produce overal CFR
 linelist_cleaned %>% 
