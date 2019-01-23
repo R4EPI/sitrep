@@ -5,19 +5,29 @@ output: github_document
 
 
 # Introduction to this template
-This is a template which can be used to create an automated outbreak situation report. 
+
+This is a template which can be used to create an automated outbreak situation
+report.
 
 - It is organised by time, place and person. 
-- You can type normal text in white spaces (such as here) and r-code in grey spaces (denoted by three backticks and r) (see [Rmarkdown introduction](https://rmarkdown.rstudio.com/articles_intro.html) and [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
-- Introductions and contents of sections are within square brackets "[...]" and can be deleted as appropriate 
-- Examples of inline code (to automate updating numbers, e.g. line 148), can similarly be removed/updated 
-- Code itself can be deleted, but as a word of caution: make sure you aren't deleting bits where variables are created/manipulated, or at least update them appropriatley
+- You can type normal text in white spaces (such as here) and r-code in grey
+    spaces (denoted by three backticks and r) (see [Rmarkdown
+    introduction](https://rmarkdown.rstudio.com/articles_intro.html) and
+    [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
+- Introductions and contents of sections are within square brackets "[...]" and
+    can be deleted as appropriate
+- Examples of inline code (to automate updating numbers, e.g. line 148), can
+    similarly be removed/updated
+- Code itself can be deleted, but as a word of caution: make sure you aren't
+    deleting bits where variables are created/manipulated, or at least update
+    them appropriatley
 - ADD LIST ON WHICH PACKAGES WILL BE USED FOR WHAT REASONS! AND HOW TO INSTALL
 - OTHER INFO TO ADD??
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+options(knitr.kable.NA = "-")
 library(knitr) # for creating output doc
 library(dplyr) # for cleaning/shaping data
 library(ggplot2) # for plotting diagrams
@@ -340,14 +350,14 @@ CFR by age group
 
 ```{r cfr_by_age_group}
 # group by known outcome and agegroup 
-group_by(known_status, age_group) %>%
-  # for each grouping 
-  do({
-    deaths <- sum(.$outcome == "Death") # count num deaths 
-    population <- length(.$outcome) # count population
-    case_fatality_rate(deaths, population) # pass to function 
-  }) %>%
-  arrange(desc(lower)) %>% # sort by lower confidence interval
+linelist_cleaned %>% 
+  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  group_by(age_group) %>%                        # group by age_group
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # tally population
+  do(bind_cols(age_group = .$age_group, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  arrange(desc(lower)) %>%                       # sort by lower confidence interval
+  complete(age_group) %>%                        # Ensure all levels are represented
   rename("Age group (years)" = age_group, 
          "Deaths" = deaths, 
          "Population" = population, 
@@ -362,14 +372,14 @@ CFR by case definition
 
 ```{r cfr_by_case_def}
 # group by known outcome and case definition 
-group_by(known_status, case_def) %>%
-  # for each grouping 
-  do({
-    deaths <- sum(.$outcome == "Death") # count num deaths 
-    population <- length(.$outcome) # count population
-    case_fatality_rate(deaths, population) # pass to function 
-  }) %>%
-  arrange(desc(lower)) %>% # sort by lower confidence interval
+linelist_cleaned %>% 
+  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  group_by(case_def) %>%                         # group by case_def
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # tally population
+  do(bind_cols(case_def = .$case_def, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  arrange(desc(lower)) %>%                       # sort by lower confidence interval
+  complete(case_def) %>%                         # Ensure all levels are represented
   rename("Case definition" = case_def, 
          "Deaths" = deaths, 
          "Population" = population, 
