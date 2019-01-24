@@ -5,25 +5,35 @@ output: github_document
 
 
 # Introduction to this template
-This is a template which can be used to create an automated outbreak situation report. 
+
+This is a template which can be used to create an automated outbreak situation
+report.
 
 - It is organised by time, place and person. 
-- You can type normal text in white spaces (such as here) and r-code in grey spaces (denoted by three backticks and r) (see [Rmarkdown introduction](https://rmarkdown.rstudio.com/articles_intro.html) and [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
-- Introductions and contents of sections are within square brackets "[...]" and can be deleted as appropriate 
-- Examples of inline code (to automate updating numbers, e.g. line 148), can similarly be removed/updated 
-- Code itself can be deleted, but as a word of caution: make sure you aren't deleting bits where variables are created/manipulated, or at least update them appropriatley
+- You can type normal text in white spaces (such as here) and r-code in grey
+    spaces (denoted by three backticks and r) (see [Rmarkdown
+    introduction](https://rmarkdown.rstudio.com/articles_intro.html) and
+    [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
+- Introductions and contents of sections are within square brackets "[...]" and
+    can be deleted as appropriate
+- Examples of inline code (to automate updating numbers, e.g. line 148), can
+    similarly be removed/updated
+- Code itself can be deleted, but as a word of caution: make sure you aren't
+    deleting bits where variables are created/manipulated, or at least update
+    them appropriatley
 - ADD LIST ON WHICH PACKAGES WILL BE USED FOR WHAT REASONS! AND HOW TO INSTALL
 - OTHER INFO TO ADD??
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, error = TRUE)
+options(knitr.kable.NA = "-")
 library(knitr) # for creating output doc
 library(dplyr) # for cleaning/shaping data
 library(ggplot2) # for plotting diagrams
 
 # epi packages
-library(epireports) # for msf field epi functions
+library(sitrep) # for msf field epi functions
 library(incidence) # for epicurves
 library(ISOweek) # for creating epiweeks
 library(epitools) # for creating 2by2 tables
@@ -34,15 +44,19 @@ library(epitools) # for creating 2by2 tables
 
 
 ```{r read_data}
-# read data from CSV
-#linelist_raw <- readr::read_csv("linelist.csv")
-
-# read data from Excel
-# linelist_raw <- readxl::read_xlsx
+## Read data ------------------------------------
+# CSV file
+# linelist_raw <- rio::import("linelist.csv")
+#
+# Excel file
+# linelist_raw <- rio::import("linelist.xlsx")
+#
+# Stata data file
+# linelist_raw <- rio::import("linelist.dat")
 
 linelist_raw <- outbreaks::fluH7N9_china_2013
 
-### Fixing variable names
+## Fixing variable names ----------------------
 
 # a good first step is to assign standard column names so that subsequent code
 # uses stable column names. 
@@ -56,6 +70,7 @@ linelist_cleaned <- linelist_raw
 # this function is preset rules for variable naming 
 # for example it changes spaces and dots to "_" and characters to lowercase
 cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+
 # overwrite variable names with defined clean names
 colnames(linelist_cleaned) <- cleaned_colnames
 
@@ -86,8 +101,6 @@ lab_results <- linelist_cleaned %>%
 population_data <- distinct(linelist_cleaned, province)
 population_data$population <- as.integer(runif(nrow(population_data), 
                                           min = 10^3, max = 10^5))
-
-
 ```
 
 
@@ -97,7 +110,7 @@ population_data$population <- as.integer(runif(nrow(population_data),
 
 
 ```{r browse_data, eval = FALSE}
-# Browsing data
+# Browsing data ---------------------------------
 # here are a few ways to do data explorations 
 
 # view the first ten rows of data
@@ -122,13 +135,6 @@ unique(linelist_cleaned$sex)
 # install.packages("summarytools")
 # view(summarytools::dfSummary(linelist_cleaned))
 ```
-
-
-
-
-
-
-
 
 
 
@@ -168,10 +174,8 @@ linelist_cleaned$case_def <- ifelse(linelist_cleaned$test_result == "Positive",
 linelist_cleaned$case_def[linelist_cleaned$case_def != "Confirmed" & 
                             linelist_cleaned$symptoms == "Yes"] <- "Probable"
 
-
 # create an epiweek variable 
 linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
-
 
 # ... TODO: add some snippets for cleaing data
 # TODO: showcase and recommend the linelist package
@@ -196,7 +200,9 @@ linelist_cleaned$name <- NULL
 
 
 
-In total there were `r nrow(linelist_cleaned)` cases. There were `r linelist_cleaned %>% filter(sex == "Female") %>% count()` females affected and `r linelist_cleaned %>% filter(sex == "Male") %>% count()` males. 
+In total there were `r nrow(linelist_cleaned)` cases. There were
+`r linelist_cleaned %>% filter(sex == "Female") %>% count()` females affected and
+`r linelist_cleaned %>% filter(sex == "Male") %>% count()` males. 
 
 The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% select(age_group)` years. 
 
@@ -221,7 +227,9 @@ Cases by age group.
 # get counts and proportions by age group
 descriptive(linelist_cleaned, "age_group") %>%
   # change variable names 
-  rename("Age group (years)" = age_group, "Cases (n)" = n,"Proportion (%)" =  prop) %>% 
+  rename("Age group (years)" = age_group, 
+         "Cases (n)" = n,
+         "Proportion (%)" = prop) %>% 
   kable(digits = 2)
 ```
 
@@ -264,24 +272,25 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 ```{r filter_case_def_describe, eval = FALSE}
 
 # you can also subset a descriptive table
+#
 # for example to only have confirmed cases 
-descriptive(filter(linelist_cleaned, case_def == "Confirmed"), "age_group", "sex") %>% 
+filter(linelist_cleaned, case_def == "Confirmed") %>%
+  descriptive("age_group", "sex") %>% 
   kable(digits = 2)
 
 
 # alternatively you could show a single age group 
-descriptive(filter(linelist_cleaned, age_group == "10-29"), "age_group", "sex") %>% 
+filter(linelist_cleaned, age_group == "10-29") %>%
+  descriptive("age_group", "sex") %>% 
   kable(digits = 2)
 ```
-
-
 
 
 Age pyramid
 
 
 ```{r age_pyramid}
-plot_age_pyramid(filter(linelist_cleaned, !is.na(sex)))
+plot_age_pyramid(linelist_cleaned, age_group = "age_group", split_by = "sex")
 ```
 
 
@@ -289,39 +298,33 @@ CFR
 
 The case fatality ratio among those with known outcomes is below
 
-```{r identify_deaths}
-# define your input variables in advance to pass through CFR function
-# CHANGE TO DPLYR SYNTAX??
-known_status <- linelist_cleaned[!is.na(linelist_cleaned$outcome), ]
-deaths <- sum(linelist_cleaned$outcome == "Death", na.rm = TRUE)
-population <- length(linelist_cleaned$outcome[!is.na(linelist_cleaned$outcome)])
-```
-
-
 ```{r overall_cfr}
 # use arguments from above to produce overal CFR
-case_fatality_rate(deaths, population) %>% 
-  rename("Deaths" = deaths, 
-         "Population" = population, 
-         "CFR (%)" = cfr, 
+linelist_cleaned %>% 
+  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # count population
+  do(case_fatality_rate(.$deaths, .$population)) %>% # calculate case fatality rate
+  rename("Deaths" = deaths,
+         "Population" = population,
+         "CFR (%)" = cfr,
          "Lower 95% CI" = lower,
-         "Upper 95% CI" = upper) %>% 
-  knitr::kable(digits = 2)
+         "Upper 95% CI" = upper) %>%
+  knitr::kable(digits = 2)                       # print nicely with 2 digits
 ```
 
 CFR by sex 
 
 
 ```{r, cfr_by_sex}
-# group by known outcome and agegroup 
-group_by(known_status, sex) %>%
-  # for each grouping 
-  do({
-    deaths <- sum(.$outcome == "Death") # count num deaths 
-    population <- length(.$outcome) # count population
-    case_fatality_rate(deaths, population) # pass to function 
-  }) %>%
-  arrange(desc(lower)) %>% # sort by lower confidence interval
+# group by known outcome and sex
+linelist_cleaned %>% 
+  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  group_by(sex) %>%                              # group by sex
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # tally population
+  do(bind_cols(sex = .$sex, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  arrange(desc(lower)) %>%                       # sort by lower confidence interval
   rename("Sex" = sex, 
          "Deaths" = deaths, 
          "Population" = population, 
@@ -337,14 +340,14 @@ CFR by age group
 
 ```{r cfr_by_age_group}
 # group by known outcome and agegroup 
-group_by(known_status, age_group) %>%
-  # for each grouping 
-  do({
-    deaths <- sum(.$outcome == "Death") # count num deaths 
-    population <- length(.$outcome) # count population
-    case_fatality_rate(deaths, population) # pass to function 
-  }) %>%
-  arrange(desc(lower)) %>% # sort by lower confidence interval
+linelist_cleaned %>% 
+  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  group_by(age_group) %>%                        # group by age_group
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # tally population
+  do(bind_cols(age_group = .$age_group, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  arrange(desc(lower)) %>%                       # sort by lower confidence interval
+  tidyr::complete(age_group) %>%                 # Ensure all levels are represented
   rename("Age group (years)" = age_group, 
          "Deaths" = deaths, 
          "Population" = population, 
@@ -359,14 +362,14 @@ CFR by case definition
 
 ```{r cfr_by_case_def}
 # group by known outcome and case definition 
-group_by(known_status, case_def) %>%
-  # for each grouping 
-  do({
-    deaths <- sum(.$outcome == "Death") # count num deaths 
-    population <- length(.$outcome) # count population
-    case_fatality_rate(deaths, population) # pass to function 
-  }) %>%
-  arrange(desc(lower)) %>% # sort by lower confidence interval
+linelist_cleaned %>% 
+  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  group_by(case_def) %>%                         # group by case_def
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # tally population
+  do(bind_cols(case_def = .$case_def, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  arrange(desc(lower)) %>%                       # sort by lower confidence interval
+  tidyr::complete(case_def) %>%                  # Ensure all levels are represented
   rename("Case definition" = case_def, 
          "Deaths" = deaths, 
          "Population" = population, 
@@ -384,11 +387,16 @@ group_by(known_status, case_def) %>%
 #### Attack rate
 
 The attack rate per 100,000 population is below - based on available population data for the whole country. 
-
-```{r attack_rate}
+```{r collect_variables}
 # define population 
 population <- sum(population_data$population)
+deaths     <- filter(linelist_cleaned, outcome == "Death") %>% nrow()
+# counts and cummulative counts by week
+cases <- count(linelist_cleaned, epiweek) %>% 
+  mutate(cummulative = cumsum(n))
+```
 
+```{r attack_rate}
 attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>% 
   rename("Cases (n)" = cases,
          "Population" = population, 
@@ -401,9 +409,6 @@ attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>%
 The below gives the attack rate per week. 
 
 ```{r attack_rate_per_week}
-# cases for each week
-cases <- count(linelist_cleaned, epiweek)
-
 # attack rate for each week
 attack_rate(cases$n, population, multiplier = 100000) %>% 
   # add the epiweek column to table
@@ -420,10 +425,6 @@ attack_rate(cases$n, population, multiplier = 100000) %>%
 The below gives the cummulative attack rate per week. 
 
 ```{r cummulative_attack_rate_per_week}
-# cummulative counts by week
-cases <- count(linelist_cleaned, epiweek) %>% 
-  mutate(cummulative = cumsum(n))
-
 # cummulative attack rate by week
 attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
   # add the epiweek column to table
@@ -443,7 +444,7 @@ attack_rate(cases$cummulative, population, multiplier = 100000) %>%
 Mortality rate per 100,000:
 
 ```{r mortality_rate}
-mortality_rate(deaths, population, multiplier = 10^4, digits = 1) %>%
+mortality_rate(deaths, population, multiplier = 10^4) %>%
   kable(digits = 2)
 ```
 
@@ -455,8 +456,11 @@ outcome <- linelist_cleaned$outcome == "Death"
 is_male <- linelist_cleaned$sex == "Male"
 is_child <- as.integer(linelist_cleaned$age) <= 12
 
-univariate_analysis(measure = "OR", digits = 3, outcome = outcome, 
-                    is_male, is_child) %>% 
+univariate_analysis(measure = "OR", 
+                    digits = 3, 
+                    outcome = outcome, 
+                    is_male, 
+                    is_child) %>% 
   rename("Exposure" = exposure, 
          "Exposed cases (n)" = exp_cases, 
          "Unexposed cases (n)" = unexp_cases,  
@@ -591,11 +595,8 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
 If you do not have spatial data available, it may be worth calculating attack rates by region. 
 
 ```{r attack_rate_by_region}
-# cases for each week
-cases <- count(linelist_cleaned, province)
-
-# merge population data 
-cases <- left_join(cases, population_data, by = "province")
+cases <- count(linelist_cleaned, province) %>%   # cases for each week
+  left_join(population_data, by = "province")    # merge population data 
 
 # attack rate for each week
 attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
@@ -607,7 +608,7 @@ attack_rate(cases$n, cases$population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  knitr::kable(digits = 2)
+  kable(digits = 2, format.args = list(big.mark = ","))
 ```
 
 
@@ -744,6 +745,7 @@ cases <- set_projection(cases, current.projection = "longlat", projection = 4326
 ```
 
 ##### Dot maps
+
 ```{r dot_maps, message = FALSE}
 # dotmap 
 basemap + 
@@ -786,16 +788,20 @@ basemap +
 ```{r mortality_rate_per_district}
 
 linelist_cleaned %>%
-  filter(!is.na(outcome)) %>%
-  group_by(province) %>%
-  do({
-    province <- as.character(.$province[1])
-    deaths <- sum(.$outcome == "Death")
-    pop <- population_data[population_data$province == province, "population"]
-    mortality_rate(deaths, pop, multiplier = 10^3)
-  }) %>%
-  mutate_if(is.numeric, funs(round(., digits = 2))) %>%
-  kable(col.names = c("Province", "Number of cases", "Population",
-                      "Incidence per 1000", "Lower 95% CI", "Upper 95% CI"))
+  filter(!is.na(outcome)) %>%                     # remove missing outcomes
+  group_by(province) %>%                         # group the provinces
+  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+            population = n()) %>%                # tally population
+  do(bind_cols(province = .$province, mortality_rate(.$deaths, .$population, multiplier = 10^3))) %>% # calculate mortality rate
+  arrange(desc(lower)) %>%                       # sort by lower confidence interval
+  tidyr::complete(province) %>%                  # Ensure all levels are represented
+  rename("Province" = province, 
+    "Number of deaths" = deaths, 
+    "Population" = population,
+    "Mortality per 1,000" = `mortality per 1 000`, 
+    "Lower 95% CI" = lower, 
+    "Upper 95% CI" = upper
+  ) %>% 
+  kable(digits = 3, format.args = list(big.mark = ","))
 ```
 
