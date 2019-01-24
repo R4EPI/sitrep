@@ -648,6 +648,13 @@ map <- raster::getData("GADM", country = "CN", level = 1)
 ## changing GADM to a sf object 
 map <- st_as_sf(map)
 
+## check the CRS
+# st_crs(map)
+## set the CRS if not present using EPSG value
+# map <- st_set_crs(map, value = 4326) # Sets to WGS84
+## Transform to a different CRS such as UTM, search online for relvant EPSG value
+# map_otherprojection <- st_transform(map, value = 32646) 
+
 ```
 
 
@@ -659,11 +666,6 @@ map <- st_as_sf(map)
 # Subset map to provinces of interest
 mapsub <- map %>% filter(NAME_1 %in% unique(linelist_cleaned$province))
 
-# change projection of subset 
-mapsub <- set_projection(mapsub, current.projection = "longlat", projection = 4326, overwrite.current.projection = TRUE)
-
-# simplify the shapefile (small islands in china sea)
-mapsub <- simplify_shape(mapsub, fact = 1)
 ```
 
 
@@ -704,10 +706,13 @@ linelist_cleaned <- bind_cols(linelist_cleaned, a)
 
 ```{r download_tiles, message=FALSE}
 # downloading basemap tiles 
+## This requires running the plot first to download the tiles (basemap)
+## Or you need to tell the command where to look for the map tile in the cachedir argument
 
-## view available basemaps at http://leaflet-extras.github.io/leaflet-providers/preview/
-## Not all available - we need to find a better option 
-osm_tiles <- tmaptools::read_osm(bb(mapsub, projection = "longlat"), ext = 1.05, type =  "osm")
+ggplot() +
+  annotation_map_tile(zoom = NULL, progress = "text", cachedir = "mapps/tiles", zoomin = -2) +
+  geom_sf(data = map, fill = NA, col = "grey50") +
+  annotation_scale()
 
 ## Alternative specify box
 ## If do not have a shapefile - choose based on coordinates (or name of place) 
