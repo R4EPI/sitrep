@@ -12,6 +12,7 @@ addons:
       - libprotobuf-dev
       - libprotoc-dev
       - protobuf-compiler
+      - libudunits2-dev
 
 matrix:
   include:
