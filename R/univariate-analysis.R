@@ -73,8 +73,8 @@ univariate_analysis <- function(measure = "OR", digits = 3, outcome, ...) {
       )
     })
   }
-  
-  as_tibble(
+
+  tibble::as_tibble(
     cbind(
     data.frame(exposure = predictor_labels),
     do.call(rbind, res)

@@ -2,13 +2,24 @@
 % Please edit documentation in R/sample-size.R
 \name{sample_size_households}
 \alias{sample_size_households}
-\title{Take a sample size of children and convert it to households}
+\title{Take a sample size of children and convert it to households (WIP)}
 \usage{
 sample_size_households(sample_size, avg_hh, prop_under_5, frac_6_59,
   non_response_rate = 0)
 }
+\arguments{
+\item{sample_size}{the sample size}
+
+\item{avg_hh}{average household size}
+
+\item{prop_under_5}{the proportion of children under 5 months}
+
+\item{frac_6_59}{proportion of children between 6 and 59 months}
+
+\item{non_response_rate}{the non response rate}
+}
 \description{
-Take a sample size of children and convert it to households
+Take a sample size of children and convert it to households (WIP)
 }
 \references{
 Sampling Methods and Sample Size Calculation for the SMART Methodology

@@ -1,5 +1,10 @@
-#' Compute a sample size for a proportion
+#' Compute a sample size for a proportion (WIP)
 #'
+#' @param population_size the population size
+#' @param expected_prevalence the expected prevalence
+#' @param precision the precisions
+#' @param design_effect the design effect
+#' @param alpha the significance level
 #'
 #'
 #' @references
@@ -16,8 +21,13 @@ sample_size <- function(population_size, expected_prevalence,
   as.integer(round(num / denom))
 }
 
-#' Take a sample size of children and convert it to households
+#' Take a sample size of children and convert it to households (WIP)
 #'
+#' @param sample_size the sample size
+#' @param avg_hh average household size
+#' @param prop_under_5 the proportion of children under 5 months
+#' @param frac_6_59 proportion of children between 6 and 59 months
+#' @param non_response_rate the non response rate
 #'
 #' @references
 #' Sampling Methods and Sample Size Calculation for the SMART Methodology

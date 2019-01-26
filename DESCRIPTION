@@ -20,7 +20,7 @@ Imports:
     incidence,
     outbreaks,
     rlang,
-    dplyr,
+    dplyr (>= 0.7),
     tidyr, 
     rmarkdown, 
     knitr, 
@@ -34,5 +34,6 @@ Imports:
     tmaptools,
     rmapshaper,
     lwgeom,
-    epitools
+    epitools,
+    tibble
 Roxygen: list(markdown = TRUE)

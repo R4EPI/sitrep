@@ -12,6 +12,7 @@
 #'  - `multiplier = 100`: proportion
 #'  - `multiplier = 10^4`: x per 10,000 people
 #' @export
+#' @rdname attack_rate
 #' @examples
 #' print(ar <- attack_rate(10, 50), digits = 4) # 20% attack rate
 #' fmt_ci_df(ar)
@@ -24,6 +25,7 @@ attack_rate <- function(cases, population, conf_level = 0.95,
   res
 }
 
+#' @rdname attack_rate
 #' @export
 case_fatality_rate <- function(deaths, population, conf_level = 0.95,
                                multiplier = 100) {
@@ -32,6 +34,7 @@ case_fatality_rate <- function(deaths, population, conf_level = 0.95,
   res
 }
 
+#' @rdname attack_rate
 #' @export
 mortality_rate <- function(deaths, population, conf_level = 0.95,
                            multiplier = 10^4) {

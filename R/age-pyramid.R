@@ -11,6 +11,7 @@
 #' @import ggplot2
 #' @export
 #' @examples
+#' library(ggplot2)
 #'
 #' set.seed(2018-01-15)
 #' ages <- cut(sample(80, 150, replace = TRUE),
@@ -39,7 +40,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", ve
   sb <- rlang::sym(split_by)
   plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
   plot_data <- dplyr::group_by(plot_data, !!ag, !!sb)
-  plot_data <- dplyr::summarise(plot_data, n = n())
+  plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
   max_n <- signif(max(plot_data[["n"]]), digits = -1)
   stopifnot(is.finite(max_n), max_n > 0)
   step_size <- ceiling(max_n / 5)
@@ -55,7 +56,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", ve
     scale_fill_manual(values = incidence::incidence_pal1(length(sex_levels))) +
     scale_y_continuous(limits = c(-max_n, max_n),
                        breaks = the_breaks,
-                       label = abs(the_breaks)) +
+                       labels = abs(the_breaks)) +
     theme_classic()
 
   if (vertical_lines == TRUE) {
