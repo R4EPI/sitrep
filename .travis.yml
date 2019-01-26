@@ -9,6 +9,9 @@ addons:
     packages:
       - libsodium-dev
       - libprotobuf-dev
+      - libprotobuf-dev
+      - libprotoc-dev
+      - protobuf-compiler
 
 matrix:
   include:
