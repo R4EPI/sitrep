@@ -9,17 +9,7 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Suggests:
-    testthat,
-    rmarkdown, 
-    knitr, 
-    epitrix, 
-    here, 
-    ISOweek, 
-    OpenStreetMap,
-    raster,
-    sf, 
-    tmap,
-    tmaptools
+    testthat
 RoxygenNote: 6.1.1
 Imports: 
     scales,
@@ -32,5 +22,17 @@ Imports:
     rlang,
     dplyr,
     tidyr, 
+    rmarkdown, 
+    knitr, 
+    epitrix, 
+    here, 
+    ISOweek, 
+    OpenStreetMap,
+    raster,
+    sf, 
+    tmap,
+    tmaptools,
+    rmapshaper,
+    lwgeom,
     epitools
 Roxygen: list(markdown = TRUE)
