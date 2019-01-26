@@ -2,6 +2,11 @@
 language: r
 cache: packages
 
+addons:
+  apt:
+    packages:
+      - libsodium-dev
+
 matrix:
   include:
     - os: linux
