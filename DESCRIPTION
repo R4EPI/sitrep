@@ -6,34 +6,34 @@ Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
                     role = c("aut", "cre")))
 Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
-Encoding: UTF-8
-LazyData: true
+Imports: 
+    binom,
+    dplyr (>= 0.7),
+    epitools,
+    epitrix,
+    ggplot2,
+    here,
+    incidence,
+    ISOweek,
+    knitr,
+    lwgeom,
+    OpenStreetMap,
+    outbreaks,
+    raster,
+    rio,
+    rlang,
+    rmapshaper,
+    rmarkdown,
+    scales,
+    sf,
+    survey,
+    tibble,
+    tidyr,
+    tmap,
+    tmaptools
 Suggests:
     testthat
-RoxygenNote: 6.1.1
-Imports: 
-    scales,
-    ggplot2,
-    survey,
-    rio,
-    binom,
-    incidence,
-    outbreaks,
-    rlang,
-    dplyr (>= 0.7),
-    tidyr, 
-    rmarkdown, 
-    knitr, 
-    epitrix, 
-    here, 
-    ISOweek, 
-    OpenStreetMap,
-    raster,
-    sf, 
-    tmap,
-    tmaptools,
-    rmapshaper,
-    lwgeom,
-    epitools,
-    tibble
+Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1
