@@ -2,9 +2,17 @@
 % Please edit documentation in R/cfr.R
 \name{attack_rate}
 \alias{attack_rate}
+\alias{case_fatality_rate}
+\alias{mortality_rate}
 \title{Rates and Ratios}
 \usage{
 attack_rate(cases, population, conf_level = 0.95, multiplier = 100)
+
+case_fatality_rate(deaths, population, conf_level = 0.95,
+  multiplier = 100)
+
+mortality_rate(deaths, population, conf_level = 0.95,
+  multiplier = 10^4)
 }
 \arguments{
 \item{cases, deaths}{number of cases or deaths in a population.}

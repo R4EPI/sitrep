@@ -26,6 +26,7 @@ Plot a population pyramid (age-sex) from a dataframe.
 This assumes that your variables are called "age_group" and "sex", respectively.
 }
 \examples{
+library(ggplot2)
 
 set.seed(2018-01-15)
 ages <- cut(sample(80, 150, replace = TRUE),

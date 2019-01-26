@@ -2,13 +2,24 @@
 % Please edit documentation in R/sample-size.R
 \name{sample_size}
 \alias{sample_size}
-\title{Compute a sample size for a proportion}
+\title{Compute a sample size for a proportion (WIP)}
 \usage{
 sample_size(population_size, expected_prevalence, precision, design_effect,
   alpha = 0.05)
 }
+\arguments{
+\item{population_size}{the population size}
+
+\item{expected_prevalence}{the expected prevalence}
+
+\item{precision}{the precisions}
+
+\item{design_effect}{the design effect}
+
+\item{alpha}{the significance level}
+}
 \description{
-Compute a sample size for a proportion
+Compute a sample size for a proportion (WIP)
 }
 \references{
 This method is based on the work of Kevin M. Sullivan and Andrew G. Dean
