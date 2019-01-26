@@ -15,6 +15,7 @@ addons:
       - libudunits2-dev
       - libv8-3.14-dev
       - libjq-dev
+      - libgdal-dev
 
 matrix:
   include:
