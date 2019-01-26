@@ -10,7 +10,16 @@ Encoding: UTF-8
 LazyData: true
 Suggests:
     testthat,
-    rmarkdown
+    rmarkdown, 
+    knitr, 
+    epitrix, 
+    here, 
+    ISOweek, 
+    OpenStreetMap,
+    raster,
+    sf, 
+    tmap,
+    tmaptools
 RoxygenNote: 6.1.1
 Imports: 
     scales,
@@ -18,4 +27,9 @@ Imports:
     survey,
     rlang,
     binom,
-    incidence
+    incidence,
+    outbreaks,
+    rlang,
+    dplyr,
+    tidyr, 
+    epitools

@@ -10,9 +10,9 @@
 sample_size <- function(population_size, expected_prevalence,
                         precision, design_effect, alpha = 0.05) {
   num <- (design_effect * population_size * expected_prevalence *
-            (1 - expected_prevalence))
+    (1 - expected_prevalence))
   denom <- precision^2 / stats::qnorm(1 - alpha / 2)^2 * (population_size - 1) +
-              expected_prevalence * (1 - expected_prevalence)
+    expected_prevalence * (1 - expected_prevalence)
   as.integer(round(num / denom))
 }
 

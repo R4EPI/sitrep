@@ -1,22 +1,61 @@
-#' Plot an age group
-#'
+#' Plot a population pyramid (age-sex) from a dataframe.
+#' This assumes that your variables are called "age_group" and "sex", respectively.
+#' @param data Your dataframe (e.g. linelist)
+#' @param age_group the name of a column in the data frame that defines the age
+#'   group categories. Defaults to "age_group"
+#' @param split_by the name of a column in the data frame that defines the 
+#'   the bivariate column. Defaults to "sex"
+#' @param vertical_lines If you would like to add dashed vertical lines to help
+#' visual interpretation of numbers. Default is to not show (FALSE),
+#' to turn on write TRUE.
 #' @import ggplot2
 #' @export
-plot_age_pyramid <- function(data) {
-  stopifnot(is.data.frame(data), c("age_group", "sex") %in% colnames(data))
-  plot_data <- dplyr::group_by(data, .data$age_group, .data$sex)
+#' @examples
+#'
+#' set.seed(2018-01-15)
+#' ages <- cut(sample(80, 150, replace = TRUE),
+#'             breaks = c(0, 5, 10, 30, 90), right = FALSE)
+#' sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
+#' ill  <- sample(0:1, 150, replace = TRUE)
+#' dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
+#'
+#' # Create the age pyramid, stratifying by sex
+#' print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
+#'
+#' # Stratify by case definition and customize with ggplot2
+#' ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
+#'   theme_bw(base_size = 16) +
+#'   labs(title = "Age groups by case definition")
+plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", vertical_lines = FALSE) {
+  stopifnot(is.data.frame(data), c(age_group, split_by) %in% colnames(data))
+  data[[split_by]] <- as.character(data[[split_by]])
+  ag <- rlang::sym(age_group)
+  sb <- rlang::sym(split_by)
+  plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
+  plot_data <- dplyr::group_by(plot_data, !!ag, !!sb)
   plot_data <- dplyr::summarise(plot_data, n = n())
-  max_n <- max(plot_data[["n"]])
+  max_n <- signif(max(plot_data[["n"]]), digits = -1)
   stopifnot(is.finite(max_n), max_n > 0)
   step_size <- ceiling(max_n / 5)
-  sex_levels <- unique(data[["sex"]])
+  sex_levels <- unique(data[[split_by]])
   stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
-  plot_data[["n"]] <- ifelse(plot_data[["sex"]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
-  ggplot(plot_data) +
-    aes(x = age_group, y = n, fill = sex) +
+  plot_data[["n"]] <- ifelse(plot_data[[split_by]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
+  the_breaks <- seq(0, max_n, step_size)
+  the_breaks <- c(-rev(the_breaks[-1]), the_breaks)
+  pyramid <- ggplot(plot_data) +
+    aes(x = !!ag, y = !!quote(n), fill = !!sb) +
     geom_bar(stat = "identity") +
     coord_flip() +
     scale_fill_manual(values = incidence::incidence_pal1(length(sex_levels))) +
-    scale_y_continuous(limits = c(-max_n, max_n), breaks = seq(-max_n, max_n, step_size),
-                       label = abs(seq(-max_n, max_n, step_size)))
+    scale_y_continuous(limits = c(-max_n, max_n),
+                       breaks = the_breaks,
+                       label = abs(the_breaks)) +
+    theme_classic()
+
+  if (vertical_lines == TRUE) {
+    pyramid <- pyramid +
+      geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dashed", colour = "grey")
+  }
+
+  pyramid
 }
