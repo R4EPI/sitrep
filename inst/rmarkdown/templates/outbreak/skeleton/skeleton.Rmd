@@ -621,8 +621,7 @@ The following is one example of how to use and display spatial data.
 ```{r spatial_packages, message = FALSE, warning = FALSE}
 # spatial packages 
 # library(raster) # for downloading GADM shapefiles
-library(tmap) # for plotting maps
-library(tmaptools) # for tiles and spatial operations (kernel densities) 
+library(ggspatial) # for plotting maps and downloading tiles
 library(sf) # for manipulating spatial objects easily
 ```
 
@@ -709,14 +708,8 @@ linelist_cleaned <- bind_cols(linelist_cleaned, a)
 ## This requires running the plot first to download the tiles (basemap)
 ## Or you need to tell the command where to look for the map tile in the cachedir argument
 
-ggplot() +
-  annotation_map_tile(zoom = NULL, progress = "text", cachedir = "mapps/tiles", zoomin = -2) +
-  geom_sf(data = map, fill = NA, col = "grey50") +
-  annotation_scale()
 
-## Alternative specify box
-## If do not have a shapefile - choose based on coordinates (or name of place) 
-# osm_tiles <- tmaptools::read_osm(bb(xlim = c(108.78, 122.94), ylim = c(20.22, 42.61)))
+
 
 ```
 
@@ -725,19 +718,11 @@ ggplot() +
 ```{r plot_map, message = FALSE}
 
 # plot your basemap
-basemap <- tm_shape(osm_tiles) + # osm tiles
-  tm_raster() + #osm tiles as an image
-  tm_shape(mapsub) + # shapefile
-  tm_polygons(col = NA, alpha = 0) + # shapefile as polygon
-  tm_layout(frame = FALSE) + # remove frame around plot
-  tm_compass(position = c("right", "top")) + # add a north compass
-  tm_scale_bar(breaks = c(0,250, 500), size = 1) # add a scalebar
+ggplot() +
+  annotation_map_tile(zoom = NULL, progress = "text", cachedir = "maps/tiles") + # osm tiles
+  geom_sf(data = mapsub, fill = NA, col = "grey50") + # shapefile as polygon
+  annotation_scale() # add a scalebar
 
-# save basemap for later offline use  
-# save(basemap, file = here::here("base.rda"))
-
-# load basemap when need it offline
-# load(file = here::here("base.rda"))
 ```
 
 
@@ -745,20 +730,29 @@ basemap <- tm_shape(osm_tiles) + # osm tiles
 # make linelist available for plotting 
 ## this could probably be done directly in linelist_cleaned
 ## unsure how other functions would react to an sf + dataframe obj though
-cases <- st_as_sf(linelist_cleaned, coords = c("lon", "lat"))
-cases <- set_projection(cases, current.projection = "longlat", projection = 4326)
+## It doesn't allow for missing values in the coordinates.
+cases <- linelist_cleaned %>% 
+          filter(!is.na(lat) | !is.na(lon)) %>% # Remove missing coordinates
+          st_as_sf(coords = c("lon", "lat"), crs = 4326)
 ```
 
 ##### Dot maps
 
 ```{r dot_maps, message = FALSE}
 # dotmap 
-basemap + 
-  tm_shape(cases) + 
-  tm_dots(col = "case_def",  
-          palette = "Dark2", size = 0.5, 
-          title = "Case definition") + 
-  tm_layout(legend.outside = TRUE)
+ggplot() +
+  annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
+  geom_sf(data = mapsub, fill = NA, col = "grey50") + # shapefile as polygon
+  geom_sf(data = cases, aes(col = case_def)) + # cases as points
+  annotation_scale() # add a scalebar
+
+
+# basemap + 
+#   tm_shape(cases) + 
+#   tm_dots(col = "case_def",  
+          # palette = "Dark2", size = 0.5, 
+          # title = "Case definition") + 
+  # tm_layout(legend.outside = TRUE)
 ```
 
 ##### Choropleth maps
@@ -777,13 +771,20 @@ counts <- left_join(counts, population_data, by = "province") %>%
 ## add counts to map data 
 mapsub <- left_join(mapsub, counts, by = c("NAME_1" = "province"))
 
-# plot choropleth
-basemap + 
-  tm_shape(mapsub) + 
-  tm_polygons(col = "AR", 
-              border.col = "black", 
-              title = "AR per 100000 population") + 
-  tm_layout(legend.outside = TRUE)
+
+ggplot() +
+  annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
+  geom_sf(data = mapsub, aes(fill = AR), col = "grey50") + # shapefile as polygon
+  annotation_scale() # add a scalebar
+
+
+# # plot choropleth
+# basemap + 
+#   tm_shape(mapsub) + 
+#   tm_polygons(col = "AR", 
+#               border.col = "black", 
+#               title = "AR per 100000 population") + 
+#   tm_layout(legend.outside = TRUE)
 ```
 
 
