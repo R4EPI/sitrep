@@ -700,22 +700,11 @@ linelist_cleaned <- bind_cols(linelist_cleaned, a)
 ```
 
 
-
-
-
-```{r download_tiles, message=FALSE}
+```{r plot_map, message = FALSE}
 # downloading basemap tiles 
 ## This requires running the plot first to download the tiles (basemap)
 ## Or you need to tell the command where to look for the map tile in the cachedir argument
 
-
-
-
-```
-
-
-
-```{r plot_map, message = FALSE}
 
 # plot your basemap
 ggplot() +
@@ -746,13 +735,6 @@ ggplot() +
   geom_sf(data = cases, aes(col = case_def)) + # cases as points
   annotation_scale() # add a scalebar
 
-
-# basemap + 
-#   tm_shape(cases) + 
-#   tm_dots(col = "case_def",  
-          # palette = "Dark2", size = 0.5, 
-          # title = "Case definition") + 
-  # tm_layout(legend.outside = TRUE)
 ```
 
 ##### Choropleth maps
@@ -778,13 +760,6 @@ ggplot() +
   annotation_scale() # add a scalebar
 
 
-# # plot choropleth
-# basemap + 
-#   tm_shape(mapsub) + 
-#   tm_polygons(col = "AR", 
-#               border.col = "black", 
-#               title = "AR per 100000 population") + 
-#   tm_layout(legend.outside = TRUE)
 ```
 
 
