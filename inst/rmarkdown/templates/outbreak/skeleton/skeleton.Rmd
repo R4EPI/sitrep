@@ -624,8 +624,7 @@ The following is one example of how to use and display spatial data.
 ```{r spatial_packages, message = FALSE, warning = FALSE}
 # spatial packages 
 # library(raster) # for downloading GADM shapefiles
-library(tmap) # for plotting maps
-library(tmaptools) # for tiles and spatial operations (kernel densities) 
+library(ggspatial) # for plotting maps and downloading tiles
 library(sf) # for manipulating spatial objects easily
 ```
 
@@ -651,6 +650,13 @@ map <- raster::getData("GADM", country = "CN", level = 1)
 ## changing GADM to a sf object 
 map <- st_as_sf(map)
 
+## check the CRS
+# st_crs(map)
+## set the CRS if not present using EPSG value
+# map <- st_set_crs(map, value = 4326) # Sets to WGS84
+## Transform to a different CRS such as UTM, search online for relvant EPSG value
+# map_otherprojection <- st_transform(map, value = 32646) 
+
 ```
 
 
@@ -662,11 +668,6 @@ map <- st_as_sf(map)
 # Subset map to provinces of interest
 mapsub <- map %>% filter(NAME_1 %in% unique(linelist_cleaned$province))
 
-# change projection of subset 
-mapsub <- set_projection(mapsub, current.projection = "longlat", projection = 4326, overwrite.current.projection = TRUE)
-
-# simplify the shapefile (small islands in china sea)
-mapsub <- simplify_shape(mapsub, fact = 1)
 ```
 
 
@@ -702,40 +703,18 @@ linelist_cleaned <- bind_cols(linelist_cleaned, a)
 ```
 
 
-
-
-
-```{r download_tiles, message=FALSE}
-# downloading basemap tiles 
-
-## view available basemaps at http://leaflet-extras.github.io/leaflet-providers/preview/
-## Not all available - we need to find a better option 
-osm_tiles <- tmaptools::read_osm(bb(mapsub, projection = "longlat"), ext = 1.05, type =  "osm")
-
-## Alternative specify box
-## If do not have a shapefile - choose based on coordinates (or name of place) 
-# osm_tiles <- tmaptools::read_osm(bb(xlim = c(108.78, 122.94), ylim = c(20.22, 42.61)))
-
-```
-
-
-
 ```{r plot_map, message = FALSE}
+# downloading basemap tiles 
+## This requires running the plot first to download the tiles (basemap)
+## Or you need to tell the command where to look for the map tile in the cachedir argument
+
 
 # plot your basemap
-basemap <- tm_shape(osm_tiles) + # osm tiles
-  tm_raster() + #osm tiles as an image
-  tm_shape(mapsub) + # shapefile
-  tm_polygons(col = NA, alpha = 0) + # shapefile as polygon
-  tm_layout(frame = FALSE) + # remove frame around plot
-  tm_compass(position = c("right", "top")) + # add a north compass
-  tm_scale_bar(breaks = c(0,250, 500), size = 1) # add a scalebar
+ggplot() +
+  annotation_map_tile(zoom = NULL, progress = "text", cachedir = "maps/tiles") + # osm tiles
+  geom_sf(data = mapsub, fill = NA, col = "grey50") + # shapefile as polygon
+  annotation_scale() # add a scalebar
 
-# save basemap for later offline use  
-# save(basemap, file = here::here("base.rda"))
-
-# load basemap when need it offline
-# load(file = here::here("base.rda"))
 ```
 
 
@@ -743,20 +722,22 @@ basemap <- tm_shape(osm_tiles) + # osm tiles
 # make linelist available for plotting 
 ## this could probably be done directly in linelist_cleaned
 ## unsure how other functions would react to an sf + dataframe obj though
-cases <- st_as_sf(linelist_cleaned, coords = c("lon", "lat"))
-cases <- set_projection(cases, current.projection = "longlat", projection = 4326)
+## It doesn't allow for missing values in the coordinates.
+cases <- linelist_cleaned %>% 
+          filter(!is.na(lat) | !is.na(lon)) %>% # Remove missing coordinates
+          st_as_sf(coords = c("lon", "lat"), crs = 4326)
 ```
 
 ##### Dot maps
 
 ```{r dot_maps, message = FALSE}
 # dotmap 
-basemap + 
-  tm_shape(cases) + 
-  tm_dots(col = "case_def",  
-          palette = "Dark2", size = 0.5, 
-          title = "Case definition") + 
-  tm_layout(legend.outside = TRUE)
+ggplot() +
+  annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
+  geom_sf(data = mapsub, fill = NA, col = "grey50") + # shapefile as polygon
+  geom_sf(data = cases, aes(col = case_def)) + # cases as points
+  annotation_scale() # add a scalebar
+
 ```
 
 ##### Choropleth maps
@@ -775,13 +756,13 @@ counts <- left_join(counts, population_data, by = "province") %>%
 ## add counts to map data 
 mapsub <- left_join(mapsub, counts, by = c("NAME_1" = "province"))
 
-# plot choropleth
-basemap + 
-  tm_shape(mapsub) + 
-  tm_polygons(col = "AR", 
-              border.col = "black", 
-              title = "AR per 100000 population") + 
-  tm_layout(legend.outside = TRUE)
+
+ggplot() +
+  annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
+  geom_sf(data = mapsub, aes(fill = AR), col = "grey50") + # shapefile as polygon
+  annotation_scale() # add a scalebar
+
+
 ```
 
 
