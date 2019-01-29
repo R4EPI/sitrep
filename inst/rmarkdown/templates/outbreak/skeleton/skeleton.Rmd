@@ -169,10 +169,13 @@ linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex,
                                       m = "Male")
 
 # create a case definition variable 
-linelist_cleaned$case_def <- ifelse(linelist_cleaned$test_result == "Positive", 
-                                    "Confirmed", "Suspected")
-linelist_cleaned$case_def[linelist_cleaned$case_def != "Confirmed" & 
-                            linelist_cleaned$symptoms == "Yes"] <- "Probable"
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(case_def = case_when(
+    test_result == "Positive"                     ~ "Confirmed",
+    test_result == "Negative" & symptoms == "Yes" ~ "Probable",
+    test_result == "Negative"                     ~ "Suspected",
+    TRUE                                          ~ "Unknown"
+  ))
 
 # create an epiweek variable 
 linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
