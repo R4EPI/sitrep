@@ -1,6 +1,6 @@
 ---
 title: "Outbreak report"
-output: github_document
+output: word_document
 ---
 
 
