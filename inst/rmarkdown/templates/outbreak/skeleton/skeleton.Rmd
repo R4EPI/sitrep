@@ -666,7 +666,9 @@ map <- st_as_sf(map)
 # subsetting shapefiles 
 
 # Subset map to provinces of interest
-mapsub <- map %>% filter(NAME_1 %in% unique(linelist_cleaned$province))
+mapsub <- map %>% 
+  filter(NAME_1 %in% unique(linelist_cleaned$province)) %>%
+  rmapshaper::ms_simplify(keep = 0.1)
 
 ```
 
@@ -724,8 +726,8 @@ ggplot() +
 ## unsure how other functions would react to an sf + dataframe obj though
 ## It doesn't allow for missing values in the coordinates.
 cases <- linelist_cleaned %>% 
-          filter(!is.na(lat) | !is.na(lon)) %>% # Remove missing coordinates
-          st_as_sf(coords = c("lon", "lat"), crs = 4326)
+  filter(!is.na(lat) | !is.na(lon)) %>% # Remove missing coordinates
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
 ```
 
 ##### Dot maps

@@ -16,8 +16,6 @@ Imports:
     incidence,
     ISOweek,
     knitr,
-    lwgeom,
-    OpenStreetMap,
     outbreaks,
     raster,
     rio,
@@ -28,9 +26,7 @@ Imports:
     sf,
     survey,
     tibble,
-    tidyr,
-    tmap,
-    tmaptools
+    tidyr
 Suggests:
     testthat
 Encoding: UTF-8
