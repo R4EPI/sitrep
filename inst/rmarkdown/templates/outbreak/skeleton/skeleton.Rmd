@@ -33,6 +33,7 @@ library(dplyr) # for cleaning/shaping data
 library(ggplot2) # for plotting diagrams
 
 # epi packages
+library(linelist) # including a data dictionary
 library(sitrep) # for msf field epi functions
 library(incidence) # for epicurves
 library(ISOweek) # for creating epiweeks
@@ -55,6 +56,9 @@ library(epitools) # for creating 2by2 tables
 # linelist_raw <- rio::import("linelist.dat")
 
 linelist_raw <- outbreaks::fluH7N9_china_2013
+
+## Load data dictionary defining the epivars
+set_dictionary(here::here("outbreak-dictionary.xlsx"))
 
 ## Fixing variable names ----------------------
 
@@ -89,10 +93,10 @@ lab_results <- linelist_cleaned %>%
                 mutate(test_result = sample(c("Positive", "Negative"),
                                             nrow(linelist_cleaned), 
                                             replace = TRUE), 
-                       symptoms = sample(c("Yes", "No"),
+                       symptoms    = sample(c("Yes", "No"),
                                             nrow(linelist_cleaned), 
                                             replace = TRUE),
-                       contact = sample(c("Yes", "No"),
+                       contact     = sample(c("Yes", "No"),
                                             nrow(linelist_cleaned), 
                                             replace = TRUE)
                 )
@@ -181,7 +185,29 @@ linelist_cleaned <- linelist_cleaned %>%
 linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
 
 # ... TODO: add some snippets for cleaing data
-# TODO: showcase and recommend the linelist package
+```
+
+```{r create_linelist}
+template_linelist(linelist_cleaned)
+linelist_cleaned <- as_linelist(x = linelist_cleaned,
+  id              = "case_id",
+  date_onset      = "date_of_onset",
+  date_outcome    = "date_of_outcome",
+  case_definition = "case_def",
+  outcome         = "outcome",
+  gender          = "sex",
+  age             = "age",
+  age_group       = "age_group",
+  NULL  # don't delete me
+)
+ID           <- lookup(linelist_cleaned, "case_id")
+DATE_ONSET   <- lookup(linelist_cleaned, "date_onset")
+CASE         <- lookup(linelist_cleaned, "case_definition")
+DATE_OUTCOME <- lookup(linelist_cleaned, "date_onset")
+OUTCOME      <- lookup(linelist_cleaned, "outcome")
+GENDER       <- lookup(linelist_cleaned, "gender")
+AGE          <- lookup(linelist_cleaned, "age")
+AGE_GRP      <- lookup(linelist_cleaned, "age_group")
 ```
 
 
@@ -204,10 +230,10 @@ linelist_cleaned$name <- NULL
 
 
 In total there were `r nrow(linelist_cleaned)` cases. There were
-`r linelist_cleaned %>% filter(sex == "Female") %>% count()` females affected and
-`r linelist_cleaned %>% filter(sex == "Male") %>% count()` males. 
+`r linelist_cleaned %>% filter(!!GENDER == "Female") %>% count()` females affected and
+`r linelist_cleaned %>% filter(!!GENDER == "Male") %>% count()` males. 
 
-The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% select(age_group)` years. 
+The most affected age group was `r descriptive(linelist_cleaned, as.character(AGE_GRP)) %>% slice(which.max(n)) %>% select(!!AGE_GRP)` years. 
 
 
 #### Age
@@ -216,10 +242,12 @@ Cases by sex
 
 ```{r describe_by_sex}
 # get counts and proportions of cases by sex
-descriptive(linelist_cleaned, "sex") %>%
+descriptive(linelist_cleaned, as.character(GENDER)) %>%
   # change table column names 
   # rename( new variable name = old variable name)
-  rename("Sex" = sex, "Cases (n)" = n,"Proportion (%)" =  prop) %>% 
+  rename("Sex" = !!GENDER, 
+         "Cases (n)" = n, 
+         "Proportion (%)" =  prop) %>% 
   kable(digits = 2)
 ```
 
@@ -228,9 +256,9 @@ Cases by age group.
 
 ```{r describe_by_age_group} 
 # get counts and proportions by age group
-descriptive(linelist_cleaned, "age_group") %>%
+descriptive(linelist_cleaned, as.character(AGE_GRP)) %>%
   # change variable names 
-  rename("Age group (years)" = age_group, 
+  rename("Age group (years)" = !!AGE_GRP,
          "Cases (n)" = n,
          "Proportion (%)" = prop) %>% 
   kable(digits = 2)
@@ -243,8 +271,12 @@ Cases by age group and definition
 ```{r describe_by_age_group_and_def}
 # get counts and props of age groups by case definition 
 # include column and row totals 
-descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group (years)" = age_group, 
+descriptive(linelist_cleaned, 
+            as.character(AGE_GRP),
+            as.character(CASE), 
+            coltotals = TRUE, 
+            rowtotals = TRUE) %>% 
+  rename("Age group (years)" = !!AGE_GRP, 
          "Confirmed cases (n)" = Confirmed_n, 
          "%" = Confirmed_prop, 
          "Probable cases (n)" = Probable_n, 
@@ -260,8 +292,10 @@ descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtota
 Cases by age group and sex 
 
 ```{r describe_by_age_group_and_sex}
-descriptive(linelist_cleaned, "age_group", "sex") %>% 
-  rename("Age group (years)" = age_group, 
+descriptive(linelist_cleaned, 
+            as.character(AGE_GRP), 
+            as.character(GENDER)) %>% 
+  rename("Age group (years)" = !!AGE_GRP,
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
          "Male cases (n)" = Male_n, 
@@ -277,14 +311,14 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 # you can also subset a descriptive table
 #
 # for example to only have confirmed cases 
-filter(linelist_cleaned, case_def == "Confirmed") %>%
-  descriptive("age_group", "sex") %>% 
+filter(linelist_cleaned, !!CASE == "Confirmed") %>%
+  descriptive(as.character(AGE_GRP), as.character(GENDER)) %>% 
   kable(digits = 2)
 
 
 # alternatively you could show a single age group 
-filter(linelist_cleaned, age_group == "10-29") %>%
-  descriptive("age_group", "sex") %>% 
+filter(linelist_cleaned, AGE_GRP == "10-29") %>%
+  descriptive(as.character(AGE_GRP), as.character(GENDER)) %>% 
   kable(digits = 2)
 ```
 
@@ -293,7 +327,9 @@ Age pyramid
 
 
 ```{r age_pyramid}
-plot_age_pyramid(linelist_cleaned, age_group = "age_group", split_by = "sex")
+plot_age_pyramid(linelist_cleaned, 
+                 age_group = as.character(AGE_GRP), 
+                 split_by = as.character(GENDER))
 ```
 
 
@@ -304,8 +340,8 @@ The case fatality ratio among those with known outcomes is below
 ```{r overall_cfr}
 # use arguments from above to produce overal CFR
 linelist_cleaned %>% 
-  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
-  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+  filter(!is.na(!!OUTCOME)) %>%                     # remove rows with missing outcome
+  summarise(deaths = sum(!!OUTCOME == "Death"),    # tally deaths
             population = n()) %>%                # count population
   do(case_fatality_rate(.$deaths, .$population)) %>% # calculate case fatality rate
   rename("Deaths" = deaths,
@@ -322,11 +358,11 @@ CFR by sex
 ```{r, cfr_by_sex}
 # group by known outcome and sex
 linelist_cleaned %>% 
-  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  filter(!is.na(!!OUTCOME)) %>%                     # remove rows with missing outcome
   group_by(sex) %>%                              # group by sex
-  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+  summarise(deaths = sum(!!OUTCOME == "Death"),    # tally deaths
             population = n()) %>%                # tally population
-  do(bind_cols(sex = .$sex, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  do(bind_cols(sex = get_epivars(., "gender"), case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
   arrange(desc(lower)) %>%                       # sort by lower confidence interval
   rename("Sex" = sex, 
          "Deaths" = deaths, 
@@ -344,11 +380,11 @@ CFR by age group
 ```{r cfr_by_age_group}
 # group by known outcome and agegroup 
 linelist_cleaned %>% 
-  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  filter(!is.na(!!OUTCOME)) %>%                     # remove rows with missing outcome
   group_by(age_group) %>%                        # group by age_group
-  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+  summarise(deaths = sum(!!OUTCOME == "Death"),    # tally deaths
             population = n()) %>%                # tally population
-  do(bind_cols(age_group = .$age_group, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  do(bind_cols(age_group = get_epivar(., "age_group"), case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
   arrange(desc(lower)) %>%                       # sort by lower confidence interval
   tidyr::complete(age_group) %>%                 # Ensure all levels are represented
   rename("Age group (years)" = age_group, 
@@ -366,11 +402,11 @@ CFR by case definition
 ```{r cfr_by_case_def}
 # group by known outcome and case definition 
 linelist_cleaned %>% 
-  filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
+  filter(!is.na(!!OUTCOME)) %>%                     # remove rows with missing outcome
   group_by(case_def) %>%                         # group by case_def
-  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+  summarise(deaths = sum(!!OUTCOME == "Death"),    # tally deaths
             population = n()) %>%                # tally population
-  do(bind_cols(case_def = .$case_def, case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
+  do(bind_cols(case_def = get_epivars(., "case_definition"), case_fatality_rate(.$deaths, .$population))) %>% # calculate case fatality rate
   arrange(desc(lower)) %>%                       # sort by lower confidence interval
   tidyr::complete(case_def) %>%                  # Ensure all levels are represented
   rename("Case definition" = case_def, 
@@ -393,7 +429,7 @@ The attack rate per 100,000 population is below - based on available population 
 ```{r collect_variables}
 # define population 
 population <- sum(population_data$population)
-deaths     <- filter(linelist_cleaned, outcome == "Death") %>% nrow()
+deaths     <- filter(linelist_cleaned, !!OUTCOME == "Death") %>% nrow()
 # counts and cummulative counts by week
 cases <- count(linelist_cleaned, epiweek) %>% 
   mutate(cummulative = cumsum(n))
@@ -455,9 +491,9 @@ mortality_rate(deaths, population, multiplier = 10^4) %>%
 #### 2x2 tables
 
 ```{r two_by_two, message = FALSE, warning = FALSE}
-outcome <- linelist_cleaned$outcome == "Death"
-is_male <- linelist_cleaned$sex == "Male"
-is_child <- as.integer(linelist_cleaned$age) <= 12
+outcome <- get_epivars(linelist_cleaned, "outcome")== "Death"
+is_male <- gender(linelist_cleaned) == "Male"
+is_child <- as.integer(as.character(age(linelist_cleaned))) <= 12
 
 univariate_analysis(measure = "OR", 
                     digits = 3, 
@@ -489,10 +525,10 @@ univariate_analysis(measure = "OR",
 * [When did the cases fall ill? Are numbers increasing or stable? You may want to include an Epi curve (bar chart showing number of new (suspected and confirmed) cases each day/week) ]
 
 
-There were `r sum(is.na(linelist_cleaned$date_of_onset))` cases missing dates of onset. 
+There were `r sum(is.na(date_onset(linelist_cleaned)))` cases missing dates of onset. 
 
 ```{r create_incidence, message = FALSE}
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
+inc_week_7 <- incidence(date_onset(linelist_cleaned), interval = 7)
 ```
 
 The peak of the outbreak was in `r find_peak(inc_week_7)`
@@ -516,9 +552,9 @@ You may also want to stratify by gender.
 
 
 ```{r incidence_by_gender, message = FALSE}
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
+inc_week_7 <- incidence(date_onset(linelist_cleaned), 
                         interval = 7, 
-                        groups = linelist_cleaned$sex)
+                        groups = gender(linelist_cleaned))
 
 
 plot(inc_week_7, show_cases = TRUE, border = "black") + 
@@ -540,9 +576,9 @@ You could similarly stratify by case definition (or any other categorical variab
 
 
 ```{r incidence_by_case_def, message = FALSE}
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset, 
+inc_week_7 <- incidence(date_onset(linelist_cleaned), 
                         interval = 7, 
-                        groups = linelist_cleaned$case_def)
+                        groups = get_epivars(linelist_cleaned, "case_def"))
 
 
 plot(inc_week_7, show_cases = TRUE, border = "black") + 
@@ -564,9 +600,10 @@ Alternatively, you could stratify by sex among a subset of only confirmed cases.
 
 
 ```{r incidence_by_sex_confirmed, message = FALSE}
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def == "Confirmed"], 
+tmp <- filter(linelist_cleaned, !!CASE == "Confirmed")
+inc_week_7 <- incidence(date_onset(tmp), 
                         interval = 7, 
-                        groups = linelist_cleaned$sex[linelist_cleaned$case_def == "Confirmed"])
+                        groups = gender(tmp))
 
 
 plot(inc_week_7, show_cases = TRUE, border = "black") + 
@@ -699,7 +736,7 @@ if (nrow(a) > nrow(linelist_cleaned)) {
 
 ## merge to linelist
 linelist_cleaned <- bind_cols(linelist_cleaned, a)
-
+linelist_cleaned <- set_epivars(linelist_cleaned, geo = c("lon", "lat"))
 ```
 
 
@@ -725,7 +762,7 @@ ggplot() +
 ## It doesn't allow for missing values in the coordinates.
 cases <- linelist_cleaned %>% 
           filter(!is.na(lat) | !is.na(lon)) %>% # Remove missing coordinates
-          st_as_sf(coords = c("lon", "lat"), crs = 4326)
+          st_as_sf(coords = lookup(linelist_cleaned, "geo"), crs = 4326)
 ```
 
 ##### Dot maps
@@ -735,7 +772,7 @@ cases <- linelist_cleaned %>%
 ggplot() +
   annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
   geom_sf(data = mapsub, fill = NA, col = "grey50") + # shapefile as polygon
-  geom_sf(data = cases, aes(col = case_def)) + # cases as points
+  geom_sf(data = cases, aes(col = !!CASE)) + # cases as points
   annotation_scale() # add a scalebar
 
 ```
@@ -772,9 +809,9 @@ ggplot() +
 ```{r mortality_rate_per_district}
 
 linelist_cleaned %>%
-  filter(!is.na(outcome)) %>%                     # remove missing outcomes
+  filter(!is.na(!!OUTCOME)) %>%                     # remove missing outcomes
   group_by(province) %>%                         # group the provinces
-  summarise(deaths = sum(outcome == "Death"),    # tally deaths
+  summarise(deaths = sum(!!OUTCOME == "Death"),    # tally deaths
             population = n()) %>%                # tally population
   do(bind_cols(province = .$province, mortality_rate(.$deaths, .$population, multiplier = 10^3))) %>% # calculate mortality rate
   arrange(desc(lower)) %>%                       # sort by lower confidence interval
