@@ -65,6 +65,7 @@ ggplot2::theme_set(theme_bw(base_size = 18))
 #
 # For password protected Excel file 
 # use the excel.link package 
+# library(excel.link)
 # linelist_raw <- excel.link::xl.read.file("linelist.xlsx", 
 #                                          xl.sheet = "Sheet1", 
 #                                          password = "R4epi")
@@ -94,7 +95,7 @@ linelist_cleaned <- rename(linelist_cleaned, sex = gender)
 ```
 
 
-```{r clean_data}
+```{r add_extra_data}
 # THIS CAN BE DELETED WHEN WE USE A DIFFERENT DATASET 
 # its just to be able to demonstrate posibilities
 
@@ -164,8 +165,14 @@ linelist_cleaned <- left_join(linelist_cleaned, lab_results,
 
 
 
-```{r standardise_data}
+```{r standardise_clean_data}
 # Next, document anything to clean data. Use dplyr for that.
+
+# make sure all date variables are formatted as dates 
+linelist_cleaned[ , grep("date|Date", names(linelist_cleaned))] <- lapply(
+                    linelist_cleaned[ , grep("date|Date", names(linelist_cleaned))], 
+                    as.Date)
+
 
 # create an age group variable by specifying categorical breaks
 linelist_cleaned$age_group <- age_categories(linelist_cleaned$age, 
