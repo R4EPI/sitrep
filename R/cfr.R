@@ -11,6 +11,7 @@
 #'  - `multiplier = 1`: ratio between 0 and 1
 #'  - `multiplier = 100`: proportion
 #'  - `multiplier = 10^4`: x per 10,000 people
+#' @param mergeCI Whether or not to put the confidence intervals in one column (default is FALSE)
 #' @export
 #' @rdname attack_rate
 #' @examples
@@ -19,30 +20,45 @@
 #' print(cfr <- case_fatality_rate(1, 100), digits = 2) # CFR of 1%
 #' fmt_ci_df(cfr)
 attack_rate <- function(cases, population, conf_level = 0.95,
-                        multiplier = 100) {
+                        multiplier = 100, mergeCI = FALSE) {
   res <- proportion(cases, population, multiplier = multiplier, conf_level = conf_level)
   colnames(res) <- c("cases", "population", "ar", "lower", "upper")
+  if (mergeCI == TRUE) {
+    res$ci <- paste0(res$lower, " - ", res$upper)
+    res$lower <- NULL
+    res$upper <- NULL
+  }
   res
 }
 
 #' @rdname attack_rate
 #' @export
 case_fatality_rate <- function(deaths, population, conf_level = 0.95,
-                               multiplier = 100) {
+                               multiplier = 100, mergeCI = FALSE) {
   res <- proportion(deaths, population, multiplier = multiplier, conf_level = conf_level)
   colnames(res) <- c("deaths", "population", "cfr", "lower", "upper")
+  if (mergeCI == TRUE) {
+    res$ci <- paste0(res$lower, " - ", res$upper)
+    res$lower <- NULL
+    res$upper <- NULL
+  }
   res
 }
 
 #' @rdname attack_rate
 #' @export
 mortality_rate <- function(deaths, population, conf_level = 0.95,
-                           multiplier = 10^4) {
+                           multiplier = 10^4, mergeCI = FALSE) {
   stopifnot(is.numeric(multiplier), length(multiplier) == 1L, multiplier > 0)
   # as in here https://www.cdc.gov/ophss/csels/dsepd/ss1978/lesson3/section3.html
   res <- proportion(deaths, population, conf_level = conf_level, multiplier = multiplier)
   est_label <- paste0("mortality per ", scales::number(multiplier))
   colnames(res) <- c("deaths", "population", est_label, "lower", "upper")
+  if (mergeCI == TRUE) {
+    res$ci <- paste0(res$lower, " - ", res$upper)
+    res$lower <- NULL
+    res$upper <- NULL
+  }
   res
 }
 
