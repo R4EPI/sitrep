@@ -21,13 +21,18 @@ report.
 - Code itself can be deleted, but as a word of caution: make sure you aren't
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
+- For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
 - ADD LIST ON WHICH PACKAGES WILL BE USED FOR WHAT REASONS! AND HOW TO INSTALL
 - OTHER INFO TO ADD??
 
 
 ```{r setup, include=FALSE}
+# hide all code chunks in the output, but show errors
 knitr::opts_chunk$set(echo = FALSE, error = TRUE)
-options(knitr.kable.NA = "-")
+# set default NA to - in output, define figure width/height
+options(knitr.kable.NA = "-", fig.width = 16, fig.height = 12)
+
+
 library(knitr) # for creating output doc
 library(dplyr) # for cleaning/shaping data
 library(ggplot2) # for plotting diagrams
@@ -37,6 +42,9 @@ library(sitrep) # for msf field epi functions
 library(incidence) # for epicurves
 library(ISOweek) # for creating epiweeks
 library(epitools) # for creating 2by2 tables
+
+#set default text size to 16 for plots
+ggplot2::theme_set(theme_bw(base_size = 18))
 ```
 
 
@@ -49,10 +57,18 @@ library(epitools) # for creating 2by2 tables
 # linelist_raw <- rio::import("linelist.csv")
 #
 # Excel file
-# linelist_raw <- rio::import("linelist.xlsx")
+# to read in a specific sheet use "which"
+# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
 #
 # Stata data file
 # linelist_raw <- rio::import("linelist.dat")
+#
+# For password protected Excel file 
+# use the excel.link package 
+# library(excel.link)
+# linelist_raw <- excel.link::xl.read.file("linelist.xlsx", 
+#                                          xl.sheet = "Sheet1", 
+#                                          password = "R4epi")
 
 linelist_raw <- outbreaks::fluH7N9_china_2013
 
@@ -79,7 +95,7 @@ linelist_cleaned <- rename(linelist_cleaned, sex = gender)
 ```
 
 
-```{r clean_data}
+```{r add_extra_data}
 # THIS CAN BE DELETED WHEN WE USE A DIFFERENT DATASET 
 # its just to be able to demonstrate posibilities
 
@@ -149,8 +165,14 @@ linelist_cleaned <- left_join(linelist_cleaned, lab_results,
 
 
 
-```{r standardise_data}
+```{r standardise_clean_data}
 # Next, document anything to clean data. Use dplyr for that.
+
+# make sure all date variables are formatted as dates 
+linelist_cleaned[ , grep("date|Date", names(linelist_cleaned))] <- lapply(
+                    linelist_cleaned[ , grep("date|Date", names(linelist_cleaned))], 
+                    as.Date)
+
 
 # create an age group variable by specifying categorical breaks
 linelist_cleaned$age_group <- age_categories(linelist_cleaned$age, 
@@ -169,6 +191,7 @@ linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex,
                                       m = "Male")
 
 # create a case definition variable 
+# the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
     test_result == "Positive"                     ~ "Confirmed",
@@ -275,7 +298,7 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 ```{r filter_case_def_describe, eval = FALSE}
 
 # you can also subset a descriptive table
-#
+
 # for example to only have confirmed cases 
 filter(linelist_cleaned, case_def == "Confirmed") %>%
   descriptive("age_group", "sex") %>% 
@@ -292,8 +315,11 @@ filter(linelist_cleaned, age_group == "10-29") %>%
 Age pyramid
 
 
-```{r age_pyramid}
-plot_age_pyramid(linelist_cleaned, age_group = "age_group", split_by = "sex")
+```{r age_pyramid, warning=FALSE}
+# plot age pyramid 
+plot_age_pyramid(linelist_cleaned, age_group = "age_group", split_by = "sex") + 
+  labs(x = "Cases (n)", y = "Age group (years)") +                    # change axis labels
+  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
 ```
 
 
@@ -319,7 +345,7 @@ linelist_cleaned %>%
 CFR by sex 
 
 
-```{r, cfr_by_sex}
+```{r cfr_by_sex}
 # group by known outcome and sex
 linelist_cleaned %>% 
   filter(!is.na(outcome)) %>%                     # remove rows with missing outcome
@@ -390,6 +416,7 @@ linelist_cleaned %>%
 #### Attack rate
 
 The attack rate per 100,000 population is below - based on available population data for the whole country. 
+
 ```{r collect_variables}
 # define population 
 population <- sum(population_data$population)
@@ -400,14 +427,17 @@ cases <- count(linelist_cleaned, epiweek) %>%
 ```
 
 ```{r attack_rate}
-attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>% 
-  rename("Cases (n)" = cases,
+ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) 
+  rename(ar, 
+         "Cases (n)" = cases,
          "Population" = population, 
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
   knitr::kable(digits = 2)
 ```
+
+Here, we can see that the Attack Rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar)`.
 
 The below gives the attack rate per week. 
 
@@ -429,7 +459,7 @@ The below gives the cummulative attack rate per week.
 
 ```{r cummulative_attack_rate_per_week}
 # cummulative attack rate by week
-attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, epiweek), .) %>% 
   rename("Epiweek" = epiweek, 
@@ -444,10 +474,15 @@ attack_rate(cases$cummulative, population, multiplier = 100000) %>%
 
 #### Mortality
 
-Mortality rate per 100,000:
+Mortality rate per 10,000:
 
 ```{r mortality_rate}
 mortality_rate(deaths, population, multiplier = 10^4) %>%
+  rename("Deaths" = deaths, 
+         "Population" = population, 
+         "Mortality (per 10,000)" = `mortality per 10 000`, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) %>% 
   kable(digits = 2)
 ```
 
@@ -461,26 +496,26 @@ is_child <- as.integer(linelist_cleaned$age) <= 12
 
 univariate_analysis(measure = "OR", 
                     digits = 3, 
+                    mergeCI = TRUE, 
+                    verbose = FALSE,
                     outcome = outcome, 
                     is_male, 
                     is_child) %>% 
   rename("Exposure" = exposure, 
-         "Exposed cases (n)" = exp_cases, 
-         "Unexposed cases (n)" = unexp_cases,  
-         "Case odds" = cases_odds,
-         "Exposed controls (n)" = exp_noncases, 
-         "Unexposed controls (n)" = unexp_noncases,
-         "Control odds" = noncases_odds,
+         "Exp. cases (n)" = exp_cases, 
+         "Unexp. cases (n)" = unexp_cases, 
+         "Exp. controls (n)" = exp_noncases, 
+         "Unexp. controls (n)" = unexp_noncases,
          "OR" = estimate,
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper, 
-         "p" = p_value
+         "95%CI" = ci
          ) %>% 
   # clean names of exposures 
   mutate(Exposure = recode(Exposure, 
                            is_male = "Sex (male)", 
                            is_child = "Age (<12yrs)")) %>% 
-  knitr::kable(digits = 2)
+    huxtable::as_huxtable(add_colnames = TRUE) %>%      # convert to a pretty table
+    huxtable::set_col_width(c(3, 1, 1, 1, 1, 1, 2)) %>% # set column widths so that exposure and CI are maximized
+    huxtable::print_md(max_width = 100)                 # print as a markdown table (so it can be converted)
 ```
 
 
@@ -495,7 +530,7 @@ There were `r sum(is.na(linelist_cleaned$date_of_onset))` cases missing dates of
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
 ```
 
-The peak of the outbreak was in `r find_peak(inc_week_7)`
+The peak of the outbreak was in `r ISOweek(find_peak(inc_week_7))`
 
 ```{r epicurve, message = FALSE}
 # plot your epicurve
@@ -528,9 +563,9 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
        captions = "Source: MoH of China data on xx/yy/zzzz") + 
-  # change visuals of dates and remove legend title
+  # change visuals of dates, remove legend title and move legend to bottom
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank()) + 
+        legend.title = element_blank(), legend.position = "bottom") + 
   # change interval of date labels
   scale_x_date(date_breaks = "1 week")
 ```
@@ -552,9 +587,9 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
        captions = "Source: MoH of China data on xx/yy/zzzz") + 
-  # change visuals of dates and remove legend title
+  # change visuals of dates, remove legend title and move legend to bottom
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank()) + 
+        legend.title = element_blank(), legend.position = "bottom") + 
   # change interval of date labels
   scale_x_date(date_breaks = "1 week")
 ```
@@ -576,16 +611,16 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
        captions = "Source: MoH of China data on xx/yy/zzzz") + 
-  # change visuals of dates and remove legend title
+  # change visuals of dates, remove legend title and move legend to bottom
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank()) + 
+        legend.title = element_blank(), legend.position = "bottom") + 
   # change interval of date labels
   scale_x_date(date_breaks = "1 week")
 ```
 
 
 
-
+ 
 
 ### Place
 
@@ -611,7 +646,7 @@ attack_rate(cases$n, cases$population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
-  kable(digits = 2, format.args = list(big.mark = ","))
+  kable(digits = 2, format.args = list(big.mark = ",")) # set thousands separator
 ```
 
 
@@ -713,7 +748,7 @@ linelist_cleaned <- bind_cols(linelist_cleaned, a)
 
 
 # plot your basemap
-ggplot() +
+base <- ggplot() + 
   annotation_map_tile(zoom = NULL, progress = "text", cachedir = "maps/tiles") + # osm tiles
   geom_sf(data = mapsub, fill = NA, col = "grey50") + # shapefile as polygon
   annotation_scale() # add a scalebar
@@ -727,20 +762,20 @@ ggplot() +
 ## unsure how other functions would react to an sf + dataframe obj though
 ## It doesn't allow for missing values in the coordinates.
 cases <- linelist_cleaned %>% 
-  filter(!is.na(lat) | !is.na(lon)) %>% # Remove missing coordinates
+  filter(!is.na(lat) & !is.na(lon)) %>% # Remove missing coordinates
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 ```
 
 ##### Dot maps
 
-```{r dot_maps, message = FALSE}
+```{r dot_maps, message = FALSE, warning = FALSE}
 # dotmap 
 ggplot() +
   annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
   geom_sf(data = mapsub, fill = NA, col = "grey50") + # shapefile as polygon
-  geom_sf(data = cases, aes(col = case_def)) + # cases as points
-  annotation_scale() # add a scalebar
-
+  geom_sf(data = cases, aes(colour = case_def, fill = case_def)) + # cases as points
+  annotation_scale() +  # add a scalebar
+  theme_void() # remove coordinates and axes
 ```
 
 ##### Choropleth maps
@@ -764,9 +799,8 @@ ggplot() +
   annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
   geom_sf(data = mapsub, aes(fill = AR), col = "grey50") + # shapefile as polygon
   annotation_scale() + # add a scalebar
-  scale_fill_viridis_c(option = "C") # color the scale to be perceptually uniform
-
-
+  scale_fill_viridis_c(option = "C") + # color the scale to be perceptually uniform
+  theme_void() # remove coordinates and axes
 ```
 
 
@@ -790,6 +824,6 @@ linelist_cleaned %>%
     "Lower 95% CI" = lower, 
     "Upper 95% CI" = upper
   ) %>% 
-  kable(digits = 3, format.args = list(big.mark = ","))
+  kable(digits = 3, format.args = list(big.mark = ",")) # set thousands separator
 ```
 

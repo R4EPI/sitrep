@@ -25,6 +25,7 @@ Imports:
     sf,
     survey,
     tibble,
+    huxtable,
     tidyr
 Suggests:
     testthat
