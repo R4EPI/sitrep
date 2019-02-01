@@ -20,7 +20,6 @@ Imports:
     raster,
     rio,
     rlang,
-    rmapshaper,
     rmarkdown,
     scales,
     sf,

@@ -701,9 +701,10 @@ map <- st_as_sf(map)
 # subsetting shapefiles 
 
 # Subset map to provinces of interest
+suppressWarnings({
 mapsub <- map %>% 
   filter(NAME_1 %in% unique(linelist_cleaned$province)) %>%
-  rmapshaper::ms_simplify(keep = 0.1)
+  sf::st_simplify(preserveTopology = TRUE, dTolerance = 0.05)
 
 ```
 
@@ -798,6 +799,7 @@ ggplot() +
   annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
   geom_sf(data = mapsub, aes(fill = AR), col = "grey50") + # shapefile as polygon
   annotation_scale() + # add a scalebar
+  scale_fill_viridis_c(option = "C") + # color the scale to be perceptually uniform
   theme_void() # remove coordinates and axes
 ```
 
