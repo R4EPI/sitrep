@@ -2,11 +2,10 @@
 % Please edit documentation in R/age-pyramid.R
 \name{plot_age_pyramid}
 \alias{plot_age_pyramid}
-\title{Plot a population pyramid (age-sex) from a dataframe.
-This assumes that your variables are called "age_group" and "sex", respectively.}
+\title{Plot a population pyramid (age-sex) from a dataframe.}
 \usage{
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
-  vertical_lines = FALSE)
+  stack_by = split_by, vertical_lines = FALSE)
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}
@@ -17,13 +16,15 @@ group categories. Defaults to "age_group"}
 \item{split_by}{the name of a column in the data frame that defines the
 the bivariate column. Defaults to "sex"}
 
+\item{stack_by}{the name of the column in the data frame to use for shading
+the bars}
+
 \item{vertical_lines}{If you would like to add dashed vertical lines to help
 visual interpretation of numbers. Default is to not show (FALSE),
 to turn on write TRUE.}
 }
 \description{
 Plot a population pyramid (age-sex) from a dataframe.
-This assumes that your variables are called "age_group" and "sex", respectively.
 }
 \examples{
 library(ggplot2)
