@@ -513,9 +513,9 @@ univariate_analysis(measure = "OR",
   mutate(Exposure = recode(Exposure, 
                            is_male = "Sex (male)", 
                            is_child = "Age (<12yrs)")) %>% 
-    huxtable::as_huxtable(add_colnames = TRUE) %>%
-    huxtable::set_col_width(c(3, 1, 1, 1, 1, 1, 2)) %>%
-    huxtable::print_md(max_width = 100)
+    huxtable::as_huxtable(add_colnames = TRUE) %>%      # convert to a pretty table
+    huxtable::set_col_width(c(3, 1, 1, 1, 1, 1, 2)) %>% # set column widths so that exposure and CI are maximized
+    huxtable::print_md(max_width = 100)                 # print as a markdown table (so it can be converted)
 ```
 
 
