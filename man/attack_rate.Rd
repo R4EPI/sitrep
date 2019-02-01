@@ -6,13 +6,14 @@
 \alias{mortality_rate}
 \title{Rates and Ratios}
 \usage{
-attack_rate(cases, population, conf_level = 0.95, multiplier = 100)
+attack_rate(cases, population, conf_level = 0.95, multiplier = 100,
+  mergeCI = FALSE, digits = 2)
 
 case_fatality_rate(deaths, population, conf_level = 0.95,
-  multiplier = 100)
+  multiplier = 100, mergeCI = FALSE, digits = 2)
 
 mortality_rate(deaths, population, conf_level = 0.95,
-  multiplier = 10^4)
+  multiplier = 10^4, mergeCI = FALSE, digits = 2)
 }
 \arguments{
 \item{cases, deaths}{number of cases or deaths in a population.}
@@ -29,13 +30,24 @@ confidence interval.}
 \item \code{multiplier = 100}: proportion
 \item \code{multiplier = 10^4}: x per 10,000 people
 }}
+
+\item{mergeCI}{Whether or not to put the confidence intervals in one column (default is FALSE)}
+
+\item{digits}{if \code{mergeCI = TRUE}, this determines how many digits are printed}
 }
 \description{
 Calculate attack rate, case fatality rate, and mortality rate
 }
 \examples{
+# Attack rates can be calculated with just two numbers
 print(ar <- attack_rate(10, 50), digits = 4) # 20\% attack rate
+
+# print them inline using `fmt_ci_df()`
 fmt_ci_df(ar)
+
+# Alternatively, if you want one column for the CI, use `mergeCI = TRUE`
+attack_rate(10, 50, mergeCI = TRUE, digits = 2) # 20\% attack rate
+
 print(cfr <- case_fatality_rate(1, 100), digits = 2) # CFR of 1\%
 fmt_ci_df(cfr)
 }

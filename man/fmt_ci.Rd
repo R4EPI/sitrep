@@ -5,6 +5,7 @@
 \alias{fmt_pci}
 \alias{fmt_pci_df}
 \alias{fmt_ci_df}
+\alias{merge_ci_df}
 \title{Helper to format confidence interval for text}
 \usage{
 fmt_ci(e = numeric(), l = numeric(), u = numeric(), digits = 2)
@@ -14,6 +15,8 @@ fmt_pci(e = numeric(), l = numeric(), u = numeric(), digits = 2)
 fmt_pci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
 
 fmt_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
+
+merge_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
 }
 \arguments{
 \item{e}{the column of the estimate (defaults to the third column). Otherwise, a number}
