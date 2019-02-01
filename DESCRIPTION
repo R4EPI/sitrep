@@ -20,12 +20,12 @@ Imports:
     raster,
     rio,
     rlang,
-    rmapshaper,
     rmarkdown,
     scales,
     sf,
     survey,
     tibble,
+    huxtable,
     tidyr
 Suggests:
     testthat

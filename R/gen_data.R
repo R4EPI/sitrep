@@ -8,7 +8,7 @@
 #' @param numcases Specify the number of cases you want (default is 300)
 #' @import rio
 #' @import epitrix
-#' @export
+#' @noRd
 
 gen_data <- function(disease, varnames = "Item", numcases = 300) {
   # read in data set - pasting the disease name for sheet

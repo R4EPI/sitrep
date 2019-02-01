@@ -416,6 +416,7 @@ linelist_cleaned %>%
 #### Attack rate
 
 The attack rate per 100,000 population is below - based on available population data for the whole country. 
+
 ```{r collect_variables}
 # define population 
 population <- sum(population_data$population)
@@ -426,14 +427,17 @@ cases <- count(linelist_cleaned, epiweek) %>%
 ```
 
 ```{r attack_rate}
-attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) %>% 
-  rename("Cases (n)" = cases,
+ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 100000) 
+  rename(ar, 
+         "Cases (n)" = cases,
          "Population" = population, 
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) %>% 
   knitr::kable(digits = 2)
 ```
+
+Here, we can see that the Attack Rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar)`.
 
 The below gives the attack rate per week. 
 
@@ -455,7 +459,7 @@ The below gives the cummulative attack rate per week.
 
 ```{r cummulative_attack_rate_per_week}
 # cummulative attack rate by week
-attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, epiweek), .) %>% 
   rename("Epiweek" = epiweek, 
@@ -509,7 +513,9 @@ univariate_analysis(measure = "OR",
   mutate(Exposure = recode(Exposure, 
                            is_male = "Sex (male)", 
                            is_child = "Age (<12yrs)")) %>% 
-  knitr::kable(digits = 2)
+    huxtable::as_huxtable(add_colnames = TRUE) %>%      # convert to a pretty table
+    huxtable::set_col_width(c(3, 1, 1, 1, 1, 1, 2)) %>% # set column widths so that exposure and CI are maximized
+    huxtable::print_md(max_width = 100)                 # print as a markdown table (so it can be converted)
 ```
 
 
@@ -695,9 +701,10 @@ map <- st_as_sf(map)
 # subsetting shapefiles 
 
 # Subset map to provinces of interest
+suppressWarnings({
 mapsub <- map %>% 
   filter(NAME_1 %in% unique(linelist_cleaned$province)) %>%
-  rmapshaper::ms_simplify(keep = 0.1)
+  sf::st_simplify(preserveTopology = TRUE, dTolerance = 0.05)
 
 ```
 
@@ -792,6 +799,7 @@ ggplot() +
   annotation_map_tile(zoom = NULL, cachedir = "maps/tiles") + # osm tiles
   geom_sf(data = mapsub, aes(fill = AR), col = "grey50") + # shapefile as polygon
   annotation_scale() + # add a scalebar
+  scale_fill_viridis_c(option = "C") + # color the scale to be perceptually uniform
   theme_void() # remove coordinates and axes
 ```
 

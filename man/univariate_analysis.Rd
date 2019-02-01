@@ -4,12 +4,19 @@
 \alias{univariate_analysis}
 \title{Produce risk ratios or odds ratios}
 \usage{
-univariate_analysis(measure = "OR", digits = 3, outcome, ...)
+univariate_analysis(measure = "OR", digits = 3, verbose = TRUE,
+  mergeCI = FALSE, outcome, ...)
 }
 \arguments{
-\item{measure}{Specify what you would like to calculated, options are "OR" or "RR"}
+\item{measure}{Specify what you would like to calculated, options are "OR" or "RR"
+default is "OR"}
 
 \item{digits}{Specify number of decimal places}
+
+\item{verbose}{Specify whether would like all outputs in table (default is TRUE)
+Non-verbose output drops group odds/risk calculations as well as p-value}
+
+\item{mergeCI}{Whether or not to put the confidence intervals in one column (default is FALSE)}
 
 \item{outcome}{Vector of TRUE/FALSE from your outcome variable of interest}
 
