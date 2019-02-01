@@ -12,7 +12,7 @@
 #'  - `multiplier = 100`: proportion
 #'  - `multiplier = 10^4`: x per 10,000 people
 #' @param mergeCI Whether or not to put the confidence intervals in one column (default is FALSE)
-#' @param if `mergeCI = TRUE`, this determines how many digits are printed
+#' @param digits if `mergeCI = TRUE`, this determines how many digits are printed
 #' @export
 #' @rdname attack_rate
 #' @examples
