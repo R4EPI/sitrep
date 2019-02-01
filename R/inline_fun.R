@@ -47,3 +47,12 @@ fmt_pci_df <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2) {
 fmt_ci_df <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2) {
   fmt_ci(x[[e]], x[[l]], x[[u]], digits = digits)
 }
+
+#' @export
+#' @rdname fmt_ci
+merge_ci_df <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2) {
+  cis <- fmt_ci_df(x, e, l, u, digits)
+  x[c(l, u)] <- NULL
+  x$ci <- gsub("^.+?\\(CI ", "(", cis)
+  x
+}
