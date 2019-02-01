@@ -5,6 +5,8 @@
 #'   group categories. Defaults to "age_group"
 #' @param split_by the name of a column in the data frame that defines the
 #'   the bivariate column. Defaults to "sex"
+#' @param stack_by the name of the column in the data frame to use for shading
+#'   the bars
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (FALSE),
 #' to turn on write TRUE.
@@ -27,8 +29,8 @@
 #' ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
 #'   theme_bw(base_size = 16) +
 #'   labs(title = "Age groups by case definition")
-plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", vertical_lines = FALSE) {
-  stopifnot(is.data.frame(data), c(age_group, split_by) %in% colnames(data))
+plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", stack_by = split_by, vertical_lines = FALSE) {
+  stopifnot(is.data.frame(data), c(age_group, split_by, stack_by) %in% colnames(data))
   data[[split_by]] <- as.character(data[[split_by]])
   if (anyNA(data[[split_by]])) {
     nas <- is.na(data[[split_by]])
@@ -52,12 +54,13 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", ve
   pyramid <- ggplot(plot_data) +
     aes(x = !!ag, y = !!quote(n), fill = !!sb) +
     geom_bar(stat = "identity") +
+    geom_hline(xintercept = 0) +
     coord_flip() +
     scale_fill_manual(values = incidence::incidence_pal1(length(sex_levels))) +
     scale_y_continuous(limits = c(-max_n, max_n),
                        breaks = the_breaks,
                        labels = abs(the_breaks)) +
-    theme_classic()
+    theme_classic() 
 
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
