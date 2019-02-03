@@ -66,9 +66,10 @@ ggplot2::theme_set(theme_bw(base_size = 18))
 # For password protected Excel file 
 # use the excel.link package 
 # library(excel.link)
-# linelist_raw <- excel.link::xl.read.file("linelist.xlsx", 
-#                                          xl.sheet = "Sheet1", 
-#                                          password = "R4epi")
+# linelist_raw <- excel.link::xl.read.file("linelist.xlsx",
+#                                          xl.sheet = "Sheet1",
+#                                          password = askpass::askpass(prompt = "please enter file
+#                                                                      password"))
 
 linelist_raw <- outbreaks::fluH7N9_china_2013
 
@@ -705,7 +706,7 @@ suppressWarnings({
 mapsub <- map %>% 
   filter(NAME_1 %in% unique(linelist_cleaned$province)) %>%
   sf::st_simplify(preserveTopology = TRUE, dTolerance = 0.05)
-
+})
 ```
 
 
