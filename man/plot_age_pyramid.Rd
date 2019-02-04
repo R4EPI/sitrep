@@ -33,7 +33,7 @@ set.seed(2018-01-15)
 ages <- cut(sample(80, 150, replace = TRUE),
             breaks = c(0, 5, 10, 30, 90), right = FALSE)
 sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
-ill  <- sample(0:1, 150, replace = TRUE)
+ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
 dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
 
 # Create the age pyramid, stratifying by sex
@@ -43,4 +43,14 @@ print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
 ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
   theme_bw(base_size = 16) +
   labs(title = "Age groups by case definition")
+print(ap)
+
+# Stratify by multiple factors
+ap   <- plot_age_pyramid(dat, 
+                         age_group = "AGE", 
+                         split_by = "sex", 
+                         stack_by = "ill",
+                         vertical_lines = TRUE) +
+  labs(title = "Age groups by case definition and sex")
+print(ap)
 }

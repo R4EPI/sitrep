@@ -19,7 +19,7 @@
 #' ages <- cut(sample(80, 150, replace = TRUE),
 #'             breaks = c(0, 5, 10, 30, 90), right = FALSE)
 #' sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
-#' ill  <- sample(0:1, 150, replace = TRUE)
+#' ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
 #' dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
 #'
 #' # Create the age pyramid, stratifying by sex
@@ -29,9 +29,24 @@
 #' ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
 #'   theme_bw(base_size = 16) +
 #'   labs(title = "Age groups by case definition")
+#' print(ap)
+#'
+#' # Stratify by multiple factors
+#' ap   <- plot_age_pyramid(dat, 
+#'                          age_group = "AGE", 
+#'                          split_by = "sex", 
+#'                          stack_by = "ill",
+#'                          vertical_lines = TRUE) +
+#'   labs(title = "Age groups by case definition and sex")
+#' print(ap)
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", stack_by = split_by, vertical_lines = FALSE) {
   stopifnot(is.data.frame(data), c(age_group, split_by, stack_by) %in% colnames(data))
-  data[[split_by]] <- as.character(data[[split_by]])
+  if (!is.character(data[[split_by]]) || !is.factor(data[[split_by]])) {
+    data[[split_by]] <- as.character(data[[split_by]])
+  }
+  if (!is.character(data[[stack_by]]) || !is.factor(data[[stack_by]])) {
+    data[[stack_by]] <- as.character(data[[stack_by]])
+  }
   if (anyNA(data[[split_by]])) {
     nas <- is.na(data[[split_by]])
     warning(sprintf("removing %d observations with missing values in the %s column.",
@@ -47,6 +62,8 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", st
   max_n <- signif(max(plot_data[["n"]]), digits = -1)
   stopifnot(is.finite(max_n), max_n > 0)
   step_size <- ceiling(max_n / 5)
+  age_levels <- levels(plot_data[[age_group]])
+  max_age_group <- age_levels[length(age_levels)]
   sex_levels <- unique(data[[split_by]])
   stk_levels <- unique(data[[stack_by]])
   stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
@@ -56,7 +73,6 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", st
   pyramid <- ggplot(plot_data) +
     aes(x = !!ag, y = !!quote(n), group = !!sb, fill = !!st) +
     geom_bar(stat = "identity") +
-    geom_hline(yintercept = 0) + # add vertical line 
     coord_flip() +
     scale_fill_manual(values = incidence::incidence_pal1(length(stk_levels))) +
     scale_y_continuous(limits = c(-max_n, max_n),
@@ -68,8 +84,22 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex", st
 
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
-      geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dashed", colour = "grey")
+      geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dotted", colour = "grey")
   }
 
+  pyramid <- pyramid + 
+    geom_hline(yintercept = 0) + # add vertical line 
+    annotate(geom = "label", 
+             x = max_age_group, 
+             y = -step_size, 
+             vjust = 0.5, 
+             hjust = 1,
+             label = sex_levels[[1]]) +
+    annotate(geom = "label",
+             x = max_age_group,
+             y = step_size,
+             vjust = 0.5,
+             hjust = 0,
+             label = sex_levels[[2]]) 
   pyramid
 }
