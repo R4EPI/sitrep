@@ -5,7 +5,8 @@
 \title{Plot a population pyramid (age-sex) from a dataframe.}
 \usage{
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
-  stack_by = split_by, vertical_lines = FALSE)
+  stack_by = split_by, vertical_lines = FALSE,
+  horizontal_lines = TRUE)
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}
@@ -20,11 +21,18 @@ the bivariate column. Defaults to "sex"}
 the bars}
 
 \item{vertical_lines}{If you would like to add dashed vertical lines to help
-visual interpretation of numbers. Default is to not show (FALSE),
-to turn on write TRUE.}
+visual interpretation of numbers. Default is to not show (\code{FALSE}),
+to turn on write \code{TRUE}.}
+
+\item{horizontal}{lines If \code{TRUE} (default), horizontal dashed lines will
+appear behind the bars of the pyramid}
 }
 \description{
 Plot a population pyramid (age-sex) from a dataframe.
+}
+\note{
+if \code{split_by} and \code{stack_by} are not the same, The values of \code{spit_by}
+will show up as labels at the top of the pyramid.
 }
 \examples{
 library(ggplot2)
