@@ -31,29 +31,30 @@ msf_dict <- function(name = "MSF-outbreak-dict.xls", disease, tibble = TRUE) {
   # DATA CLEANING
   # (CAN EVENTUALLY BE DELETED WHEN DICTIONARIES STABILISE)
   # 3 types added to - BOOLEAN, TRUE_ONLY and ORGANISATION-UNIT
-  dat_dict$options[which(is.na(dat_dict$options) &
-                           dat_dict$value_type == "BOOLEAN")] <- "Yes"
-  dat_dict$x_1[which(is.na(dat_dict$x_1) &
-                       dat_dict$value_type == "BOOLEAN")] <- "No"
+  NO_OPTS   <- is.na(dat_dict$options)
+  NO_X1     <- is.na(dat_dict$x_1)
+  BOOL      <- dat_dict$value_type == "BOOLEAN"
+  TRUE_ONLY <- dat_dict$value_type == "TRUE_ONLY"
+  ORG_UNIT  <- dat_dict$value_type == "ORGANISATION_UNIT"
+
+  # Grab the location of the options column
+  OCOL      <- which(names(dat_dict) == "options")
+  dat_dict[NO_OPTS & BOOL, OCOL]   <- "Yes"
+  dat_dict[NO_X1 & BOOL, OCOL + 1] <- "No"
 
 
-  dat_dict$options[which(is.na(dat_dict$options) &
-                                 dat_dict$value_type == "TRUE_ONLY")] <- "TRUE"
-  dat_dict$x_1[which(is.na(dat_dict$x_1) &
-                       dat_dict$value_type == "TRUE_ONLY")] <- "NA"
+  dat_dict[NO_OPTS & TRUE_ONLY, OCOL]   <- "TRUE"
+  dat_dict[NO_X1 & TRUE_ONLY, OCOL + 1] <- "NA"
 
 
 
-  dat_dict$options[which(is.na(dat_dict$options) &
-                           dat_dict$value_type == "ORGANISATION_UNIT")] <- "Hospital"
-  dat_dict$x_1[which(is.na(dat_dict$x_1) &
-                       dat_dict$value_type == "ORGANISATION_UNIT")] <- "Clinic"
-  dat_dict$x_1[which(is.na(dat_dict$x_1) &
-                       dat_dict$value_type == "ORGANISATION_UNIT")] <- "Health post"
+  dat_dict[NO_OPTS & ORG_UNIT, OCOL]   <- "Hospital"
+  dat_dict[NO_X1 & ORG_UNIT, OCOL + 1] <- "Clinic"
+  dat_dict[NO_X1 & ORG_UNIT, OCOL + 2] <- "Health post"
 
   # return a tibble
   if (tibble == TRUE) {
-    dat_dict <- dplyr::as_tibble(dat_dict)
+    dat_dict <- tibble::as_tibble(dat_dict)
   }
 
   # return dictionary dataset
@@ -75,14 +76,15 @@ gen_data <- function(disease, varnames = "shortname_export", numcases = 300) {
   dat_dict <- msf_dict(disease = disease, tibble = FALSE)
 
   # drop extra columns (keep after varnames column to retain contents of vars)
-  dat_output <- dat_dict[, grep(varnames, names(dat_dict)):length(names(dat_dict))]
+  varcol <- which(names(dat_dict) == varnames)
+  dat_output <- dat_dict[, seq(from = varcol, to = length(dat_dict)), drop = FALSE]
   # drop value type
   dat_output$value_type <- NULL
 
   # use the var names as rows
-  row.names(dat_output) <- dat_output[, varnames]
+  row.names(dat_output) <- dat_output[[varnames]]
   # remove the var names column
-  dat_output <- dat_output[, -1]
+  dat_output <- dat_output[-1]
   # flip the dataset
   dat_output <- data.frame(t(dat_output))
   # remove rownames
@@ -99,9 +101,9 @@ gen_data <- function(disease, varnames = "shortname_export", numcases = 300) {
 
   # take samples for vars with defined options (non empties)
   dis_output[, !names(dat_output) %in% empties] <- apply(dat_output[, !names(dat_output) %in% empties],
-                                                       MARGIN = 2,
-                                                       function(x) sample(x[!is.na(x)],
-                                                                          numcases, replace = TRUE))
+                                                         MARGIN = 2,
+                                                         function(x) sample(x[!is.na(x)],
+                                                                            numcases, replace = TRUE))
 
   # Use data dicationary to define which vars are dates
   datevars <- dat_dict$shortname_export[dat_dict$value_type == "DATE"]
@@ -129,28 +131,28 @@ gen_data <- function(disease, varnames = "shortname_export", numcases = 300) {
   dis_output$age_months <- dis_output$age_years * 12
   dis_output$age_months[dis_output$age_years == 0] <- sample(0:12,
                                                              length(dis_output$age_months[dis_output$age_years == 0]),
-                                                                  replace = TRUE)
+                                                             replace = TRUE)
 
 
   # age_days
   dis_output$age_days <- dis_output$age_years * 365
   dis_output$age_days[dis_output$age_years == 0 &
-                        dis_output$age_months > 0] <- 30 * dis_output$age_months[dis_output$age_years == 0 &
-                                                                              dis_output$age_months > 0]
-  dis_output$age_days[dis_output$age_years == 0 &
-                        dis_output$age_months == 0] <- sample(0:30,
-                                                              length(dis_output$age_days[dis_output$age_years == 0 &
-                                                                                         dis_output$age_months == 0]),
-                                                              replace = TRUE)
+                      dis_output$age_months > 0] <- 30 * dis_output$age_months[dis_output$age_years == 0 &
+                      dis_output$age_months > 0]
+                    dis_output$age_days[dis_output$age_years == 0 &
+                                        dis_output$age_months == 0] <- sample(0:30,
+                                                                              length(dis_output$age_days[dis_output$age_years == 0 &
+                                                                                     dis_output$age_months == 0]),
+                                                                              replace = TRUE)
 
 
-   if (disease == "Cholera") {
-     dis_output$ors_consumed_litres <- sample(1:10, numcases, replace = TRUE)
-     dis_output$iv_fluids_received_litres <- sample(1:10, numcases, replace = TRUE)
-   }
+                    if (disease == "Cholera") {
+                      dis_output$ors_consumed_litres <- sample(1:10, numcases, replace = TRUE)
+                      dis_output$iv_fluids_received_litres <- sample(1:10, numcases, replace = TRUE)
+                    }
 
-  # return dataset as a tibble
-  dplyr::as_tibble(dis_output)
+                    # return dataset as a tibble
+                    dplyr::as_tibble(dis_output)
 
 }
 
