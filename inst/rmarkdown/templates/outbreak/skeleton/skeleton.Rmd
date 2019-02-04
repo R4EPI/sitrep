@@ -490,7 +490,7 @@ mortality_rate(deaths, population, multiplier = 10^4) %>%
 
 #### 2x2 tables
 
-```{r two_by_two, message = FALSE, warning = FALSE}
+```{r two_by_two, message = FALSE, warning = FALSE, results = 'asis'}
 outcome <- linelist_cleaned$outcome == "Death"
 is_male <- linelist_cleaned$sex == "Male"
 is_child <- as.integer(linelist_cleaned$age) <= 12
