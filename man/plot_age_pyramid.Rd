@@ -2,11 +2,11 @@
 % Please edit documentation in R/age-pyramid.R
 \name{plot_age_pyramid}
 \alias{plot_age_pyramid}
-\title{Plot a population pyramid (age-sex) from a dataframe.
-This assumes that your variables are called "age_group" and "sex", respectively.}
+\title{Plot a population pyramid (age-sex) from a dataframe.}
 \usage{
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
-  vertical_lines = FALSE)
+  stack_by = split_by, vertical_lines = FALSE,
+  horizontal_lines = TRUE)
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}
@@ -17,13 +17,22 @@ group categories. Defaults to "age_group"}
 \item{split_by}{the name of a column in the data frame that defines the
 the bivariate column. Defaults to "sex"}
 
+\item{stack_by}{the name of the column in the data frame to use for shading
+the bars}
+
 \item{vertical_lines}{If you would like to add dashed vertical lines to help
-visual interpretation of numbers. Default is to not show (FALSE),
-to turn on write TRUE.}
+visual interpretation of numbers. Default is to not show (\code{FALSE}),
+to turn on write \code{TRUE}.}
+
+\item{horizontal}{lines If \code{TRUE} (default), horizontal dashed lines will
+appear behind the bars of the pyramid}
 }
 \description{
 Plot a population pyramid (age-sex) from a dataframe.
-This assumes that your variables are called "age_group" and "sex", respectively.
+}
+\note{
+if \code{split_by} and \code{stack_by} are not the same, The values of \code{spit_by}
+will show up as labels at the top of the pyramid.
 }
 \examples{
 library(ggplot2)
@@ -32,7 +41,7 @@ set.seed(2018-01-15)
 ages <- cut(sample(80, 150, replace = TRUE),
             breaks = c(0, 5, 10, 30, 90), right = FALSE)
 sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
-ill  <- sample(0:1, 150, replace = TRUE)
+ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
 dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
 
 # Create the age pyramid, stratifying by sex
@@ -42,4 +51,14 @@ print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
 ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
   theme_bw(base_size = 16) +
   labs(title = "Age groups by case definition")
+print(ap)
+
+# Stratify by multiple factors
+ap   <- plot_age_pyramid(dat, 
+                         age_group = "AGE", 
+                         split_by = "sex", 
+                         stack_by = "ill",
+                         vertical_lines = TRUE) +
+  labs(title = "Age groups by case definition and sex")
+print(ap)
 }
