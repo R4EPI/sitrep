@@ -7,14 +7,14 @@
 #' (this can probably be deleted once dictionaries standardise)
 #' @param numcases For fake data, specify the number of cases you want (default is 300)
 #' @param tibble Return data dictionary as a tidyverse tibble (default is TRUE)
-#' @import rio
-#' @import epitrix
-#' @import dplyr
+#' @importFrom rio import
+#' @importFrom epitrix clean_labels
+#' @importFrom tibble as_tibble
 #' @export
 
 
 # function to
-msf_dict <- function(name = "MSF-outbreak-dict.xls", disease, tibble = TRUE) {
+msf_dict <- function(disease, name = "MSF-outbreak-dict.xls", tibble = TRUE) {
 
   # get excel file path (need to specify the file name)
   path <- system.file("extdata", name, package = "sitrep")
@@ -93,66 +93,62 @@ gen_data <- function(disease, varnames = "shortname_export", numcases = 300) {
   # colnames(dat_output) <- epitrix::clean_labels(colnames(dat_output))
 
   # define variables that do not have any contents in the data dictionary
-  empties <- names(dat_output[ , which(apply(!is.na(dat_output), FUN = sum, MARGIN = 2) == 0)])
 
   # create a NEW empty dataframe with the names from the data dictionary
   dis_output <- data.frame(matrix(ncol = ncol(dat_output), nrow = numcases) )
   colnames(dis_output) <- colnames(dat_output)
 
   # take samples for vars with defined options (non empties)
-  dis_output[, !names(dat_output) %in% empties] <- apply(dat_output[, !names(dat_output) %in% empties],
-                                                         MARGIN = 2,
-                                                         function(x) sample(x[!is.na(x)],
-                                                                            numcases, replace = TRUE))
+  categories <- lapply(dat_output, function(i) i[!is.na(i)])
+  categories <- categories[lengths(categories) > 0]
+  for (i in names(categories)) {
+    dis_output[[i]] <- sample(categories[[i]], numcases, replace = TRUE)
+  }
 
-  # Use data dicationary to define which vars are dates
+
+  # Use data dictionary to define which vars are dates
   datevars <- dat_dict$shortname_export[dat_dict$value_type == "DATE"]
+  
   # sample between two dates
-  dis_output[ , datevars] <- replicate(length(datevars),
-                                       sample(seq(as.Date("2018-01-01"), as.Date("2018-04-30"),
-                                                  by = "day"), numcases, replace = TRUE))
-  dis_output[ , datevars] <- lapply(dis_output[ , datevars], function(x) as.Date(x, origin = "1960-10-01"))
+  posidates <- seq(as.Date("2018-01-01"), as.Date("2018-04-30"), by = "day")
 
-
+  # fill the date columns with dates
+  # NOTE: check if there are any dates that MUST come before others
+  for (i in datevars) {
+    dis_output[[i]] <- sample(posidates, numcases, replace = TRUE)
+  }
 
   # Patient identifiers
-  dis_output$case_number <- paste0("A", 1:numcases)
+  dis_output$case_number <- sprintf("A%d", seq(numcases))
 
   # treatment side facility
-  dis_output$treatment_facility_site <- sample(paste0("Site ", 1:50),
+  dis_output$treatment_facility_site <- sample(sprintf("Site %d", 1:50),
                                                numcases, replace = TRUE)
 
   # age_years
   # sample 0:100
-  dis_output$age_years <- sample(0:100,
-                                 numcases, replace = TRUE)
+  dis_output$age_years <- sample(0:100, numcases, replace = TRUE)
 
   # age_month
   dis_output$age_months <- dis_output$age_years * 12
-  dis_output$age_months[dis_output$age_years == 0] <- sample(0:12,
-                                                             length(dis_output$age_months[dis_output$age_years == 0]),
-                                                             replace = TRUE)
+  NO_YEARS <- dis_output$age_years == 0
+  dis_output$age_months[NO_YEARS] <- sample(0:12, sum(NO_YEARS), replace = TRUE)
 
 
   # age_days
   dis_output$age_days <- dis_output$age_years * 365
-  dis_output$age_days[dis_output$age_years == 0 &
-                      dis_output$age_months > 0] <- 30 * dis_output$age_months[dis_output$age_years == 0 &
-                      dis_output$age_months > 0]
-                    dis_output$age_days[dis_output$age_years == 0 &
-                                        dis_output$age_months == 0] <- sample(0:30,
-                                                                              length(dis_output$age_days[dis_output$age_years == 0 &
-                                                                                     dis_output$age_months == 0]),
-                                                                              replace = TRUE)
+  SOME_MONTHS <- dis_output$age_months > 0
+  dis_output$age_days[NO_YEARS & SOME_MONTHS] <- 30 * dis_output$age_days[NO_YEARS & SOME_MONTHS]
+  dis_output$age_days[NO_YEARS & !SOME_MONTHS] <- sample(0:30, sum(NO_YEARS & !SOME_MONTHS), replace = TRUE)
 
 
-                    if (disease == "Cholera") {
-                      dis_output$ors_consumed_litres <- sample(1:10, numcases, replace = TRUE)
-                      dis_output$iv_fluids_received_litres <- sample(1:10, numcases, replace = TRUE)
-                    }
+  if (disease == "Cholera") {
+    dis_output$ors_consumed_litres <- sample(1:10, numcases, replace = TRUE)
+    dis_output$iv_fluids_received_litres <- sample(1:10, numcases, replace = TRUE)
+  }
 
-                    # return dataset as a tibble
-                    dplyr::as_tibble(dis_output)
+  # return dataset as a tibble
+  dplyr::as_tibble(dis_output)
 
 }
 
