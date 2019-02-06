@@ -183,6 +183,10 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age,
 #                                              upper = 100, 
 #                                              by = 10)
 
+# If you already have an age group variable defined, you should manually
+# arrange the categories
+# linelist_cleaned$age_group <- factor(linelist_cleaned$age_group,
+#                                      c("0-4y", "5-9y", "10-29y", "30-49y", "50-79y", "80+y"))
 
 # Change the levels of a categorical variable
 linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex, 
