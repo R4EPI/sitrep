@@ -203,6 +203,13 @@ linelist_cleaned <- linelist_cleaned %>%
     TRUE                                          ~ "Unknown"
   ))
 
+# fix any misspellings in the data
+# linelist_cleaned <- linelist_cleaned %>%
+#   mutate(province = recode(province,
+#     # List all incorrect mis-spellings here
+#     "Peking" = "Beijing"
+#   ))
+
 # create an epiweek variable 
 linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
 
