@@ -108,7 +108,7 @@ gen_data <- function(disease, varnames = "shortname_export", numcases = 300) {
 
   # Use data dictionary to define which vars are dates
   datevars <- dat_dict$shortname_export[dat_dict$value_type == "DATE"]
-  
+
   # sample between two dates
   posidates <- seq(as.Date("2018-01-01"), as.Date("2018-04-30"), by = "day")
 
@@ -121,9 +121,13 @@ gen_data <- function(disease, varnames = "shortname_export", numcases = 300) {
   # Patient identifiers
   dis_output$case_number <- sprintf("A%d", seq(numcases))
 
-  # treatment side facility
+  # treatment site facility
   dis_output$treatment_facility_site <- sample(sprintf("Site %d", 1:50),
                                                numcases, replace = TRUE)
+
+  # patient origin
+  dis_output$patient_origin_free_text <- sample(c("Village A", "Village B", "Village C", "Village D"),
+                                                numcases, replace = TRUE)
 
   # age_years
   # sample 0:100
