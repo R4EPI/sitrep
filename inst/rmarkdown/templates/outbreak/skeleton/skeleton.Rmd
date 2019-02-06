@@ -28,9 +28,9 @@ report.
 
 ```{r setup, include=FALSE}
 # hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE)
+knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 16, fig.height = 12)
 # set default NA to - in output, define figure width/height
-options(knitr.kable.NA = "-", fig.width = 16, fig.height = 12)
+options(knitr.kable.NA = "-")
 
 
 library(knitr) # for creating output doc
