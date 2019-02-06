@@ -169,9 +169,8 @@ linelist_cleaned <- left_join(linelist_cleaned, lab_results,
 # Next, document anything to clean data. Use dplyr for that.
 
 # make sure all date variables are formatted as dates 
-linelist_cleaned[ , grep("date|Date", names(linelist_cleaned))] <- lapply(
-                    linelist_cleaned[ , grep("date|Date", names(linelist_cleaned))], 
-                    as.Date)
+linelist_cleaned <- linelist_cleaned %>%
+  mutate_at(vars(matches("date|Date")), as.Date)
 
 
 # create an age group variable by specifying categorical breaks
