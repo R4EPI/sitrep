@@ -10,9 +10,9 @@
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (`FALSE`),
 #' to turn on write `TRUE`.
-#' @param horizontal lines If `TRUE` (default), horizontal dashed lines will
-#'   appear behind the bars of the pyramid 
-#' 
+#' @param horizontal_lines If `TRUE` (default), horizontal dashed lines will
+#'   appear behind the bars of the pyramid
+#'
 #' @note if `split_by` and `stack_by` are not the same, The values of `spit_by`
 #'   will show up as labels at the top of the pyramid.
 #' @import ggplot2
@@ -37,9 +37,9 @@
 #' print(ap)
 #'
 #' # Stratify by multiple factors
-#' ap   <- plot_age_pyramid(dat, 
-#'                          age_group = "AGE", 
-#'                          split_by = "sex", 
+#' ap   <- plot_age_pyramid(dat,
+#'                          age_group = "AGE",
+#'                          split_by = "sex",
 #'                          stack_by = "ill",
 #'                          vertical_lines = TRUE) +
 #'   labs(title = "Age groups by case definition and sex")
@@ -86,7 +86,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                        breaks = the_breaks,
                        labels = abs(the_breaks)) +
     theme_classic() +
-    theme(axis.line.y.left = element_blank()) 
+    theme(axis.line.y.left = element_blank())
 
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
@@ -96,15 +96,15 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   if (horizontal_lines == TRUE) {
     pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
   }
-  pyramid <- pyramid + 
-    geom_hline(yintercept = 0) # add vertical line 
+  pyramid <- pyramid +
+    geom_hline(yintercept = 0) # add vertical line
 
   if (stack_by != split_by) {
-    pyramid <- pyramid + 
-      annotate(geom = "label", 
-               x = max_age_group, 
-               y = -step_size, 
-               vjust = 0.5, 
+    pyramid <- pyramid +
+      annotate(geom = "label",
+               x = max_age_group,
+               y = -step_size,
+               vjust = 0.5,
                hjust = 1,
                label = sex_levels[[1]]) +
       annotate(geom = "label",
@@ -112,7 +112,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                y = step_size,
                vjust = 0.5,
                hjust = 0,
-               label = sex_levels[[2]]) 
+               label = sex_levels[[2]])
   }
   pyramid
 }
