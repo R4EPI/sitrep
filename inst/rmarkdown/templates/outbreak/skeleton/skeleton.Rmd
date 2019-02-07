@@ -545,7 +545,7 @@ The peak of the outbreak was in `r ISOweek(find_peak(inc_week_7))`
 
 ```{r epicurve, message = FALSE}
 # plot your epicurve
-plot(inc_week_7, show_cases = TRUE, border = "black") + 
+plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   theme_classic() + # give classic black/white graph 
   # add labels to axes and below chart
@@ -553,9 +553,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
        captions = "Source: MoH of China data on xx/yy/zzzz") + 
   # change visuals of dates and remove legend title
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank()) + 
-  # change interval of date labels
-  scale_x_date(date_breaks = "1 week")
+        legend.title = element_blank())  
 ```
 
 You may also want to stratify by gender. 
@@ -567,7 +565,7 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset,
                         groups = linelist_cleaned$sex)
 
 
-plot(inc_week_7, show_cases = TRUE, border = "black") + 
+plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   theme_classic() + # give classic black/white graph 
@@ -576,9 +574,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
        captions = "Source: MoH of China data on xx/yy/zzzz") + 
   # change visuals of dates, remove legend title and move legend to bottom
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank(), legend.position = "bottom") + 
-  # change interval of date labels
-  scale_x_date(date_breaks = "1 week")
+        legend.title = element_blank(), legend.position = "bottom") 
 ```
 
 
@@ -591,7 +587,7 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset,
                         groups = linelist_cleaned$case_def)
 
 
-plot(inc_week_7, show_cases = TRUE, border = "black") + 
+plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   theme_classic() + # give classic black/white graph 
@@ -600,9 +596,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
        captions = "Source: MoH of China data on xx/yy/zzzz") + 
   # change visuals of dates, remove legend title and move legend to bottom
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank(), legend.position = "bottom") + 
-  # change interval of date labels
-  scale_x_date(date_breaks = "1 week")
+        legend.title = element_blank(), legend.position = "bottom") 
 ```
 
 
@@ -615,7 +609,7 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def
                         groups = linelist_cleaned$sex[linelist_cleaned$case_def == "Confirmed"])
 
 
-plot(inc_week_7, show_cases = TRUE, border = "black") + 
+plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   theme_classic() + # give classic black/white graph 
@@ -624,9 +618,7 @@ plot(inc_week_7, show_cases = TRUE, border = "black") +
        captions = "Source: MoH of China data on xx/yy/zzzz") + 
   # change visuals of dates, remove legend title and move legend to bottom
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank(), legend.position = "bottom") + 
-  # change interval of date labels
-  scale_x_date(date_breaks = "1 week")
+        legend.title = element_blank(), legend.position = "bottom") 
 ```
 
 
@@ -837,4 +829,3 @@ linelist_cleaned %>%
   ) %>% 
   kable(digits = 3, format.args = list(big.mark = ",")) # set thousands separator
 ```
-
