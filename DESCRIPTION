@@ -1,35 +1,35 @@
 Type: Package
-Package: epireports
+Package: sitrep
 Title: Report templates and helper functions for EPI
 Version: 0.1.0
 Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
                     role = c("aut", "cre")))
 Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
+Imports: 
+    binom,
+    dplyr (>= 0.7),
+    epitools,
+    epitrix,
+    ggplot2,
+    here,
+    incidence,
+    ISOweek,
+    knitr,
+    outbreaks,
+    raster,
+    rio,
+    rlang,
+    rmarkdown,
+    scales,
+    sf,
+    survey,
+    tibble,
+    huxtable,
+    tidyr
+Suggests:
+    testthat
 Encoding: UTF-8
 LazyData: true
-Suggests:
-    testthat,
-    rmarkdown, 
-    knitr, 
-    epitrix, 
-    here, 
-    ISOweek, 
-    OpenStreetMap,
-    raster,
-    sf, 
-    tmap,
-    tmaptools
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.1
-Imports: 
-    scales,
-    ggplot2,
-    survey,
-    rlang,
-    binom,
-    incidence,
-    outbreaks,
-    rlang,
-    dplyr,
-    tidyr, 
-    epitools

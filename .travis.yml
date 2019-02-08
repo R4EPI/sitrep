@@ -2,6 +2,21 @@
 language: r
 cache: packages
 
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:chris-lea/libsodium'
+      - sourceline: 'ppa:opencpu/jq'
+    packages:
+      - libsodium-dev
+      - libprotobuf-dev
+      - libprotoc-dev
+      - protobuf-compiler
+      - libudunits2-dev
+      - libv8-3.14-dev
+      - libjq-dev
+      - libgdal-dev
+
 matrix:
   include:
     - os: linux

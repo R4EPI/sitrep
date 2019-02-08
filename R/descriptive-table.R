@@ -10,8 +10,8 @@
 #' @importFrom dplyr group_by ungroup bind_rows summarise_all funs count mutate mutate_at
 #' @importFrom tidyr complete gather unite spread
 #' @importFrom rlang sym "!!" ".data" ":="
+#' @importFrom stats setNames
 #' @export
-
 descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
                         coltotals = FALSE, rowtotals = FALSE) {
 
@@ -38,7 +38,7 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
     count_data <- tidyr::gather(count_data, key = "variable", value = "value", c(.data$n, .data$prop))
     count_data <- tidyr::unite(count_data, "temp", !!sym_group, .data$variable, sep = "_")
     count_data <- tidyr::spread(count_data, .data$temp, .data$value)
-    
+
   } else {
     # get counts and props for just a single variable
     count_data <- dplyr::count(df, !!sym_count)
@@ -61,7 +61,7 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
     # change first column (with var levels) in to a character (for rbinding)
     count_data <- dplyr::mutate(count_data, !!sym_count := as.character(!!sym_count))
     # summarise all columns that are numeric, make first col "Total", bind as a row
-    csummaries <- summarise_if(count_data, is.numeric, sum, na.rm = TRUE) 
+    csummaries <- dplyr::summarise_if(count_data, is.numeric, sum, na.rm = TRUE)
     count_data <- dplyr::bind_rows(count_data, csummaries)
     count_data[nrow(count_data), 1] <- "Total"
   }
