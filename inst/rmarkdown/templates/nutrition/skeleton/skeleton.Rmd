@@ -7,6 +7,9 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(knitr)
+
+# remotes::install_github("dirkschumacher/anthro")
+library(anthro) # for the WHO Child Growth Standards.
 ```
 
 # EXCECUTIVE SUMMARY  
@@ -29,13 +32,162 @@ library(knitr)
 
 ### Definitions and standards
 
+We used the following definitions for the analysis of the survey results for Weight for Height z-scores (WHZ):
+
+* Global acute malnutrition (GAM): a WHZ score of less than (<) -2 and/or oedema;
+* Moderate acute malnutrition: WHZ score <-2 and ≥ -3 and no oedema; 
+* Severe acute malnutrition (SAM): WHZ score <-3 and/or oedema.
+
+We used the following definitions for the analysis of the survey results for MUAC measurements:
+
+* Global acute malnutrition (GAM): MUAC of <125mm and/or oedema;
+* Moderate acute malnutrirtion: MUAC <125mm and >= 115mm and no oedema;
+* Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
+
+In order to estimate stunting in the surveyed population, we looked at Height for Age z-scores (HAZ) and used the following definitions:
+
+* Stunting: HAZ score <-2;
+* Moderate stunting: HAZ score >=-3 and <-2; Severe stunting: HAZ score <-3.
+* Exclusion of z-scores from Observed mean SMART flags included: WHZ -3 to 3; HAZ -3 to 3; WAZ -3 to 3.
+
 # Results
+
+```{r}
+# read in data
+# you can use readxl to read in Excel files
+survey_data <- readxl::read_xlsx("<your_data>")
+
+colnames(survey_data) <- epitrix::clean_labels(colnames(survey_data))
+
+# then document all data cleaning you do
+
+# filter out all records that do not have a valid sex value
+survey_data <- filter(survey_data, sex %in% c(0, 1)) %>% 
+  mutate(sex = sex + 1L)
+
+# make weight and height numeric
+survey_data$height <- as.numeric(survey_data$height)
+
+# remove all entires for which we do not have an age in months
+survey_data <- filter(survey_data, age_months > 0, age_months < 60)
+
+survey_data$age_group <- age_categories(survey_data$age_months, breakers = c(6, 18, 30, 42, 54, 60))
+
+# drop unused group
+survey_data$age_group <- forcats::fct_drop(survey_data$age_group, "60+")
+```
+
 
 ## Characteristics of the sampled children
 
+```{r}
+plot_age_pyramid(filter(survey_data, !is.na(age_group)))
+```
+
+
 ## Anthropometric results (based on WHO standards 2006)
 
+```{r}
+# we can use the anthro package to compute z-scores
+zscore_results <- with(survey_data, anthro_zscores(
+  sex = sex,
+  age = age_months,
+  is_age_in_month = TRUE,
+  weight = weight,
+  lenhei = height,
+  oedema = oedema,
+  armc = muac_mm_left_arm / 10 # convert to cm
+))
 
+# the result is a data.frame with the different indicators and columns
+# indicating if they are flagged
+# indicators that could not be computed are NA
+```
+
+### Acute malnutrition
+
+```{r}
+library(ggplot2)
+# only consider z-scores that are not flagged
+zcurve(zscore_results$zwei[zscore_results$fwei == 0]) +
+  labs(title = "Weight-for-Height Z-scores") +
+  theme_classic()
+```
+
+
+
+```{r}
+# here we use the zscores to classify children
+weigth_for_height <- zscore_results %>% 
+  transmute(GAM = tidyr::replace_na(zwei < -2 | survey_data$oedema == "y", FALSE), 
+            MAM = tidyr::replace_na(-3 <= zwei & zwei < -2),
+            SAM = tidyr::replace_na(zwei < -3 |  survey_data$oedema == "y"))
+```
+
+Prevalence of acute malnutrition based on weight-for-height z-scores (and/or oedema) and by sex, children 6-59 months
+
+```{r}
+# we can either estimate the prevalence using simple couting of the z-scores
+# or use anthro_prevalence to use the survey package to obtain better estimates
+stratify_zscores(dplyr::bind_cols(survey_data, weigth_for_height), by = "sex", GAM, MAM, SAM) %>%
+  knitr::kable()
+```
+
+
+Prevalence of acute malnutrition by age, based on weight-for-height z-scores, children 6-59 months
+
+```{r}
+# quick prototype to go towards the expected result in the report
+cbind(survey_data, weigth_for_height) %>% 
+  mutate(Normal = !GAM & !MAM & !SAM) %>% 
+  select(age_group, MAM, SAM, Normal) %>% 
+  filter(!is.na(age_group)) %>% 
+  tidyr::gather(class, flagged, -age_group) %>% 
+  group_by(age_group, class) %>% 
+  summarise(n = n(), 
+            flagged = sum(flagged, na.rm = TRUE), 
+            rel = flagged / n, 
+            !!! sitrep:::splice_df(binom::binom.wilson(flagged, n), lower, upper)) %>% 
+  mutate(value = paste0(n, " - ", flagged, " ", fmt_ci(rel, lower, upper))) %>% 
+  select(age_group, class, value) %>% 
+  tidyr::spread(class, value) %>% 
+  knitr::kable()
+```
+
+
+### Chronic malnutrition
+
+```{r}
+zcurve(zscore_results$zlen[zscore_results$flen == 0]) +
+  labs(title = "Length/Height-for-age Z-scores") +
+  theme_classic()
+```
+
+
+### Design effects and excluded individuals
+
+```{r}
+# TODO
+```
+
+
+### Programme coverage
+
+```{r}
+# TODO
+```
+
+### Sitting height
+
+```{r}
+# TODO
+```
+
+### Food distribution
+
+```{r}
+# TODO
+```
 
 # Discussion
 
