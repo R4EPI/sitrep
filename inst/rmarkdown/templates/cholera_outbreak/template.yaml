@@ -1,0 +1,4 @@
+name: Cholera outbreak report
+description: >
+  An automated outbreak report template for cholera
+create_dir: false

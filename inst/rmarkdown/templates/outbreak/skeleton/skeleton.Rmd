@@ -71,6 +71,7 @@ ggplot2::theme_set(theme_bw(base_size = 18))
 #                                          password = askpass::askpass(prompt = "please enter file
 #                                                                      password"))
 
+# load an example dataset (delete if you have your own data)
 linelist_raw <- outbreaks::fluH7N9_china_2013
 
 ## Fixing variable names ----------------------
@@ -97,7 +98,7 @@ linelist_cleaned <- rename(linelist_cleaned, sex = gender)
 
 
 ```{r add_extra_data}
-# THIS CAN BE DELETED WHEN WE USE A DIFFERENT DATASET 
+# THIS CAN BE DELETED IF YOUR DATA HAS THIS ALREADY A DIFFERENT DATASET 
 # its just to be able to demonstrate posibilities
 
 # generate artificial lab tests, symptoms and contact vars
@@ -325,7 +326,6 @@ filter(linelist_cleaned, age_group == "10-29") %>%
 
 Age pyramid
 
-
 ```{r age_pyramid, warning=FALSE}
 # plot age pyramid 
 plot_age_pyramid(linelist_cleaned, age_group = "age_group", split_by = "sex") + 
@@ -354,7 +354,6 @@ linelist_cleaned %>%
 ```
 
 CFR by sex 
-
 
 ```{r cfr_by_sex}
 # group by known outcome and sex
@@ -398,7 +397,6 @@ linelist_cleaned %>%
 ```
 
 CFR by case definition 
-
 
 ```{r cfr_by_case_def}
 # group by known outcome and case definition 
