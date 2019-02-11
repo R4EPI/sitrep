@@ -27,7 +27,7 @@ report for cholera.
 
 ```{r setup, include=FALSE}
 # hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 16, fig.height = 12)
+knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
 # set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
 
@@ -65,10 +65,9 @@ ggplot2::theme_set(theme_bw(base_size = 18))
 # For password protected Excel file 
 # use the excel.link package 
 # library(excel.link)
-# linelist_raw <- excel.link::xl.read.file("linelist.xlsx",
-#                                          xl.sheet = "Sheet1",
-#                                          password = askpass::askpass(prompt = "please enter file
-#                                                                      password"))
+# linelist_raw <- xl.read.file("linelist.xlsx",
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass(prompt = "please enter file password"))
 
 # get MSF data dictionary for cholera 
 linelist_dict <- msf_dict("Cholera")
@@ -164,10 +163,9 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 # For password protected Excel file 
 # use the excel.link package 
 # library(excel.link)
-# linelist_raw <- excel.link::xl.read.file("linelist.xlsx",
-#                                          xl.sheet = "Sheet1",
-#                                          password = askpass::askpass(prompt = "please enter file
-#                                                                      password"))
+# linelist_raw <- xl.read.file("linelist.xlsx",
+#                             xl.sheet = "Sheet1",
+#                             password = askpass::askpass("please enter file password"))
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 # 
@@ -177,58 +175,58 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 ## Fixing variable names ----------------------
 
 # rename your variable names to fit the data dictionary 
-# before the equals is the old name and after is the new name
+# before the equals is the new name and after is the old name
 # the first two have been filled as examples 
   # (where your var names are readmittedvar and pregnantoutcome)
 # see the standardise_clean_data code chunk on how to recode your variables
 # linelist_cleaned <- rename(linelist_cleaned, 
-#                             readmittedvar   = readmission                     ,
-#                             pregnantoutcome = pregnancy_outcome_at_exit       ,
-#                                             = prescribed_antibiotics          ,
-#                                             = oedema                          ,
-#                                             = prescribed_zinc_supplement      ,
-#                                             = dehydration_severity_during_stay,
-#                                             = dehydration_level_at_admission  ,
-#                                             = residential_status_brief        ,
-#                                             = malaria_rdt_at_admission        ,
-#                                             = event_file_type                 ,
-#                                             = exit_status                     ,
-#                                             = pregnant                        ,
-#                                             = cholera_referred_to             ,
-#                                             = cholera_referred_from           ,
-#                                             = time_to_death                   ,
-#                                             = previously_vaccinated           ,
-#                                             = treatment_facility_site         ,
-#                                             = cholera_treatment_facility_type ,
-#                                             = treatment_location              ,
-#                                             = patient_origin                  ,
-#                                             = sex                             ,
-#                                             = msf_involvement                 ,
-#                                             = trimester                       ,
-#                                             = fluids_treatment_plan           ,
-#                                             = foetus_alive_at_admission       ,
-#                                             = previous_vaccine_doses_received ,
-#                                             = cholera_culture_result          ,
-#                                             = cholera_rdt_result              ,
-#                                             = cholera_pcr_result              ,
-#                                             = delivery_event                  ,
-#                                             = comments_on_lab_results         ,
-#                                             = age_years                       ,
-#                                             = treatment_facility_name         ,
-#                                             = age_days                        ,
-#                                             = date_of_last_vaccination        ,
-#                                             = date_lab_sample_taken           ,
-#                                             = date_of_onset                   ,
-#                                             = age_months                      ,
-#                                             = patient_origin_free_text        ,
-#                                             = case_number                     ,
-#                                             = date_of_admission               ,
-#                                             = iv_fluids_received_litres       ,
-#                                             = date_of_consultation_admission  ,
-#                                             = arrival_date_in_area_if_3m      ,
-#                                             = date_of_exit                    ,
-#                                             = ors_consumed_litres
-#                             )
+#  readmission                      = readmittedvar,
+#  pregnancy_outcome_at_exit        = pregantntoutcome,
+#  prescribed_antibiotics           =     ,
+#  oedema                           =     ,
+#  prescribed_zinc_supplement       =     ,
+#  dehydration_severity_during_stay =     ,
+#  dehydration_level_at_admission   =     ,
+#  residential_status_brief         =     ,
+#  malaria_rdt_at_admission         =     ,
+#  event_file_type                  =     ,
+#  exit_status                      =     ,
+#  pregnant                         =     ,
+#  cholera_referred_to              =     ,
+#  cholera_referred_from            =     ,
+#  time_to_death                    =     ,
+#  previously_vaccinated            =     ,
+#  treatment_facility_site          =     ,
+#  cholera_treatment_facility_type  =     ,
+#  treatment_location               =     ,
+#  patient_origin                   =     ,
+#  sex                              =     ,
+#  msf_involvement                  =     ,
+#  trimester                        =     ,
+#  fluids_treatment_plan            =     ,
+#  foetus_alive_at_admission        =     ,
+#  previous_vaccine_doses_received  =     ,
+#  cholera_culture_result           =     ,
+#  cholera_rdt_result               =     ,
+#  cholera_pcr_result               =     ,
+#  delivery_event                   =     ,
+#  comments_on_lab_results          =     ,
+#  age_years                        =     ,
+#  treatment_facility_name          =     ,
+#  age_days                         =     ,
+#  date_of_last_vaccination         =     ,
+#  date_lab_sample_taken            =     ,
+#  date_of_onset                    =     ,
+#  age_months                       =     ,
+#  patient_origin_free_text         =     ,
+#  case_number                      =     ,
+#  date_of_admission                =     ,
+#  iv_fluids_received_litres        =     ,
+#  date_of_consultation_admission   =     ,
+#  arrival_date_in_area_if_3m       =     ,
+#  date_of_exit                     =     ,
+#  ors_consumed_litres              =     
+#  )
 
 ```
 
@@ -322,11 +320,11 @@ linelist_cleaned <- linelist_cleaned %>%
 # add under 2 years to the age_years variable
 # data dictionary defines that under 2s dont have year filled in (but months/days instead)
 linelist_cleaned <- linelist_cleaned %>% 
-  mutate( age_years = case_when(
+  mutate(age_years = case_when(
     is.na(age_years) & is.na(age_months) ~ as.integer(age_days / 365.25),
-    is.na(age_years) ~ as.integer(age_months / 12),
-    TRUE ~ age_years
-    ))
+    is.na(age_years)                     ~ as.integer(age_months / 12),
+    TRUE                                 ~ age_years
+  ))
 
 
 # create an age group variable by specifying categorical breaks (of years)
@@ -347,7 +345,7 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 
 # create age group variable for under 5 years based on months
 linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months, 
-                                                         breakers = c(0, 5, 8, 11, 23))
+                                                 breakers = c(0, 5, 8, 11, 23))
                                        
 # Change the level labels of a categorical variable
 linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex, 
@@ -363,33 +361,25 @@ linelist_cleaned <- linelist_cleaned %>%
                                            ">4-24 hours", 
                                            ">24-48 hours", 
                                            ">48 hours")
-                                ) )
+  ))
 
 # change the order of levels of multiple categorical variables
-linelist_cleaned <- linelist_cleaned %>% 
-  mutate(dehydration_level_at_admission = factor(dehydration_level_at_admission, 
-                                                 levels = c("None", 
-                                                            "Some", 
-                                                            "Severe", 
-                                                            "Unknown")
-                                                 ),
-         dehydration_severity_during_stay = factor(dehydration_severity_during_stay,
-                                                   levels = c("None", 
-                                                            "Some", 
-                                                            "Severe", 
-                                                            "Unknown"))
-         )
+linelist_cleaned <- linelist_cleaned %>%
+  mutate_at(vars(starts_with("dehydration")), 
+            funs(factor(., levels = c("None", "Some", "Severe", "Unknown")))
+           )
 
 # create a case definition variable 
 # grepl is used to search for words within a character variable
 # the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
+# starting from the specific to the general
 # TRUE assigns all remaining rows 
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
-    grepl("Positive", .$cholera_pcr_result) |  
-      grepl("Positive", .$cholera_culture_result)   ~ "Confirmed",
-    grepl("Positive", .$cholera_rdt_result)         ~ "Probable",
-    TRUE                                            ~ "Suspected"
+    grepl("Positive", cholera_pcr_result)     ~ "Confirmed",  
+    grepl("Positive", cholera_culture_result) ~ "Confirmed",
+    grepl("Positive", cholera_rdt_result)     ~ "Probable",
+    TRUE                                      ~ "Suspected"
   ))
 
 
@@ -454,10 +444,10 @@ linelist_cleaned <- linelist_cleaned %>%
 
 From the start of the outbreak up until `r reporting_week` there were a 
 total of `r nrow(linelist_cleaned)` cases. There were
-`r linelist_cleaned %>% filter(sex == "Female") %>% count()` females affected and
-`r linelist_cleaned %>% filter(sex == "Male") %>% count()` males. 
+`r linelist_cleaned %>% filter(sex == "Female") %>% count() %>% pull(n)` females affected and
+`r linelist_cleaned %>% filter(sex == "Male") %>% count() %>% pull(n)` males. 
 
-The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% select(age_group)` years. 
+The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` years. 
 
 
 #### Demographics 
@@ -504,13 +494,17 @@ Age pyramid by case definition
 There were `r sum(is.na(linelist_cleaned$sex))` cases missing information on sex, 
 `r sum(is.na(linelist_cleaned$case_def))` missing case definitions and 
 `r sum(is.na(linelist_cleaned$age_group))` missing age group.
+
 ```{r age_pyramid, warning=FALSE}
 # plot age pyramid 
  
-plot_age_pyramid(linelist_cleaned, age_group = "age_group", split_by = "sex", 
+plot_age_pyramid(linelist_cleaned, 
+                 age_group = "age_group", 
+                 split_by = "sex", 
                  stack_by = "case_def") + 
-  labs(y = "Cases (n)", x = "Age group (years)") +                    # change axis labels (nb. x/y flip)
-  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
+  labs(y = "Cases (n)", x = "Age group (years)") + # change axis labels (nb. x/y flip)
+  theme(legend.position = "bottom") +              # move legend to bottomw
+  theme(legend.title = element_blank())            # remove title
 ```
 
 
@@ -524,14 +518,17 @@ plot_age_pyramid(linelist_cleaned, age_group = "age_group", split_by = "sex",
 #   theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
 ```
 
+```{r treatment_plans, warning = FALSE}
+trtpln <- descriptive(linelist_cleaned, counter = "fluids_treatment_plan") %>%
+  mutate(to_print = sprintf("%d (%.1f%%)", n, prop))
+trtplnA <- filter(trtpln, grepl("A$", fluids_treatment_plan)) %>% pull(to_print)
+trtplnB <- filter(trtpln, grepl("B$", fluids_treatment_plan)) %>% pull(to_print)
+trtplnC <- filter(trtpln, grepl("C$", fluids_treatment_plan)) %>% pull(to_print)
+```
 
-From the start of the outbreak, `r paste0(filter(descriptive(linelist_cleaned, counter = "fluids_treatment_plan"), fluids_treatment_plan == "Treatment plan A") %>% select(n), " (", filter(descriptive(linelist_cleaned, counter = "fluids_treatment_plan"), fluids_treatment_plan == "Treatment plan A") %>% select(prop), "%)")` 
-patients were admitted to treatment plan A, 
-`r paste0(filter(descriptive(linelist_cleaned, counter = "fluids_treatment_plan"), fluids_treatment_plan == "Treatment plan B") %>% select(n), " (", filter(descriptive(linelist_cleaned, counter = "fluids_treatment_plan"), fluids_treatment_plan == "Treatment plan B") %>% select(prop), "%)")`
-were admitted to treatment plan B, with 
-`r paste0(filter(descriptive(linelist_cleaned, counter = "fluids_treatment_plan"), fluids_treatment_plan == "Treatment plan C") %>% select(n), " (", filter(descriptive(linelist_cleaned, counter = "fluids_treatment_plan"), fluids_treatment_plan == "Treatment plan C") %>% select(prop), "%)")`
-being admitted to treatment plan C. 
-
+From the start of the outbreak, `r trtplnA` patients were admitted to treatment
+plan A, `r trtplnB` were admitted to treatment plan B, with `r trtplnC` being
+admitted to treatment plan C.
 
 Cases by treatment plan and case definition
 
@@ -551,7 +548,7 @@ descriptive(linelist_cleaned, "fluids_treatment_plan", "case_def",
 
 The median number of days admitted was `r median(linelist_cleaned$obs_days)`, 
 with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_cleaned$obs_days)` days. 
-A total of `r filter(linelist_cleaned, readmission == "Yes") %>% count()` patients were readmitted to the CTC. 
+A total of `r filter(linelist_cleaned, readmission == "Yes") %>% nrow()` patients were readmitted to the CTC. 
 
 
 Cases by dehyrdation severity at admission
@@ -579,8 +576,8 @@ descriptive(linelist_cleaned, "dehydration_severity_during_stay",
 
 #### Case fatality ratio 
 
-To date, there have been `r sum(grepl("Dead", exit_status))` deaths, of which 
-`r linelist_cleaned %>% filter(exit_status == "Dead on arrival") %>% count()` 
+To date, there have been `r sum(grepl("Dead", linelist_cleaned$exit_status))` deaths, of which 
+`r linelist_cleaned %>% filter(exit_status == "Dead on arrival") %>% nrow()` 
 were dead on arrival. 
 
 Among those who died, the time to death is shown below. 
@@ -604,16 +601,16 @@ The case fatality ratio among those with known outcomes is below
 ```{r overall_cfr}
 # use arguments from above to produce overal CFR
 linelist_cleaned %>% 
-  filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
+  filter(!is.na(exit_status)) %>%  # remove rows with missing outcome
   summarise(deaths = sum(DIED),    # tally deaths
-            population = n()) %>%                # count population
+            population = n()) %>%  # count population
   # calculate case fatality rate
   do(case_fatality_rate(.$deaths, .$population, mergeCI = TRUE)) %>% 
   rename("Deaths" = deaths,
          "Population" = population,
          "CFR (%)" = cfr,
          "95% CI" = ci) %>%
-  knitr::kable(digits = 2)                       # print nicely with 2 digits
+  knitr::kable(digits = 2)         # print nicely with 2 digits
 ```
 
 
@@ -624,8 +621,7 @@ The case fatality ratio by sex among those with known outcomes is below.
 linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
   group_by(sex) %>%                              # group by sex
-  summarise(deaths = sum(exit_status == "Dead in facility" |
-                           exit_status == "Dead on arrival"),        # tally deaths
+  summarise(deaths = sum(grepl("Dead", exit_status)),        # tally deaths
             population = n()) %>%                # tally population
   # calculate case fatality rate
   do(bind_cols(sex = .$sex, 
@@ -647,8 +643,7 @@ CFR by age group among those with known outcomes
 linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
   group_by(age_group) %>%                        # group by age_group
-  summarise(deaths = sum(exit_status == "Dead in facility" |
-                           exit_status == "Dead on arrival"),    # tally deaths
+  summarise(deaths = sum(grepl("Dead", exit_status)),    # tally deaths
             population = n()) %>%                # tally population
   # calculate case fatality rate
   do(bind_cols(age_group = .$age_group, 
@@ -669,8 +664,7 @@ CFR by case definition among those with known outcomes
 linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
   group_by(case_def) %>%                        # group by case_def
-  summarise(deaths = sum(exit_status == "Dead in facility" |
-                           exit_status == "Dead on arrival"),  # tally deaths
+  summarise(deaths = sum(grepl("Dead", exit_status)),    # tally deaths
             population = n()) %>%               # tally population
   # calculate case fatality rate
   do(bind_cols(case_def = .$case_def, 
@@ -746,7 +740,8 @@ obs_time <- as.numeric(obs_end - obs_start)
 # patient observation time 
 pat_obs_time <- linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>% 
-  summarise(days = sum(.$obs_days))
+  summarise(days = sum(obs_days)) %>%
+  pull(days)
 ```
 
 To produce a mortality rate per 10,000 people use the following code chunk. 
@@ -787,7 +782,7 @@ This uses the person days of cases in your linelist with a known outcome.
 However, this will give you an unreasonably high mortality rate, as 
 those in hospital will only be the most severely affected. 
 ```{r mortality_rate_patients}
-mortality_rate(deaths, pat_obs_time$days, multiplier = 10000) %>%
+mortality_rate(deaths, pat_obs_time, multiplier = 10000) %>%
   rename("Deaths" = deaths, 
          "Population" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
@@ -927,8 +922,7 @@ The below gives case fatility rate per week.
 linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
   group_by(epiweek) %>%                        # group by case_def
-  summarise(deaths = sum(exit_status == "Dead in facility" |
-                           exit_status == "Dead on arrival"),  # tally deaths
+  summarise(deaths = sum(grepl("Dead", exit_status)),  # tally deaths
             population = n()) %>%               # tally population
   # calculate case fatality rate
   do(bind_cols(epiweek = .$epiweek, 
