@@ -816,14 +816,17 @@ The peak of the outbreak was in `r ISOweek(find_peak(inc_week_7))`
 
 ```{r epicurve, message = FALSE}
 # plot your epicurve
-plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
+basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
        captions = paste0("Source: MSF data from ", reporting_week)) + 
   # change visuals of dates and remove legend title
   theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank())  
+        legend.title = element_blank())
+
+# show your plot (stored for later use) 
+basic_curve
 ```
 
 
@@ -892,10 +895,12 @@ cases <- count(linelist_cleaned, epiweek) %>%
   mutate(cummulative = cumsum(n))
 
 # attack rate for each week
-attack_rate(cases$n, population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$n, population, multiplier = 100000) %>% 
   # add the epiweek column to table
-  bind_cols(select(cases, epiweek), .) %>% 
-  rename("Epiweek" = epiweek, 
+  bind_cols(select(cases, epiweek), .)
+
+rename(ar, 
+        "Epiweek" = epiweek, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
@@ -921,25 +926,73 @@ attack_rate(cases$cummulative, population, multiplier = 100000) %>%
   knitr::kable(digits = 2)
 ```
 
-The below gives case fatility rate per week. 
+The below gives case fatility rate per week as a proportion
 
 ```{r cfr_per_week}
 # group by known outcome and case definition 
-linelist_cleaned %>% 
+cfr <- linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
   group_by(epiweek) %>%                        # group by case_def
   summarise(deaths = sum(grepl("Dead", exit_status)),  # tally deaths
             population = n()) %>%               # tally population
   # calculate case fatality rate
   do(bind_cols(epiweek = .$epiweek, 
-               case_fatality_rate(.$deaths, .$population, mergeCI = TRUE))) %>% 
-  tidyr::complete(epiweek) %>%                 # Ensure all levels are represented
-  rename("Epiweek" = epiweek, 
+               case_fatality_rate(.$deaths, .$population))) %>% 
+  tidyr::complete(epiweek)                 # Ensure all levels are represented
+
+rename(cfr, 
+       "Epiweek" = epiweek, 
          "Deaths" = deaths, 
          "Population" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 2)
+         "95%CI" = ci) 
+
+  knitr::kable(cfr, digits = 2)
+```
+
+
+You could plot the AR and CFR together as line graphs by epiweek. 
+
+```{r collect_variables_lines}
+
+ar_sub <- select(ar, epiweek, ar, lower, upper) %>% 
+  mutate(group = "AR") %>% 
+  rename("estimate" = ar)
+
+cfr_sub <- select(cfr, epiweek, cfr, lower, upper) %>% 
+  mutate(group = "CFR") %>% 
+  rename("estimate" = cfr)
+
+rates <- bind_rows(ar_sub, cfr_sub)
+
+```
+
+
+
+```{r line_graphs_ar_cfr}
+
+lp <- ggplot(rates, aes(x = epiweek, group = group, fill = group, col = group)) + 
+  geom_ribbon(aes(ymin = lower, ymax = upper), linetype = 2, alpha = 0.2,  show.legend = FALSE) +
+  geom_line(aes(y = estimate)) + 
+  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "Rate") + 
+  # change visuals of dates and remove legend title
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+        legend.title = element_blank(), legend.position = "bottom") + 
+  # change the labels of the legend
+  scale_color_discrete(labels = c("AR[95%CI] (per 100,000)", "CFR[95%CI] (as %)"))
+
+lp 
+```
+
+
+You could then also add the AR and CFR by week on to an epicurve. 
+
+```{r epicurve_ar_cfr, message = FALSE, fig.height = 10}
+
+gridExtra::grid.arrange(basic_curve, lp, nrow = 2)
+
 ```
 
 
@@ -947,7 +1000,35 @@ linelist_cleaned %>%
 
 *  [Across what area: one or several villages, all from same school, etc. You may want to include a map of the distribution of cases; attack rates by location]
 
-If you do not have spatial data available, it may be worth calculating attack rates by region. 
+To get a basic descriptive table of cases by region and outcome, see below. 
+
+```{r describe_by_region_outcome}
+# get counts and props of region by outcome 
+# include column and row totals 
+descriptive(linelist_cleaned, "patient_origin_free_text", "exit_status", 
+            coltotals = TRUE, rowtotals = TRUE) %>% 
+  rename("Region" = "patient_origin_free_text", 
+         "Died facility (n)" = "Dead in facility_n", 
+         "%" = "Dead in facility_prop", 
+         "Died arrival (n)" = "Dead on arrival_n", 
+         "%" = "Dead on arrival_prop",
+         "Discharged (n)" = "Discharged home_n", 
+         "%" = "Discharged home_prop", 
+         "Left against advice (n)" = "Left against medical advice_n", 
+         "%" = "Left against medical advice_prop", 
+         "Transferred MSF facility (n)" = "Transferred (to an MSF facility)_n", 
+         "%" = "Transferred (to an MSF facility)_prop", 
+         "Transferred external facility (n)" = "Transferred (to External Facility)_n", 
+         "%" = "Transferred (to External Facility)_prop", 
+         "Total" = "Total"
+         ) %>% 
+  kable(digits = 2)
+```
+
+
+
+
+If you do not have spatial data available, it may also be worth calculating attack rates by region. 
 
 ```{r attack_rate_by_region}
 cases <- count(linelist_cleaned, patient_origin_free_text) %>%   # cases for each week
