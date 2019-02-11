@@ -398,7 +398,6 @@ linelist_cleaned %>%
 
 CFR by case definition 
 
-
 ```{r cfr_by_case_def}
 # group by known outcome and case definition 
 linelist_cleaned %>% 
