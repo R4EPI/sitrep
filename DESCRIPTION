@@ -11,6 +11,7 @@ Imports:
     dplyr (>= 0.7),
     epitools,
     epitrix,
+    forcats,
     ggplot2,
     here,
     incidence,
