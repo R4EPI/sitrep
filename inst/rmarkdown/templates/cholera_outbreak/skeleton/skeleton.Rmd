@@ -42,8 +42,9 @@ library(incidence) # for epicurves
 library(ISOweek) # for creating epiweeks
 library(epitools) # for creating 2by2 tables
 
-#set default text size to 16 for plots
-ggplot2::theme_set(theme_bw(base_size = 18))
+# set default text size to 16 for plots
+# give classic black/white axes for plots
+ggplot2::theme_set(theme_classic(base_size = 18))
 ```
 
 
@@ -503,8 +504,12 @@ plot_age_pyramid(linelist_cleaned,
                  split_by = "sex", 
                  stack_by = "case_def") + 
   labs(y = "Cases (n)", x = "Age group (years)") + # change axis labels (nb. x/y flip)
-  theme(legend.position = "bottom") +              # move legend to bottomw
-  theme(legend.title = element_blank())            # remove title
+  # move legend to bottom
+  # remove title
+  # change text size
+  theme(legend.position = "bottom",             
+  legend.title = element_blank(),
+  text = element_text(size = 18))            
 ```
 
 
@@ -514,8 +519,13 @@ plot_age_pyramid(linelist_cleaned,
 # filter(linelist_cleaned, age_years <= 2) %>%
 # plot_age_pyramid(age_group = "age_group_mon", split_by = "sex",
 #                  stack_by = "case_def") +
-#   labs(x = "Cases (n)", y = "Age group (months)") +                   # change axis labels (nb. x/y flip)
-#   theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
+#   labs(x = "Cases (n)", y = "Age group (months)") +               # change axis labels (nb. x/y flip)
+#   # move legend to bottom
+#   # remove title
+#   # change text size
+#   theme(legend.position = "bottom",             
+#   legend.title = element_blank(),
+#   text = element_text(size = 18)) 
 ```
 
 ```{r treatment_plans, warning = FALSE}
@@ -808,7 +818,6 @@ The peak of the outbreak was in `r ISOweek(find_peak(inc_week_7))`
 # plot your epicurve
 plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  theme_classic() + # give classic black/white graph 
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
        captions = paste0("Source: MSF data from ", reporting_week)) + 
@@ -828,7 +837,6 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset,
 plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  theme_classic() + # give classic black/white graph 
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
        captions = paste0("Source: MSF data from ", reporting_week)) + 
@@ -848,7 +856,6 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset,
 plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  theme_classic() + # give classic black/white graph 
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
        captions = paste0("Source: MSF data from ", reporting_week)) + 
@@ -868,7 +875,6 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def
 plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  theme_classic() + # give classic black/white graph 
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
        captions = paste0("Source: MSF data from ", reporting_week)) + 
@@ -969,7 +975,6 @@ ggplot(ar, aes(x = reorder(Region, `AR (per 100,000)`),
                y = `AR (per 100,000)`)) + 
   geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
   geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
-  theme_classic() + # give classic black/white graph 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Region", y = "AR (per 100,000", 
