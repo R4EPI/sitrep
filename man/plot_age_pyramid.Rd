@@ -24,7 +24,7 @@ the bars}
 visual interpretation of numbers. Default is to not show (\code{FALSE}),
 to turn on write \code{TRUE}.}
 
-\item{horizontal}{lines If \code{TRUE} (default), horizontal dashed lines will
+\item{horizontal_lines}{If \code{TRUE} (default), horizontal dashed lines will
 appear behind the bars of the pyramid}
 }
 \description{
@@ -54,9 +54,9 @@ ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
 print(ap)
 
 # Stratify by multiple factors
-ap   <- plot_age_pyramid(dat, 
-                         age_group = "AGE", 
-                         split_by = "sex", 
+ap   <- plot_age_pyramid(dat,
+                         age_group = "AGE",
+                         split_by = "sex",
                          stack_by = "ill",
                          vertical_lines = TRUE) +
   labs(title = "Age groups by case definition and sex")

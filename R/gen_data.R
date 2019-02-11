@@ -146,6 +146,8 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
 
 
 # function to generate fake dataset based on data dictionary
+#' @export
+#' @rdname msf_dict
 gen_data <- function(disease, varnames = "data_element_shortname", numcases = 300) {
 
   # Three datasets:
@@ -302,6 +304,8 @@ gen_data <- function(disease, varnames = "data_element_shortname", numcases = 30
 
 
 # function to switch from coded to named values (based on data dictionaries)
+#' @export
+#' @rdname msf_dict
 switch_vals <- function(df, disease) {
   # read in appropriate dictionary as a list
   dat_dict <- msf_dict(disease, compact = FALSE)
