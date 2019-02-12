@@ -985,9 +985,9 @@ cowplot::plot_grid(
   basic_curve + nofx,
   ar_plot + nofx,
   cfr_plot,
-  align = "v",
-  axis = "lr",
-  ncol = 1
+  align = "v", # align plots vertically
+  axis = "lr", # only by their left and right margins
+  ncol = 1     # allow only one column
 )
 ```
 
