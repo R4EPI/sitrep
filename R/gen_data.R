@@ -5,7 +5,7 @@
 #' A third function (switch_vals) is used to recode variables defined in the
 #' dictionaries from coded to named form (e.g. 0/1 to No/Yes).
 #' @param disease Specify which disease you would like to use.
-#' Currently supports "Cholera", "Measles" and "Meningitis".
+#' Currently supports "Cholera", "Measles" and "Meningitis". Also supports "mortality".
 #' @param varnames Specify name of column that contains varnames.
 #' Currently default set to "Item".
 #' (this can probably be deleted once dictionaries standardise)
@@ -24,118 +24,127 @@
 msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
                      compact = TRUE) {
 
-  # get excel file path (need to specify the file name)
-  path <- system.file("extdata", name, package = "sitrep")
+  if (disease == "mortality") {
+    warning("mortality does currently not support the compact option. The returned output will always be 'compact'.")
+    outtie <- siterep:::msf_dict_mortality(
+      disease = disease,
+      name = "MSF-mortality_survey-dict.xlsx",
+      tibble = tibble
+      )
+  } else {
+    # get excel file path (need to specify the file name)
+    path <- system.file("extdata", name, package = "sitrep")
 
-  # read in categorical variable content options
-  dat_opts <- rio::import(path, which = "OptionCodes")
+    # read in categorical variable content options
+    dat_opts <- rio::import(path, which = "OptionCodes")
 
-  # read in data set - pasting the disease name for sheet
-  dat_dict <- rio::import(path, which = disease)
+    # read in data set - pasting the disease name for sheet
+    dat_dict <- rio::import(path, which = disease)
 
-  # clean col names
-  colnames(dat_dict) <- epitrix::clean_labels(colnames(dat_dict))
-  colnames(dat_opts) <- epitrix::clean_labels(colnames(dat_opts))
+    # clean col names
+    colnames(dat_dict) <- epitrix::clean_labels(colnames(dat_dict))
+    colnames(dat_opts) <- epitrix::clean_labels(colnames(dat_opts))
 
-  # clean future var names
-  # excel names (data element shortname)
-  # csv names (data_element_name)
-  dat_dict$data_element_shortname <- epitrix::clean_labels(dat_dict$data_element_shortname)
-  dat_dict$data_element_name      <- epitrix::clean_labels(dat_dict$data_element_name)
+    # clean future var names
+    # excel names (data element shortname)
+    # csv names (data_element_name)
+    dat_dict$data_element_shortname <- epitrix::clean_labels(dat_dict$data_element_shortname)
+    dat_dict$data_element_name      <- epitrix::clean_labels(dat_dict$data_element_name)
 
-  # Adding hardcoded var types to options list
-  # 3 types added to - BOOLEAN, TRUE_ONLY and ORGANISATION-UNIT
-  BOOLEAN           <- data.frame(option_code = c(1, 0),
-                         option_name = c("[1] Yes", "[0] No"),
-                         option_uid = c(NA, NA),
-                         option_order_in_set = c(1,2),
-                         optionset_uid = c("BOOLEAN", "BOOLEAN")
-                         )
+    # Adding hardcoded var types to options list
+    # 3 types added to - BOOLEAN, TRUE_ONLY and ORGANISATION-UNIT
+    BOOLEAN           <- data.frame(option_code = c(1, 0),
+                                    option_name = c("[1] Yes", "[0] No"),
+                                    option_uid = c(NA, NA),
+                                    option_order_in_set = c(1,2),
+                                    optionset_uid = c("BOOLEAN", "BOOLEAN")
+    )
 
-  TRUE_ONLY         <- data.frame(option_code = c(1, "NA"),
-                          option_name = c("[1] TRUE", "[NA] Not TRUE"),
-                          option_uid = c(NA, NA),
-                          option_order_in_set = c(1,2),
-                          optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
-                          )
+    TRUE_ONLY         <- data.frame(option_code = c(1, "NA"),
+                                    option_name = c("[1] TRUE", "[NA] Not TRUE"),
+                                    option_uid = c(NA, NA),
+                                    option_order_in_set = c(1,2),
+                                    optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
+    )
 
-  ORGANISATION_UNIT <- data.frame(option_code = c("HO", "CL", "HP"),
-                          option_name = c("[HO] Hospital", "[CL] Clinic", "[HP] Health post"),
-                          option_uid = c(NA, NA, NA),
-                          option_order_in_set = c(1,2,3),
-                          optionset_uid = c("ORGANISATION_UNIT", "ORGANISATION_UNIT", "ORGANISATION_UNIT")
-                          )
+    ORGANISATION_UNIT <- data.frame(option_code = c("HO", "CL", "HP"),
+                                    option_name = c("[HO] Hospital", "[CL] Clinic", "[HP] Health post"),
+                                    option_uid = c(NA, NA, NA),
+                                    option_order_in_set = c(1,2,3),
+                                    optionset_uid = c("ORGANISATION_UNIT", "ORGANISATION_UNIT", "ORGANISATION_UNIT")
+    )
 
-  # bind these on to the bottom of dat_opts (option list) as rows
-  dat_opts <- do.call("rbind", list(dat_opts, BOOLEAN, TRUE_ONLY, ORGANISATION_UNIT))
+    # bind these on to the bottom of dat_opts (option list) as rows
+    dat_opts <- do.call("rbind", list(dat_opts, BOOLEAN, TRUE_ONLY, ORGANISATION_UNIT))
 
 
 
-  # add the unique identifier to link above three in dictionary to options list
-  for (i in c("BOOLEAN", "TRUE_ONLY", "ORGANISATION_UNIT")) {
-    dat_dict$used_optionset_uid[dat_dict$data_element_valuetype == i] <- i
-  }
-
-  # remove back end codes from frent end var in the options list
-  dat_opts$option_name <- gsub(".*] ", "", dat_opts$option_name)
-
-  # produce clean compact data dictionary for use in gen_data
-  if (compact == TRUE) {
-    # change dat_opts to wide format
-    # remove the optionset_UID for treatment_facility_site
-    # (is just numbers 1:50 and dont want it in the data dictionary)
-    a <- aggregate(option_code ~ optionset_uid,
-                   dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    obs <- sapply(a$option_code, length) # count length of var opts for each
-    highest <- seq_len(max(obs)) # create sequence for pulling out of list
-    out <- t(sapply(a$option_code, "[", i = highest)) # pull out of list and flip to make dataframe
-    colnames(out) <- sprintf("Code%d", seq(ncol(out))) # rename with code and num of columns
-
-    # bind to above
-    a$option_code <- NULL
-    a <- cbind(a, out)
-
-    # repeat above for names
-    b <- aggregate(option_name ~ optionset_uid,
-                   dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    obs <- sapply(b$option_name, length) # count length of var opts for each
-    highest <- seq_len(max(obs)) # create sequence for pulling out of list
-    out <- t(sapply(b$option_name, "[", i = highest)) # pull out of list and flip to make dataframe
-    colnames(out) <- sprintf("Name%d", seq(ncol(out))) # rename with code and num of column
-
-    b$option_name <- NULL
-    b$optionset_uid <- NULL
-    b <- cbind(b, out)
-
-    # bind code and name together
-    combiner <- cbind(a, b)
-
-    # merge with data dicationry
-    outtie <- merge(dat_dict, combiner,
-                    by.x = "used_optionset_uid", by.y = "optionset_uid",
-                    all.x = TRUE)
-
-    # return a tibble
-    if (tibble == TRUE) {
-      outtie <- tibble::as_tibble(outtie)
+    # add the unique identifier to link above three in dictionary to options list
+    for (i in c("BOOLEAN", "TRUE_ONLY", "ORGANISATION_UNIT")) {
+      dat_dict$used_optionset_uid[dat_dict$data_element_valuetype == i] <- i
     }
 
-  }
+    # remove back end codes from frent end var in the options list
+    dat_opts$option_name <- gsub(".*] ", "", dat_opts$option_name)
 
-  # Return second option of list with data dictionary and category options seperate
-  if (compact == FALSE) {
+    # produce clean compact data dictionary for use in gen_data
+    if (compact == TRUE) {
+      # change dat_opts to wide format
+      # remove the optionset_UID for treatment_facility_site
+      # (is just numbers 1:50 and dont want it in the data dictionary)
+      a <- aggregate(option_code ~ optionset_uid,
+                     dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
+      obs <- sapply(a$option_code, length) # count length of var opts for each
+      highest <- seq_len(max(obs)) # create sequence for pulling out of list
+      out <- t(sapply(a$option_code, "[", i = highest)) # pull out of list and flip to make dataframe
+      colnames(out) <- sprintf("Code%d", seq(ncol(out))) # rename with code and num of columns
 
-    if (tibble == TRUE) {
-      outtie <- list(dictionary = tibble::as_tibble(dat_dict),
-                     options = tibble::as_tibble(dat_opts)
-                     )
+      # bind to above
+      a$option_code <- NULL
+      a <- cbind(a, out)
+
+      # repeat above for names
+      b <- aggregate(option_name ~ optionset_uid,
+                     dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
+      obs <- sapply(b$option_name, length) # count length of var opts for each
+      highest <- seq_len(max(obs)) # create sequence for pulling out of list
+      out <- t(sapply(b$option_name, "[", i = highest)) # pull out of list and flip to make dataframe
+      colnames(out) <- sprintf("Name%d", seq(ncol(out))) # rename with code and num of column
+
+      b$option_name <- NULL
+      b$optionset_uid <- NULL
+      b <- cbind(b, out)
+
+      # bind code and name together
+      combiner <- cbind(a, b)
+
+      # merge with data dicationry
+      outtie <- merge(dat_dict, combiner,
+                      by.x = "used_optionset_uid", by.y = "optionset_uid",
+                      all.x = TRUE)
+
+      # return a tibble
+      if (tibble == TRUE) {
+        outtie <- tibble::as_tibble(outtie)
+      }
+
     }
 
-    if (tibble == FALSE) {
-      outtie <- list(dictionary = dat_dict,
-                     options = dat_opts)
-    }
+    # Return second option of list with data dictionary and category options seperate
+    if (compact == FALSE) {
 
+      if (tibble == TRUE) {
+        outtie <- list(dictionary = tibble::as_tibble(dat_dict),
+                       options = tibble::as_tibble(dat_opts)
+        )
+      }
+
+      if (tibble == FALSE) {
+        outtie <- list(dictionary = dat_dict,
+                       options = dat_opts)
+      }
+
+    }
   }
 
   # return dictionary dataset
@@ -156,7 +165,12 @@ gen_data <- function(disease, varnames = "data_element_shortname", numcases = 30
   # 3) dis_output = disease dataset generated from sampling (exported)
 
   # get msf disease specific data dictionary
-  dat_dict <- msf_dict(disease = disease, tibble = FALSE, compact = TRUE)
+  if (disease == "mortality") {
+    dat_dict <- msf_dict_mortality(tibble = FALSE)
+  } else {
+    dat_dict <- msf_dict(disease = disease, tibble = FALSE, compact = TRUE)
+  }
+
 
   # drop extra columns (keep varnames and code options)
   varcol <- which(names(dat_dict) == varnames)
@@ -237,26 +251,43 @@ gen_data <- function(disease, varnames = "data_element_shortname", numcases = 30
                                                 numcases, replace = TRUE)
 
   # age_years
-  # sample 0:120
-  dis_output$age_years <- sample(0:120, numcases, replace = TRUE)
-  U2_YEARS <- which(dis_output$age_years <= 2)
-  dis_output$age_years[U2_YEARS] <- NA
+  age_year_var <- grep("age.*year", names(dis_output), value = TRUE)[1]
+  age_month_var <- grep("age.*month", names(dis_output), value = TRUE)[1]
+  age_day_var <- grep("age.*day", names(dis_output), value = TRUE)[1]
 
-  # age_month
-  if (length(U2_YEARS) > 0) {
-    dis_output$age_months[U2_YEARS] <- sample(0:23,
-                                              length(U2_YEARS),
-                                              replace = TRUE)
-    U2_MONTHS <- which(dis_output$age_months <= 2)
-    dis_output$age_months[U2_MONTHS] <- NA
+  set_age_na <- TRUE
+  if (disease == "mortality")
+    set_age_na <- FALSE
+
+  if (!is.na(age_year_var)) {
+    # sample 0:120
+    dis_output[, age_year_var] <- sample(0:120, numcases, replace = TRUE)
+    U2_YEARS <- which(dis_output[, age_year_var] <= 2)
+    if (set_age_na)
+      dis_output[U2_YEARS, age_year_var] <- NA
+
+    if (!is.na(age_month_var)) {
+      # age_month
+      if (length(U2_YEARS) > 0) {
+        dis_output[U2_YEARS, age_month_var] <- sample(0:23,
+                                                      length(U2_YEARS),
+                                                      replace = TRUE)
+        U2_MONTHS <- which(dis_output[, age_month_var] <= 2)
+        if (set_age_na)
+          dis_output[U2_MONTHS, age_month_var] <- NA
+      }
+
+      if (!is.na(age_day_var)) {
+        # age_days
+        if (length(U2_MONTHS) > 0) {
+          dis_output[U2_MONTHS, age_day_var] <- sample(0:60,
+                                                       length(U2_MONTHS),
+                                                       replace = TRUE)
+        }
+      }
+    }
   }
 
-  # age_days
-  if (length(U2_MONTHS) > 0) {
-    dis_output$age_days[U2_MONTHS] <- sample(0:60,
-                                           length(U2_MONTHS),
-                                           replace = TRUE)
-  }
 
 
   if (disease == "Cholera" | disease == "Measles") {
@@ -293,6 +324,19 @@ gen_data <- function(disease, varnames = "data_element_shortname", numcases = 30
 
     # fix pregnancy delivery
     dis_output$delivery_event[dis_output$sex != "F"] <- "NA"
+  }
+
+  if (disease == "mortality") {
+    # add more plausibility checks
+    dis_output$q53_cq4a[dis_output$q49_cq3 == "Yes"] <- NA
+    dis_output$q87_q32_born[dis_output$q155_q5_age_year > 1] <- "No"
+    dis_output$q88_q33_born_date[dis_output$q155_q5_age_year > 1] <- NA
+    dis_output$q152_q7_pregnant[dis_output$q4_q6_sex == "Male"] <- NA
+
+    died <- dis_output$q136_q34_died == "Yes"
+    dis_output[died, c("q137_q35_died_date", "q138_q36_died_cause",
+                       "q141_q37_died_violence", "q143_q41_died_place",
+                       "q145_q43_died_country")] <- NA
   }
 
   # return dataset as a tibble
