@@ -810,6 +810,10 @@ There were `r sum(is.na(linelist_cleaned$date_of_onset))` cases missing dates of
 
 ```{r create_incidence, message = FALSE}
 inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
+epicurve_theme <- theme(
+  axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+  legend.title = element_blank()
+  )
 ```
 
 The peak of the outbreak was in `r ISOweek(find_peak(inc_week_7))`
@@ -817,13 +821,12 @@ The peak of the outbreak was in `r ISOweek(find_peak(inc_week_7))`
 ```{r epicurve, message = FALSE}
 # plot your epicurve
 basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
-       captions = paste0("Source: MSF data from ", reporting_week)) + 
+       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
   # change visuals of dates and remove legend title
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank())
+  epicurve_theme
 
 # show your plot (stored for later use) 
 basic_curve
@@ -838,14 +841,12 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset,
                         interval = 7, 
                         groups = linelist_cleaned$sex)
 plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
-  labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
-       captions = paste0("Source: MSF data from ", reporting_week)) + 
+       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
   # change visuals of dates, remove legend title and move legend to bottom
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank(), legend.position = "bottom") 
+  epicurve_theme
 ```
 
 
@@ -857,14 +858,12 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset,
                         interval = 7, 
                         groups = linelist_cleaned$case_def)
 plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
-  labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
-       captions = paste0("Source: MSF data from ", reporting_week)) + 
+       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
   # change visuals of dates, remove legend title and move legend to bottom
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank(), legend.position = "bottom") 
+  epicurve_theme
 ```
 
 
@@ -876,14 +875,12 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def
                         interval = 7, 
                         groups = linelist_cleaned$sex[linelist_cleaned$case_def == "Confirmed"])
 plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
-  labs(x = "Calendar week", y = "Cases (n)") + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
-       captions = paste0("Source: MSF data from ", reporting_week)) + 
+       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
   # change visuals of dates, remove legend title and move legend to bottom
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank(), legend.position = "bottom") 
+  epicurve_theme
 ```
 
 
@@ -899,14 +896,14 @@ ar <- attack_rate(cases$n, population, multiplier = 100000) %>%
   # add the epiweek column to table
   bind_cols(select(cases, epiweek), .)
 
-rename(ar, 
-        "Epiweek" = epiweek, 
+ar %>%
+  merge_ci_df(e = 4) %>% # merge the upper and lower CI into one column
+  rename("Epiweek" = epiweek, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
-  knitr::kable(digits = 2)
+         "95%CI" = ci) %>% 
+  knitr::kable(digits = 2, align = "r")
 ```
  
 
@@ -917,13 +914,13 @@ The below gives the cummulative attack rate per week.
 attack_rate(cases$cummulative, population, multiplier = 100000) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, epiweek), .) %>% 
+  merge_ci_df(e = 4) %>% # merge the upper and lower CI into one column
   rename("Epiweek" = epiweek, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
-  knitr::kable(digits = 2)
+         "95%CI" = ci) %>% 
+  knitr::kable(digits = 2, align = "r")
 ```
 
 The below gives case fatility rate per week as a proportion
@@ -940,59 +937,58 @@ cfr <- linelist_cleaned %>%
                case_fatality_rate(.$deaths, .$population))) %>% 
   tidyr::complete(epiweek)                 # Ensure all levels are represented
 
-rename(cfr, 
-       "Epiweek" = epiweek, 
+cfr %>%
+  merge_ci_df(e = 4) %>%
+  rename("Epiweek" = epiweek, 
          "Deaths" = deaths, 
          "Population" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci) 
-
-  knitr::kable(cfr, digits = 2)
+         "95%CI" = ci) %>% 
+  knitr::kable(digits = 2, align = "r")
 ```
 
 
 You could plot the AR and CFR together as line graphs by epiweek. 
 
-```{r collect_variables_lines}
-
-ar_sub <- select(ar, epiweek, ar, lower, upper) %>% 
-  mutate(group = "AR") %>% 
-  rename("estimate" = ar)
-
-cfr_sub <- select(cfr, epiweek, cfr, lower, upper) %>% 
-  mutate(group = "CFR") %>% 
-  rename("estimate" = cfr)
-
-rates <- bind_rows(ar_sub, cfr_sub)
-
+```{r ar_line_graph}
+ar_plot <- ggplot(ar, aes(x = epiweek, group = 1)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), color = "blue", fill = "blue", linetype = 2, alpha = 0.2, show.legend = FALSE) +
+  geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100), breaks = c(0, 25, 50, 75, 100)) +  # set origin for axes
+  scale_x_discrete(limits = c(ar$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 100,000)") + 
+  # change visuals of dates and remove legend title
+  epicurve_theme
 ```
 
 
-
-```{r line_graphs_ar_cfr}
-
-lp <- ggplot(rates, aes(x = epiweek, group = group, fill = group, col = group)) + 
-  geom_ribbon(aes(ymin = lower, ymax = upper), linetype = 2, alpha = 0.2,  show.legend = FALSE) +
-  geom_line(aes(y = estimate)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+```{r cfr_line_graph}
+cfr_plot <- ggplot(cfr, aes(x = epiweek, group = 1)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), color = "red", fill = "red", linetype = 2, alpha = 0.2, show.legend = FALSE) +
+  geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
+  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
+  scale_x_discrete(limits = c(ar$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "Rate") + 
+  labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Rate [95% CI]") + 
   # change visuals of dates and remove legend title
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-        legend.title = element_blank(), legend.position = "bottom") + 
-  # change the labels of the legend
-  scale_color_discrete(labels = c("AR[95%CI] (per 100,000)", "CFR[95%CI] (as %)"))
-
-lp 
+  epicurve_theme 
 ```
 
 
 You could then also add the AR and CFR by week on to an epicurve. 
 
 ```{r epicurve_ar_cfr, message = FALSE, fig.height = 10}
-
-gridExtra::grid.arrange(basic_curve, lp, nrow = 2)
-
+nofx <- theme(axis.text.x = element_blank(),
+              axis.title.x = element_blank())
+cowplot::plot_grid(
+  basic_curve + nofx,
+  ar_plot + nofx,
+  cfr_plot,
+  align = "v",
+  axis = "lr",
+  ncol = 1
+)
 ```
 
 
@@ -1037,14 +1033,14 @@ cases <- count(linelist_cleaned, patient_origin_free_text) %>%   # cases for eac
 ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, patient_origin_free_text), .) %>% 
+  
   rename("Region" = patient_origin_free_text, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) 
-
-kable(ar, digits = 2, format.args = list(big.mark = ",")) # set thousands separator
+kable(ar, digits = 2, align = "r", format.args = list(big.mark = ",")) # set thousands separator
 ```
 
 You could then also plot this on a bar chart with confidence intervals. 
