@@ -670,7 +670,9 @@ library(sf) # for manipulating spatial objects easily
 ```{r download_spatial_maps, message=FALSE}
 
 # reading in a shapefile 
-# map <- read_sf(here("mapfolder", "china.shp"))
+# shapefiles consist of multiple files
+# so you dont need to specify the file type (reas_sf recognises it for you)
+# map <- read_sf(here("mapfolder", "china"))
 
 
 # download administrative boundaries 
