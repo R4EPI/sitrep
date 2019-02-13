@@ -1134,50 +1134,55 @@ ggplot() +
 You could then also throw your plot of region and the choropleth in a map to 
 produce this for each week in a for-loop. 
 
-```{r map_for_loop_epiweek}
+```{r map_for_loop_epiweek, fig.width = 12}
 
+cases <- linelist_cleaned %>% 
+  group_by(epiweek) %>%
+  count(patient_origin_free_text) %>%   # cases for each week by region
+  left_join(population_data_region, by = "patient_origin_free_text")    # merge population data 
+
+# attack rate for region
+ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
+  # add the region column to table
+  bind_cols(select(cases, epiweek, patient_origin_free_text), .) %>% 
+  rename("Region" = patient_origin_free_text, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 100,000)" = ar, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper)
+max_cases <- max(cases$n)
 for (i in unique(linelist_cleaned$epiweek)) {
-  cases <- linelist_cleaned %>% 
-    filter(epiweek == i) %>% 
-    count(patient_origin_free_text) %>%   # cases for each week by region
-    left_join(population_data_region, by = "patient_origin_free_text")    # merge population data 
-    
-    # attack rate for region
-    ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
-    # add the region column to table
-    bind_cols(select(cases, patient_origin_free_text), .) %>% 
-    
-    rename("Region" = patient_origin_free_text, 
-           "Cases (n)" = cases, 
-           "Population" = population, 
-           "AR (per 100,000)" = ar, 
-           "Lower 95%CI" = lower,
-           "Upper 95%CI" = upper)
-  
+  this_ar <- filter(ar, epiweek == i)
   # plot map 
-mapsub <- left_join(map, ar, by = c("name" = "Region"))
-
-# choropleth 
-print(
-ggplot() +
-  geom_sf(data = mapsub, aes(fill = `Cases (n)`), col = "grey50") + # shapefile as polygon
-  annotation_scale() + # add a scalebar
-  scale_fill_viridis_c(option = "C") + # color the scale to be perceptually uniform
-  theme_void() # remove coordinates and axes
-)
-
-# plot with the region on the x axis sorted by increasing ar
-# ar value on the y axis 
-print(
-ggplot(ar, aes(x = reorder(Region, `AR (per 100,000)`),
-               y = `AR (per 100,000)`)) + 
-  geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
-  geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  # add labels to axes and below chart
-  labs(x = "Region", y = "AR (per 100,000)", 
-       captions = paste0("Source: MSF data from ", reporting_week))
-)
+  mapsub <- left_join(map, this_ar, by = c("name" = "Region"))
+  
+  # choropleth 
+  map_plot <- ggplot() +
+    geom_sf(data = mapsub, aes(fill = `Cases (n)`), col = "grey50") + # shapefile as polygon
+    annotation_scale() + # add a scalebar
+    scale_fill_viridis_c(limits = c(0, max_cases), option = "C") + # color the scale to be perceptually uniform
+    theme_void() # remove coordinates and axes
+  
+  # plot with the region on the x axis sorted by increasing ar
+  # ar value on the y axis 
+  barplot <- ggplot(this_ar, aes(x = reorder(Region, `AR (per 100,000)`),
+                                 y = `AR (per 100,000)`)) + 
+    geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
+    geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
+    scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+    # add labels to axes and below chart
+    labs(x = "Region", y = "AR (per 100,000)", 
+         captions = paste0("Source: MSF data from ", reporting_week))
+  print(
+    cowplot::plot_grid(
+      barplot + labs(title = paste0("Epiweek:", i)),
+      map_plot,
+      nrow = 1,
+      align = "h",
+      axis = "tb"
+    )
+  )
 }
 ```
 
