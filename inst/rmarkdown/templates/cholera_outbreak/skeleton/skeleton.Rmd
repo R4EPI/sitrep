@@ -1161,10 +1161,10 @@ ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper)
-max_cases <- max(cases$n) # define the maximum number of cases for the color palette 
-
+max_cases <- max(cases$n, na.rm = TRUE) # define the maximum number of cases for the color palette 
+max_ar    <- max(ar$`Upper 95%CI`, na.rm = TRUE)
 # go through each epiweek, fiter and plot the data
-for (i in unique(linelist_cleaned$epiweek)) {
+for (i in unique(cases$epiweek)) {
   this_ar <- filter(ar, epiweek == i)
   
   # map 
@@ -1184,7 +1184,7 @@ for (i in unique(linelist_cleaned$epiweek)) {
                                  y = `AR (per 100,000)`)) + 
     geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
     geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
-    scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+    scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  # set origin for axes
     # add labels to axes and below chart
     labs(x = "Region", y = "AR (per 100,000)", 
          captions = paste0("Source: MSF data from ", reporting_week))
