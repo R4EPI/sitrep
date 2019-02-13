@@ -19,17 +19,17 @@ gen_polygon <- function(regions) {
   coords <- list(coords)
 
   # create a polygon from coordinates
-  original_poly <- st_polygon(coords)
+  original_poly <- sf::st_polygon(coords)
 
   # define how many regions we want in our polygon
-  high <- ceiling(length(regions) / 2)
-
+  # high <- ceiling(length(regions) / 2)
+  high <- ceiling(sqrt(length(regions)))
   # change polygon to grid (subdivisions as squares)
-  gridding <- st_make_grid(original_poly, n = c(2,high),
-                           square = TRUE, what = "polygons")
+  gridding <- sf::st_make_grid(original_poly, n = c(high, high),
+                               square = FALSE, what = "polygons")
 
   # only keep grid parts inside original boundary
-  geometry <- st_intersection(gridding, original_poly)
+  geometry <- sf::st_intersection(gridding, original_poly)
 
   # check if regions is less that grid produces (for odd nums regions)
   squares <- length(geometry) - length(regions)
@@ -43,8 +43,10 @@ gen_polygon <- function(regions) {
   }
 
   # polygon in to a list column which can be used as simple features for plot
-  output_poly <- st_sf(tibble::tibble(name = labeling, geometry = geometry))
+  output_poly <- sf::st_sf(tibble::tibble(name = labeling, geometry = geometry))
 
   # Sets coordinate reference systwem to WGS84
-  output_poly <- st_set_crs(output_poly, value = 4326)
+  output_poly <- sf::st_set_crs(output_poly, value = 4326)
+
+  output_poly
 }
