@@ -1134,6 +1134,7 @@ mapsub <- left_join(map, ar, by = c("name" = "Region"))
 # choropleth 
 ggplot() +
   geom_sf(data = mapsub, aes(fill = `AR (per 100,000)`), col = "grey50") + # shapefile as polygon
+  coord_sf(datum = NA) + # needed to avoid gridlines being drawn
   annotation_scale() + # add a scalebar
   scale_fill_viridis_c(option = "C") + # color the scale to be perceptually uniform
   theme_void() # remove coordinates and axes
@@ -1172,6 +1173,7 @@ for (i in unique(linelist_cleaned$epiweek)) {
   # choropleth 
   map_plot <- ggplot() +
     geom_sf(data = mapsub, aes(fill = `Cases (n)`), col = "grey50") + # shapefile as polygon
+    coord_sf(datum = NA) + # needed to avoid gridlines being drawn
     annotation_scale() + # add a scalebar
     scale_fill_viridis_c(limits = c(0, max_cases), option = "C") + # color the scale to be perceptually uniform
     theme_void() # remove coordinates and axes
