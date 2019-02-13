@@ -1145,10 +1145,14 @@ You could then also throw your plot of region and the choropleth in a map to
 produce this for each week in a for-loop. 
 
 ```{r map_for_loop_epiweek, fig.width = 12}
+# change region variable to a factor so that zero counts can be included
+linelist_cleaned$patient_origin_free_text <- as.factor(linelist_cleaned$patient_origin_free_text)
 
+# case counts
 cases <- linelist_cleaned %>% 
   group_by(epiweek) %>%
   count(patient_origin_free_text) %>%   # cases for each week by region
+  tidyr::complete(patient_origin_free_text, fill = list(n = 0)) %>% # include zero counts
   left_join(population_data_region, by = "patient_origin_free_text")    # merge population data 
 
 # attack rate for region
