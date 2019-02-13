@@ -26,7 +26,7 @@ gen_polygon <- function(regions) {
   high <- ceiling(sqrt(length(regions)))
   # change polygon to grid (subdivisions as squares)
   gridding <- sf::st_make_grid(original_poly, n = c(high, high),
-                               square = FALSE, what = "polygons")
+                               square = TRUE , what = "polygons")
 
   # only keep grid parts inside original boundary
   geometry <- sf::st_intersection(gridding, original_poly)
