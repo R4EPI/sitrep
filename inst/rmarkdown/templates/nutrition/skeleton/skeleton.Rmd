@@ -129,7 +129,8 @@ Prevalence of acute malnutrition based on weight-for-height z-scores (and/or oed
 ```{r}
 # we can either estimate the prevalence using simple couting of the z-scores
 # or use anthro_prevalence to use the survey package to obtain better estimates
-stratify_zscores(dplyr::bind_cols(survey_data, weight_for_height), by = "sex", GAM, MAM, SAM) %>%
+dplyr::bind_cols(survey_data, weight_for_height) %>%
+  stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
   knitr::kable()
 ```
 
@@ -138,7 +139,7 @@ Prevalence of acute malnutrition by age, based on weight-for-height z-scores, ch
 
 ```{r}
 # quick prototype to go towards the expected result in the report
-cbind(survey_data, weight_for_height) %>% 
+dplyr::bind_cols(survey_data, weight_for_height) %>% 
   mutate(Normal = !GAM & !MAM & !SAM) %>% 
   select(age_group, MAM, SAM, Normal) %>% 
   filter(!is.na(age_group)) %>% 
