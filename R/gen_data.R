@@ -161,8 +161,10 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   # get msf dictionary specific data dictionary
   if (dictionary == "Mortality") {
     dat_dict <- msf_dict_mortality(tibble = FALSE)
-  } else {
+  } else if (dictionary %in% c("Cholera", "Measles", "Meningitis")) {
     dat_dict <- msf_dict(disease = dictionary, tibble = FALSE, compact = TRUE)
+  } else {
+    stop("'dictionary' must be one of: 'Cholera', 'Measles', 'Meningitis', 'Mortality'")
   }
 
 
@@ -304,7 +306,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   }
 
   if (dictionary == "Measles") {
-    di_output$baby_born_with_complications[PREGNANT_FEMALE &
+    dis_output$baby_born_with_complications[PREGNANT_FEMALE &
                                              dis_output$delivery_event != "1"] <- NA
   }
 
