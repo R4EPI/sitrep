@@ -148,7 +148,8 @@ dplyr::bind_cols(survey_data, weight_for_height) %>%
   summarise(n = n(), 
             flagged = sum(flagged, na.rm = TRUE), 
             rel = flagged / n, 
-            !!! sitrep:::splice_df(binom::binom.wilson(flagged, n), lower, upper)) %>% 
+            ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
+  tidyr::unnest()
   mutate(value = paste0(n, " - ", flagged, " ", fmt_ci(rel, lower, upper))) %>% 
   select(age_group, class, value) %>% 
   tidyr::spread(class, value) %>% 

@@ -6,16 +6,20 @@
 #'
 #' @include helpers.R
 #' @export
+#' @examples
+#' # A crude example, but it works
+#' stratify_zscores(mtcars, by = "gear", am, vs)
 stratify_zscores <- function(survey_data, by, ...) {
   comput_result <- function(group = pairlist()) {
     res <- survey_data
     res <- dplyr::select(res, !!! rlang::ensyms(...), !! by)
     res <- tidyr::gather(res, "stratum", "flagged", -(!! by))
     res <- dplyr::group_by(res, .data$stratum, !!! group)
-    dplyr::summarise(res, n = n(),
+    res <- dplyr::summarise(res, n = n(),
               flagged = sum(.data$flagged, na.rm = TRUE),
               rel = .data$flagged / .data$n,
-              !!! splice_df(binom::binom.wilson(.data$flagged, .data$n), "lower", "upper"))
+              ci = list(binom::binom.wilson(.data$flagged, .data$n)[, c("lower", "upper")]))
+    tidyr::unnest(res)
   }
   dplyr::bind_rows(
     comput_result(),
