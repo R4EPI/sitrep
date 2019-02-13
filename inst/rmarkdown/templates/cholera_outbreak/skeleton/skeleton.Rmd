@@ -508,12 +508,10 @@ plot_age_pyramid(linelist_cleaned,
                  split_by = "sex", 
                  stack_by = "case_def") + 
   labs(y = "Cases (n)", x = "Age group (years)") + # change axis labels (nb. x/y flip)
-  # move legend to bottom
-  # remove title
-  # change text size
-  theme(legend.position = "bottom",             
-  legend.title = element_blank(),
-  text = element_text(size = 18))            
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
 ```
 
 
@@ -521,20 +519,25 @@ plot_age_pyramid(linelist_cleaned,
 ```{r age_pyramid_U2, warning=FALSE}
 # plot age pyramid under 2s
 # filter(linelist_cleaned, age_years <= 2) %>%
-# plot_age_pyramid(age_group = "age_group_mon", split_by = "sex",
-#                  stack_by = "case_def") +
-#   labs(x = "Cases (n)", y = "Age group (months)") +               # change axis labels (nb. x/y flip)
-#   # move legend to bottom
-#   # remove title
-#   # change text size
-#   theme(legend.position = "bottom",             
-#   legend.title = element_blank(),
-#   text = element_text(size = 18)) 
+#   plot_age_pyramid(age_group = "age_group_mon", 
+#                    split_by = "sex",
+#                    stack_by = "case_def") +
+#   labs(x = "Cases (n)", y = "Age group (months)") + # change axis labels (nb. x/y flip)
+#   theme(legend.position = "bottom",     # move legend to bottom
+#         legend.title = element_blank(), # remove title
+#         text = element_text(size = 18)  # change text size
+#        )
 ```
 
 ```{r treatment_plans, warning = FALSE}
+# summarize the number of patients admitted to treatment plans for printing in
+# the report. 
 trtpln <- descriptive(linelist_cleaned, counter = "fluids_treatment_plan") %>%
+  # Create a variable that displays the number of people followed by xx.x%
+  # change the %.1f to %.2f if you want more digits in your percentages
   mutate(to_print = sprintf("%d (%.1f%%)", n, prop))
+
+# number of people in the plans A, B, and C
 trtplnA <- filter(trtpln, grepl("A$", fluids_treatment_plan)) %>% pull(to_print)
 trtplnB <- filter(trtpln, grepl("B$", fluids_treatment_plan)) %>% pull(to_print)
 trtplnC <- filter(trtpln, grepl("C$", fluids_treatment_plan)) %>% pull(to_print)
@@ -547,8 +550,11 @@ admitted to treatment plan C.
 Cases by treatment plan and case definition
 
 ```{r describe_by_treatment_plan_case_def}
-descriptive(linelist_cleaned, "fluids_treatment_plan", "case_def", 
-            coltotals = TRUE, rowtotals = TRUE) %>% 
+descriptive(linelist_cleaned, 
+            counter = "fluids_treatment_plan", 
+            grouper = "case_def", 
+            coltotals = TRUE, 
+            rowtotals = TRUE) %>% 
   rename("Fluid treatment plan" = fluids_treatment_plan, 
          "Confirmed cases (n)" = Confirmed_n, 
          "%" = Confirmed_prop, 
@@ -568,7 +574,8 @@ A total of `r filter(linelist_cleaned, readmission == "Yes") %>% nrow()` patient
 Cases by dehyrdation severity at admission
 
 ```{r describe_by_illness_severity_admission}
-descriptive(linelist_cleaned, "dehydration_level_at_admission", 
+descriptive(linelist_cleaned, 
+            counter = "dehydration_level_at_admission", 
             coltotals = TRUE) %>% 
   rename("Dehydration severity" = dehydration_level_at_admission, 
          "Cases (n)" = n, 
@@ -579,7 +586,8 @@ descriptive(linelist_cleaned, "dehydration_level_at_admission",
 Cases by dehydration severity during stay 
 
 ```{r describe_by_illness_severity_stay}
-descriptive(linelist_cleaned, "dehydration_severity_during_stay", 
+descriptive(linelist_cleaned, 
+            counter = "dehydration_severity_during_stay", 
             coltotals = TRUE) %>% 
   rename("Dehydration severity" = dehydration_severity_during_stay, 
          "Cases (n)" = n, 
@@ -600,8 +608,7 @@ Among those who died, the time to death is shown below.
 DIED <- grepl("Dead", linelist_cleaned$exit_status)
 
 filter(linelist_cleaned, DIED) %>% 
-descriptive("time_to_death", 
-            coltotals = TRUE) %>% 
+  descriptive(counter = "time_to_death", coltotals = TRUE) %>% 
   rename("Time (hours)" = time_to_death, 
          "Deaths (n)" = n, 
          "%" = prop) %>% 
@@ -705,8 +712,8 @@ population <- sum(population_data_age$population)
 ```{r attack_rate}
 # calculate the ar
 # store as AR to be able to use output for automating text below
-ar <- attack_rate(nrow(linelist_cleaned), population, 
-                  multiplier = 10000)
+ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
+
 rename(ar, 
        "Cases (n)" = cases,
        "Population" = population, 
@@ -745,8 +752,9 @@ catchment population (twice) and based on hospital population.
 
 ```{r collect_variables_rates}
 # count number of deaths 
-deaths <- filter(linelist_cleaned, exit_status == "Dead in facility" |
-                           exit_status == "Dead on arrival") %>% nrow()
+deaths <- filter(linelist_cleaned, 
+                 exit_status == "Dead in facility" | exit_status == "Dead on arrival") %>% 
+  nrow()
 
 # outbreak duration in days 
 obs_time <- as.numeric(obs_end - obs_start)
@@ -795,6 +803,7 @@ of the wider population, use the following code chunk.
 This uses the person days of cases in your linelist with a known outcome. 
 However, this will give you an unreasonably high mortality rate, as 
 those in hospital will only be the most severely affected. 
+
 ```{r mortality_rate_patients}
 mortality_rate(deaths, pat_obs_time, multiplier = 10000) %>%
   rename("Deaths" = deaths, 
@@ -1151,10 +1160,13 @@ ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>%
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper)
-max_cases <- max(cases$n)
+max_cases <- max(cases$n) # define the maximum number of cases for the color palette 
+
+# go through each epiweek, fiter and plot the data
 for (i in unique(linelist_cleaned$epiweek)) {
   this_ar <- filter(ar, epiweek == i)
-  # plot map 
+  
+  # map 
   mapsub <- left_join(map, this_ar, by = c("name" = "Region"))
   
   # choropleth 
@@ -1174,6 +1186,7 @@ for (i in unique(linelist_cleaned$epiweek)) {
     # add labels to axes and below chart
     labs(x = "Region", y = "AR (per 100,000)", 
          captions = paste0("Source: MSF data from ", reporting_week))
+  # combine the barplot and map plot into one
   print(
     cowplot::plot_grid(
       barplot + labs(title = paste0("Epiweek:", i)),
