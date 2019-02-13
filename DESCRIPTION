@@ -30,7 +30,6 @@ Imports:
     tibble,
     huxtable,
     tidyr,
-    magrittr,
     tidyselect
 Suggests:
     testthat

@@ -1,12 +1,13 @@
-# don't export this function - only for internal use
+# function to load MSF data dictionary for mortality surveys
 
 #' @importFrom rio import
 #' @importFrom epitrix clean_labels
 #' @importFrom tibble as_tibble
-#' @importFrom magrittr %>%
 #' @importFrom tidyr fill spread
 #' @importFrom dplyr mutate group_by row_number ungroup select recode
 #' @importFrom tidyselect everything
+#' @export
+#' @rdname msf_dict
 msf_dict_mortality <- function(name = "MSF-mortality_survey-dict.xlsx",
                                tibble = TRUE) {
 
@@ -20,30 +21,32 @@ msf_dict_mortality <- function(name = "MSF-mortality_survey-dict.xlsx",
   colnames(dat_dict) <- epitrix::clean_labels(colnames(dat_dict))
 
   # fill NA values with previous non-NA value, replace "." in codes and names
-  dat_dict <- dat_dict %>%
-    tidyr::fill(tidyselect::everything(), .direction = "down") %>%
-    dplyr::mutate(choice_code = replace(choice_code, choice_code == ".", NA),
-                  choice_name = replace(choice_name, choice_name == ".", NA))
+  dat_dict <- tidyr::fill(dat_dict,
+                          tidyselect::everything(), .direction = "down")
 
   # minor tidying, e.g.: create "CodeX" assignments
-  dat_dict <- dat_dict %>%
-    dplyr::mutate(data_element_name = column_name,
-                  data_element_shortname = column_name,
-                  data_element_valuetype = gsub(pattern = "Question",
-                                                replacement = "",
-                                                x = type)) %>%
-    dplyr::select(-column_name, - type) %>%
-    dplyr::group_by(data_element_shortname) %>%
-    dplyr::mutate(code = paste0("Code", dplyr::row_number())) %>%
-    dplyr::ungroup()
+  dat_dict <- dplyr::mutate(dat_dict,
+    choice_code = replace(choice_code, choice_code == ".", NA),
+    choice_name = replace(choice_name, choice_name == ".", NA))
+  dat_dict <- dplyr::mutate(dat_dict,
+                            data_element_name = column_name,
+                            data_element_shortname = column_name,
+                            data_element_valuetype = gsub(pattern = "Question",
+                                                          replacement = "",
+                                                          x = type))
+  dat_dict <- dplyr::select(dat_dict, -column_name, - type)
+  dat_dict <- dplyr::group_by(dat_dict, data_element_shortname)
+  dat_dict <- dplyr::mutate(dat_dict,
+                            code = paste0("Code", dplyr::row_number()))
+  dat_dict <- dplyr::ungroup(dat_dict)
 
   # transform dat_dict to wide format (like outbreak dictionary)
-  dat_dict_wide <- dat_dict %>%
-    dplyr::select(-choice_code) %>%
-    tidyr::spread(code, choice_name)
+  dat_dict_wide <- dplyr::select(dat_dict, -choice_code)
+  dat_dict_wide <- tidyr::spread(dat_dict_wide, code, choice_name)
 
-  dat_dict_wide$data_element_valuetype <- dat_dict_wide$data_element_valuetype %>%
-    dplyr::recode("Integer" = "INTEGER_POSITIVE",
+  dat_dict_wide$data_element_valuetype <-
+    dplyr::recode(dat_dict_wide$data_element_valuetype,
+                  "Integer" = "INTEGER_POSITIVE",
                   "Binary" = "TEXT",
                   "ChoiceMulti" = "TEXT",
                   "Text" = "LONG_TEXT",
