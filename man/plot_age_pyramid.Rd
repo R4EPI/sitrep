@@ -24,7 +24,7 @@ the bars}
 visual interpretation of numbers. Default is to not show (\code{FALSE}),
 to turn on write \code{TRUE}.}
 
-\item{horizontal}{lines If \code{TRUE} (default), horizontal dashed lines will
+\item{horizontal_lines}{If \code{TRUE} (default), horizontal dashed lines will
 appear behind the bars of the pyramid}
 }
 \description{
