@@ -8,14 +8,17 @@ Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
 Imports: 
     binom,
+    cowplot,
     dplyr (>= 0.7),
     epitools,
     epitrix,
     ggplot2,
+    ggspatial,
     here,
     incidence,
     ISOweek,
     knitr,
+    lwgeom,
     outbreaks,
     raster,
     rio,
