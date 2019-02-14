@@ -45,6 +45,8 @@ Collate:
     'cfr.R'
     'descriptive-table.R'
     'gen_data.R'
+    'gen_polygon.R'
+    'gen_population.R'
     'helpers.R'
     'inline_fun.R'
     'nutrition.R'
