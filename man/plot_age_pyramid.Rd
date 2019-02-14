@@ -54,11 +54,11 @@ ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
 print(ap)
 
 # Stratify by multiple factors
-ap   <- plot_age_pyramid(dat,
-                         age_group = "AGE",
-                         split_by = "sex",
-                         stack_by = "ill",
-                         vertical_lines = TRUE) +
+ap <- plot_age_pyramid(dat,
+                       age_group = "AGE",
+                       split_by = "sex",
+                       stack_by = "ill",
+                       vertical_lines = TRUE) +
   labs(title = "Age groups by case definition and sex")
 print(ap)
 }
