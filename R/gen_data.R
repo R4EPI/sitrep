@@ -54,25 +54,24 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
   # Adding hardcoded var types to options list
   # 3 types added to - BOOLEAN, TRUE_ONLY and ORGANISATION-UNIT
   BOOLEAN           <- data.frame(option_code = c(1, 0),
-                                  option_name = c("[1] Yes", "[0] No"),
-                                  option_uid = c(NA, NA),
-                                  option_order_in_set = c(1,2),
-                                  optionset_uid = c("BOOLEAN", "BOOLEAN")
-  )
+                         option_name = c("[1] Yes", "[0] No"),
+                         option_uid = c(NA, NA),
+                         option_order_in_set = c(1,2),
+                         optionset_uid = c("BOOLEAN", "BOOLEAN")
+                         )
 
   TRUE_ONLY         <- data.frame(option_code = c(1, "NA"),
-                                  option_name = c("[1] TRUE", "[NA] Not TRUE"),
-                                  option_uid = c(NA, NA),
-                                  option_order_in_set = c(1,2),
-                                  optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
-  )
-
+                         option_name = c("[1] TRUE", "[NA] Not TRUE"),
+                         option_uid = c(NA, NA),
+                         option_order_in_set = c(1,2),
+                         optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
+                         )
   ORGANISATION_UNIT <- data.frame(option_code = c("HO", "CL", "HP"),
-                                  option_name = c("[HO] Hospital", "[CL] Clinic", "[HP] Health post"),
-                                  option_uid = c(NA, NA, NA),
-                                  option_order_in_set = c(1,2,3),
-                                  optionset_uid = c("ORGANISATION_UNIT", "ORGANISATION_UNIT", "ORGANISATION_UNIT")
-  )
+                         option_name = c("[HO] Hospital", "[CL] Clinic", "[HP] Health post"),
+                         option_uid = c(NA, NA, NA),
+                         option_order_in_set = c(1,2,3),
+                         optionset_uid = c("ORGANISATION_UNIT", "ORGANISATION_UNIT", "ORGANISATION_UNIT")
+                         )
 
   # bind these on to the bottom of dat_opts (option list) as rows
   dat_opts <- do.call("rbind", list(dat_opts, BOOLEAN, TRUE_ONLY, ORGANISATION_UNIT))
@@ -136,7 +135,7 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
     if (tibble == TRUE) {
       outtie <- list(dictionary = tibble::as_tibble(dat_dict),
                      options = tibble::as_tibble(dat_opts)
-      )
+                     )
     }
 
     if (tibble == FALSE) {
@@ -280,6 +279,8 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   age_month_var <- grep("age.*month", names(dis_output), value = TRUE)[1]
   age_day_var <- grep("age.*day", names(dis_output), value = TRUE)[1]
 
+  # set_age_na controlls if age_year_var should be set to NA if age_month_var is sampled
+  # same is done for age_month_var and age_day_var
   set_age_na <- TRUE
   if (dictionary == "Mortality")
     set_age_na <- FALSE
