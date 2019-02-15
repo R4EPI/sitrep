@@ -1,19 +1,25 @@
 #' MSF data dictionaries and dummy datasets
-#' These function reads in MSF data dictionaries and produces randomised datasets
-#' based on values defined in the dictionaries.
-#' The randomised dataset produced should mimic an excel export from DHIS2.
-#' A third function (switch_vals) is used to recode variables defined in the
-#' dictionaries from coded to named form (e.g. 0/1 to No/Yes).
+#'
+#' These function reads in MSF data dictionaries and produces randomised
+#' datasets based on values defined in the dictionaries.  The randomised
+#' dataset produced should mimic an excel export from DHIS2.  A third function
+#' (switch_vals) is used to recode variables defined in the dictionaries from
+#' coded to named form (e.g. 0/1 to No/Yes).
+#'
 #' @param disease Specify which disease you would like to use.
 #' Currently supports "Cholera", "Measles" and "Meningitis".
-#' @param varnames Specify name of column that contains varnames.
-#' Currently default set to "Item".
-#' (this can probably be deleted once dictionaries standardise)
-#' @param numcases For fake data, specify the number of cases you want (default is 300)
+#' @param varnames Specify name of column that contains varnames. Currently
+#' default set to "Item".  (this can probably be deleted once dictionaries
+#' standardise)
+#' @param numcases For fake data, specify the number of cases you want (default is 300
 #' @param tibble Return data dictionary as a tidyverse tibble (default is TRUE)
-#' @param compact If TRUE, returns a neat data dictionary in single data frame. If FALSE, returns
-#' a list with two data frames, one with variables and the other with content options.
+#' @param compact If TRUE, returns a neat data dictionary in single data frame.
+#' If FALSE, returns a list with two data frames, one with variables and the
+#' other with content options.
 #' @param df A dataframe (e.g. your linelist) which is passed to switch_vals function.
+#' @param copy_to_clipboard. if `TRUE` (default), the rename template will be
+#' copied to the user's clipboard with [clipr::write_clip()]. If `FALSE`, the
+#' rename template will be printed to the user's console. 
 #' @importFrom rio import
 #' @importFrom epitrix clean_labels
 #' @importFrom tibble as_tibble
@@ -142,7 +148,25 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
   outtie
 }
 
-
+#' @export
+#' @rdname msf_dict
+msf_dict_rename_helper <- function(disease, varnames = "data_element_shortname", copy_to_clipboard = TRUE) {
+  # get msf disease specific data dictionary
+  dat_dict <- msf_dict(disease = disease, tibble = FALSE, compact = TRUE)
+  msg <- "## Add the appropriate column names after the equals signs\n\n"
+  msg <- paste0(msg, "linelist_cleaned <- rename(linelist_cleaned,\n")
+  the_renames <- sprintf("  %s =   , # %s", 
+                         format(dat_dict[[varnames]]), 
+                         dat_dict[["data_element_valuetype"]])
+  the_renames[length(the_renames)] <- gsub(",", " ", the_renames[length(the_renames)])
+  msg <- paste0(msg, paste(the_renames, collapse = "\n"), "\n)\n")
+  if (copy_to_clipboard && requireNamespace("clipr")) {
+    clipr::write_clip(msg)
+    message("rename template copied to clipboard. Paste the contents to your RMarkdown file and enter in the column names from your data set.")
+  } else { 
+    cat(msg)
+  }
+}
 
 
 # function to generate fake dataset based on data dictionary
@@ -311,7 +335,7 @@ switch_vals <- function(df, disease) {
   dat_dict <- msf_dict(disease, compact = FALSE)
 
   # returns the row number which dataset names match to dictionary names
-  matchers <- match(names(df), dat_dict$dictionary$data_element_shortname)
+  matchers <- match(names(df), dat_dict$dictionary$data_element_shortname, nomatch = 0)
   # returns lookup IDs based on
   ids <- dat_dict$dictionary$used_optionset_uid[matchers]
 

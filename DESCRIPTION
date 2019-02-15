@@ -9,6 +9,7 @@ License: MIT + file LICENSE
 Imports: 
     binom,
     cowplot,
+    clipr,
     dplyr (>= 0.7),
     epitools,
     epitrix,

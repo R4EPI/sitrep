@@ -57,85 +57,87 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 ```{r read_DHIS_excel_data}
 
 # If your linelist is an excel export of data from DHIS2 use this code chunk
-# This assumes your data fits the standardised MSF data dictionary for this disease
-# (Otherwise use one of the code chunks below for csv DHIS data and for non DHIS data)
+# This assumes your data fits the standardised MSF data dictionary for this
+# disease (Otherwise use one of the code chunks below for csv DHIS data and for
+# non DHIS data)
 
 
-## Read data ------------------------------------
-
+## Read data ------------------------------------------------------
 
 # USE ONE OF THE BELOW TWO OPTIONS TO READ IN YOUR DATA FROM EXCEL
 # one version is for password protected files
 
-
-# Excel file
-# to read in a specific sheet use "which"
+## Excel file ---------------------------
+#
+## To read in a specific sheet use "which"
 # linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
 
-# For password protected Excel file 
-# use the excel.link package 
+## Excel file (password-protected) ------
+#
+## Use the excel.link package 
 # library(excel.link)
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
-# get MSF data dictionary for cholera 
+## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
+linelist_raw <- gen_data("Cholera") # generates a fake dataset for use as an example in this template
+
+## MSF Cholera Dictionary ---------------
+#
+## get MSF data dictionary for cholera 
 linelist_dict <- msf_dict("Cholera")
-# you can look at the standard dictionary with this
+
+## you can look at the standard dictionary by uncommenting the line below
 # View(linelist_dict) 
-# you can view variable names in the standard data dicationry with this
+
+## you can view variable names in the standard data dicationry uncommenting the line below
 # linelist_dict$data_element_shortname
 
 
-# THIS LINE CAN BE DELETED - YOU READ IN YOUR OWN DATA ABOVE!
-# generates a fake dataset for use as an example in this template
-linelist_raw <- gen_data("Cholera")
+# Clean column names ---------------------------------------------
 
-## Fixing variable names ----------------------
+## a good first step is to assign standard column names so that subsequent code
+## uses stable column names. In case the input data changes, you just need to
+## fix the column mapping.
 
-# a good first step is to assign standard column names so that subsequent code
-# uses stable column names. 
-# in case the input data changes, you just need to fix the column mapping
-
-
-# make a copy of your original dataset and name it linelist_cleaned
+## make a copy of your orginal dataset and name it linelist_cleaned
 linelist_cleaned <- linelist_raw
 
-# UNCOMMENT AND RUN THREE LINES OF CODE BELOW!
-# define clean variable names using clean_labels from the epitrix package
-# this function is preset rules for variable naming 
-# for example it changes spaces and dots to "_" and characters to lowercase
+## UNCOMMENT AND RUN TWO LINES OF CODE BELOW!
+##
+## define clean variable names using clean_labels from the epitrix package. This
+## function defines rules for variable naming; for example, it changes spaces
+## and dots to "_" and sets all characters to lowercase.
+
 # cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+# colnames(linelist_cleaned) <- cleaned_colnames # overwrite variable names with defined clean names
 
-# overwrite variable names with defined clean names
-# colnames(linelist_cleaned) <- cleaned_colnames
+## OPTIONAL: below is just an example in case you want to specifically change a
+## few names you can also change specific var names using the *rename*
+## function. In this example, we have the columns "gender" and "age" that we
+## want to rename as "sex" and "age_years".
+## The formula for this is rename(data, NEW_NAME = OLD_NAME)
 
-# OPTIONAL: below is just an example in case you want to specifically change a few names)
-# you can also change specific var names using the *rename* function
 # linelist_cleaned <- rename(linelist_cleaned, 
-#                            sex = gender, 
-#                            age = age_years)
+#                            gender    = sex, 
+#                            age_years = age)
 
 
-# OPTIONAL: if you only want to keep certain variables - you can select these by name or column number
-# view the names of your vars and their column number using: names(linelist_cleaned)
-# this example keeps the first three columns as well as age_years and sex variables
+## OPTIONAL: if you only want to keep certain variables - 
+## you can select these by name or column number view the names of your vars
+## and their column number using: names(linelist_cleaned) this example keeps
+## the first three columns as well as age_years and sex variables
+
 # linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
 
-
-
-# OPTIONAL: ONLY RUN THESE LINES IF YOUR DATA MATCHES THE DICTIONARY EXACTLY(!) AND YOU DONT WANT ANY EXTRA VARS
-# find out which variables match the data dictionary 
-match_cols <- match(colnames(linelist_cleaned), linelist_dict$data_element_shortname)
-
-# only keep variables defined data dictionary 
-linelist_cleaned <- select(linelist_cleaned, match_cols)
-# alternatively keep the matched columns and specify names of extra columns in your data you want to keep
-# linelist_cleaned <- select(linelist_cleaned, c(match_cols, "age_years", "sex"))
-
-# switch variable contents to show what you see on data entry (i.e. named rather than coded values) 
-# this is only for the variables matching between the two
-linelist_cleaned[match_cols] <- switch_vals(df = linelist_cleaned[match_cols], disease = "Cholera")
+## Standardising values --------------------------------------------
+## 
+## Data entered in through software will often code values in a compact format
+## to save space. For example, Yes/No values will often be coded as 1 or 0 and
+## sex coded as M or F. This line uses the MSF dictionary to recode these values
+## back to a human-readable format.
+linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 ```
 
 
@@ -144,53 +146,61 @@ linelist_cleaned[match_cols] <- switch_vals(df = linelist_cleaned[match_cols], d
 # If your linelist is a csv export of data from DHIS2 use this code chunk
 # This assumes your data fits the standardised MSF data dictionary for this disease
 
-## Read data ------------------------------------
+## Read data ------------------------------------------------------
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 
-# get MSF data dictionary for cholera 
+## get MSF data dictionary for cholera 
 # linelist_dict <- msf_dict("Cholera")
 
 ## Fixing variable names ----------------------
-# make a copy of your original dataset and name it linelist_cleaned
+## make a copy of your original dataset and name it linelist_cleaned
 # linelist_cleaned <- linelist_raw
 
-# define clean variable names using clean_labels from the epitrix package
+## define clean variable names using clean_labels from the epitrix package
 # cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
 
-# overwrite variable names with defined clean names
+## overwrite variable names with excel version names from data dictionary
+## return which rows in the data dictionary match your column names
+
+# match_cols <- match(cleaned_colnames, linelist_dict$data_element_name, nomatch = 0)
+# cleaned_colnames[match_cols > 0] <- linelist_dict$data_element_shortname[match_cols]
+
+## overwrite variable names with defined clean names
 # colnames(linelist_cleaned) <- cleaned_colnames
 
-# overwrite variable names with excel version names from data dictionary
-# return which rows in the data dictionary match your column ames
-# match_cols <- match(colnames(linelist_cleaned), linelist_dict$data_element_name)
-# colnames(linelist_cleaned) <- linelist_dict$data_element_shortname[match_cols]
 
-# only keep variables defined data dictionary 
-# linelist_cleaned <- select(linelist_cleaned, match_cols)
-# alternatively keep the matched columns and specify names of extra columns in your data you want to keep
-# linelist_cleaned <- select(linelist_cleaned, c(match_cols, "age_years", "sex"))
-
-# switch variable contents to show what you see on data entry (i.e. named rather than coded values) 
-# this is only for the variables matching between the two
-# linelist_cleaned[match_cols] <- switch_vals(df = linelist_cleaned[match_cols], disease = "Cholera")
+## Standardising values --------------------------------------------
+## 
+## Data entered in through software will often code values in a compact format
+## to save space. For example, Yes/No values will often be coded as 1 or 0 and
+## sex coded as M or F. This line uses the MSF dictionary to recode these values
+## back to a human-readable format.
+## linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 ```
 
 
 
 ```{r read_nonDHIS_data}
 
-# If your linelist NOT an export of data from DHIS2 use this code chunk
-# This assumes your data does not fit the standardised MSF data dictionary for this disease
-# You will need to clean and update this script to match your data
-  # This will also require you to recode variable contents
-  # You will also need to update the code later in the script to fit your names/contents
-# You will still need to read in the standardised data dictionary
-  # This is to understand which variables are being used later in the script
-  # So that you can adapt those later code chunks to fit your dataset
-  # you will need to run this to look at the data dictionary: 
-  # linelist_dict <- msf_dict("Cholera")
-  # View(linelist_dict) 
+## IF YOUR LINELIST NOT AN EXPORT OF DATA FROM DHIS2 USE THIS CODE CHUNK ------
+##
+## This assumes your data does not fit the standardised MSF data dictionary for
+## this disease.
+##
+## Checklist to clean and update this script to match your data ---------------
+## 
+## - [ ] Recode your variable names to match this analysis 
+## - [ ] Recode variable contents
+## - [ ] update the code later in the script to fit your names/contents
+##
+## You will still need to read in the standardised data dictionary
+##   This is to understand which variables are being used later in the script
+##   So that you can adapt those later code chunks to fit your dataset
+##
+## - [ ] run this to look at the data dictionary: 
+# linelist_dict <- msf_dict("Cholera")
+# View(linelist_dict) 
 
 
 ## Read data ------------------------------------
@@ -202,8 +212,8 @@ linelist_cleaned[match_cols] <- switch_vals(df = linelist_cleaned[match_cols], d
 # use the excel.link package 
 # library(excel.link)
 # linelist_raw <- xl.read.file("linelist.xlsx",
-#                             xl.sheet = "Sheet1",
-#                             password = askpass::askpass("please enter file password"))
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass("please enter file password"))
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 # 
@@ -220,15 +230,26 @@ linelist_cleaned[match_cols] <- switch_vals(df = linelist_cleaned[match_cols], d
 # overwrite variable names with defined clean names
 # colnames(linelist_cleaned) <- cleaned_colnames
 
-# OPTIONAL: below is just an example in case you want to specifically change a few names)
-# you can also change specific var names using the *rename* function
-# linelist_cleaned <- rename(linelist_cleaned, 
-#                            sex = gender, 
-#                            age = age_years)
+## OPTIONAL: below is just an example in case you want to specifically change a
+## few names you can also change specific var names using the *rename*
+## function. In this example, we have the columns "gender" and "age" that we
+## want to rename as "sex" and "age_years".
+## The formula for this is rename(data, NEW_NAME = OLD_NAME)
 
-# OPTIONAL: if you only want to keep certain variables - you can select these by name or column number
-# view the names of your vars and their column number using: names(linelist_cleaned)
-# this example keeps the first three columns as well as age_years and sex variables
+# linelist_cleaned <- rename(linelist_cleaned, 
+#                            gender    = sex, 
+#                            age_years = age)
+
+# You can use the function msf_dict_rename_helper() to create a template based
+# on the cholera dictionary
+msf_dict_rename_helper("Cholera")
+
+
+## OPTIONAL: if you only want to keep certain variables - 
+## you can select these by name or column number view the names of your vars
+## and their column number using: names(linelist_cleaned) this example keeps
+## the first three columns as well as age_years and sex variables
+
 # linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
 ```
 
