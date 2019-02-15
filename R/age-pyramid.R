@@ -70,7 +70,8 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   # find the maximum x axis position
   max_n     <- dplyr::group_by(plot_data, !!ag, !!sb)
   max_n     <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
-  max_n     <- signif(max(max_n[["n"]]), digits = -1)
+  max_n     <- max(max_n[["n"]])
+  max_n     <- if (max_n %% 10 > 5) signif(max_n, 1) else signif(max_n, 1) + 10
   stopifnot(is.finite(max_n), max_n > 0)
   step_size <- ceiling(max_n / 5)
   age_levels <- levels(plot_data[[age_group]])
