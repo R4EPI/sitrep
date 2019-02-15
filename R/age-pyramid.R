@@ -66,7 +66,11 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
   plot_data <- dplyr::group_by(plot_data, !!ag, !!sb, !!st)
   plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
-  max_n <- signif(max(plot_data[["n"]]), digits = -1)
+  plot_data <- dplyr::ungroup(plot_data)
+  # find the maximum x axis position
+  max_n     <- dplyr::group_by(plot_data, !!ag, !!sb)
+  max_n     <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
+  max_n     <- signif(max(max_n[["n"]]), digits = -1)
   stopifnot(is.finite(max_n), max_n > 0)
   step_size <- ceiling(max_n / 5)
   age_levels <- levels(plot_data[[age_group]])
