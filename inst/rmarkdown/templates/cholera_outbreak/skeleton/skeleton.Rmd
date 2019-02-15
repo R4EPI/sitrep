@@ -186,13 +186,14 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 ## IF YOUR LINELIST NOT AN EXPORT OF DATA FROM DHIS2 USE THIS CODE CHUNK ------
 ##
 ## This assumes your data does not fit the standardised MSF data dictionary for
-## this disease.
+## this disease. If you are using this section, be aware that this template may
+## not work simply due to the unpredictable nature of non-standardized data
 ##
 ## Checklist to clean and update this script to match your data ---------------
 ## 
 ## - [ ] Recode your variable names to match this analysis 
 ## - [ ] Recode variable contents
-## - [ ] update the code later in the script to fit your names/contents
+## - [ ] Check the code later in the script and update it to fit your names/contents
 ##
 ## You will still need to read in the standardised data dictionary
 ##   This is to understand which variables are being used later in the script
@@ -230,20 +231,30 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 # overwrite variable names with defined clean names
 # colnames(linelist_cleaned) <- cleaned_colnames
 
+## Renaming variables to match the template -------------------------------
 ## OPTIONAL: below is just an example in case you want to specifically change a
 ## few names you can also change specific var names using the *rename*
 ## function. In this example, we have the columns "gender" and "age" that we
 ## want to rename as "sex" and "age_years".
-## The formula for this is rename(data, NEW_NAME = OLD_NAME)
+## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 
 # linelist_cleaned <- rename(linelist_cleaned, 
-#                            gender    = sex, 
-#                            age_years = age)
+#                            gender    = sex, # TEXT
+#                            age_years = age  # INTEGER_POSITIVE
+# )
 
-# You can use the function msf_dict_rename_helper() to create a template based
-# on the cholera dictionary
+## You can use the function msf_dict_rename_helper() to create a template based
+## on the Cholera dictionary. This will copy a rename command like the one above
+## to your clipboard.
 msf_dict_rename_helper("Cholera")
-
+## Paste the result here and add add the column names from linelist_cleaned
+## to the appropriate variables. PLEASE NOTE: this is not a foolproof solution;
+## you still need to be aware of what each variable means and what values it
+## takes. 
+## 
+## If there are any variables that are in the MSF dictionary that are not in
+## your data set, then you should comment them out, but be aware that some
+## analyses may not run because of this. 
 
 ## OPTIONAL: if you only want to keep certain variables - 
 ## you can select these by name or column number view the names of your vars
@@ -264,35 +275,35 @@ msf_dict_rename_helper("Cholera")
 
 ## Read data ------------------------------------
 
-# Excel file
-# to read in a specific sheet use "which"
+## Excel file
+## to read in a specific sheet use "which"
 # population_data <- rio::import("population.xlsx", which = "Sheet1")
 
-# repeat same cleaning steps as above
-# make sure your place variable name matches!
+## repeat same cleaning steps as above
+## make sure your place variable name matches!
 
 ## Counts from population proportions ------------------------------------ 
-# if you only know the total population and the proportions in each age group, use this function 
+## if you only know the total population and the proportions in each age group, use this function 
 # population_data_age <- gen_population(total_pop = 1000, 
 #                                       groups = c("0-4","5-14","15-24","25-34","35-44","45+"),
 #                                       proportions = c(0.182, 0.278, 0.26, 0.11, 0.07, 0.10)
 #                                       )
 
 ## Fake data ------------------------------------ 
-# THE BELOW CAN BE DELETED IF YOU HAVE YOUR OWN (REAL) POPULATION DATA! 
-# its just to be able to demonstrate script in this template
+## THE BELOW CAN BE DELETED IF YOU HAVE YOUR OWN (REAL) POPULATION DATA! 
+## its just to be able to demonstrate script in this template
 
-# generate some artificial population data by region 
+## generate some artificial population data by region 
 population_data_region <- distinct(linelist_cleaned, patient_origin_free_text)
 population_data_region$population <- as.integer(runif(nrow(population_data_region), 
                                           min = 500, max = 2000))
 
-# generate some artificial population data by age groups (years)
+## generate some artificial population data by age groups (years)
 population_data_age <- tibble(age_group = c("0-4","5-14","15-29","30-44", "45+"))
 population_data_age$population <- as.integer(runif(nrow(population_data_age), 
                                           min = 500, max = 2000))
 
-# generate some artifical population data by age group (months) 
+## generate some artifical population data by age group (months) 
 population_data_age_months <- tibble(age_group_mon = c("0-5", "6-8", "9-10","11-22", "23+"))
 population_data_age_months$population <- as.integer(runif(nrow(population_data_age_months), 
                                           min = 500, max = 2000))
@@ -301,28 +312,28 @@ population_data_age_months$population <- as.integer(runif(nrow(population_data_a
 
 
 ```{r browse_data, eval = FALSE}
-# Browsing data ---------------------------------
-# here are a few ways to do data explorations 
+## Browsing data ---------------------------------
+## here are a few ways to do data explorations 
 
-# view the first ten rows of data
+## view the first ten rows of data
 head(linelist_cleaned, n = 10)
 
-# view your whole dataset interactivley (in an excel style format)
+## view your whole dataset interactivley (in an excel style format)
 ## Remember that `View` needs to be written with a capital *V*
 View(linelist_cleaned)
 
-# overview of variable types and contents
+## overview of variable types and contents
 str(linelist_cleaned)
 
-# gives mean, median and max values of variables
+## gives mean, median and max values of variables
 summary(linelist_cleaned)
 
-# view unique values contained in variables 
+## view unique values contained in variables 
 unique(linelist_cleaned$sex)
 
-# another alternative is with the "summarytools package"
-# use the dfSummary function in combination with view
-# note that view is not capitalised with this package
+## another alternative is with the "summarytools package"
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
 # install.packages("summarytools")
 # summarytools::view(summarytools::dfSummary(linelist_cleaned))
 ```
@@ -370,40 +381,40 @@ linelist_cleaned <- linelist_cleaned %>%
   mutate(age_years = case_when(
     is.na(age_years) & is.na(age_months) ~ as.integer(age_days / 365.25),
     is.na(age_years)                     ~ as.integer(age_months / 12),
-    TRUE                                 ~ age_years
+    TRUE                                 ~ as.integer(age_years)
   ))
 
-# change those who are above or below a certain age to NA
+## change those who are above or below a certain age to NA
 # linelist_cleaned <- mutate(linelist_cleaned, 
 #                            age_years = case_when(
-#                              age_years <0 ~ NA, 
-#                              age_years >120 ~ NA
+#                              age_years < 0   ~ NA_integer_, 
+#                              age_years > 120 ~ NA_integer_
 #                            ))
 
-# create an age group variable by specifying categorical breaks (of years)
+## create an age group variable by specifying categorical breaks (of years)
 linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years, 
                                              breakers = c(0, 5, 15, 30, 45))
 
-# alternatively, create an age group variable specify a sequence
+## alternatively, create an age group variable specify a sequence
 # linelist_cleaned$age_group <- age_categories(linelist_cleaned$age,
 #                                              lower = 0, 
 #                                              upper = 100, 
 #                                              by = 10)
 
-# If you already have an age group variable defined, you should manually
-# arrange the categories
+## If you already have an age group variable defined, you should manually
+## arrange the categories
 # linelist_cleaned$age_group <- factor(linelist_cleaned$age_group,
 #                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
 
 
-# create age group variable for under 5 years based on months
+## create age group variable for under 5 years based on months
 linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months, 
                                                  breakers = c(0, 6, 9, 11, 23))
 
 # Factor (categorical) variables ---------------------------------
 
-# recode a factor character variable
-# fix any misspellings in the data
+## recode a factor character variable
+## fix any misspellings in the data
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate(patient_origin_free_text = recode(patient_origin_free_text,
 #     # List all incorrect mis-spellings here ("old" = "new")
@@ -567,7 +578,7 @@ plot_age_pyramid(linelist_cleaned,
 
 
 
-```{r age_pyramid_U2, warning=FALSE}
+```{r age_pyramid_under_two, warning=FALSE}
 # plot age pyramid under 2s
 # filter(linelist_cleaned, age_years <= 2) %>%
 #   plot_age_pyramid(age_group = "age_group_mon", 
@@ -1161,16 +1172,18 @@ mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
 # generate fake shapefile
 map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin_free_text))
 
-# reading in a shapefile 
-# shapefiles consist of multiple files
-# so you dont need to specify the file type (reas_sf recognises it for you)
+## reading in a shapefile 
+## shapefiles consist of multiple files
+## so you dont need to specify the file type (reas_sf recognises it for you)
 # map <- read_sf(here("mapfolder", "china"))
 
 
 ## check the CRS
 # st_crs(map)
+
 ## set the CRS if not present using EPSG value
 # map <- st_set_crs(map, value = 4326) # Sets to WGS84
+
 ## Transform to a different CRS such as UTM, search online for relvant EPSG value
 # map_otherprojection <- st_transform(map, value = 32646) 
 ```
