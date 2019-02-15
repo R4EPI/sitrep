@@ -61,17 +61,17 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
                          )
 
   TRUE_ONLY         <- data.frame(option_code = c(1, "NA"),
-                         option_name = c("[1] TRUE", "[NA] Not TRUE"),
-                         option_uid = c(NA, NA),
-                         option_order_in_set = c(1,2),
-                         optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
-                         )
+                          option_name = c("[1] TRUE", "[NA] Not TRUE"),
+                          option_uid = c(NA, NA),
+                          option_order_in_set = c(1,2),
+                          optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
+                          )
   ORGANISATION_UNIT <- data.frame(option_code = c("HO", "CL", "HP"),
-                         option_name = c("[HO] Hospital", "[CL] Clinic", "[HP] Health post"),
-                         option_uid = c(NA, NA, NA),
-                         option_order_in_set = c(1,2,3),
-                         optionset_uid = c("ORGANISATION_UNIT", "ORGANISATION_UNIT", "ORGANISATION_UNIT")
-                         )
+                          option_name = c("[HO] Hospital", "[CL] Clinic", "[HP] Health post"),
+                          option_uid = c(NA, NA, NA),
+                          option_order_in_set = c(1,2,3),
+                          optionset_uid = c("ORGANISATION_UNIT", "ORGANISATION_UNIT", "ORGANISATION_UNIT")
+                          )
 
   # bind these on to the bottom of dat_opts (option list) as rows
   dat_opts <- do.call("rbind", list(dat_opts, BOOLEAN, TRUE_ONLY, ORGANISATION_UNIT))
