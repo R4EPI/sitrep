@@ -19,7 +19,7 @@
 #' @param df A dataframe (e.g. your linelist) which is passed to switch_vals function.
 #' @param copy_to_clipboard. if `TRUE` (default), the rename template will be
 #' copied to the user's clipboard with [clipr::write_clip()]. If `FALSE`, the
-#' rename template will be printed to the user's console. 
+#' rename template will be printed to the user's console.
 #' @importFrom rio import
 #' @importFrom epitrix clean_labels
 #' @importFrom tibble as_tibble
@@ -155,15 +155,19 @@ msf_dict_rename_helper <- function(disease, varnames = "data_element_shortname",
   dat_dict <- msf_dict(disease = disease, tibble = FALSE, compact = TRUE)
   msg <- "## Add the appropriate column names after the equals signs\n\n"
   msg <- paste0(msg, "linelist_cleaned <- rename(linelist_cleaned,\n")
-  the_renames <- sprintf("  %s =   , # %s", 
-                         format(dat_dict[[varnames]]), 
+  the_renames <- sprintf("  %s =   , # %s",
+                         format(dat_dict[[varnames]]),
                          dat_dict[["data_element_valuetype"]])
   the_renames[length(the_renames)] <- gsub(",", " ", the_renames[length(the_renames)])
   msg <- paste0(msg, paste(the_renames, collapse = "\n"), "\n)\n")
-  if (copy_to_clipboard && requireNamespace("clipr")) {
-    clipr::write_clip(msg)
+  if (copy_to_clipboard) {
+    x <- try(clipr::write_clip(msg), silent = TRUE)
+    if (inherits(x, "try-error")) {
+      if (interactive()) cat(msg)
+      return(invisible())
+    }
     message("rename template copied to clipboard. Paste the contents to your RMarkdown file and enter in the column names from your data set.")
-  } else { 
+  } else {
     cat(msg)
   }
 }
