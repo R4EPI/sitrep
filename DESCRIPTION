@@ -9,6 +9,7 @@ License: MIT + file LICENSE
 Imports: 
     binom,
     cowplot,
+    clipr,
     dplyr (>= 0.7),
     epitools,
     epitrix,
@@ -45,6 +46,8 @@ Collate:
     'cfr.R'
     'descriptive-table.R'
     'gen_data.R'
+    'gen_polygon.R'
+    'gen_population.R'
     'helpers.R'
     'inline_fun.R'
     'nutrition.R'
