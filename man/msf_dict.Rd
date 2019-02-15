@@ -2,17 +2,16 @@
 % Please edit documentation in R/gen_data.R
 \name{msf_dict}
 \alias{msf_dict}
+\alias{msf_dict_rename_helper}
 \alias{gen_data}
 \alias{switch_vals}
-\title{MSF data dictionaries and dummy datasets
-These function reads in MSF data dictionaries and produces randomised datasets
-based on values defined in the dictionaries.
-The randomised dataset produced should mimic an excel export from DHIS2.
-A third function (switch_vals) is used to recode variables defined in the
-dictionaries from coded to named form (e.g. 0/1 to No/Yes).}
+\title{MSF data dictionaries and dummy datasets}
 \usage{
 msf_dict(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
   compact = TRUE)
+
+msf_dict_rename_helper(disease, varnames = "data_element_shortname",
+  copy_to_clipboard = TRUE)
 
 gen_data(disease, varnames = "data_element_shortname", numcases = 300)
 
@@ -24,22 +23,26 @@ Currently supports "Cholera", "Measles" and "Meningitis".}
 
 \item{tibble}{Return data dictionary as a tidyverse tibble (default is TRUE)}
 
-\item{compact}{If TRUE, returns a neat data dictionary in single data frame. If FALSE, returns
-a list with two data frames, one with variables and the other with content options.}
+\item{compact}{If TRUE, returns a neat data dictionary in single data frame.
+If FALSE, returns a list with two data frames, one with variables and the
+other with content options.}
 
-\item{varnames}{Specify name of column that contains varnames.
-Currently default set to "Item".
-(this can probably be deleted once dictionaries standardise)}
+\item{varnames}{Specify name of column that contains varnames. Currently
+default set to "Item".  (this can probably be deleted once dictionaries
+standardise)}
 
-\item{numcases}{For fake data, specify the number of cases you want (default is 300)}
+\item{numcases}{For fake data, specify the number of cases you want (default is 300}
 
 \item{df}{A dataframe (e.g. your linelist) which is passed to switch_vals function.}
+
+\item{copy_to_clipboard.}{if \code{TRUE} (default), the rename template will be
+copied to the user's clipboard with \code{\link[clipr:write_clip]{clipr::write_clip()}}. If \code{FALSE}, the
+rename template will be printed to the user's console.}
 }
 \description{
-MSF data dictionaries and dummy datasets
-These function reads in MSF data dictionaries and produces randomised datasets
-based on values defined in the dictionaries.
-The randomised dataset produced should mimic an excel export from DHIS2.
-A third function (switch_vals) is used to recode variables defined in the
-dictionaries from coded to named form (e.g. 0/1 to No/Yes).
+These function reads in MSF data dictionaries and produces randomised
+datasets based on values defined in the dictionaries.  The randomised
+dataset produced should mimic an excel export from DHIS2.  A third function
+(switch_vals) is used to recode variables defined in the dictionaries from
+coded to named form (e.g. 0/1 to No/Yes).
 }

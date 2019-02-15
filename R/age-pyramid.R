@@ -10,7 +10,7 @@
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (`FALSE`),
 #' to turn on write `TRUE`.
-#' @param horizontal_lines If `TRUE` (default), horizontal dashed lines will
+#' @param horizontal lines If `TRUE` (default), horizontal dashed lines will
 #'   appear behind the bars of the pyramid
 #'
 #' @note if `split_by` and `stack_by` are not the same, The values of `spit_by`
@@ -37,11 +37,11 @@
 #' print(ap)
 #'
 #' # Stratify by multiple factors
-#' ap   <- plot_age_pyramid(dat,
-#'                          age_group = "AGE",
-#'                          split_by = "sex",
-#'                          stack_by = "ill",
-#'                          vertical_lines = TRUE) +
+#' ap <- plot_age_pyramid(dat,
+#'                        age_group = "AGE",
+#'                        split_by = "sex",
+#'                        stack_by = "ill",
+#'                        vertical_lines = TRUE) +
 #'   labs(title = "Age groups by case definition and sex")
 #' print(ap)
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
@@ -66,7 +66,12 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
   plot_data <- dplyr::group_by(plot_data, !!ag, !!sb, !!st)
   plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
-  max_n <- signif(max(plot_data[["n"]]), digits = -1)
+  plot_data <- dplyr::ungroup(plot_data)
+  # find the maximum x axis position
+  max_n     <- dplyr::group_by(plot_data, !!ag, !!sb)
+  max_n     <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
+  max_n     <- max(max_n[["n"]])
+  max_n     <- if (max_n %% 10 > 5) signif(max_n, 1) else signif(max_n, 1) + 10
   stopifnot(is.finite(max_n), max_n > 0)
   step_size <- ceiling(max_n / 5)
   age_levels <- levels(plot_data[[age_group]])

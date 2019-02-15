@@ -15,7 +15,7 @@ report for cholera.
     [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
 - Introductions and contents of sections are within square brackets "[...]" and
     can be deleted as appropriate
-- Examples of inline code (to automate updating numbers, e.g. line 148), can
+- Examples of inline code (to automate updating numbers, e.g. in the "Person section"), can
     similarly be removed/updated
 - Code itself can be deleted, but as a word of caution: make sure you aren't
     deleting bits where variables are created/manipulated, or at least update
@@ -57,60 +57,87 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 ```{r read_DHIS_excel_data}
 
 # If your linelist is an excel export of data from DHIS2 use this code chunk
-# This assumes your data fits the standardised MSF data dictionary for this disease
-# (Otherwise use one of the code chunks below for csv DHIS data and for non DHIS data)
+# This assumes your data fits the standardised MSF data dictionary for this
+# disease (Otherwise use one of the code chunks below for csv DHIS data and for
+# non DHIS data)
 
 
-## Read data ------------------------------------
+## Read data ------------------------------------------------------
 
-# Excel file
-# to read in a specific sheet use "which"
+# USE ONE OF THE BELOW TWO OPTIONS TO READ IN YOUR DATA FROM EXCEL
+# one version is for password protected files
+
+## Excel file ---------------------------
+#
+## To read in a specific sheet use "which"
 # linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
 
-# For password protected Excel file 
-# use the excel.link package 
+## Excel file (password-protected) ------
+#
+## Use the excel.link package 
 # library(excel.link)
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
-# get MSF data dictionary for cholera 
+## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
+linelist_raw <- gen_data("Cholera") # generates a fake dataset for use as an example in this template
+
+## MSF Cholera Dictionary ---------------
+#
+## get MSF data dictionary for cholera 
 linelist_dict <- msf_dict("Cholera")
 
+## you can look at the standard dictionary by uncommenting the line below
+# View(linelist_dict) 
 
-# THIS LINE CAN BE DELETED IF YOU HAVE YOUR OWN DATA! (read in above)
-# use fake dataset as an example for this template
-linelist_raw <- gen_data("Cholera")
-
-## Fixing variable names ----------------------
-
-# a good first step is to assign standard column names so that subsequent code
-# uses stable column names. 
-# in case the input data changes, you just need to fix the column mapping
+## you can view variable names in the standard data dicationry uncommenting the line below
+# linelist_dict$data_element_shortname
 
 
-# make a copy of your original dataset and name it linelist_cleaned
+# Clean column names ---------------------------------------------
+
+## a good first step is to assign standard column names so that subsequent code
+## uses stable column names. In case the input data changes, you just need to
+## fix the column mapping.
+
+## make a copy of your orginal dataset and name it linelist_cleaned
 linelist_cleaned <- linelist_raw
 
-# RUN BELOW TWO LINES IF YOU ARE READING IN YOUR OWN DATA!
-# define clean variable names using clean_labels from the epitrix package
-# this function is preset rules for variable naming 
-# for example it changes spaces and dots to "_" and characters to lowercase
+## UNCOMMENT AND RUN TWO LINES OF CODE BELOW!
+##
+## define clean variable names using clean_labels from the epitrix package. This
+## function defines rules for variable naming; for example, it changes spaces
+## and dots to "_" and sets all characters to lowercase.
+
 # cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+# colnames(linelist_cleaned) <- cleaned_colnames # overwrite variable names with defined clean names
 
-# overwrite variable names with defined clean names
-# colnames(linelist_cleaned) <- cleaned_colnames
+## OPTIONAL: below is just an example in case you want to specifically change a
+## few names you can also change specific var names using the *rename*
+## function. In this example, we have the columns "gender" and "age" that we
+## want to rename as "sex" and "age_years".
+## The formula for this is rename(data, NEW_NAME = OLD_NAME)
 
-# OPTIONAL: you can also change specific var names using the *rename* function
-# linelist_cleaned <- rename(linelist_cleaned, sex = gender)
+# linelist_cleaned <- rename(linelist_cleaned, 
+#                            gender    = sex, 
+#                            age_years = age)
 
-# only keep variables defined data dictionary 
-# you could alternatively write out all the names you want to keep e.g. c("sex", "age", ...)
-linelist_cleaned <- select(linelist_raw, linelist_dict$data_element_shortname)
 
-# switch variable contents to show what you see on data entry (rather than coded values) 
+## OPTIONAL: if you only want to keep certain variables - 
+## you can select these by name or column number view the names of your vars
+## and their column number using: names(linelist_cleaned) this example keeps
+## the first three columns as well as age_years and sex variables
+
+# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
+
+## Standardising values --------------------------------------------
+## 
+## Data entered in through software will often code values in a compact format
+## to save space. For example, Yes/No values will often be coded as 1 or 0 and
+## sex coded as M or F. This line uses the MSF dictionary to recode these values
+## back to a human-readable format.
 linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
-
 ```
 
 
@@ -119,45 +146,62 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 # If your linelist is a csv export of data from DHIS2 use this code chunk
 # This assumes your data fits the standardised MSF data dictionary for this disease
 
-## Read data ------------------------------------
+## Read data ------------------------------------------------------
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 
-# get MSF data dictionary for cholera 
+## get MSF data dictionary for cholera 
 # linelist_dict <- msf_dict("Cholera")
 
 ## Fixing variable names ----------------------
-# make a copy of your original dataset and name it linelist_cleaned
+## make a copy of your original dataset and name it linelist_cleaned
 # linelist_cleaned <- linelist_raw
 
-# define clean variable names using clean_labels from the epitrix package
+## define clean variable names using clean_labels from the epitrix package
 # cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
 
-# overwrite variable names with defined clean names
+## overwrite variable names with excel version names from data dictionary
+## return which rows in the data dictionary match your column names
+
+# match_cols <- match(cleaned_colnames, linelist_dict$data_element_name, nomatch = 0)
+# cleaned_colnames[match_cols > 0] <- linelist_dict$data_element_shortname[match_cols]
+
+## overwrite variable names with defined clean names
 # colnames(linelist_cleaned) <- cleaned_colnames
 
-# overwrite variable names with excel version names from data dictionary
-# return which rows in the data dictionary match your column ames
-# match_cols <- match(colnames(linelist_cleaned), linelist_dict$data_element_name)
-# colnames(linelist_cleaned) <- linelist_dict$data_element_shortname[match_cols]
 
-# only keep variables defined data dictionary 
-# you could alternatively write out all the names you want to keep e.g. c("sex", "age", ...)
-# linelist_cleaned <- select(linelist_raw, linelist_dict$data_element_shortname)
-
-# switch variable contents to show what you see on data entry (rather than coded values) 
-# linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
+## Standardising values --------------------------------------------
+## 
+## Data entered in through software will often code values in a compact format
+## to save space. For example, Yes/No values will often be coded as 1 or 0 and
+## sex coded as M or F. This line uses the MSF dictionary to recode these values
+## back to a human-readable format.
+## linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 ```
 
 
 
 ```{r read_nonDHIS_data}
 
-# If your linelist NOT an export of data from DHIS2 use this code chunk
-# This assumes your data does not fit the standardised MSF data dictionary for this disease
-# You will need to assign all your variable names by hand in order for this script to work
-  # This will also require you to recode variable contents to match 
-  # Alternatively, you could adapt the code later in the script to fit your names/contents
+## IF YOUR LINELIST NOT AN EXPORT OF DATA FROM DHIS2 USE THIS CODE CHUNK ------
+##
+## This assumes your data does not fit the standardised MSF data dictionary for
+## this disease. If you are using this section, be aware that this template may
+## not work simply due to the unpredictable nature of non-standardized data
+##
+## Checklist to clean and update this script to match your data ---------------
+## 
+## - [ ] Recode your variable names to match this analysis 
+## - [ ] Recode variable contents
+## - [ ] Check the code later in the script and update it to fit your names/contents
+##
+## You will still need to read in the standardised data dictionary
+##   This is to understand which variables are being used later in the script
+##   So that you can adapt those later code chunks to fit your dataset
+##
+## - [ ] run this to look at the data dictionary: 
+# linelist_dict <- msf_dict("Cholera")
+# View(linelist_dict) 
 
 
 ## Read data ------------------------------------
@@ -169,8 +213,8 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 # use the excel.link package 
 # library(excel.link)
 # linelist_raw <- xl.read.file("linelist.xlsx",
-#                             xl.sheet = "Sheet1",
-#                             password = askpass::askpass("please enter file password"))
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass("please enter file password"))
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 # 
@@ -179,60 +223,45 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 
 ## Fixing variable names ----------------------
 
-# rename your variable names to fit the data dictionary 
-# before the equals is the new name and after is the old name
-# the first two have been filled as examples 
-  # (where your var names are readmittedvar and pregnantoutcome)
-# see the standardise_clean_data code chunk on how to recode your variables
-# linelist_cleaned <- rename(linelist_cleaned, 
-#  readmission                      = readmittedvar,
-#  pregnancy_outcome_at_exit        = pregantntoutcome,
-#  prescribed_antibiotics           =     ,
-#  oedema                           =     ,
-#  prescribed_zinc_supplement       =     ,
-#  dehydration_severity_during_stay =     ,
-#  dehydration_level_at_admission   =     ,
-#  residential_status_brief         =     ,
-#  malaria_rdt_at_admission         =     ,
-#  event_file_type                  =     ,
-#  exit_status                      =     ,
-#  pregnant                         =     ,
-#  cholera_referred_to              =     ,
-#  cholera_referred_from            =     ,
-#  time_to_death                    =     ,
-#  previously_vaccinated            =     ,
-#  treatment_facility_site          =     ,
-#  cholera_treatment_facility_type  =     ,
-#  treatment_location               =     ,
-#  patient_origin                   =     ,
-#  sex                              =     ,
-#  msf_involvement                  =     ,
-#  trimester                        =     ,
-#  fluids_treatment_plan            =     ,
-#  foetus_alive_at_admission        =     ,
-#  previous_vaccine_doses_received  =     ,
-#  cholera_culture_result           =     ,
-#  cholera_rdt_result               =     ,
-#  cholera_pcr_result               =     ,
-#  delivery_event                   =     ,
-#  comments_on_lab_results          =     ,
-#  age_years                        =     ,
-#  treatment_facility_name          =     ,
-#  age_days                         =     ,
-#  date_of_last_vaccination         =     ,
-#  date_lab_sample_taken            =     ,
-#  date_of_onset                    =     ,
-#  age_months                       =     ,
-#  patient_origin_free_text         =     ,
-#  case_number                      =     ,
-#  date_of_admission                =     ,
-#  iv_fluids_received_litres        =     ,
-#  date_of_consultation_admission   =     ,
-#  arrival_date_in_area_if_3m       =     ,
-#  date_of_exit                     =     ,
-#  ors_consumed_litres              =     
-#  )
+# define clean variable names using clean_labels from the epitrix package
+# this function is preset rules for variable naming 
+# for example it changes spaces and dots to "_" and characters to lowercase
+# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
 
+# overwrite variable names with defined clean names
+# colnames(linelist_cleaned) <- cleaned_colnames
+
+## Renaming variables to match the template -------------------------------
+## OPTIONAL: below is just an example in case you want to specifically change a
+## few names you can also change specific var names using the *rename*
+## function. In this example, we have the columns "gender" and "age" that we
+## want to rename as "sex" and "age_years".
+## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
+
+# linelist_cleaned <- rename(linelist_cleaned, 
+#                            gender    = sex, # TEXT
+#                            age_years = age  # INTEGER_POSITIVE
+# )
+
+## You can use the function msf_dict_rename_helper() to create a template based
+## on the Cholera dictionary. This will copy a rename command like the one above
+## to your clipboard.
+msf_dict_rename_helper("Cholera")
+## Paste the result here and add add the column names from linelist_cleaned
+## to the appropriate variables. PLEASE NOTE: this is not a foolproof solution;
+## you still need to be aware of what each variable means and what values it
+## takes. 
+## 
+## If there are any variables that are in the MSF dictionary that are not in
+## your data set, then you should comment them out, but be aware that some
+## analyses may not run because of this. 
+
+## OPTIONAL: if you only want to keep certain variables - 
+## you can select these by name or column number view the names of your vars
+## and their column number using: names(linelist_cleaned) this example keeps
+## the first three columns as well as age_years and sex variables
+
+# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
 ```
 
 
@@ -246,28 +275,36 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 
 ## Read data ------------------------------------
 
-# Excel file
-# to read in a specific sheet use "which"
+## Excel file
+## to read in a specific sheet use "which"
 # population_data <- rio::import("population.xlsx", which = "Sheet1")
 
-# repeat same cleaning steps as above
-# make sure your place variable name matches!
+## repeat same cleaning steps as above
+## make sure your place variable name matches!
 
-# THE BELOW CAN BE DELETED IF YOU HAVE YOUR OWN POP DATA! 
-# its just to be able to demonstrate script in this template
+## Counts from population proportions ------------------------------------ 
+## if you only know the total population and the proportions in each age group, use this function 
+# population_data_age <- gen_population(total_pop = 1000, 
+#                                       groups = c("0-4","5-14","15-24","25-34","35-44","45+"),
+#                                       proportions = c(0.182, 0.278, 0.26, 0.11, 0.07, 0.10)
+#                                       )
 
-# generate some artificial population data by region 
+## Fake data ------------------------------------ 
+## THE BELOW CAN BE DELETED IF YOU HAVE YOUR OWN (REAL) POPULATION DATA! 
+## its just to be able to demonstrate script in this template
+
+## generate some artificial population data by region 
 population_data_region <- distinct(linelist_cleaned, patient_origin_free_text)
 population_data_region$population <- as.integer(runif(nrow(population_data_region), 
                                           min = 500, max = 2000))
 
-# generate some artificial population data by age groups (years)
-population_data_age <- tibble(age_group = c("0-4","5-14","15-24","25-34","35-44","45+"))
+## generate some artificial population data by age groups (years)
+population_data_age <- tibble(age_group = c("0-4","5-14","15-29","30-44", "45+"))
 population_data_age$population <- as.integer(runif(nrow(population_data_age), 
                                           min = 500, max = 2000))
 
-# generate some artifical population data by age group (months) 
-population_data_age_months <- tibble(age_group_mon = c("0-4", "5-7", "8-10","11-23"))
+## generate some artifical population data by age group (months) 
+population_data_age_months <- tibble(age_group_mon = c("0-5", "6-8", "9-10","11-22", "23+"))
 population_data_age_months$population <- as.integer(runif(nrow(population_data_age_months), 
                                           min = 500, max = 2000))
 ```
@@ -275,28 +312,28 @@ population_data_age_months$population <- as.integer(runif(nrow(population_data_a
 
 
 ```{r browse_data, eval = FALSE}
-# Browsing data ---------------------------------
-# here are a few ways to do data explorations 
+## Browsing data ---------------------------------
+## here are a few ways to do data explorations 
 
-# view the first ten rows of data
+## view the first ten rows of data
 head(linelist_cleaned, n = 10)
 
-# view your whole dataset interactivley (in an excel style format)
+## view your whole dataset interactivley (in an excel style format)
 ## Remember that `View` needs to be written with a capital *V*
 View(linelist_cleaned)
 
-# overview of variable types and contents
+## overview of variable types and contents
 str(linelist_cleaned)
 
-# gives mean, median and max values of variables
+## gives mean, median and max values of variables
 summary(linelist_cleaned)
 
-# view unique values contained in variables 
+## view unique values contained in variables 
 unique(linelist_cleaned$sex)
 
-# another alternative is with the "summarytools package"
-# use the dfSummary function in combination with view
-# note that view is not capitalised with this package
+## another alternative is with the "summarytools package"
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
 # install.packages("summarytools")
 # summarytools::view(summarytools::dfSummary(linelist_cleaned))
 ```
@@ -305,11 +342,11 @@ unique(linelist_cleaned$sex)
 
 
 
-
 ```{r standardise_clean_data}
 # Next, document anything to clean data. Use dplyr for that.
 
-
+# Date variables ---------------------------------
+# IF YOU ARE USING THE DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
 # make sure all date variables are formatted as dates 
 DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>% 
   select(data_element_shortname) # select date vars
@@ -321,37 +358,70 @@ linelist_cleaned <- linelist_cleaned %>%
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate_at(vars(matches("date|Date")), as.Date)
 
+# set unrealistic dates to NA, based on having browsed dates in the previous chunk
+# linelist_cleaned <- mutate(linelist_cleaned,
+#                            date_of_onset < as.Date("2017-11-01") ~ NA, 
+#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+  
+# create an epiweek variable 
+linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
 
-# add under 2 years to the age_years variable
+
+# Numeric variables --------------------------------- 
+# create number of days under observation
+linelist_cleaned <- mutate(linelist_cleaned, 
+                           obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
+
+
+# Age group variables ---------------------------------
+
+# OPTIONAL: add under 2 years to the age_years variable
 # data dictionary defines that under 2s dont have year filled in (but months/days instead)
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(age_years = case_when(
     is.na(age_years) & is.na(age_months) ~ as.integer(age_days / 365.25),
     is.na(age_years)                     ~ as.integer(age_months / 12),
-    TRUE                                 ~ age_years
+    TRUE                                 ~ as.integer(age_years)
   ))
 
+## change those who are above or below a certain age to NA
+# linelist_cleaned <- mutate(linelist_cleaned, 
+#                            age_years = case_when(
+#                              age_years < 0   ~ NA_integer_, 
+#                              age_years > 120 ~ NA_integer_
+#                            ))
 
-# create an age group variable by specifying categorical breaks (of years)
+## create an age group variable by specifying categorical breaks (of years)
 linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years, 
-                                             breakers = c(0, 5, 15, 25, 35, 45))
+                                             breakers = c(0, 5, 15, 30, 45))
 
-# alternatively, create an age group variable specify a sequence
+## alternatively, create an age group variable specify a sequence
 # linelist_cleaned$age_group <- age_categories(linelist_cleaned$age,
 #                                              lower = 0, 
 #                                              upper = 100, 
 #                                              by = 10)
 
-# If you already have an age group variable defined, you should manually
-# arrange the categories
+## If you already have an age group variable defined, you should manually
+## arrange the categories
 # linelist_cleaned$age_group <- factor(linelist_cleaned$age_group,
-#                                      c("0-4y", "5-9y", "10-29y", "30-49y", "50-79y", "80+y"))
+#                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
 
 
-# create age group variable for under 5 years based on months
+## create age group variable for under 5 years based on months
 linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months, 
-                                                 breakers = c(0, 5, 8, 11, 23))
-                                       
+                                                 breakers = c(0, 6, 9, 11, 23))
+
+# Factor (categorical) variables ---------------------------------
+
+## recode a factor character variable
+## fix any misspellings in the data
+# linelist_cleaned <- linelist_cleaned %>%
+#   mutate(patient_origin_free_text = recode(patient_origin_free_text,
+#     # List all incorrect mis-spellings here ("old" = "new")
+#     "Valliages DD" = "Village D"
+#   ))
+
+
 # Change the level labels of a categorical variable
 linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex, 
                                       "Male" = "Male", 
@@ -368,13 +438,27 @@ linelist_cleaned <- linelist_cleaned %>%
                                            ">48 hours")
   ))
 
+
 # change the order of levels of multiple categorical variables
 linelist_cleaned <- linelist_cleaned %>%
   mutate_at(vars(starts_with("dehydration")), 
-            funs(factor(., levels = c("None", "Some", "Severe", "Unknown")))
+            list(~factor(., levels = c("None", "Some", "Severe", "Unknown")))
            )
 
+# Create a factor variable based on rules from other simple character variables
 # create a case definition variable 
+# the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
+# starting from the specific to the general
+# TRUE assigns all remaining rows 
+# linelist_cleaned <- linelist_cleaned %>%
+#   mutate(case_def = case_when(
+#     test_result == "Positive"                     ~ "Confirmed",
+#     test_result == "Negative" & symptoms == "Yes" ~ "Probable",
+#     test_result == "Negative"                     ~ "Suspected",
+#     TRUE                                          ~ "Unknown"
+#   ))
+
+# create a case definition variable based on searching other variables
 # grepl is used to search for words within a character variable
 # the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
 # starting from the specific to the general
@@ -386,28 +470,6 @@ linelist_cleaned <- linelist_cleaned %>%
     grepl("Positive", cholera_rdt_result)     ~ "Probable",
     TRUE                                      ~ "Suspected"
   ))
-
-
-
-
-# fix any misspellings in the data
-# linelist_cleaned <- linelist_cleaned %>%
-#   mutate(patient_origin_free_text = recode(patient_origin_free_text,
-#     # List all incorrect mis-spellings here ("old" = "new")
-#     "Valliages DD" = "Village D"
-#   ))
-
-
-# create an epiweek variable 
-linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
-
-
-# create number of days under observation
-linelist_cleaned <- mutate(linelist_cleaned, 
-                           obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
-
-# ... TODO: add some snippets for cleaing data
-# TODO: showcase and recommend the linelist package
 ```
 
 
@@ -516,7 +578,7 @@ plot_age_pyramid(linelist_cleaned,
 
 
 
-```{r age_pyramid_U2, warning=FALSE}
+```{r age_pyramid_under_two, warning=FALSE}
 # plot age pyramid under 2s
 # filter(linelist_cleaned, age_years <= 2) %>%
 #   plot_age_pyramid(age_group = "age_group_mon", 
@@ -1110,16 +1172,18 @@ mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
 # generate fake shapefile
 map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin_free_text))
 
-# reading in a shapefile 
-# shapefiles consist of multiple files
-# so you dont need to specify the file type (reas_sf recognises it for you)
+## reading in a shapefile 
+## shapefiles consist of multiple files
+## so you dont need to specify the file type (reas_sf recognises it for you)
 # map <- read_sf(here("mapfolder", "china"))
 
 
 ## check the CRS
 # st_crs(map)
+
 ## set the CRS if not present using EPSG value
 # map <- st_set_crs(map, value = 4326) # Sets to WGS84
+
 ## Transform to a different CRS such as UTM, search online for relvant EPSG value
 # map_otherprojection <- st_transform(map, value = 32646) 
 ```
@@ -1144,7 +1208,7 @@ ggplot() +
 You could then also throw your plot of region and the choropleth in a map to 
 produce this for each week in a for-loop. 
 
-```{r map_for_loop_epiweek, fig.width = 12}
+```{r map_for_loop_epiweek, message = FALSE, warning = FALSE, fig.width = 12}
 # change region variable to a factor so that zero counts can be included
 linelist_cleaned$patient_origin_free_text <- as.factor(linelist_cleaned$patient_origin_free_text)
 

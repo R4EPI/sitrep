@@ -9,9 +9,11 @@ License: MIT + file LICENSE
 Imports: 
     binom,
     cowplot,
+    clipr,
     dplyr (>= 0.7),
     epitools,
     epitrix,
+    forcats,
     ggplot2,
     ggspatial,
     here,
@@ -29,11 +31,27 @@ Imports:
     survey,
     tibble,
     huxtable,
-    tidyr,
-    tidyselect
+    tidyr
 Suggests:
     testthat
+Remotes:
+    dirkschumacher/anthro
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.1
+Collate: 
+    'age-categories.R'
+    'age-pyramid.R'
+    'cfr.R'
+    'descriptive-table.R'
+    'gen_data.R'
+    'gen_polygon.R'
+    'gen_population.R'
+    'helpers.R'
+    'inline_fun.R'
+    'nutrition.R'
+    'sample-size.R'
+    'survey.R'
+    'univariate-analysis.R'
+    'zcurve.R'
