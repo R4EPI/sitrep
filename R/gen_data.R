@@ -233,7 +233,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output[[i]] <- sample(posidates, numcases, replace = TRUE)
   }
 
-  if (dictionary %in% c("Cholera", "Measles", "Meningitis")) {
+  if (dictionary != "Mortality") { 
     # Fix DATES
     # exit dates before date of entry
     # just add 20 to admission.... (was easiest...)

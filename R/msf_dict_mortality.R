@@ -33,6 +33,7 @@ msf_dict_mortality <- function(name = "MSF-mortality_survey-dict.xlsx",
   dat_dict <- dplyr::mutate(dat_dict,
                             code = paste0("Code", dplyr::row_number()))
   dat_dict <- dplyr::ungroup(dat_dict)
+  dat_dict$code <- factor(dat_dict$code, unique(dat_dict$code))
 
   # transform dat_dict to wide format (like outbreak dictionary)
   dat_dict$choice_code <- NULL
