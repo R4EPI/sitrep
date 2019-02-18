@@ -12,7 +12,7 @@
 #' Currently supports "Cholera", "Measles", "Meningitis" and "Mortality".
 #' @param varnames Specify name of column that contains varnames. Currently
 #' default set to "Item".  (this can probably be deleted once dictionaries
-#' standardise)
+#' standardise) If `dictionary` is "Mortality", `varnames` needs to be "column_name"`.
 #' @param numcases For fake data, specify the number of cases you want (default is 300
 #' @param tibble Return data dictionary as a tidyverse tibble (default is TRUE)
 #' @param compact If TRUE, returns a neat data dictionary in single data frame.
@@ -233,7 +233,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output[[i]] <- sample(posidates, numcases, replace = TRUE)
   }
 
-  if (dictionary != "Mortality") { 
+  if (dictionary != "Mortality") {
     # Fix DATES
     # exit dates before date of entry
     # just add 20 to admission.... (was easiest...)
@@ -353,16 +353,21 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   }
 
   if (dictionary == "Mortality") {
-    # add more plausibility checks
+    # q53_cq4a ("Why is no occupant agreeing to participate?") shoud be NA if
+    # Head of Household answers the questions (q49_cq3)
     dis_output$q53_cq4a[dis_output$q49_cq3 == "Yes"] <- NA
+    # assume person is not born during study when age > 1
     dis_output$q87_q32_born[dis_output$q155_q5_age_year > 1] <- "No"
     dis_output$q88_q33_born_date[dis_output$q155_q5_age_year > 1] <- NA
+    # pregnancy set to NA for males
     dis_output$q152_q7_pregnant[dis_output$q4_q6_sex == "Male"] <- NA
 
-    died <- dis_output$q136_q34_died == "Yes"
+    # set Columns that are relate to "death" as NA if "q136_q34_died" is "No"
+    died <- dis_output$q136_q34_died == "No"
     dis_output[died, c("q137_q35_died_date", "q138_q36_died_cause",
                        "q141_q37_died_violence", "q143_q41_died_place",
                        "q145_q43_died_country")] <- NA
+    # more plausibility checks of generated data might be implemented in the future
   }
 
   # return dataset as a tibble
