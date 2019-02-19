@@ -46,7 +46,8 @@ study_data_cleaned <- linelist_raw %>%
   mutate(age_in_years = as.integer(q155_q5_age_year),
          age_group = age_categories(age_in_years, breakers = seq(0, 85, 5)),
          sex = q4_q6_sex,
-         died = q136_q34_died == "Yes") %>%
+         died = q136_q34_died == "Yes",
+         cause_of_death = q138_q36_died_cause) %>%
   filter(!is.na(sex))
 ```
 
@@ -97,8 +98,11 @@ suvery_design <- svydesign(
 ```
 
 
-## Demographics
+## Demographic information
 
+TODO: add some sample text with inline R
+
+Age distribution of current household population by five year age groups, dependency age groups, and by child and adult populations, by gender.
 ```{r describe_by_age_group_and_sex}
 descriptive(study_data_cleaned, 
             "age_group", 
@@ -128,8 +132,7 @@ descriptive(study_data_cleaned, "age_group_wide", "sex", rowtotals = TRUE) %>%
   kable(digits = 2)
 ```
 
-Age pyramid
-
+Age distribution of current household population by five year age groups and by gender.
 ```{r age_pyramid}
 plot_age_pyramid(study_data_cleaned, 
                  age_group = "age_group", 
@@ -159,9 +162,31 @@ survey_ciprop_foreach_binary_variable(design = suvery_design,
 
 ## Mortality
 
+Reported causes of death and cause-specific mortality rates;
+```{r}
+descriptive(study_data_cleaned %>% 
+              filter(!is.na(cause_of_death)), 
+            "cause_of_death") %>% 
+  knitr::kable()
+
+
+linelist_cleaned %>% 
+  filter(!is.na(exit_status)) %>%  # remove rows with missing outcome
+  summarise(deaths = sum(DIED),    # tally deaths
+            population = n()) %>%  # count population
+  # calculate case fatality rate
+  do(case_fatality_rate(.$deaths, .$population, mergeCI = TRUE)) %>% 
+  rename("Deaths" = deaths,
+         "Population" = population,
+         "CFR (%)" = cfr,
+         "95% CI" = ci) %>%
+  knitr::kable(digits = 2) 
+
+```
+
 
 ```{r}
-suvery_ciprob(suvery_design, "died") %>%
+suvery_ciprob(suvery_design, "cause_of_death") %>%
   knitr::kable()
 ```
 
