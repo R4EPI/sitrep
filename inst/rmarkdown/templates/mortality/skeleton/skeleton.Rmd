@@ -47,7 +47,11 @@ study_data_cleaned <- linelist_raw %>%
          age_group = age_categories(age_in_years, breakers = seq(0, 85, 5)),
          sex = q4_q6_sex,
          died = q136_q34_died == "Yes",
-         cause_of_death = q138_q36_died_cause) %>%
+         cause_of_death = factor(q138_q36_died_cause,
+                                 levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
+                                            "Trauma/accident", "Pregnancy-related", 
+                                            "Violence", "Outbreak disease (specify)", 
+                                            "Malnutrition", "Unknown", "Other (specify)"))) %>%
   filter(!is.na(sex))
 ```
 
@@ -145,56 +149,88 @@ plot_age_pyramid(study_data_cleaned,
 # TODO: Table - Age distribution of the sample population and of the study population.
 ```
 
-## Morbidity
-
-```{r}
-# symptoms start with sym_
-
-cols <- colnames(study_data_cleaned)
-symptom_columns <- cols[grepl(pattern = "^sym", x = cols)]
-
-survey_ciprop_foreach_binary_variable(design = suvery_design, 
-                                      variables = symptom_columns) %>%
-  knitr::kable()
-```
-
-
 
 ## Mortality
 
-Reported causes of death and cause-specific mortality rates;
+Reported causes of death and cause-specific mortality rates (cause-specific mortality per 10000 still missing!)
 ```{r}
-descriptive(study_data_cleaned %>% 
-              filter(!is.na(cause_of_death)), 
-            "cause_of_death") %>% 
-  knitr::kable()
-
-
-linelist_cleaned %>% 
-  filter(!is.na(exit_status)) %>%  # remove rows with missing outcome
-  summarise(deaths = sum(DIED),    # tally deaths
-            population = n()) %>%  # count population
-  # calculate case fatality rate
-  do(case_fatality_rate(.$deaths, .$population, mergeCI = TRUE)) %>% 
-  rename("Deaths" = deaths,
-         "Population" = population,
-         "CFR (%)" = cfr,
-         "95% CI" = ci) %>%
+death_tbl <- function(x) {
+  x %>% 
+    filter(!is.na(cause_of_death),
+           died) %>%  # remove rows with missing outcome
+    group_by(cause_of_death) %>% 
+    summarise(deaths = n()) %>%  # deaths by cause of death
+    # calculate case fatality rate
+    do(bind_cols("cause_of_death" = .$cause_of_death, 
+                 case_fatality_rate(.$deaths, sum(.$deaths), mergeCI = TRUE))) %>%
+    tidyr::complete(cause_of_death, fill = list(deaths = 0)) %>%                 # Ensure all levels are represented
+    mutate(cfr = if_else(deaths == 0, "-", paste0(round(cfr, 1), " ", ci))) %>% 
+    select(cause_of_death, deaths, cfr) %>% 
+    rename("Reported cause of death" = cause_of_death,
+           "n" = deaths,
+           "% (95% CI)" = cfr)
+}
+# todo: make cause of death factor!
+death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died)) %>%
   knitr::kable(digits = 2) 
 
 ```
 
-
+Cause of deaht by age group
 ```{r}
-suvery_ciprob(suvery_design, "cause_of_death") %>%
-  knitr::kable()
+
+d1 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         age_in_years %in% 0:4)) %>% 
+  rename("n <5 years old" = n)
+d2 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         age_in_years %in% 5:14)) %>% 
+  rename("n 5 to 14 years old" = n)
+d3 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         age_in_years %in% 15:60)) %>% 
+  rename("n 15 to 60 years old" = n)
+d4 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         age_in_years >60)) %>% 
+  rename("n 60+ years old" = n)
+
+cbind(d1, d2[, 2:3], d3[, 2:3], d4[, 2:3]) %>%
+  knitr::kable(digits = 2) 
+
+
 ```
 
+Mortality rates and reported causes of death by gender
 ```{r}
-suvery_ciprob_stratified(suvery_design, "died", "age_group") %>%
-  kable()
+d1 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         sex == "Female")) %>% 
+  rename("n Female" = n)
+d2 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         sex == "Male")) %>% 
+  rename("n Male" = n)
+
+cbind(d1, d2[, 2:3]) %>%
+  knitr::kable(digits = 2) 
+
 ```
 
+## Morbidity
+
+```{r}
+# symptoms
+```
 
 # Conclusions
 
