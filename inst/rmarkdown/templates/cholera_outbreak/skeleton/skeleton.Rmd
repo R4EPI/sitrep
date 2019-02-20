@@ -667,7 +667,7 @@ were dead on arrival.
 Among those who died, the time to death is shown below. 
 
 ```{r describe_time_to_death}
-DIED <- grepl("Dead", linelist_cleaned$exit_status)
+linelist_cleaned$DIED <- grepl("Dead", linelist_cleaned$exit_status)
 
 filter(linelist_cleaned, DIED) %>% 
   descriptive(counter = "time_to_death", coltotals = TRUE) %>% 
