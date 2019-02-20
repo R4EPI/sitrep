@@ -367,6 +367,13 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output[died, c("q137_q35_died_date", "q138_q36_died_cause",
                        "q141_q37_died_violence", "q143_q41_died_place",
                        "q145_q43_died_country")] <- NA
+    # pregnancy related cause of death n.a. for too old/young and for males
+    no_pregnancy <- dis_output$q138_q36_died_cause == "Pregnancy-related" &
+      (dis_output$q4_q6_sex == "Male" | dis_output$q155_q5_age_year >= 50 |
+         dis_output$q155_q5_age_year < 12)
+    no_pregnancy[is.na(no_pregnancy)] <- FALSE # replace NAs
+    dis_output[no_pregnancy, "q138_q36_died_cause"] <- "Unknown"
+
     # more plausibility checks of generated data might be implemented in the future
   }
 
