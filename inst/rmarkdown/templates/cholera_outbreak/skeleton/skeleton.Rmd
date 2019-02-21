@@ -1095,7 +1095,8 @@ cfr <- linelist_cleaned %>%
   # calculate case fatality rate
   do(bind_cols(epiweek = .$epiweek, 
                case_fatality_rate(.$deaths, .$population))) %>% 
-  tidyr::complete(epiweek)                 # Ensure all levels are represented
+  tidyr::complete(epiweek) %>%             # Ensure all levels are represented
+  mutate(epiweek = as.character(epiweek))
 
 cfr %>%
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
