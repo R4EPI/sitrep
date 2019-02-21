@@ -18,7 +18,7 @@
 #' @examples
 #' # Attack rates can be calculated with just two numbers
 #' print(ar <- attack_rate(10, 50), digits = 4) # 20% attack rate
-#' 
+#'
 #' # print them inline using `fmt_ci_df()`
 #' fmt_ci_df(ar)
 #'
@@ -66,8 +66,13 @@ mortality_rate <- function(deaths, population, conf_level = 0.95,
 
 proportion <- function(x, n, conf_level = 0.95, multiplier = 100) {
   stopifnot(is.numeric(conf_level), conf_level >= 0, conf_level <= 1)
+  n <- if (length(n) < length(x)) rep(n, length(x)) else n
+  missing_data <- is.na(x) | is.na(x)
+  x[missing_data] <- 100
+  n[missing_data] <- 100
   res <- binom::binom.wilson(x, n, conf.level = conf_level)
   res <- res[, c("x", "n", "mean", "lower", "upper")]
+  res[missing_data, ] <- NA_real_
   colnames(res) <- c("x", "n", "prop", "lower", "upper")
   res$prop  <- (x / n) * multiplier
   res$lower <- res$lower * multiplier
