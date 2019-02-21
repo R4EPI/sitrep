@@ -210,6 +210,56 @@ dplyr::bind_cols(survey_data, weight_for_height) %>%
   knitr::kable()
 ```
 
+```{r}
+muac <- survey_data %>% 
+  transmute(GAM = tidyr::replace_na(muac_mm_left_arm < 125 | survey_data$oedema == "y", FALSE), 
+            MAM = tidyr::replace_na(muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 &  survey_data$oedema == "n"),
+            SAM = tidyr::replace_na(muac_mm_left_arm < 115 |  survey_data$oedema == "y"))
+```
+
+Prevalence of acute malnutrition based on mid upper arm cicumference (MUAC) and by sex, children 6-59 months
+
+```{r}
+# we can either estimate the prevalence using simple couting of the z-scores
+# or use anthro_prevalence to use the survey package to obtain better estimates
+
+# Calculate denominators for each group
+totals <- c(length(survey_data$sex), sum(survey_data$sex==1), sum(survey_data$sex==2))
+
+dplyr::bind_cols(survey_data, muac) %>%
+  stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
+  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>% 
+  select(stratum, sex, value) %>% 
+  mutate(sex = recode(sex, .missing = "All", "1" = "Sex 1", "2" = "Sex 2")) %>% 
+  tidyr::spread(sex, value) %>%
+  tibble::column_to_rownames(var = "stratum") %>% 
+  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)")) 
+```
+
+
+Prevalence of acute malnutrition by age, based on mid upper arm cicumference (MUAC), children 6-59 months
+
+```{r}
+# quick prototype to go towards the expected result in the report
+dplyr::bind_cols(survey_data, muac) %>% 
+  mutate(Normal = !GAM & !MAM & !SAM) %>% 
+  select(age_group, GAM, MAM, SAM) %>% 
+  filter(!is.na(age_group)) %>% 
+  tidyr::gather(class, flagged, -age_group) %>% 
+  group_by(age_group, class) %>% 
+  summarise(n = n(), 
+            flagged = sum(flagged, na.rm = TRUE), 
+            rel = flagged / n, 
+            ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
+  tidyr::unnest() %>% 
+  ungroup() %>% 
+  mutate(value = paste0(flagged, " ", fmt_ci(rel, lower, upper)),
+         age_group= paste0(age_group, " N = ", n)) %>% 
+  select(age_group, class, value) %>% 
+  tidyr::spread(class, value) %>% 
+  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)"))) 
+```
+
 ### Chronic malnutrition
 
 ```{r}
