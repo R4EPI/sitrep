@@ -58,7 +58,7 @@ In order to estimate stunting in the surveyed population, we looked at Height fo
 ```{r}
 # read in data
 # you can use rio to read in tabular data (Excel/csv) files
-survey_data <- rio::import("../../../../extdata/Fake export Nutrition Survey.xlsx", which = 2)
+survey_data <- rio::import("<your_data>", which = 2)
 
 colnames(survey_data) <- epitrix::clean_labels(colnames(survey_data))
 
