@@ -1050,7 +1050,8 @@ cases <- count(linelist_cleaned, epiweek) %>%
 ar <- attack_rate(cases$n, population, multiplier = 100000) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, epiweek), .) %>% 
-  tidyr::complete(epiweek)                 # Ensure all levels are represented
+  tidyr::complete(epiweek) %>%            # Ensure all levels are represented
+  mutate(epiweek = as.character(epiweek))
 
 ar %>%
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
@@ -1088,7 +1089,7 @@ cfr <- linelist_cleaned %>%
   group_by(epiweek) %>%                        # group by case_def
   summarise(deaths = sum(grepl("Dead", exit_status)),  # tally deaths
             population = n()) %>%               # tally population
-  full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks")) %>%
+  full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks")) %>% 
   arrange(dates) %>%
   mutate(epiweek = forcats::fct_inorder(epiweek)) %>%
   # calculate case fatality rate
@@ -1128,7 +1129,7 @@ cfr_plot <- ggplot(cfr, aes(x = epiweek, group = 1)) +
   geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
   scale_y_continuous(expand = c(0, 0), 
                      limits = c(0, 100), breaks = c(0, 25, 50, 75, 100)) +  # set origin for axes
-  scale_x_discrete(limits = c(ar$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
+  scale_x_discrete(limits = c(cfr$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Rate [95% CI]") + 
   # change visuals of dates and remove legend title
