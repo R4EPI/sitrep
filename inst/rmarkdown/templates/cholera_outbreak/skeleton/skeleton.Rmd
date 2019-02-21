@@ -1041,7 +1041,10 @@ The below gives the attack rate per week.
 ```{r attack_rate_per_week}
 # counts and cumulative counts by week
 cases <- count(linelist_cleaned, epiweek) %>% 
-  mutate(cumulative = cumsum(n))
+  full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks", n = "counts")) %>%
+  arrange(dates) %>%
+  mutate(cumulative = cumsum(n)) %>%
+  mutate(epiweek = forcats::fct_inorder(epiweek))
 
 # attack rate for each week
 ar <- attack_rate(cases$n, population, multiplier = 100000) %>% 
@@ -1085,6 +1088,9 @@ cfr <- linelist_cleaned %>%
   group_by(epiweek) %>%                        # group by case_def
   summarise(deaths = sum(grepl("Dead", exit_status)),  # tally deaths
             population = n()) %>%               # tally population
+  full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks")) %>%
+  arrange(dates) %>%
+  mutate(epiweek = forcats::fct_inorder(epiweek)) %>%
   # calculate case fatality rate
   do(bind_cols(epiweek = .$epiweek, 
                case_fatality_rate(.$deaths, .$population))) %>% 
