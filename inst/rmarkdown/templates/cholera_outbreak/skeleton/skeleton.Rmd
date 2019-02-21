@@ -971,6 +971,7 @@ basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = 
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
+       title = "Cases by week of onset",
        subtitle = paste0("Source: MSF data from ", reporting_week)) + 
   # change visuals of dates and remove legend title
   epicurve_theme
@@ -1038,13 +1039,13 @@ plot(inc_week_7_sex_conf, show_cases = TRUE, border = "black", n_breaks = nrow(i
 
 The below gives the attack rate per week. 
 
-```{r attack_rate_per_week}
+```{r attack_rate_per_week, warning = FALSE, message = FALSE}
 # counts and cumulative counts by week
-cases <- count(linelist_cleaned, epiweek) %>% 
-  full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks", n = "counts")) %>%
-  arrange(dates) %>%
-  mutate(cumulative = cumsum(n)) %>%
-  mutate(epiweek = forcats::fct_inorder(epiweek))
+cases <- count(linelist_cleaned, epiweek) %>% # get counts
+  full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks", n = "counts")) %>%  # ensure all weeks there
+  arrange(dates) %>% # sort by date
+  mutate(cumulative = cumsum(n)) %>% # add the cummulative count
+  mutate(epiweek = forcats::fct_inorder(epiweek)) # sort based on epiweek
 
 # attack rate for each week
 ar <- attack_rate(cases$n, population, multiplier = 100000) %>% 
@@ -1082,11 +1083,11 @@ attack_rate(cases$cumulative, population, multiplier = 100000) %>%
 
 The below gives case fatality rate per week as a proportion
 
-```{r cfr_per_week}
+```{r cfr_per_week, warning = FALSE, message = FALSE}
 # group by known outcome and case definition 
 cfr <- linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
-  group_by(epiweek) %>%                        # group by case_def
+  group_by(epiweek) %>%                        # group by epiweek
   summarise(deaths = sum(grepl("Dead", exit_status)),  # tally deaths
             population = n()) %>%               # tally population
   full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks")) %>% 
@@ -1102,7 +1103,7 @@ cfr %>%
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
   rename("Epiweek" = epiweek, 
          "Deaths" = deaths, 
-         "Population" = population, 
+         "Cases" = population, 
          "CFR (%)" = cfr, 
          "95%CI" = ci) %>% 
   knitr::kable(digits = 2, align = "r")
@@ -1113,7 +1114,8 @@ You could plot the AR and CFR together as line graphs by epiweek.
 
 ```{r ar_line_graph}
 ar_plot <- ggplot(ar, aes(x = epiweek, group = 1)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), color = "blue", fill = "blue", linetype = 2, alpha = 0.2, show.legend = FALSE) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), 
+              color = "blue", fill = "blue", linetype = 2, alpha = 0.2, show.legend = FALSE) +
   geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   scale_x_discrete(limits = c(ar$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
@@ -1126,10 +1128,10 @@ ar_plot <- ggplot(ar, aes(x = epiweek, group = 1)) +
 
 ```{r cfr_line_graph}
 cfr_plot <- ggplot(cfr, aes(x = epiweek, group = 1)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), color = "red", fill = "red", linetype = 2, alpha = 0.2, show.legend = FALSE) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), 
+              color = "red", fill = "red", linetype = 2, alpha = 0.2, show.legend = FALSE) +
   geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
-  scale_y_continuous(expand = c(0, 0), 
-                     limits = c(0, 100), breaks = c(0, 25, 50, 75, 100)) +  # set origin for axes
+  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   scale_x_discrete(limits = c(cfr$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Rate [95% CI]") + 
@@ -1196,14 +1198,17 @@ cases <- count(linelist_cleaned, patient_origin_free_text) %>%   # cases for eac
 ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
   # add the region column to table
   bind_cols(select(cases, patient_origin_free_text), .) %>% 
-  
   rename("Region" = patient_origin_free_text, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) 
-kable(ar, digits = 2, align = "r", format.args = list(big.mark = ",")) # set thousands separator
+
+ar %>% 
+  merge_ci_df(e = 4) %>% # merge lower and upper CI in to one column 
+  rename("95%CI" = ci) %>%  # rename single 95%CI column
+  kable(digits = 2, align = "r", format.args = list(big.mark = ",")) # set thousands separator
 ```
 
 You could then also plot this on a bar chart with confidence intervals. 
@@ -1218,8 +1223,8 @@ ggplot(ar, aes(x = reorder(Region, `AR (per 100,000)`),
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Region", y = "AR (per 100,000)", 
-       captions = paste0("Source: MSF data from ", reporting_week))
-
+       captions = paste0("Source: MSF data from ", reporting_week)) + 
+  epicurve_theme
 ```
 
 
@@ -1236,12 +1241,12 @@ deaths <- group_by(linelist_cleaned, patient_origin_free_text) %>%
 mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
   # add the region column to table
   bind_cols(select(deaths, patient_origin_free_text), .) %>% 
+  merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
   rename("Region" = patient_origin_free_text, 
          "Deaths" = deaths, 
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
+         "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
 
@@ -1252,26 +1257,38 @@ mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
 
 
 
-```{r download_spatial_maps, message=FALSE}
+```{r read_shapefiles, message=FALSE}
 
 # DELETE THIS LINE IF YOU HAVE YOUR OWN SHAPEFILE
 # generate fake shapefile
 map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin_free_text))
 
+## Checklist for Shapefiles ----------------------------------------------
+## 
+## - [ ] Your shapefile can be a polygon or points
+##          - [ ] Polygons do not need to be contiguous
+## - [ ] make sure the regions named in your shapefile match the appropriate variable in your linelist!
+##          - [ ] this is usually the slot ID or NAME in most shapefiles
+## - [ ] Check to make sure your coordinate reference system is WGS84 (this is the standard)
+##        depending on how your shapefile was made it could in a different CRS
+##        this could give you trouble down the line if you want to combine plots with eg. GPS points
+## - [ ] DELETE OR COMMENT OUT THE FAKE SHAPEFILE SECTION
+
+
+
 ## reading in a shapefile 
 ## shapefiles consist of multiple files
 ## so you dont need to specify the file type (reas_sf recognises it for you)
-# map <- read_sf(here("mapfolder", "china"))
+# map <- read_sf(here("mapfolder", "region"))
 
 
-## check the CRS
+## check the coordinate reference system (CRS)
 # st_crs(map)
 
 ## set the CRS if not present using EPSG value
+## this is the most commonly used 
 # map <- st_set_crs(map, value = 4326) # Sets to WGS84
 
-## Transform to a different CRS such as UTM, search online for relvant EPSG value
-# map_otherprojection <- st_transform(map, value = 32646) 
 ```
 
 The following will plot a map based on the attack rate table. 
@@ -1279,22 +1296,53 @@ The following will plot a map based on the attack rate table.
 
 ```{r choropleth_maps, message = FALSE, warning = FALSE}
 
+## Checklist for plotting ----------------------------------------------
+## - [ ] merge your attack rate or counts table with your shapefile 
+## - [ ] Choose the appropriate section below depending on if you are plotting polygons or points
+## - [ ] Choose what variable you would like to fill (for polygons) or colour (for points) with (counts or AR)
+## - [ ] DELETE OR COMMENT OUT THE SECTION YOU WONT BE USING
+
+# join your ar or case counts based on matching shapefile names with regions in your ar table
 mapsub <- left_join(map, ar, by = c("name" = "Region"))
 
+
+## plotting with polygons ------------------------------------------------------
+
 # choropleth 
+# you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 100,000)`
 ggplot() +
   geom_sf(data = mapsub, aes(fill = `AR (per 100,000)`), col = "grey50") + # shapefile as polygon
   coord_sf(datum = NA) + # needed to avoid gridlines being drawn
   annotation_scale() + # add a scalebar
   scale_fill_viridis_c(option = "C") + # color the scale to be perceptually uniform
+  geom_sf_text(data = mapsub, aes(label = name), colour = "grey50") + # label polygons
   theme_void() # remove coordinates and axes
+
+
+
+## plotting with points --------------------------------------------------------
+
+# ggplot() +
+#   geom_sf(data = mapsub, aes(col = `AR (per 100,000)`)) + # shapefile as polygon
+#   coord_sf(datum = NA) + # needed to avoid gridlines being drawn
+#   annotation_scale() + # add a scalebar
+#   scale_colour_viridis_c(option = "C") + # color the scale to be perceptually uniform
+#   theme_void() # remove coordinates and axes
+
 ```
 
 
-You could then also throw your plot of region and the choropleth in a map to 
-produce this for each week in a for-loop. 
+You could then also throw your bar plot by region and the choropleth map, for each week, in a for-loop. 
 
 ```{r map_for_loop_epiweek, message = FALSE, warning = FALSE, fig.width = 12}
+
+
+## Checklist for plotting in for-loop ------------------------------------------
+## - [ ] decide if you would like to show counts or AR
+## - [ ] replace `Cases (n)` and `AR (per 100,000)` appropriately
+
+
+
 # change region variable to a factor so that zero counts can be included
 linelist_cleaned$patient_origin_free_text <- as.factor(linelist_cleaned$patient_origin_free_text)
 
@@ -1341,7 +1389,8 @@ for (i in unique(cases$epiweek)) {
     scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  # set origin for axes
     # add labels to axes and below chart
     labs(x = "Region", y = "AR (per 100,000)", 
-         captions = paste0("Source: MSF data from ", reporting_week))
+         captions = paste0("Source: MSF data from ", reporting_week)) + 
+    epicurve_theme
   # combine the barplot and map plot into one
   print(
     cowplot::plot_grid(
