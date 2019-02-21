@@ -8,6 +8,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(knitr)
 
+# remotes::install_github("r4epi/sitrep")
+library(sitrep)
 # remotes::install_github("dirkschumacher/anthro")
 library(anthro) # for the WHO Child Growth Standards.
 ```
@@ -55,7 +57,7 @@ In order to estimate stunting in the surveyed population, we looked at Height fo
 ```{r}
 # read in data
 # you can use rio to read in tabular data (Excel/csv) files
-survey_data <- rio::import("<your_data>")
+survey_data <- rio::import("../../../../extdata/Fake export Nutrition Survey.xlsx", which = 2)
 
 colnames(survey_data) <- epitrix::clean_labels(colnames(survey_data))
 
@@ -72,9 +74,11 @@ survey_data$height <- as.numeric(survey_data$height)
 survey_data <- filter(survey_data, age_months > 0, age_months < 60)
 
 survey_data$age_group <- age_categories(survey_data$age_months, breakers = c(6, 18, 30, 42, 54, 60))
+survey_data$age_24months <- age_categories(survey_data$age_months, breakers = c(6, 24, 60))
 
 # drop unused group
 survey_data$age_group <- forcats::fct_drop(survey_data$age_group, "60+")
+survey_data$age_24months <- forcats::fct_drop(survey_data$age_24months, "60+")
 ```
 
 
@@ -82,6 +86,21 @@ survey_data$age_group <- forcats::fct_drop(survey_data$age_group, "60+")
 
 ```{r}
 plot_age_pyramid(filter(survey_data, !is.na(age_group)))
+```
+
+
+
+```{r}
+survey_data %>%
+  mutate(total = 1) %>% 
+  select(sex, age_group, age_24months, total) %>% 
+  filter(!is.na(age_group)) %>% 
+  tidyr::gather(class, flagged) %>% 
+  count(class, flagged) %>% 
+  group_by(class) %>% 
+  mutate(prop = prop.table(n)) %>% 
+  knitr::kable()
+
 ```
 
 
@@ -149,7 +168,7 @@ dplyr::bind_cols(survey_data, weight_for_height) %>%
             flagged = sum(flagged, na.rm = TRUE), 
             rel = flagged / n, 
             ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
-  tidyr::unnest()
+  tidyr::unnest() %>% 
   mutate(value = paste0(n, " - ", flagged, " ", fmt_ci(rel, lower, upper))) %>% 
   select(age_group, class, value) %>% 
   tidyr::spread(class, value) %>% 
