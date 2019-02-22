@@ -739,7 +739,7 @@ were dead on arrival.
 
 Among those who died, the time to death is shown below. 
 
-```{r describe_time_to_death}
+```{r describe_time_to_death, warning = FALSE, message = FALSE}
 filter(linelist_cleaned, DIED) %>% 
   descriptive(counter = "time_to_death", coltotals = TRUE) %>% 
   rename("Time (hours)" = time_to_death, 
@@ -752,9 +752,9 @@ filter(linelist_cleaned, DIED) %>%
 
 The case fatality ratio among those with known outcomes is below
 
-```{r overall_cfr}
+```{r overall_cfr, warning = FALSE, message = FALSE}
 # use arguments from above to produce overal CFR
-linelist_cleaned %>% 
+overall_cfr <- linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%  # remove rows with missing outcome
   summarise(deaths = sum(DIED),    # tally deaths
             population = n()) %>%  # count population
@@ -763,16 +763,19 @@ linelist_cleaned %>%
   rename("Deaths" = deaths,
          "Cases" = population,
          "CFR (%)" = cfr,
-         "95% CI" = ci) %>%
-  knitr::kable(digits = 2)         # print nicely with 2 digits
+         "95%CI" = ci)
+
+  knitr::kable(overall_cfr, digits = 2)         # print nicely with 2 digits
 ```
 
 
 The case fatality ratio by sex among those with known outcomes is below. 
 
-```{r cfr_by_sex}
-# group by known outcome and sex
-linelist_cleaned %>% 
+```{r cfr_by_sex, warning = FALSE, message = FALSE}
+# bind sex specific cfr and overall cfr together as rows
+bind_rows(
+  # group by known outcome and sex
+  linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
   group_by(sex) %>%                              # group by sex
   summarise(deaths = sum(grepl("Dead", exit_status)),        # tally deaths
@@ -784,7 +787,12 @@ linelist_cleaned %>%
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
+         "95%CI" = ci), 
+  
+  # add a column to overall_cfr with "Total" in it so can add as a row below
+  overall_cfr %>% 
+    mutate(Sex = "Total")
+  ) %>% 
   knitr::kable(digits = 2)
 ```
 
@@ -792,7 +800,9 @@ linelist_cleaned %>%
 
 CFR by age group among those with known outcomes
 
-```{r cfr_by_age_group}
+```{r cfr_by_age_group, warning = FALSE, message = FALSE}
+# bind age specific cfr and overall cfr together as rows
+bind_rows(
 # group by known outcome and agegroup 
 linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
@@ -807,13 +817,20 @@ linelist_cleaned %>%
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
+         "95%CI" = ci), 
+
+  # add a column to overall_cfr with "Total" in it so can add as a row below
+  overall_cfr %>% 
+    mutate("Age group (years)" = "Total")
+  ) %>% 
   knitr::kable(digits = 2)
 ```
 
 CFR by case definition among those with known outcomes
 
-```{r cfr_by_case_def}
+```{r cfr_by_case_def, warning = FALSE, message = FALSE}
+# bind case def specific cfr and overall cfr together as rows
+bind_rows(
 # group by known outcome and case definition 
 linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
@@ -828,7 +845,12 @@ linelist_cleaned %>%
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
+         "95%CI" = ci),
+
+  # add a column to overall_cfr with "Total" in it so can add as a row below
+  overall_cfr %>% 
+    mutate("Case definition" = "Total")
+  ) %>% 
   knitr::kable(digits = 2)
 ```
 
@@ -844,17 +866,17 @@ population <- sum(population_data_age$population)
 
 ```{r attack_rate}
 # calculate the ar
-# store as AR to be able to use output for automating text below
+# store as AR to be able to use output for automating text below (inline functions)
 ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
 
-rename(ar, 
-       "Cases (n)" = cases,
-       "Population" = population, 
-       "AR (per 10,000)" = ar,
-       "lower 95%CI" = lower, 
-       "Upper 95%CI" = upper
-       ) %>% 
-  knitr::kable(digits = 2)
+ar %>%
+  merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
+  rename("Cases (n)" = cases, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 100,000)" = ar, 
+         "95%CI" = ci) %>% 
+  knitr::kable(digits = 2, align = "r")
 ```
 
 Here, we can see that the Attack Rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar)`.
@@ -901,12 +923,11 @@ To produce a mortality rate per 10,000 people use the following code chunk.
 This assumes that you are capturing every death in your population. 
 
 ```{r mortality_rate}
-mortality_rate(deaths, population, multiplier = 10000) %>%
+mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
+         "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
 
@@ -920,12 +941,11 @@ currently reporting on. (see this [presentation](https://www.odi.org/sites/odi.o
 
 
 ```{r mortality_rate_CMR}
-mortality_rate(deaths, population*obs_time, multiplier = 10000) %>%
+mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
          "person-days" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
+         "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
 
@@ -936,12 +956,11 @@ However, this will give you an unreasonably high mortality rate, as
 those in hospital will only be the most severely affected. 
 
 ```{r mortality_rate_patients}
-mortality_rate(deaths, pat_obs_time, multiplier = 10000) %>%
+mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
          "Population" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
+         "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
 
