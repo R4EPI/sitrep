@@ -5,7 +5,7 @@
 \title{Plot a population pyramid (age-sex) from a dataframe.}
 \usage{
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
-  stack_by = split_by, vertical_lines = FALSE,
+  stack_by = split_by, proportional = FALSE, vertical_lines = FALSE,
   horizontal_lines = TRUE)
 }
 \arguments{
@@ -19,6 +19,10 @@ the bivariate column. Defaults to "sex"}
 
 \item{stack_by}{the name of the column in the data frame to use for shading
 the bars}
+
+\item{proportional}{If \code{TRUE}, bars will represent proportions of cases out
+of the entire population. Otherwise (\code{FALSE}, default), bars represent
+case counts}
 
 \item{vertical_lines}{If you would like to add dashed vertical lines to help
 visual interpretation of numbers. Default is to not show (\code{FALSE}),
@@ -58,6 +62,16 @@ ap <- plot_age_pyramid(dat,
                        age_group = "AGE",
                        split_by = "sex",
                        stack_by = "ill",
+                       vertical_lines = TRUE) +
+  labs(title = "Age groups by case definition and sex")
+print(ap)
+
+# Display proportions
+ap <- plot_age_pyramid(dat,
+                       age_group = "AGE",
+                       split_by = "sex",
+                       stack_by = "ill",
+                       proportional = TRUE,
                        vertical_lines = TRUE) +
   labs(title = "Age groups by case definition and sex")
 print(ap)

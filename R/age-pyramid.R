@@ -7,6 +7,9 @@
 #'   the bivariate column. Defaults to "sex"
 #' @param stack_by the name of the column in the data frame to use for shading
 #'   the bars
+#' @param proportional If `TRUE`, bars will represent proportions of cases out
+#'   of the entire population. Otherwise (`FALSE`, default), bars represent
+#'   case counts
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (`FALSE`),
 #' to turn on write `TRUE`.
@@ -16,6 +19,7 @@
 #' @note if `split_by` and `stack_by` are not the same, The values of `spit_by`
 #'   will show up as labels at the top of the pyramid.
 #' @import ggplot2
+#' @importFrom scales percent
 #' @export
 #' @examples
 #' library(ggplot2)
@@ -44,9 +48,19 @@
 #'                        vertical_lines = TRUE) +
 #'   labs(title = "Age groups by case definition and sex")
 #' print(ap)
+#' 
+#' # Display proportions
+#' ap <- plot_age_pyramid(dat,
+#'                        age_group = "AGE",
+#'                        split_by = "sex",
+#'                        stack_by = "ill",
+#'                        proportional = TRUE,
+#'                        vertical_lines = TRUE) +
+#'   labs(title = "Age groups by case definition and sex")
+#' print(ap)
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
-                             stack_by = split_by, vertical_lines = FALSE,
-                             horizontal_lines = TRUE) {
+                             stack_by = split_by, proportional = FALSE, 
+                             vertical_lines = FALSE, horizontal_lines = TRUE) {
   stopifnot(is.data.frame(data), c(age_group, split_by, stack_by) %in% colnames(data))
   if (!is.character(data[[split_by]]) || !is.factor(data[[split_by]])) {
     data[[split_by]] <- as.character(data[[split_by]])
@@ -67,22 +81,40 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   plot_data <- dplyr::group_by(plot_data, !!ag, !!sb, !!st)
   plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
   plot_data <- dplyr::ungroup(plot_data)
+  if (proportional) {
+    plot_data$n <- plot_data$n / sum(plot_data$n, na.rm = TRUE)
+  }
   # find the maximum x axis position
   max_n <- dplyr::group_by(plot_data, !!ag, !!sb)
   max_n <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
   max_n <- max(max_n[["n"]])
   # make sure the x axis is a multiple of ten
-  max_n <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
+  if (proportional) {
+    max_n <- ceiling(max_n * 100)
+    max_n <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
+    step_size <- if (max_n > 25) 0.1 else if (max_n > 15) 0.05 else 0.01
+    max_n <- max_n / 100
+    lab_fun <- function(i) scales::percent(abs(i))
+    y_lab <- "proportion"
+  } else {
+    max_n <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
+    step_size <- ceiling(max_n / 5)
+    lab_fun <- abs
+    y_lab <- "counts"
+  }
   stopifnot(is.finite(max_n), max_n > 0)
-  step_size <- ceiling(max_n / 5)
+
   age_levels <- levels(plot_data[[age_group]])
   max_age_group <- age_levels[length(age_levels)]
   sex_levels <- unique(data[[split_by]])
   stk_levels <- unique(data[[stack_by]])
+
   stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
+
   plot_data[["n"]] <- ifelse(plot_data[[split_by]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
   the_breaks <- seq(0, max_n, step_size)
   the_breaks <- c(-rev(the_breaks[-1]), the_breaks)
+
   pyramid <- ggplot(plot_data) +
     aes(x = !!ag, y = !!quote(n), group = !!sb, fill = !!st) +
     geom_bar(stat = "identity") +
@@ -90,9 +122,10 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     scale_fill_manual(values = incidence::incidence_pal1(length(stk_levels))) +
     scale_y_continuous(limits = c(-max_n, max_n),
                        breaks = the_breaks,
-                       labels = abs(the_breaks)) +
+                       labels = lab_fun) +
     theme_classic() +
-    theme(axis.line.y.left = element_blank())
+    theme(axis.line.y.left = element_blank()) +
+    labs(y = y_lab)
 
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
