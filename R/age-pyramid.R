@@ -32,15 +32,17 @@
 #' sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
 #' ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
 #' dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
-#' dat[1, 1] <- NA
-#' dat[2, 2] <- NA
-#' dat[3, 3] <- NA
 #'
 #' # Create the age pyramid, stratifying by sex
 #' print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
 #'
 #' # Remove NA categories with na.rm = TRUE
-#' print(ap   <- plot_age_pyramid(dat, age_group = "AGE", na.rm = TRUE))
+#' dat2 <- dat
+#' dat2[1, 1] <- NA
+#' dat2[2, 2] <- NA
+#' dat2[3, 3] <- NA
+#' print(ap   <- plot_age_pyramid(dat2, age_group = "AGE"))
+#' print(ap   <- plot_age_pyramid(dat2, age_group = "AGE", na.rm = TRUE))
 #'
 #' # Stratify by case definition and customize with ggplot2
 #' ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
