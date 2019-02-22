@@ -10,6 +10,8 @@
 #' @param proportional If `TRUE`, bars will represent proportions of cases out
 #'   of the entire population. Otherwise (`FALSE`, default), bars represent
 #'   case counts
+#' @param na.rm  If `TRUE`, this removes NA counts from the age groups. Defaults
+#'   to `TRUE`.
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (`FALSE`),
 #' to turn on write `TRUE`.
@@ -30,9 +32,15 @@
 #' sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
 #' ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
 #' dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
+#' dat[1, 1] <- NA
+#' dat[2, 2] <- NA
+#' dat[3, 3] <- NA
 #'
 #' # Create the age pyramid, stratifying by sex
 #' print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
+#'
+#' # Remove NA categories with na.rm = TRUE
+#' print(ap   <- plot_age_pyramid(dat, age_group = "AGE", na.rm = TRUE))
 #'
 #' # Stratify by case definition and customize with ggplot2
 #' ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
@@ -59,7 +67,7 @@
 #'   labs(title = "Age groups by case definition and sex")
 #' print(ap)
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
-                             stack_by = split_by, proportional = FALSE, 
+                             stack_by = split_by, proportional = FALSE, na.rm = FALSE,
                              vertical_lines = FALSE, horizontal_lines = TRUE) {
   stopifnot(is.data.frame(data), c(age_group, split_by, stack_by) %in% colnames(data))
   if (!is.character(data[[split_by]]) || !is.factor(data[[split_by]])) {
@@ -68,11 +76,19 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   if (!is.character(data[[stack_by]]) || !is.factor(data[[stack_by]])) {
     data[[stack_by]] <- as.character(data[[stack_by]])
   }
-  if (anyNA(data[[split_by]])) {
-    nas <- is.na(data[[split_by]])
-    warning(sprintf("removing %d observations with missing values in the %s column.",
-                    sum(nas), split_by))
+  if (anyNA(data[[split_by]]) || anyNA(data[[stack_by]])) {
+    nas <- is.na(data[[split_by]]) | is.na(data[[stack_by]])
+    warning(sprintf("removing %d observations with missing values between the %s and %s columns.",
+                    sum(nas), split_by, stack_by))
     data <- data[!nas, , drop = FALSE]
+  }
+  if (na.rm) {
+    nas <- is.na(data[[age_group]])
+    warning(sprintf("removing %d observations with missing values from the %s column.",
+                    sum(nas), age_group))
+    data <- data[!nas, , drop = FALSE]
+  } else {
+    data[[age_group]] <- forcats::fct_explicit_na(data[[age_group]])
   }
   ag <- rlang::sym(age_group)
   sb <- rlang::sym(split_by)
