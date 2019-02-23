@@ -1,120 +1,236 @@
 ---
 title: "Mortality survey"
-output: github_document
+output: word_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      error = TRUE)
 library(dplyr)
 library(knitr)
-library(epireports)
+library(sitrep)
 library(survey)
+library(ggplot2)
 ```
 
-```{r, message=FALSE}
-# study_data_raw <- readxl::read_excel("...")
-study_data_raw <- outbreaks::fluH7N9_china_2013
+```{r read_data, message = FALSE}
+# use read_data stuff from outbreak?
 
-study_data_cleaned <- study_data_raw %>%
+
+## Read data ------------------------------------
+# CSV file
+# linelist_raw <- rio::import("linelist.csv")
+#
+# Excel file
+# to read in a specific sheet use "which"
+# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
+#
+# Stata data file
+# linelist_raw <- rio::import("linelist.dat")
+#
+# For password protected Excel file 
+# use the excel.link package 
+# library(excel.link)
+# linelist_raw <- excel.link::xl.read.file("linelist.xlsx",
+#                                          xl.sheet = "Sheet1",
+#                                          password = askpass::askpass(prompt = "please enter file
+#                                                                      password"))
+
+# linelist_raw <- outbreaks::fluH7N9_china_2013
+linelist_raw <- gen_data(dictionary = "Mortality", varnames = "column_name",
+                         numcases = 500)
+
+study_data_cleaned <- linelist_raw %>%
   # some cleaning
-  mutate(age_in_years = as.integer(age),
-         age_group = cut(age_in_years, breaks = seq(0, 90, 5), right = FALSE),
-         sex = gender,
-         symp_Tuberculosis = runif(n()) < 0.5,
-         symp_Cancer = runif(n()) < 0.01,
-         symp_Mumps = runif(n()) < 0.1,
-         died = outcome == "Death") %>%
+  mutate(age_in_years = as.integer(q155_q5_age_year),
+         age_group = age_categories(age_in_years, breakers = seq(0, 85, 5)),
+         sex = q4_q6_sex,
+         died = q136_q34_died == "Yes",
+         cause_of_death = factor(q138_q36_died_cause,
+                                 levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
+                                            "Trauma/accident", "Pregnancy-related", 
+                                            "Violence", "Outbreak disease (specify)", 
+                                            "Malnutrition", "Unknown", "Other (specify)"))) %>%
   filter(!is.na(sex))
 ```
 
 
 # Introduction
 
-# Study Design 
+# Methods
 
-# Sample Size and Sampling methods
+## Study Design 
 
-## Sample Size
+## Sample Size and Sampling methods
 
-```{r}
-size <- sample_size(population_size = 10000,
-                    precision = 0.005, 
-                    design_effect = 1.5, 
-                    expected_prevalence = 0.005)
-size
-```
+### Sample Size
 
-```{r}
-sample_size_households(size, 
-                       avg_hh = 5, 
-                       prop_under_5 = 0.15, 
-                       frac_6_59 = 0.9, 
-                       non_response_rate = 0.03)
+### Sampling
 
-```
-
-
-## Sampling
-
-### Random sampling
+#### Random sampling
 
 ```{r}
 # Insert some code to generate a random number sequence
 ```
 
-### Cluster sampling
+#### Cluster sampling
 
 ```{r}
 # Insert some example code to do cluster sampling
 ```
 
-# Study Findings
+## Data collection
+
+## Data analysis
+<!-- TODO: add paragraph about R/sitrep -->
+
+# Results
 
 
 ```{r}
 # we first need to create a survery design that reflects the study
 suvery_design <- svydesign(
   ids = ~1, # no cluster ids
-  weights = NULL, #no sampling weights in this example
+  weights = NULL, # no sampling weights in this example
   data = study_data_cleaned
 )
 ```
 
-
-## Demographics
-
 ```{r}
-plot_age_pyramid(study_data_cleaned)
+# TODO: Arrivals and departures of included household members during the recall period;
 ```
 
-## Morbitity
 
-```{r}
-# symptoms start with sym_
+## Demographic information
 
-cols <- colnames(study_data_cleaned)
-symptom_columns <- cols[grepl(pattern = "^sym", x = cols)]
+TODO: add some sample text with inline R
 
-survey_ciprop_foreach_binary_variable(design = suvery_design, 
-                                      variables = symptom_columns) %>%
-  knitr::kable()
+Age distribution of current household population by five year age groups, dependency age groups, and by child and adult populations, by gender.
+```{r describe_by_age_group_and_sex}
+descriptive(study_data_cleaned, 
+            "age_group", 
+            "sex", 
+            rowtotals = TRUE, 
+            coltotals = TRUE) %>% 
+  rename("Age" = age_group, 
+         "Female cases (n)" = Female_n, 
+         "%" = Female_prop, 
+         "Male cases (n)" = Male_n, 
+         "%" = Male_prop) %>% 
+  kable(digits = 2)
 ```
 
+```{r describe_by_age_group_and_sex_wider_age_groups}
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_group_wide = age_categories(age_in_years, 
+                                         breakers = c(0, 1, 5, 15, 60)))
+
+descriptive(study_data_cleaned, "age_group_wide", "sex", rowtotals = TRUE) %>% 
+  # rename("Age" = age_group_wide, 
+  #        "Female cases (n)" = Female_n, 
+  #        "%" = Female_prop, 
+  #        "Male cases (n)" = Male_n, 
+  #        "%" = Male_prop) %>% 
+  setNames(c("Infant, child and adult populations", rep("", nrow(.)))) %>% # find better solution
+  kable(digits = 2)
+```
+
+Age distribution of current household population by five year age groups and by gender.
+```{r age_pyramid}
+plot_age_pyramid(study_data_cleaned, 
+                 age_group = "age_group", 
+                 split_by = "sex") + 
+  labs(x = "Cases (n)", y = "Age group (years)") +                    # change axis labels
+  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
+```
+
+```{r}
+# TODO: Table - Age distribution of the sample population and of the study population.
+```
 
 
 ## Mortality
 
-
+Reported causes of death and cause-specific mortality rates (cause-specific mortality per 10000 still missing!)
 ```{r}
-suvery_ciprob(suvery_design, "died") %>%
-  knitr::kable()
+death_tbl <- function(x) {
+  x %>% 
+    filter(!is.na(cause_of_death),
+           died) %>%  # remove rows with missing outcome
+    group_by(cause_of_death) %>% 
+    summarise(deaths = n()) %>%  # deaths by cause of death
+    # calculate case fatality rate
+    do(bind_cols("cause_of_death" = .$cause_of_death, 
+                 case_fatality_rate(.$deaths, sum(.$deaths), mergeCI = TRUE))) %>%
+    tidyr::complete(cause_of_death, fill = list(deaths = 0)) %>%                 # Ensure all levels are represented
+    mutate(cfr = if_else(deaths == 0, "-", paste0(round(cfr, 1), " ", ci))) %>% 
+    select(cause_of_death, deaths, cfr) %>% 
+    rename("Reported cause of death" = cause_of_death,
+           "n" = deaths,
+           "% (95% CI)" = cfr)
+}
+# todo: make cause of death factor!
+death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died)) %>%
+  knitr::kable(digits = 2) 
+
 ```
 
+Cause of deaht by age group
 ```{r}
-suvery_ciprob_stratified(suvery_design, "died", "age_group") %>%
-  kable()
+
+d1 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         age_in_years %in% 0:4)) %>% 
+  rename("n <5 years old" = n)
+d2 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         age_in_years %in% 5:14)) %>% 
+  rename("n 5 to 14 years old" = n)
+d3 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         age_in_years %in% 15:60)) %>% 
+  rename("n 15 to 60 years old" = n)
+d4 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         age_in_years >60)) %>% 
+  rename("n 60+ years old" = n)
+
+cbind(d1, d2[, 2:3], d3[, 2:3], d4[, 2:3]) %>%
+  knitr::kable(digits = 2) 
+
+
 ```
 
+Mortality rates and reported causes of death by gender
+```{r}
+d1 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         sex == "Female")) %>% 
+  rename("n Female" = n)
+d2 <- death_tbl(study_data_cleaned %>% 
+  filter(!is.na(cause_of_death),
+         died,
+         sex == "Male")) %>% 
+  rename("n Male" = n)
+
+cbind(d1, d2[, 2:3]) %>%
+  knitr::kable(digits = 2) 
+
+```
+
+## Morbidity
+
+```{r}
+# symptoms
+```
 
 # Conclusions
 
