@@ -5,6 +5,8 @@
 #' @param grouper A name of the variable (in quotation marks) that you would like to have as columns.
 #' @param multiplier What you would like to have your proportions as (default is per 100).
 #' @param digits The number of decimal places you would like in your proportions (default is 1).
+#' @param proptotal A TRUE/FALSE variable specifying whether you would proportions to be of total cases.
+#' The default is FALSE and returns proportions for each column.
 #' @param coltotals Add column totals on the end
 #' @param rowtotals Add row totals (only sums counts)
 #' @importFrom dplyr group_by ungroup bind_rows summarise_all funs count mutate mutate_at
@@ -13,7 +15,7 @@
 #' @importFrom stats setNames
 #' @export
 descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
-                        coltotals = FALSE, rowtotals = FALSE) {
+                        proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE) {
 
   # Using rlang::sym() allows us to use quoted arguments
   # If we wanted to go full NSE, we would use rlang::enquo() instead
@@ -30,9 +32,16 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
     count_data <- tidyr::complete(df, !!sym_group, fill = the_list)
     count_data <- dplyr::group_by(count_data, !!sym_group)
     count_data <- dplyr::count(count_data, !!sym_count)
-    count_data <- dplyr::mutate(count_data,
+
+    if (proptotal) {
+      count_data <- dplyr::mutate(count_data,
+                                  prop = round(.data$n / nrow(df) * multiplier,
+                                               digits = digits))
+    } else {
+      count_data <- dplyr::mutate(count_data,
                                 prop = round(.data$n / sum(.data$n) * multiplier,
                                              digits = digits))
+    }
 
     # change to wide format, to have "grouper" var levels as columns
     count_data <- tidyr::gather(count_data, key = "variable", value = "value", c(.data$n, .data$prop))
@@ -42,14 +51,20 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
   } else {
     # get counts and props for just a single variable
     count_data <- dplyr::count(df, !!sym_count)
-    count_data <- dplyr::mutate(count_data,
-                                prop = round(.data$n / sum(.data$n) * multiplier,
-                                             digits = digits))
+    if (proptotal) {
+      count_data <- dplyr::mutate(count_data,
+                                  prop = round(.data$n / nrow(df) * multiplier,
+                                               digits = digits))
+    } else {
+      count_data <- dplyr::mutate(count_data,
+                                  prop = round(.data$n / sum(.data$n) * multiplier,
+                                               digits = digits))
+    }
   }
   # fill in the counting data that didn't make it
   count_data <- tidyr::complete(count_data, !!sym_count)
 
-  if (!is.na(grouper)){
+  if (!is.na(grouper)) {
     # filter out the dummy variable
     count_data <- dplyr::filter(count_data, !!sym_count != tmp_var)
   }

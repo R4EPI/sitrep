@@ -6,7 +6,7 @@
 Option to add row and column totals}
 \usage{
 descriptive(df, counter, grouper = NA, multiplier = 100, digits = 1,
-  coltotals = FALSE, rowtotals = FALSE)
+  proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE)
 }
 \arguments{
 \item{df}{A dataframe (e.g. your linelist)}
@@ -18,6 +18,9 @@ descriptive(df, counter, grouper = NA, multiplier = 100, digits = 1,
 \item{multiplier}{What you would like to have your proportions as (default is per 100).}
 
 \item{digits}{The number of decimal places you would like in your proportions (default is 1).}
+
+\item{proptotal}{A TRUE/FALSE variable specifying whether you would proportions to be of total cases.
+The default is FALSE and returns proportions for each column.}
 
 \item{coltotals}{Add column totals on the end}
 
