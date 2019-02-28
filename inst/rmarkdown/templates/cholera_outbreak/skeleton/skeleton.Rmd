@@ -1390,24 +1390,42 @@ The following will plot a map based on the attack rate table.
 ```{r choropleth_maps, message = FALSE, warning = FALSE}
 
 ## Checklist for plotting ----------------------------------------------
+## - [ ] consider making categorical groupings of your AR or counts variable
 ## - [ ] merge your attack rate or counts table with your shapefile 
 ## - [ ] Choose the appropriate section below depending on if you are plotting polygons or points
 ## - [ ] Choose what variable you would like to fill (for polygons) or colour (for points) with (counts or AR)
 ## - [ ] DELETE OR COMMENT OUT THE SECTION YOU WONT BE USING
 
-# join your ar or case counts based on matching shapefile names with regions in your ar table
+## create a categorical variable for plotting 
+max_ar    <- max(ar$`Upper 95%CI`, na.rm = TRUE) # define your highest AR
+
+breakers <- as.integer(c(0, # include zero as a standalone group
+             seq(1, max_ar, by = max_ar/4) # 1 to maximum with four divisions
+             ))
+## add a categorical variable using the age_categories function 
+## nb in this case we arent using ages - but it functions the same way!
+ar <- mutate(ar, 
+             categories = age_categories(`AR (per 100,000)`, 
+                                         breakers = breakers)
+             )
+
+
+## join your ar or case counts based on matching shapefile names with regions in your ar table
 mapsub <- left_join(map, ar, by = c("name" = "Region"))
 
 
 ## plotting with polygons ------------------------------------------------------
 
-# choropleth 
-# you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 100,000)`
+## choropleth 
+## you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 100,000)`
 ggplot() +
-  geom_sf(data = mapsub, aes(fill = `AR (per 100,000)`), col = "grey50") + # shapefile as polygon
+  geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + # shapefile as polygon
   coord_sf(datum = NA) + # needed to avoid gridlines being drawn
   annotation_scale() + # add a scalebar
-  scale_fill_viridis_c(option = "C") + # color the scale to be perceptually uniform
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_viridis_d(drop = FALSE, option = "C", name = "AR (per 100,000)") + 
   geom_sf_text(data = mapsub, aes(label = name), colour = "grey50") + # label polygons
   theme_void() # remove coordinates and axes
 
@@ -1416,10 +1434,13 @@ ggplot() +
 ## plotting with points --------------------------------------------------------
 
 # ggplot() +
-#   geom_sf(data = mapsub, aes(col = `AR (per 100,000)`)) + # shapefile as polygon
+#   # plot shapefile as point 
+#   # shape 21 allows fill variable and colour border (e.g. black ring around circle)
+#   # size allows you to make it bigger 
+#   geom_sf(data = mapsub, aes(fill = categories), shape = 21, size = 5, color = "black") + 
 #   coord_sf(datum = NA) + # needed to avoid gridlines being drawn
 #   annotation_scale() + # add a scalebar
-#   scale_colour_viridis_c(option = "C") + # color the scale to be perceptually uniform
+#   scale_fill_viridis_d(drop = FALSE, option = "C") + # color the scale to be perceptually uniform
 #   theme_void() # remove coordinates and axes
 
 ```
@@ -1431,8 +1452,9 @@ You could then also throw your bar plot by region and the choropleth map, for ea
 
 
 ## Checklist for plotting in for-loop ------------------------------------------
-## - [ ] decide if you would like to show counts or AR
-## - [ ] replace `Cases (n)` and `AR (per 100,000)` appropriately
+## - [ ] decide if you would like to show counts, AR or categories of those
+## - [ ] define appropriate breaks to ensure legend is uniform by week
+## - [ ] replace `Cases (n)` and `AR (per 100,000)` or "categories", appropriately
 ## - [ ] consider facet wrapping by an overarching unit if have many regions (e.g. by province)
 
 
@@ -1459,6 +1481,19 @@ ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>%
          "Upper 95%CI" = upper)
 max_cases <- max(cases$n, na.rm = TRUE) # define the maximum number of cases for the color palette 
 max_ar    <- max(ar$`Upper 95%CI`, na.rm = TRUE)
+
+# define breaks for standardising color palette 
+breakers <- as.integer(c(0, # include zero as a standalone group
+             seq(1, max_ar, by = max_ar/4) # 1 to maximum with four divisions
+             ))
+## add a categorical variable using the age_categories function 
+## nb in this case we arent using ages - but it functions the same way!
+ar <- mutate(ar, 
+             categories = age_categories(`AR (per 100,000)`, 
+                                         breakers = breakers)
+             )
+
+
 # go through each epiweek, fiter and plot the data
 for (i in unique(cases$epiweek)) {
   this_ar <- filter(ar, epiweek == i)
@@ -1468,10 +1503,11 @@ for (i in unique(cases$epiweek)) {
   
   # choropleth 
   map_plot <- ggplot() +
-    geom_sf(data = mapsub, aes(fill = `Cases (n)`), col = "grey50") + # shapefile as polygon
+    geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + # shapefile as polygon
     coord_sf(datum = NA) + # needed to avoid gridlines being drawn
     annotation_scale() + # add a scalebar
-    scale_fill_viridis_c(limits = c(0, max_cases), option = "C") + # color the scale to be perceptually uniform
+    scale_fill_viridis_d(drop = FALSE, option = "C", 
+                         name = "AR (per 100,000)") + # color the scale to be perceptually uniform (keep levels)
     theme_void() # remove coordinates and axes
   
   # plot with the region on the x axis sorted by increasing ar
