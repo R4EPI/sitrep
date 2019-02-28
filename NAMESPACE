@@ -3,6 +3,7 @@
 export(age_categories)
 export(attack_rate)
 export(case_fatality_rate)
+export(case_fatality_rate_df)
 export(descriptive)
 export(fmt_ci)
 export(fmt_ci_df)

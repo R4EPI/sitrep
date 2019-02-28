@@ -775,11 +775,7 @@ The case fatality ratio among those with known outcomes is below
 ```{r overall_cfr, warning = FALSE, message = FALSE}
 # use arguments from above to produce overal CFR
 overall_cfr <- linelist_cleaned %>% 
-  filter(!is.na(exit_status)) %>%  # remove rows with missing outcome
-  summarise(deaths = sum(DIED),    # tally deaths
-            population = n()) %>%  # count population
-  # calculate case fatality rate
-  do(case_fatality_rate(.$deaths, .$population, mergeCI = TRUE)) %>% 
+  case_fatality_rate_df(deaths = DIED, mergeCI = TRUE) %>%
   rename("Deaths" = deaths,
          "Cases" = population,
          "CFR (%)" = cfr,
@@ -792,27 +788,14 @@ overall_cfr <- linelist_cleaned %>%
 The case fatality ratio by sex among those with known outcomes is below. 
 
 ```{r cfr_by_sex, warning = FALSE, message = FALSE}
-# bind sex specific cfr and overall cfr together as rows
-bind_rows(
-  # group by known outcome and sex
-  linelist_cleaned %>% 
-  filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
-  group_by(sex) %>%                              # group by sex
-  summarise(deaths = sum(grepl("Dead", exit_status)),        # tally deaths
-            population = n()) %>%                # tally population
-  # calculate case fatality rate
-  do(bind_cols(sex = .$sex, 
-               case_fatality_rate(.$deaths, .$population, mergeCI = TRUE))) %>% 
+linelist_cleaned %>%
+  mutate(sex = forcats::fct_explicit_na(sex, "-")) %>%
+  case_fatality_rate_df(deaths = DIED, group = sex, mergeCI = TRUE, add_total = TRUE) %>%
   rename("Sex" = sex, 
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci), 
-  
-  # add a column to overall_cfr with "Total" in it so can add as a row below
-  overall_cfr %>% 
-    mutate(Sex = "Total")
-  ) %>% 
+         "95%CI" = ci) %>% 
   knitr::kable(digits = 2)
 ```
 
@@ -821,56 +804,26 @@ bind_rows(
 CFR by age group among those with known outcomes
 
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
-# bind age specific cfr and overall cfr together as rows
-bind_rows(
-# group by known outcome and agegroup 
-linelist_cleaned %>% 
-  filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
-  group_by(age_group) %>%                        # group by age_group
-  summarise(deaths = sum(grepl("Dead", exit_status)),    # tally deaths
-            population = n()) %>%                # tally population
-  # calculate case fatality rate
-  do(bind_cols(age_group = .$age_group, 
-               case_fatality_rate(.$deaths, .$population, mergeCI = TRUE))) %>% 
-   tidyr::complete(age_group) %>%               # Ensure all levels are represented
-  rename("Age group (years)" = age_group, 
+linelist_cleaned %>%
+  case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
+  rename("Age Group" = age_group, 
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci), 
-
-  # add a column to overall_cfr with "Total" in it so can add as a row below
-  overall_cfr %>% 
-    mutate("Age group (years)" = "Total")
-  ) %>% 
+         "95%CI" = ci) %>% 
   knitr::kable(digits = 2)
 ```
 
 CFR by case definition among those with known outcomes
 
 ```{r cfr_by_case_def, warning = FALSE, message = FALSE}
-# bind case def specific cfr and overall cfr together as rows
-bind_rows(
-# group by known outcome and case definition 
-linelist_cleaned %>% 
-  filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
-  group_by(case_def) %>%                        # group by case_def
-  summarise(deaths = sum(grepl("Dead", exit_status)),    # tally deaths
-            population = n()) %>%               # tally population
-  # calculate case fatality rate
-  do(bind_cols(case_def = .$case_def, 
-               case_fatality_rate(.$deaths, .$population, mergeCI = TRUE))) %>% 
-  tidyr::complete(case_def) %>%                 # Ensure all levels are represented
-  rename("Case definition" = case_def, 
+linelist_cleaned %>%
+  case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
+  rename("Case Definition" = case_def, 
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci),
-
-  # add a column to overall_cfr with "Total" in it so can add as a row below
-  overall_cfr %>% 
-    mutate("Case definition" = "Total")
-  ) %>% 
+         "95%CI" = ci) %>% 
   knitr::kable(digits = 2)
 ```
 
