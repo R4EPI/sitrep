@@ -31,9 +31,10 @@ age_categories <- function(x, breakers = NA,
     if (!is.na(breakers)) {
       stop("breakers must be at least three numbers")
     } else {
-      breakers <- unique(seq(lower, upper, by = by), max(x, na.rm = TRUE))
+      breakers <- unique(c(seq(lower, upper, by = by), upper))
     }
   }
+  print(breakers)
 
   nb <- length(breakers)
 
