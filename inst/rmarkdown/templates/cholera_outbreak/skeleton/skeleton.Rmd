@@ -341,7 +341,7 @@ population_data_age$population <- as.integer(runif(nrow(population_data_age),
                                           min = 500, max = 2000))
 
 ## generate some artifical population data by age group (months) 
-population_data_age_months <- tibble(age_group_mon = c("0-5", "6-8", "9-10","11-22", "23+"))
+population_data_age_months <- tibble(age_group_mon = c("0-5", "6-8", "9-11","12-24"))
 population_data_age_months$population <- as.integer(runif(nrow(population_data_age_months), 
                                           min = 500, max = 2000))
 ```
@@ -470,7 +470,8 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 
 ## create age group variable for under 5 years based on months
 linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months, 
-                                                 breakers = c(0, 6, 9, 11, 23))
+                                                 breakers = c(0, 6, 9, 12, 24), 
+                                                 ceiling = TRUE)
 
 # Factor (categorical) variables ---------------------------------
 
@@ -633,11 +634,8 @@ descriptive(linelist_cleaned, "age_group", "sex", coltotals = TRUE, rowtotals = 
 Alternatively if you would like proportions to be of the total population, use the following. 
 
 ```{r total_props_agegroup_sex}
-count(linelist_cleaned, age_group, sex) %>%  # get counts of cases by age group and sex
-  mutate(prop = n/nrow(linelist_cleaned)*100) %>%  # calculate the proportion in each based on total cases
-  tidyr::gather(key = "variable", value = "value", c(.data$n, .data$prop)) %>% # collect n and props for each
-  tidyr::unite("temp", .data$sex, .data$variable, sep = "_") %>% # group these with the sex var 
-  tidyr::spread(.data$temp, .data$value) %>% # spread with age_group as your key
+descriptive(linelist_cleaned, "age_group", "sex", 
+            coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
   rename("Age group (years)" = age_group, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
