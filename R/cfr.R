@@ -37,6 +37,21 @@ attack_rate <- function(cases, population, conf_level = 0.95,
   res
 }
 
+attack_rate_df <- function(x, cases, population, group = NULL, conf_level = 0.95,
+                           multiplier = 100, mergeCI = FALSE, digits = 2, 
+                           add_total = TRUE) {
+  
+  qcases <- rlang::enquo(cases)
+  qpop   <- rlang::enquo(population)
+  qgroup <- rlang::enquo(group)
+  wants_grouping <- !is.null(rlang::get_expr(qgroup))
+  
+  if (wants_grouping) {
+    x <- dplyr::group_by(x, qgroup)
+  }
+  
+  
+}
 #' @rdname attack_rate
 #' @export
 case_fatality_rate <- function(deaths, population, conf_level = 0.95,
