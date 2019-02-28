@@ -60,6 +60,8 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 # This assumes your data fits the standardised MSF data dictionary for this
 # disease (Otherwise use one of the code chunks below for csv DHIS data and for
 # non DHIS data). This script is adapted to fit to DHIS standardised data. 
+# If you don't have lab tests or do not wish to create a case definition, 
+# then you will need to fix code stratified by case definition later in the script
 
 
 ## Read data ------------------------------------------------------
@@ -329,7 +331,7 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 ## its just to be able to demonstrate script in this template
 
 ## generate some artificial population data by region 
-population_data_region <- distinct(linelist_cleaned, patient_origin_free_text)
+population_data_region <- distinct(linelist_cleaned, patient_origin)
 population_data_region$population <- as.integer(runif(nrow(population_data_region), 
                                           min = 500, max = 2000))
 
@@ -484,9 +486,10 @@ linelist_cleaned$DIED <- grepl("Dead", linelist_cleaned$exit_status)
 
 
 ## recode a factor character variable
-## fix any misspellings in the geographic region variables
+## fix any misspellings in the manually entered geographic region variables
 ## you can choose any geographic region which you have available to you 
-## ideally this variable would fit your shapefile! 
+## ideally this variable would fit your shapefile and population data! 
+## If you have many regions - consider group by an overarching unit (e.g. province)
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate(patient_origin_free_text = recode(patient_origin_free_text,
 #     # List all incorrect mis-spellings here ("old" = "new")
@@ -627,6 +630,23 @@ descriptive(linelist_cleaned, "age_group", "sex", coltotals = TRUE, rowtotals = 
   kable(digits = 2)
 ```
 
+Alternatively if you would like proportions to be of the total population, use the following. 
+
+```{r total_props_agegroup_sex}
+count(linelist_cleaned, age_group, sex) %>%  # get counts of cases by age group and sex
+  mutate(prop = n/nrow(linelist_cleaned)*100) %>%  # calculate the proportion in each based on total cases
+  tidyr::gather(key = "variable", value = "value", c(.data$n, .data$prop)) %>% # collect n and props for each
+  tidyr::unite("temp", .data$sex, .data$variable, sep = "_") %>% # group these with the sex var 
+  tidyr::spread(.data$temp, .data$value) %>% # spread with age_group as your key
+  rename("Age group (years)" = age_group, 
+         "Female cases (n)" = Female_n, 
+         "%" = Female_prop, 
+         "Male cases (n)" = Male_n, 
+         "%" = Male_prop,
+         "Missing (n)" = NA_n, 
+         "%" = NA_prop) %>% 
+  kable(digits = 2)
+```
 
 
 Age pyramid by case definition 
@@ -739,7 +759,7 @@ were dead on arrival.
 
 Among those who died, the time to death is shown below. 
 
-```{r describe_time_to_death}
+```{r describe_time_to_death, warning = FALSE, message = FALSE}
 filter(linelist_cleaned, DIED) %>% 
   descriptive(counter = "time_to_death", coltotals = TRUE) %>% 
   rename("Time (hours)" = time_to_death, 
@@ -752,9 +772,9 @@ filter(linelist_cleaned, DIED) %>%
 
 The case fatality ratio among those with known outcomes is below
 
-```{r overall_cfr}
+```{r overall_cfr, warning = FALSE, message = FALSE}
 # use arguments from above to produce overal CFR
-linelist_cleaned %>% 
+overall_cfr <- linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%  # remove rows with missing outcome
   summarise(deaths = sum(DIED),    # tally deaths
             population = n()) %>%  # count population
@@ -763,16 +783,19 @@ linelist_cleaned %>%
   rename("Deaths" = deaths,
          "Cases" = population,
          "CFR (%)" = cfr,
-         "95% CI" = ci) %>%
-  knitr::kable(digits = 2)         # print nicely with 2 digits
+         "95%CI" = ci)
+
+  knitr::kable(overall_cfr, digits = 2)         # print nicely with 2 digits
 ```
 
 
 The case fatality ratio by sex among those with known outcomes is below. 
 
-```{r cfr_by_sex}
-# group by known outcome and sex
-linelist_cleaned %>% 
+```{r cfr_by_sex, warning = FALSE, message = FALSE}
+# bind sex specific cfr and overall cfr together as rows
+bind_rows(
+  # group by known outcome and sex
+  linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
   group_by(sex) %>%                              # group by sex
   summarise(deaths = sum(grepl("Dead", exit_status)),        # tally deaths
@@ -784,7 +807,12 @@ linelist_cleaned %>%
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
+         "95%CI" = ci), 
+  
+  # add a column to overall_cfr with "Total" in it so can add as a row below
+  overall_cfr %>% 
+    mutate(Sex = "Total")
+  ) %>% 
   knitr::kable(digits = 2)
 ```
 
@@ -792,7 +820,9 @@ linelist_cleaned %>%
 
 CFR by age group among those with known outcomes
 
-```{r cfr_by_age_group}
+```{r cfr_by_age_group, warning = FALSE, message = FALSE}
+# bind age specific cfr and overall cfr together as rows
+bind_rows(
 # group by known outcome and agegroup 
 linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
@@ -807,13 +837,20 @@ linelist_cleaned %>%
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
+         "95%CI" = ci), 
+
+  # add a column to overall_cfr with "Total" in it so can add as a row below
+  overall_cfr %>% 
+    mutate("Age group (years)" = "Total")
+  ) %>% 
   knitr::kable(digits = 2)
 ```
 
 CFR by case definition among those with known outcomes
 
-```{r cfr_by_case_def}
+```{r cfr_by_case_def, warning = FALSE, message = FALSE}
+# bind case def specific cfr and overall cfr together as rows
+bind_rows(
 # group by known outcome and case definition 
 linelist_cleaned %>% 
   filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
@@ -828,7 +865,12 @@ linelist_cleaned %>%
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
+         "95%CI" = ci),
+
+  # add a column to overall_cfr with "Total" in it so can add as a row below
+  overall_cfr %>% 
+    mutate("Case definition" = "Total")
+  ) %>% 
   knitr::kable(digits = 2)
 ```
 
@@ -842,19 +884,21 @@ The attack rate per 10,000 population is below - based on available population d
 population <- sum(population_data_age$population)
 ```
 
+Below gives the attack rate per 10,000 population (N = `r format(population, big.mark = ",")`)
 ```{r attack_rate}
 # calculate the ar
-# store as AR to be able to use output for automating text below
+# store as AR to be able to use output for automating text below (inline functions)
 ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
 
-rename(ar, 
-       "Cases (n)" = cases,
-       "Population" = population, 
-       "AR (per 10,000)" = ar,
-       "lower 95%CI" = lower, 
-       "Upper 95%CI" = upper
-       ) %>% 
-  knitr::kable(digits = 2)
+ar %>%
+  merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
+  rename("Cases (n)" = cases, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 100,000)" = ar, 
+         "95%CI" = ci) %>% 
+  select(-Population) %>% # drop the population column as it is not changing
+  knitr::kable(digits = 2, align = "r")
 ```
 
 Here, we can see that the Attack Rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar)`.
@@ -880,6 +924,9 @@ attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>%
 
 #### Mortality
 
+THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTING (e.g. refugee camp). 
+The assumptions don't hold in an open/community setting!
+
 This demonstrates three ways of calculating mortality rate based on 
 catchment population (twice) and based on hospital population. 
 
@@ -901,12 +948,11 @@ To produce a mortality rate per 10,000 people use the following code chunk.
 This assumes that you are capturing every death in your population. 
 
 ```{r mortality_rate}
-mortality_rate(deaths, population, multiplier = 10000) %>%
+mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
+         "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
 
@@ -920,12 +966,11 @@ currently reporting on. (see this [presentation](https://www.odi.org/sites/odi.o
 
 
 ```{r mortality_rate_CMR}
-mortality_rate(deaths, population*obs_time, multiplier = 10000) %>%
+mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
          "person-days" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
+         "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
 
@@ -936,12 +981,11 @@ However, this will give you an unreasonably high mortality rate, as
 those in hospital will only be the most severely affected. 
 
 ```{r mortality_rate_patients}
-mortality_rate(deaths, pat_obs_time, multiplier = 10000) %>%
+mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
          "Population" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) %>% 
+         "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
 
@@ -1156,6 +1200,51 @@ cowplot::plot_grid(
 ```
 
 
+We could then also look at admissions and exits by epiweek for operational purposes. 
+
+```{r describe_admissions_by_epiweek_casedef}
+# get counts and props of age groups by case definition 
+# include column and row totals 
+descriptive(linelist_cleaned, "epiweek", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
+  rename("Week" = epiweek, 
+         "Confirmed cases (n)" = Confirmed_n, 
+         "%" = Confirmed_prop, 
+         "Probable cases (n)" = Probable_n, 
+         "%" = Probable_prop,
+         "Suspected cases (n)" = Suspected_n, 
+         "%" = Suspected_prop) %>% 
+  kable(digits = 2)
+```
+
+
+```{r describe_exits_by_epiweek}
+# get counts and props of admissions by epiweek 
+# include column and row totals 
+descriptive(linelist_cleaned, "epiweek", "exit_status", 
+            coltotals = TRUE, rowtotals = TRUE) %>% 
+  rename("Week" = "epiweek", 
+         "Died facility (n)" = "Dead in facility_n", 
+         "%" = "Dead in facility_prop", 
+         "Died arrival (n)" = "Dead on arrival_n", 
+         "%" = "Dead on arrival_prop",
+         "Discharged (n)" = "Discharged home_n", 
+         "%" = "Discharged home_prop", 
+         "Left against advice (n)" = "Left against medical advice_n", 
+         "%" = "Left against medical advice_prop", 
+         "Transferred MSF facility (n)" = "Transferred (to an MSF facility)_n", 
+         "%" = "Transferred (to an MSF facility)_prop", 
+         "Transferred external facility (n)" = "Transferred (to External Facility)_n", 
+         "%" = "Transferred (to External Facility)_prop", 
+         "Total" = "Total"
+         ) %>% 
+  kable(digits = 2)
+```
+
+
+
+
+
+
 ### Place
 
 *  [Across what area: one or several villages, all from same school, etc. You may want to include a map of the distribution of cases; attack rates by location]
@@ -1166,9 +1255,9 @@ To get a basic descriptive table of cases by region and outcome, see below.
 ```{r describe_by_region_outcome}
 # get counts and props of region by outcome 
 # include column and row totals 
-descriptive(linelist_cleaned, "patient_origin_free_text", "exit_status", 
+descriptive(linelist_cleaned, "patient_origin", "exit_status", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin_free_text", 
+  rename("Region" = "patient_origin", 
          "Died facility (n)" = "Dead in facility_n", 
          "%" = "Dead in facility_prop", 
          "Died arrival (n)" = "Dead on arrival_n", 
@@ -1192,13 +1281,17 @@ descriptive(linelist_cleaned, "patient_origin_free_text", "exit_status",
 If you do not have spatial data available, it may also be worth calculating attack rates by region. 
 
 ```{r attack_rate_by_region}
-cases <- count(linelist_cleaned, patient_origin_free_text) %>%   # cases for each region
-  left_join(population_data_region, by = "patient_origin_free_text")    # merge population data 
+
+## - [ ] consider facet wrapping by an overarching unit if have many regions (e.g. by province)
+
+
+cases <- count(linelist_cleaned, patient_origin) %>%   # cases for each region
+  left_join(population_data_region, by = "patient_origin")    # merge population data 
 # attack rate for region
 ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
   # add the region column to table
-  bind_cols(select(cases, patient_origin_free_text), .) %>% 
-  rename("Region" = patient_origin_free_text, 
+  bind_cols(select(cases, patient_origin), .) %>% 
+  rename("Region" = patient_origin, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
@@ -1232,17 +1325,17 @@ You could also calculate mortality rate by region (cross reference with the mort
 
 ```{r mortality_rate_region}
 
-deaths <- group_by(linelist_cleaned, patient_origin_free_text) %>%
+deaths <- group_by(linelist_cleaned, patient_origin) %>%
    filter(exit_status == "Dead in facility" | 
             exit_status == "Dead on arrival") %>% 
   summarise(deaths = n()) %>%                 # count deaths by region
-  left_join(population_data_region, by = "patient_origin_free_text")    # merge population data 
+  left_join(population_data_region, by = "patient_origin")    # merge population data 
 
 mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
   # add the region column to table
-  bind_cols(select(deaths, patient_origin_free_text), .) %>% 
+  bind_cols(select(deaths, patient_origin), .) %>% 
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
-  rename("Region" = patient_origin_free_text, 
+  rename("Region" = patient_origin, 
          "Deaths" = deaths, 
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
@@ -1261,7 +1354,7 @@ mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
 
 # DELETE THIS LINE IF YOU HAVE YOUR OWN SHAPEFILE
 # generate fake shapefile
-map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin_free_text))
+map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin))
 
 ## Checklist for Shapefiles ----------------------------------------------
 ## 
@@ -1340,24 +1433,25 @@ You could then also throw your bar plot by region and the choropleth map, for ea
 ## Checklist for plotting in for-loop ------------------------------------------
 ## - [ ] decide if you would like to show counts or AR
 ## - [ ] replace `Cases (n)` and `AR (per 100,000)` appropriately
+## - [ ] consider facet wrapping by an overarching unit if have many regions (e.g. by province)
 
 
 
 # change region variable to a factor so that zero counts can be included
-linelist_cleaned$patient_origin_free_text <- as.factor(linelist_cleaned$patient_origin_free_text)
+linelist_cleaned$patient_origin <- as.factor(linelist_cleaned$patient_origin)
 
 # case counts
 cases <- linelist_cleaned %>% 
   group_by(epiweek) %>%
-  count(patient_origin_free_text) %>%   # cases for each week by region
-  tidyr::complete(patient_origin_free_text, fill = list(n = 0)) %>% # include zero counts
-  left_join(population_data_region, by = "patient_origin_free_text")    # merge population data 
+  count(patient_origin) %>%   # cases for each week by region
+  tidyr::complete(patient_origin, fill = list(n = 0)) %>% # include zero counts
+  left_join(population_data_region, by = "patient_origin")    # merge population data 
 
 # attack rate for region
 ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
   # add the region column to table
-  bind_cols(select(cases, epiweek, patient_origin_free_text), .) %>% 
-  rename("Region" = patient_origin_free_text, 
+  bind_cols(select(cases, epiweek, patient_origin), .) %>% 
+  rename("Region" = patient_origin, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
