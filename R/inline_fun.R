@@ -56,3 +56,27 @@ merge_ci_df <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2) {
   x$ci <- gsub("^.+?\\(CI ", "(", cis)
   x
 }
+
+#' Counts and proportions inline
+#'
+#' These functions will give proportions for different variables inline.
+#'
+#' @param x a data frame
+#' 
+#' @param ... an expression or series of expressions to pass to [dplyr::filter()]
+#'
+#' @export
+#' @examples
+#'
+#' fmt_count(mtcars, cyl > 3, hp < 100)
+#' fmt_count(iris, Species == "virginica")
+fmt_count <- function(x, ...) {
+
+  stopifnot(is.data.frame(x))
+  .vars <- rlang::quos(...)
+  f <- dplyr::filter(x, !!! .vars)
+  f <- count(f)
+  prop <- f$n/nrow(x)
+  sprintf("%d (%s)", f$n, scales::percent(prop, accuracy = 0.1))
+
+}
