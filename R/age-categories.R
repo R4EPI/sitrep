@@ -34,7 +34,6 @@ age_categories <- function(x, breakers = NA,
       breakers <- unique(c(seq(lower, upper, by = by), upper))
     }
   }
-  print(breakers)
 
   nb <- length(breakers)
 
