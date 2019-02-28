@@ -30,7 +30,8 @@ fmt_ci <- function(e = numeric(), l = numeric(), u = numeric(), digits = 2, perc
   stopifnot(is.numeric(e), is.numeric(l), is.numeric(u), is.numeric(digits))
   msg <- "%s (CI %.2f--%.2f)"
   msg <- gsub("2", digits, msg)
-  e <- if (percent) scales::percent(e, scale = 1, accuracy = 1/(10^digits)) else scales::number(e, accuracy = 1/(10^digits)) 
+  fun <- if (percent) match.fun(scales::percent) else match.fun(scales::number)
+  e   <- fun(e, scale = 1, accuracy = 1/(10^digits), big.mark = ",") 
   sprintf(msg, e, l, u)
 } 
 
