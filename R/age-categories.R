@@ -25,88 +25,115 @@ age_categories <- function(x, breakers = NA,
 
   # make sure age variable is numeric
   x <- as.numeric(x)
+  right <- include.lowest <- ceiling
 
-  # for specified breaks
-  if (!is.na(breakers[1])) {
-
-    # for restricted top group
-    if (ceiling == TRUE) {
-      # create labels for groups
-      labs <- c(
-        paste(breakers[c(-length(breakers), -length(breakers) + 1)], # lower values (exclude top two breaks)
-                    breakers[c(-1, -length(breakers))] - 1, # higher values (exclude bottom and top breaks)
-                    sep = separator
-                    ), # separator groups
-        paste(breakers[length(breakers) - 1], # second highest value
-              breakers[length(breakers)], # highest value
-              sep = separator
-              )
-        )
-
-      # store output var
-      output <- cut(x,
-                    breaks = breakers,
-                    right = TRUE, include.lowest = TRUE, labels = labs
-      )
-
-    }
-
-    else {
-      # create labels for groups
-      labs <- c(
-        paste(breakers[-length(breakers)], # lower values
-          breakers[-1] - 1, # higher values
-          sep = separator
-        ), # separator groups
-        paste(breakers[length(breakers)],
-          above.char,
-          sep = ""
-        ) # highest grp
-      )
-      # store output var
-      output <- cut(x,
-        breaks = c(breakers, Inf),
-        right = FALSE, labels = labs
-      )
+  if (length(breakers) == 1) {
+    if (!is.na(breakers)) {
+      stop("breakers must be at least three numbers")
+    } else {
+      breakers <- unique(seq(lower, upper, by = by), max(x, na.rm = TRUE))
     }
   }
 
-  else {
+  nb <- length(breakers)
 
-    if (ceiling == TRUE) {
-      # create labels for groups
-      labs <- c(
-        paste(seq(lower, upper - by, by = by)[-upper/by], # lower values
-              seq(lower + by - 1, upper - by, by = by), # higher values
-              sep = separator
-        ), # separator
-        paste0(upper - by, # second highest val
-               separator, upper)
-      )
-      # store output var
-      output <- cut(x,
-                    breaks = seq(lower, upper, by = by),
-                    right = TRUE, include.lowest = TRUE, labels = labs
-      )
-    }
-
-    else {
-
-      # create labels for groups
-      labs <- c(
-        paste(seq(lower, upper - by, by = by), # lower values
-          seq(lower + by - 1, upper - 1, by = by), # higher values
-          sep = separator
-        ), # separator
-        paste(upper, above.char, sep = "") # highest group
-      )
-      # store output var
-      output <- cut(x,
-        breaks = c(seq(lower, upper, by = by), Inf),
-        right = FALSE, labels = labs
-      )
-    }
+  if (ceiling) {
+    lower_vals <- breakers[c(-nb, -nb + 1)]
+    upper_vals <- breakers[c(-1, -nb)] - 1
+    final_val  <- sprintf("%d%s%d", breakers[nb - 1], separator, breakers[nb])
+  } else {
+    lower_vals <- breakers[-nb]
+    upper_vals <- breakers[-1] - 1
+    final_val  <- sprintf("%d%s", breakers[nb], above.char)
   }
+  labs <- c(paste(lower_vals, upper_vals, sep = separator), final_val)
+
+  # # for specified breaks
+  # if (!is.na(breakers[1])) {
+
+  #   # for restricted top group
+  #   if (ceiling == TRUE) {
+  #     # create labels for groups
+  #     labs <- c(
+  #       paste(breakers[c(-nb, -nb + 1)], # lower values (exclude top two breaks)
+  #                   breakers[c(-1, -nb)] - 1, # higher values (exclude bottom and top breaks)
+  #                   sep = separator
+  #                   ), # separator groups
+  #       paste(breakers[nb - 1], # second highest value
+  #             breakers[nb], # highest value
+  #             sep = separator
+  #             )
+  #       )
+
+  #     # store output var
+  #     output <- cut(x,
+  #                   breaks = breakers,
+  #                   right = TRUE, include.lowest = TRUE, labels = labs
+  #     )
+
+  #   }
+
+  #   else {
+  #     # create labels for groups
+  #     labs <- c(
+  #       paste(breakers[-nb], # lower values
+  #         breakers[-1] - 1, # higher values
+  #         sep = separator
+  #       ), # separator groups
+  #       paste(breakers[nb],
+  #         above.char,
+  #         sep = ""
+  #       ) # highest grp
+  #     )
+  #     # store output var
+  #     output <- cut(x,
+  #       breaks = c(breakers, Inf),
+  #       right = FALSE, labels = labs
+  #     )
+  #   }
+  # }
+
+  # else {
+
+  #   if (ceiling == TRUE) {
+  #     # create labels for groups
+  #     labs <- c(
+  #       paste(seq(lower, upper - by, by = by)[-upper/by], # lower values
+  #             seq(lower + by - 1, upper - by, by = by), # higher values
+  #             sep = separator
+  #       ), # separator
+  #       paste0(upper - by, # second highest val
+  #              separator, upper)
+  #     )
+  #     # store output var
+  #     output <- cut(x,
+  #                   breaks = seq(lower, upper, by = by),
+  #                   right = TRUE, include.lowest = TRUE, labels = labs
+  #     )
+  #   }
+
+  #   else {
+
+  #     # create labels for groups
+  #     labs <- c(
+  #       paste(seq(lower, upper - by, by = by), # lower values
+  #         seq(lower + by - 1, upper - 1, by = by), # higher values
+  #         sep = separator
+  #       ), # separator
+  #       paste(upper, above.char, sep = "") # highest group
+  #     )
+  #     # store output var
+  #       breaks <- c(seq(lower, upper, by = by), Inf)
+  #       right = FALSE
+  #       labels = labs
+  #   }
+  # }
+  output <- cut(x, 
+                breaks = breakers,
+                right = right, 
+                include.lowest = FALSE,
+                labels = labs
+               )
 
   # return variable with groups
   output
