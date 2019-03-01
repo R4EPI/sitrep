@@ -25,7 +25,6 @@ age_categories <- function(x, breakers = NA,
 
   # make sure age variable is numeric
   x <- as.numeric(x)
-  right <- include.lowest <- ceiling
 
   if (length(breakers) == 1) {
     if (!is.na(breakers)) {
