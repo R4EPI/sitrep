@@ -597,8 +597,8 @@ obs_end   <- ISOweek2date(sprintf("%s-7", reporting_week))
 
 From the start of the outbreak up until `r reporting_week` there were a 
 total of `r nrow(linelist_cleaned)` cases. There were
-`r linelist_cleaned %>% filter(sex == "Female") %>% count() %>% pull(n)` females and
-`r linelist_cleaned %>% filter(sex == "Male") %>% count() %>% pull(n)` males. 
+`r fmt_count(linelist_cleaned, sex == "Female")` females and
+`r fmg_count(linelist_cleaned, sex == "Male")` males. 
 
 The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` years. 
 
@@ -661,9 +661,9 @@ count(linelist_cleaned, age_group, sex) %>%  # get counts of cases by age group 
 
 Age pyramid by case definition 
 
-There were `r sum(is.na(linelist_cleaned$sex))` cases missing information on sex, 
-`r sum(is.na(linelist_cleaned$case_def))` missing case definitions and 
-`r sum(is.na(linelist_cleaned$age_group))` missing age group.
+There were `r fmt_count(linelist_cleaned, is.na(sex))` cases missing information on sex, 
+`r fmt_count(linelist_cleaned, is.na(case_def))` missing case definitions and 
+`r fmt_count(linelist_cleaned, is.na(age_group))` missing age group.
 
 ```{r age_pyramid, warning=FALSE}
 # plot age pyramid 
@@ -733,7 +733,7 @@ descriptive(linelist_cleaned,
 
 The median number of days admitted was `r median(linelist_cleaned$obs_days)`, 
 with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_cleaned$obs_days)` days. 
-A total of `r filter(linelist_cleaned, readmission == "Yes") %>% nrow()` patients were readmitted to the CTC. 
+A total of `r fmt_count(linelist_cleaned, readmission == "Yes")` patients were readmitted to the CTC. 
 
 
 Cases by dehydration severity at admission
@@ -763,8 +763,8 @@ descriptive(linelist_cleaned,
 
 #### Case fatality ratio 
 
-To date, there have been `r sum(grepl("Dead", linelist_cleaned$exit_status))` deaths, of which 
-`r linelist_cleaned %>% filter(exit_status == "Dead on arrival") %>% nrow()` 
+To date, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status))` deaths, of which 
+`r fmt_count(linelist_cleaned, exit_status == "Dead on arrival")` 
 were dead on arrival. 
 
 Among those who died, the time to death is shown below. 
@@ -864,7 +864,7 @@ ar %>%
   knitr::kable(digits = 2, align = "r")
 ```
 
-Here, we can see that the Attack Rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar)`.
+Here, we can see that the Attack Rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
 
 To give attack rate by age group, with appropriate population denominators, use the following code. 
 
@@ -957,7 +957,7 @@ mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
 
 * [When did the cases fall ill? Are numbers increasing or stable? You may want to include an Epi curve (bar chart showing number of new (suspected and confirmed) cases each day/week) ]
 
-There were `r sum(is.na(linelist_cleaned$date_of_onset))` cases missing dates of onset. 
+There were `r fmt_count(linelist_cleaned, is.na(date_of_onset))` cases missing dates of onset. 
 
 ```{r create_incidence, message = FALSE}
 # This code creates case counts for each week of your outbreak, overall
