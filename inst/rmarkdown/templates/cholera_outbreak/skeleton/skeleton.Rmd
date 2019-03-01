@@ -419,6 +419,12 @@ linelist_cleaned <- linelist_cleaned %>%
   
 # create an epiweek variable 
 linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
+# make sure all the weeks are represented
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(ewdate = sprintf("%s-1", epiweek)) %>% 
+  mutate(ewdate = ISOweek2date(ewdate)) %>% 
+  mutate(epiweek = factor(epiweek, ISOweek(seq(min(ewdate, na.rm = TRUE), max(ewdate, na.rm = TRUE), by = "week")))) %>%
+  select(-ewdate)
 
 
 # Numeric variables --------------------------------- 
@@ -557,23 +563,27 @@ linelist_cleaned <- linelist_cleaned %>%
 
 # to demonstrate in this template we will take the maximum epiweek
 # however you can define epiweek by hand as below
-reporting_week <- max(linelist_cleaned$epiweek, na.rm = TRUE)
 
 # define current week 
+reporting_week <- levels(linelist_cleaned$epiweek)[nlevels(linelist_cleaned$epiweek)]
 # reporting_week <- "2018-W10"
-
-# outbreak start 
-# return the first day in the week of first case 
-obs_start <- ISOweek2date(paste0(min(linelist_cleaned$epiweek, na.rm = TRUE), "-1"))
-
-# return last day of reporting week 
-obs_end <- ISOweek2date(paste0(max(linelist_cleaned$epiweek, na.rm = TRUE), "-7"))
 
 # drop cases after current week
 # you will probably have cases in your dataset if case finding continues
 # as these are after the week of reporting, drop them
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(epiweek <= reporting_week)
+  filter(date_of_onset <= ISOweek2date(sprintf("%s-7", reporting_week)))
+
+
+first_week <- levels(linelist_cleaned$epiweek)[1]
+
+# outbreak start 
+# return the first day in the week of first case 
+obs_start <- ISOweek2date(sprintf("%s-1", first_week))
+
+# return last day of reporting week 
+obs_end   <- ISOweek2date(sprintf("%s-7", reporting_week))
+
 ```
 
 
