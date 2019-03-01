@@ -1048,17 +1048,17 @@ The below gives the attack rate per week.
 
 ```{r attack_rate_per_week, warning = FALSE, message = FALSE}
 # counts and cumulative counts by week
-cases <- count(linelist_cleaned, epiweek) %>% # get counts
-  full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks", n = "counts")) %>%  # ensure all weeks there
-  arrange(dates) %>% # sort by date
-  mutate(cumulative = cumsum(n)) %>% # add the cummulative count
-  mutate(epiweek = forcats::fct_inorder(epiweek)) # sort based on epiweek
+cases <- linelist_cleaned %>%
+  arrange(date_of_onset) %>%        # arrange by date of onset
+  count(epiweek, .drop = FALSE) %>% # count all epiweeks and include zero counts
+  mutate(cumulative = cumsum(n))    # add a cumulative sum
 
 # attack rate for each week
 ar <- attack_rate(cases$n, population, multiplier = 100000) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, epiweek), .) %>% 
-  tidyr::complete(epiweek) %>%            # Ensure all levels are represented
+  tidyr::complete(epiweek, 
+                  fill = list(cases = 0, population = 0, ar = 0, lower = 0, upper = 0)) %>% # Ensure all levels are represented
   mutate(epiweek = as.character(epiweek))
 
 ar %>%
@@ -1092,18 +1092,9 @@ The below gives case fatality rate per week as a proportion
 
 ```{r cfr_per_week, warning = FALSE, message = FALSE}
 # group by known outcome and case definition 
-cfr <- linelist_cleaned %>% 
-  filter(!is.na(exit_status)) %>%               # remove rows with missing outcome
-  group_by(epiweek) %>%                        # group by epiweek
-  summarise(deaths = sum(grepl("Dead", exit_status)),  # tally deaths
-            population = n()) %>%               # tally population
-  full_join(as.data.frame(inc_week_7), by = c(epiweek = "isoweeks")) %>% 
-  arrange(dates) %>%
-  mutate(epiweek = forcats::fct_inorder(epiweek)) %>%
-  # calculate case fatality rate
-  do(bind_cols(epiweek = .$epiweek, 
-               case_fatality_rate(.$deaths, .$population))) %>% 
-  tidyr::complete(epiweek) %>%             # Ensure all levels are represented
+cfr <- linelist_cleaned %>%
+  case_fatality_rate_df(grepl("Dead", exit_status), group = epiweek) %>%
+  tidyr::complete(epiweek, fill = list(deaths = 0, population = 0, cfr = 0, lower = 0, upper = 0)) %>% # Ensure all levels are represented
   mutate(epiweek = as.character(epiweek))
 
 cfr %>%
