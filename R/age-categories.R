@@ -25,7 +25,6 @@ age_categories <- function(x, breakers = NA,
 
   # make sure age variable is numeric
   x <- as.numeric(x)
-  right <- include.lowest <- ceiling
 
   if (length(breakers) == 1) {
     if (!is.na(breakers)) {
@@ -41,21 +40,19 @@ age_categories <- function(x, breakers = NA,
     lower_vals <- breakers[c(-nb, -nb + 1)]
     upper_vals <- breakers[c(-1, -nb)] - 1
     final_val  <- sprintf("%d%s%d", breakers[nb - 1], separator, breakers[nb])
+    breakers[nb] <- breakers[nb] + 1L
   } else {
     lower_vals <- breakers[-nb]
     upper_vals <- breakers[-1] - 1
     final_val  <- sprintf("%d%s", breakers[nb], above.char)
+    breakers   <- unique(c(breakers, Inf))
   }
   labs <- c(paste(lower_vals, upper_vals, sep = separator), final_val)
 
-  # If there is no ceiling, Inf needs to be part of the breaks
-  if (!ceiling) {
-    breakers <- unique(c(breakers, Inf))
-  }
-  output <- cut(x, 
+  output <- cut(x,
                 breaks = breakers,
-                right = right, 
-                include.lowest = right,
+                right = FALSE,
+                include.lowest = FALSE,
                 labels = labs
                )
 
