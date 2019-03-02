@@ -1480,9 +1480,9 @@ ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>%
 max_cases <- max(cases$n, na.rm = TRUE) # define the maximum number of cases for the color palette 
 max_ar    <- max(ar$`Upper 95%CI`, na.rm = TRUE)
 
-# define breaks for standardising color palette 
+## define breaks for standardising color palette
 breakers <- as.integer(c(0, # include zero as a standalone group
-             seq(1, max_ar, by = max_ar/4) # 1 to maximum with four divisions
+             find_breaks(max_ar, breaks = 4, snap = 100) # four breaks rounded to nearest 100
              ))
 ## add a categorical variable using the age_categories function 
 ## nb in this case we arent using ages - but it functions the same way!

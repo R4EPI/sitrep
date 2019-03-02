@@ -45,6 +45,7 @@ Collate:
     'age-pyramid.R'
     'cfr.R'
     'descriptive-table.R'
+    'find_breaks.R'
     'gen_data.R'
     'gen_polygon.R'
     'gen_population.R'
