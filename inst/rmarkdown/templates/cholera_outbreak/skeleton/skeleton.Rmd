@@ -598,7 +598,7 @@ obs_end   <- ISOweek2date(sprintf("%s-7", reporting_week))
 From the start of the outbreak up until `r reporting_week` there were a 
 total of `r nrow(linelist_cleaned)` cases. There were
 `r fmt_count(linelist_cleaned, sex == "Female")` females and
-`r fmg_count(linelist_cleaned, sex == "Male")` males. 
+`r fmt_count(linelist_cleaned, sex == "Male")` males. 
 
 The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` years. 
 
