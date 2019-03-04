@@ -199,7 +199,7 @@ d3 <- death_tbl(study_data_cleaned %>%
 d4 <- death_tbl(study_data_cleaned %>% 
   filter(!is.na(cause_of_death),
          died,
-         age_in_years >60)) %>% 
+         age_in_years > 60)) %>% 
   rename("n 60+ years old" = n)
 
 cbind(d1, d2[, 2:3], d3[, 2:3], d4[, 2:3]) %>%
