@@ -2,7 +2,9 @@
 #'
 #' Calculate attack rate, case fatality rate, and mortality rate
 #'
-#' @param cases,deaths number of cases or deaths in a population.
+#' @param cases,deaths number of cases or deaths in a population. For `_df`
+#'   functions, this can be the name of a logical column OR an evaluated
+#'   logical expression (see examples).
 #' @param population the number of individuals in the population.
 #' @param conf_level a number representing the confidence level for which to
 #' calculate the confidence interval. Defaults to 0.95, representinc 95%
@@ -27,6 +29,18 @@
 #'
 #' print(cfr <- case_fatality_rate(1, 100), digits = 2) # CFR of 1%
 #' fmt_ci_df(cfr)
+#'
+#' # using a data frame
+#' if (require("outbreaks")) {
+#'
+#'   e <- outbreaks::ebola_sim$linelist
+#'   case_fatality_rate_df(e, 
+#'                         outcome == "Death", 
+#'                         group = gender, 
+#'                         add_total = TRUE,
+#'                         mergeCI = TRUE)
+#'
+#' }
 attack_rate <- function(cases, population, conf_level = 0.95,
                         multiplier = 100, mergeCI = FALSE, digits = 2) {
   res <- proportion(cases, population, multiplier = multiplier, conf_level = conf_level)
@@ -45,6 +59,66 @@ case_fatality_rate <- function(deaths, population, conf_level = 0.95,
   colnames(res) <- c("deaths", "population", "cfr", "lower", "upper")
   if (mergeCI == TRUE) {
     res <- merge_ci_df(res, digits = digits)
+  }
+  res
+}
+
+#' @rdname attack_rate
+#' @export
+case_fatality_rate_df <- function(x, deaths, group = NULL, conf_level = 0.95,
+                                  multiplier = 100, mergeCI = FALSE, digits = 2,
+                                  add_total = FALSE) {
+
+  qdeath <- rlang::enquo(deaths)
+  qgroup <- rlang::enquo(group)
+  wants_grouping <- !is.null(rlang::get_expr(qgroup))
+
+
+  # Group the data if needed
+  if (wants_grouping) {
+    x <- dplyr::group_by(x, !!qgroup)
+  }
+
+  # Summarise the data. Luckily, deaths can be either a column or a logical
+  # expression to evaluate :)
+  # This creates a list column for the case fatality rate based on the
+  # calculated deaths and population before... so this means that 
+  # THE ORDER OF THE STATEMENTS MATTER
+  res <- dplyr::summarise(x,
+                          deaths := sum(!!qdeath, na.rm = TRUE), 
+                          population := dplyr::n(),
+                          cfr := list(case_fatality_rate(.data$deaths, 
+                                                         .data$population, 
+                                                         conf_level, 
+                                                         multiplier, 
+                                                         mergeCI, 
+                                                         digits)[-(1:2)]
+                          ))
+
+  # unnesting the list column
+  res <- tidyr::unnest(res, .data$cfr)
+
+  # adding the total if there was grouping 
+  if (add_total && wants_grouping) {
+    tot <- case_fatality_rate(sum(res$deaths, na.rm = TRUE),
+                              sum(res$population, na.rm = TRUE),
+                              conf_level,
+                              multiplier,
+                              mergeCI,
+                              digits)
+    res <- tibble::add_row(res, 
+                           !!qgroup := "Total",
+                           deaths = tot$deaths,
+                           population = tot$population,
+                           cfr = tot$cfr
+                          )
+    # merge CI gives different numbers of columns, this accounts for that.
+    if (mergeCI) {
+      res$ci[nrow(res)] <- tot$ci
+    } else {
+      res$lower[nrow(res)] <- tot$lower
+      res$upper[nrow(res)] <- tot$upper
+    }
   }
   res
 }

@@ -3,6 +3,7 @@
 \name{attack_rate}
 \alias{attack_rate}
 \alias{case_fatality_rate}
+\alias{case_fatality_rate_df}
 \alias{mortality_rate}
 \title{Rates and Ratios}
 \usage{
@@ -12,11 +13,16 @@ attack_rate(cases, population, conf_level = 0.95, multiplier = 100,
 case_fatality_rate(deaths, population, conf_level = 0.95,
   multiplier = 100, mergeCI = FALSE, digits = 2)
 
+case_fatality_rate_df(x, deaths, group = NULL, conf_level = 0.95,
+  multiplier = 100, mergeCI = FALSE, digits = 2, add_total = FALSE)
+
 mortality_rate(deaths, population, conf_level = 0.95,
   multiplier = 10^4, mergeCI = FALSE, digits = 2)
 }
 \arguments{
-\item{cases, deaths}{number of cases or deaths in a population.}
+\item{cases, deaths}{number of cases or deaths in a population. For \code{_df}
+functions, this can be the name of a logical column OR an evaluated
+logical expression (see examples).}
 
 \item{population}{the number of individuals in the population.}
 
@@ -50,4 +56,16 @@ attack_rate(10, 50, mergeCI = TRUE, digits = 2) # 20\% attack rate
 
 print(cfr <- case_fatality_rate(1, 100), digits = 2) # CFR of 1\%
 fmt_ci_df(cfr)
+
+# using a data frame
+if (require("outbreaks")) {
+
+  e <- outbreaks::ebola_sim$linelist
+  case_fatality_rate_df(e, 
+                        outcome == "Death", 
+                        group = gender, 
+                        add_total = TRUE,
+                        mergeCI = TRUE)
+
+}
 }

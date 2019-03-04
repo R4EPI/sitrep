@@ -52,7 +52,7 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
   dat_dict$data_element_name      <- epitrix::clean_labels(dat_dict$data_element_name)
 
   # Adding hardcoded var types to options list
-  # 3 types added to - BOOLEAN, TRUE_ONLY and ORGANISATION-UNIT
+  # 2 types added to - BOOLEAN, TRUE_ONLY
   BOOLEAN           <- data.frame(option_code = c(1, 0),
                          option_name = c("[1] Yes", "[0] No"),
                          option_uid = c(NA, NA),
@@ -66,20 +66,14 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
                           option_order_in_set = c(1,2),
                           optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
                           )
-  ORGANISATION_UNIT <- data.frame(option_code = c("HO", "CL", "HP"),
-                          option_name = c("[HO] Hospital", "[CL] Clinic", "[HP] Health post"),
-                          option_uid = c(NA, NA, NA),
-                          option_order_in_set = c(1,2,3),
-                          optionset_uid = c("ORGANISATION_UNIT", "ORGANISATION_UNIT", "ORGANISATION_UNIT")
-                          )
 
   # bind these on to the bottom of dat_opts (option list) as rows
-  dat_opts <- do.call("rbind", list(dat_opts, BOOLEAN, TRUE_ONLY, ORGANISATION_UNIT))
+  dat_opts <- do.call("rbind", list(dat_opts, BOOLEAN, TRUE_ONLY))
 
 
 
   # add the unique identifier to link above three in dictionary to options list
-  for (i in c("BOOLEAN", "TRUE_ONLY", "ORGANISATION_UNIT")) {
+  for (i in c("BOOLEAN", "TRUE_ONLY")) {
     dat_dict$used_optionset_uid[dat_dict$data_element_valuetype == i] <- i
   }
 
@@ -269,8 +263,19 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output$treatment_facility_site <- sample(1:50,
                                                  numcases, replace = TRUE)
 
-    # patient origin
-    dis_output$patient_origin_free_text <- sample(c("Village A", "Village B", "Village C", "Village D"),
+    # patient origin (categorical from a dropdown)
+    dis_output$patient_origin <- sample(c("Village A", "Village B",
+                                                    "Village C", "Village D"),
+                                                  numcases, replace = TRUE)
+
+    # treatment location (categorical from a dropdown)
+    dis_output$treatment_location <- sample(c("Ward A", "Ward B",
+                                              "Ward C", "Ward D"),
+                                            numcases, replace = TRUE)
+
+    # patient origin free text
+    dis_output$patient_origin_free_text <- sample(c("Messy location A", "Messy location B",
+                                                    "Messy location C", "Messy location D"),
                                                   numcases, replace = TRUE)
   }
 

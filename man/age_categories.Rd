@@ -6,7 +6,7 @@
 either give distinct breaks or specify vals for sequence}
 \usage{
 age_categories(x, breakers = NA, lower = 0, upper = NA, by = 10,
-  separator = "-", above.char = "+")
+  separator = "-", ceiling = FALSE, above.char = "+")
 }
 \arguments{
 \item{x}{Your age variable}
@@ -22,7 +22,12 @@ age_categories(x, breakers = NA, lower = 0, upper = NA, by = 10,
 
 \item{separator}{A character that you want to have between ages in group names. The default is "-" producing e.g. 0-10.}
 
-\item{above.char}{A character that you want to have after your highest age group. The default is "+" producing e.g. 80+}
+\item{ceiling}{A TRUE/FALSE variable. Specify whether you would like the highest value in your breakers, or alternatively
+the upper value specified, to be the endpoint. This would produce the highest group of "70-80" rather than "80+".
+The default is FALSE (to produce a group of 80+).}
+
+\item{above.char}{Only considered when ceiling == FALSE.
+A character that you want to have after your highest age group. The default is "+" producing e.g. 80+}
 }
 \description{
 Create an age group variable
