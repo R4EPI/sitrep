@@ -37,23 +37,149 @@ library(ggplot2)
 #                                          password = askpass::askpass(prompt = "please enter file
 #                                                                      password"))
 
-# linelist_raw <- outbreaks::fluH7N9_china_2013
+
 linelist_raw <- gen_data(dictionary = "Mortality", varnames = "column_name",
                          numcases = 500)
+
+
+```
+
+
+
+
+```{r read_population_data, warning = FALSE, message = FALSE}
+
+# create fake population by age and sex 
+population_data_age <- tibble(age_group = rep.int(c("0-4","5-14","15-29","30-44", "45+"), 2), 
+                              sex = rep.int(c("Male", "Female"), 5))
+population_data_age$population <- as.integer(runif(nrow(population_data_age), 
+                                          min = 500, max = 2000))
+
+```
+
+```{r standardise_clean_data}
 
 study_data_cleaned <- linelist_raw %>%
   # some cleaning
   mutate(age_in_years = as.integer(q155_q5_age_year),
-         age_group = age_categories(age_in_years, breakers = seq(0, 85, 5)),
+         age_group = age_categories(age_in_years, breakers = c(0, 5, 15, 30, 45)),
          sex = q4_q6_sex,
          died = q136_q34_died == "Yes",
          cause_of_death = factor(q138_q36_died_cause,
                                  levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
                                             "Trauma/accident", "Pregnancy-related", 
                                             "Violence", "Outbreak disease (specify)", 
-                                            "Malnutrition", "Unknown", "Other (specify)"))) %>%
+                                            "Malnutrition", "Unknown", "Other (specify)")), 
+         weight_ID = paste0(age_group, "_", sex)) %>%
   filter(!is.na(sex))
+
 ```
+
+
+
+```{r weights_person_days}
+
+######## WEIGHTING ------------------------------------------------------------
+# create a merger ID by age group and sex 
+population_data_age <- population_data_age %>% 
+  mutate(ID = paste0(age_group, "_", sex))
+
+# get study sample counts 
+counts <- study_data_cleaned %>% 
+  group_by(age_group, sex) %>% 
+  summarise(study = n()) %>% 
+  mutate(ID = paste0(age_group, "_", sex)) %>% 
+  ungroup() %>% 
+  select(ID, study)
+
+
+# merge counts to population data 
+population_data_age <- left_join(population_data_age, 
+                                 counts,
+                                 by = "ID")
+
+# create weight variable 
+population_data_age <- population_data_age %>% 
+  mutate(weight = population/study) %>% 
+  select(ID, weight)
+
+
+# merge to study sample 
+study_data_cleaned <- left_join(study_data_cleaned, 
+                                population_data_age, 
+                                by = c("weight_ID" = "ID"))
+
+
+
+
+#### OBSERVATION DAYS ----------------------------------------------------------
+
+## define start and end of your recall period
+
+# set the start of your recall-period
+recall_start <- as.Date("2018-01-01")
+
+# set the end of your recall period (when your survey stopped) 
+recall_end <- as.Date("2018-05-01")
+
+
+
+
+## define start date 
+## this is either the begining of your recall period (which you define in advance)
+## or a date after the start of recal if applicable (e.g. arrivals or births)
+
+
+# choose earliest date entered in survey
+# from camp arrival, household arrival and born date
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(startdate = pmin(q114_q16_date_arrival_camp, 
+                          q41_q25_hh_arrive_date,
+                          q88_q33_born_date, na.rm = T))
+
+
+# find which column had the minimum value 
+# (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
+
+
+# if start date prior to recall_start then set start to that date (need to fix so it gives dates)
+study_data_cleaned$startdate <- ifelse(study_data_cleaned$startdate < recall_start, 
+         recall_start, 
+         study_data_cleaned$startdate)
+
+
+
+## define end date 
+## this is either the end of your recall period 
+## or a date before the end of recall if applicable (e.g. departures, deaths)
+
+# choose earliest date entered in survey
+# from camp departures and death 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(enddate = pmin(q45_q29_hh_leave_date, 
+                        q137_q35_died_date, na.rm = T)) 
+
+
+# find which column had the minimum value 
+# (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
+
+
+
+# if end date after recall_end then set end to that date (need to fix so it gives dates)
+study_data_cleaned$enddate <- ifelse(study_data_cleaned$enddate > recall_end, 
+         recall_end, 
+         study_data_cleaned$enddate)
+
+
+
+## Define observation time in days (need to fix negatives in gen_data)
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(obstime = enddate - startdate)
+
+```
+
+
+
 
 
 # Introduction
