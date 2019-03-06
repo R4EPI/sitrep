@@ -101,7 +101,7 @@ population_data_age <- left_join(population_data_age,
 
 # create weight variable 
 population_data_age <- population_data_age %>% 
-  mutate(weight = population/study) %>% 
+  mutate(weight = population / study) %>% 
   select(ID, weight)
 
 
@@ -136,7 +136,7 @@ recall_end <- as.Date("2018-05-01")
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(startdate = pmin(q114_q16_date_arrival_camp, 
                           q41_q25_hh_arrive_date,
-                          q88_q33_born_date, na.rm = T))
+                          q88_q33_born_date, na.rm = TRUE))
 
 
 # find which column had the minimum value 
@@ -148,6 +148,12 @@ study_data_cleaned$startdate <- ifelse(study_data_cleaned$startdate < recall_sta
          recall_start, 
          study_data_cleaned$startdate)
 
+#  shorter version of the above
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(startdate2 = pmax(pmin(q114_q16_date_arrival_camp, 
+                                q41_q25_hh_arrive_date,
+                                q88_q33_born_date, na.rm = TRUE),
+                           recall_start, na.rm = FALSE))
 
 
 ## define end date 
@@ -158,7 +164,7 @@ study_data_cleaned$startdate <- ifelse(study_data_cleaned$startdate < recall_sta
 # from camp departures and death 
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(enddate = pmin(q45_q29_hh_leave_date, 
-                        q137_q35_died_date, na.rm = T)) 
+                        q137_q35_died_date, na.rm = TRUE)) 
 
 
 # find which column had the minimum value 
@@ -171,6 +177,11 @@ study_data_cleaned$enddate <- ifelse(study_data_cleaned$enddate > recall_end,
          recall_end, 
          study_data_cleaned$enddate)
 
+# shorter version of the above
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(enddate2 = pmin(q45_q29_hh_leave_date, 
+                         q137_q35_died_date,
+                         recall_end, na.rm = TRUE)) 
 
 
 ## Define observation time in days (need to fix negatives in gen_data)
@@ -220,7 +231,7 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 ## create a var with 1s and 0s as an example (DELETE LATER!!)
-study_data_cleaned$binary <- c(1,0)
+study_data_cleaned$binary <- c(1, 0)
 
 
 
