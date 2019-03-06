@@ -10,7 +10,8 @@ knitr::opts_chunk$set(echo = FALSE,
 library(dplyr)
 library(knitr)
 library(sitrep)
-library(survey)
+library(survey) # for survey functions 
+library(srvyr) # dplyr wrapper for survey
 library(ggplot2)
 ```
 
@@ -216,11 +217,52 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ```{r}
 # we first need to create a survery design that reflects the study
+
+
+## create a var with 1s and 0s as an example (DELETE LATER!!)
+study_data_cleaned$binary <- c(1,0)
+
+
+
+# simple random sample (using srvyr package)
+survey_design <- study_data_cleaned %>% 
+  as_survey_design(ids = 1, # no cluster ids
+                   weights = weight # weight variable created above (NULL if want no weights)
+                   )
+
+# simple random sample (using survey package) 
 suvery_design <- svydesign(
   ids = ~1, # no cluster ids
-  weights = NULL, # no sampling weights in this example
+  weights = ~weight, # weight variable created above (NULL if want no weights)
   data = study_data_cleaned
 )
+
+
+# with a categorical variable 
+survey_design %>% 
+  group_by(sex) %>% 
+  summarize(proportion = survey_mean(vartype = "ci"))
+
+svyciprop(~sex, suvery_design)
+
+
+
+# srvyr package
+survey_design %>% 
+  group_by(binary) %>% 
+  summarize(proportion = survey_mean(vartype = "ci"))
+
+# survey package
+svyciprop(~binary, suvery_design)
+
+
+
+## deaths per 10000 per day with srvyr package
+# (artificially ridiculously high!)
+survey_design %>% 
+  summarise(mortality = survey_ratio(died, obstime, vartype = "ci") * 10000)
+
+
 ```
 
 ```{r}
