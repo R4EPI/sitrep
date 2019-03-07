@@ -34,19 +34,19 @@ gen_population <- function(total_pop = 1000,
   if (!is.null(strata)) {
 
     strata2 <- factor(
-      rep.int(strata, length(groups)),
-      levels = strata
-    )
+                      rep.int(strata, length(groups)),
+                      levels = strata
+                      )
     strata2 <- sort(strata2)
 
 
     groups2 <-  factor(
-      rep.int(groups, length(strata)),
-      levels = groups
-    )
+                       rep.int(groups, length(strata)),
+                       levels = groups
+                       )
 
     if (length(proportions) < length(groups2)) {
-    proportions2 <- rep.int(proportions, length(strata))
+      proportions2 <- rep.int(proportions, length(strata))
     }
 
     output <- bind_cols(groups = groups2,
@@ -56,8 +56,8 @@ gen_population <- function(total_pop = 1000,
 
   } else {
     output <- bind_cols(groups = groups,
-                      proportions = proportions,
-                      n = proportions * total_pop)
+                        proportions = proportions,
+                        n = proportions * total_pop)
   }
 
   if (tibble == FALSE) {
