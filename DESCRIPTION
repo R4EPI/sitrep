@@ -29,6 +29,7 @@ Imports:
     scales,
     sf,
     survey,
+    srvyr,
     tibble,
     huxtable,
     tidyr
