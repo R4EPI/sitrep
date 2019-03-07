@@ -328,8 +328,16 @@ plot_age_pyramid(study_data_cleaned,
   theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
 ```
 
-```{r}
+Weighted age distribution.
+
+```{r age_pyramid_survey}
 # TODO: Table - Age distribution of the sample population and of the study population.
+plot_age_pyramid(survey_design_sex,
+                 age_group = "age_group",
+                 split_by = "sex", 
+                 proportion = TRUE) +
+  labs(x = "Cases (n)", y = "Age group (years)") +                    # change axis labels
+  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
 ```
 
 
