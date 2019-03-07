@@ -74,6 +74,9 @@ study_data_cleaned <- linelist_raw %>%
          weight_ID = paste0(age_group, "_", sex)) %>%
   filter(!is.na(sex))
 
+
+## create a var with 1s and 0s for testing (DELETE LATER!!)
+study_data_cleaned$binary <- c(1, 0)
 ```
 
 
@@ -131,29 +134,21 @@ recall_end <- as.Date("2018-05-01")
 ## or a date after the start of recal if applicable (e.g. arrivals or births)
 
 
-# choose earliest date entered in survey
-# from camp arrival, household arrival and born date
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(startdate = pmin(q114_q16_date_arrival_camp, 
-                          q41_q25_hh_arrive_date,
-                          q88_q33_born_date, na.rm = TRUE))
+# choose earliest appropriate date entered in survey
+# from camp arrival, household arrival and born date (pmin) or the start of study period (pmax)
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(startdate = pmax(
+    pmin(q114_q16_date_arrival_camp,
+          q41_q25_hh_arrive_date,
+          q88_q33_born_date, na.rm = TRUE),
+    recall_start, na.rm = FALSE
+  ))
 
 
 # find which column had the minimum value 
 # (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
 
 
-# if start date prior to recall_start then set start to that date (need to fix so it gives dates)
-study_data_cleaned$startdate <- ifelse(study_data_cleaned$startdate < recall_start, 
-         recall_start, 
-         study_data_cleaned$startdate)
-
-#  shorter version of the above
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(startdate2 = pmax(pmin(q114_q16_date_arrival_camp, 
-                                q41_q25_hh_arrive_date,
-                                q88_q33_born_date, na.rm = TRUE),
-                           recall_start, na.rm = FALSE))
 
 
 ## define end date 
@@ -161,33 +156,68 @@ study_data_cleaned <- study_data_cleaned %>%
 ## or a date before the end of recall if applicable (e.g. departures, deaths)
 
 # choose earliest date entered in survey
-# from camp departures and death 
+# from camp departures, death and end of the study
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(enddate = pmin(q45_q29_hh_leave_date, 
-                        q137_q35_died_date, na.rm = TRUE)) 
+                         q137_q35_died_date,
+                         recall_end, na.rm = TRUE))
 
 
 # find which column had the minimum value 
 # (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
 
 
-
-# if end date after recall_end then set end to that date (need to fix so it gives dates)
-study_data_cleaned$enddate <- ifelse(study_data_cleaned$enddate > recall_end, 
-         recall_end, 
-         study_data_cleaned$enddate)
-
-# shorter version of the above
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(enddate2 = pmin(q45_q29_hh_leave_date, 
-                         q137_q35_died_date,
-                         recall_end, na.rm = TRUE)) 
-
-
 ## Define observation time in days (need to fix negatives in gen_data)
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(obstime = enddate - startdate)
+  mutate(obstime = as.numeric(enddate - startdate))
 
+```
+
+
+
+
+```{r survey_design}
+## USE THIS TO SET THE STUDY DESIGN FOR YOUR SURVEY  ---------------------------
+##
+## This creates "survey objects" which can be used as data frames for calculating
+## weighted proportions etc. 
+## There are several options for study design here. 
+## At the basic level you want to decide if it is a simple random or a cluster
+## design study. You will then need to identify your weights variable. 
+## You can also create several study designs, e.g. if you would like to have
+## an overall design and a stratified design (e.g. by sex or by region). 
+##
+## Checklist for study design --------------------------------------------------
+## 
+## - [ ] Make sure you have created all necessary variables in earlier code chunks!!
+## - [ ] Decide on your study design (cluster or simple random)
+## - [ ] If doing cluster:
+##          - [ ] place your cluster ID variable in the ids option 
+##                (e.g. householdID - "fact_0_id" not availble in dat dict)
+##          - [ ] specify your weight variable (created previously)
+##                (set to NULL if want no weights)
+## - [ ] If doing simple random: 
+##          - [ ] set ids equals 1 to have no clustering 
+##          - [ ] specify your weight variable (created previously)
+##                (set to NULL if want no weights)
+## - [ ] Create additional study designs based on strata 
+##      (make sure that your weight variable is based on appropriately stratified
+##        population data)
+
+
+# simple random sample (using srvyr package)
+survey_design <- study_data_cleaned %>% 
+  as_survey_design(ids = 1, # 1 for no cluster ids 
+                   weights = weight # weight variable created above 
+                   )
+
+
+# simple random sample stratified by sex 
+survey_design_sex <- study_data_cleaned %>% 
+  as_survey_design(ids = 1, # 1 for no cluster ids 
+                   weights = weight, # weight variable created above 
+                   strata = sex
+                   )
 ```
 
 
@@ -227,52 +257,26 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 ```{r}
-# we first need to create a survery design that reflects the study
 
 
-## create a var with 1s and 0s as an example (DELETE LATER!!)
-study_data_cleaned$binary <- c(1, 0)
-
-
-
-# simple random sample (using srvyr package)
-survey_design <- study_data_cleaned %>% 
-  as_survey_design(ids = 1, # no cluster ids
-                   weights = weight # weight variable created above (NULL if want no weights)
-                   )
-
-# simple random sample (using survey package) 
-suvery_design <- svydesign(
-  ids = ~1, # no cluster ids
-  weights = ~weight, # weight variable created above (NULL if want no weights)
-  data = study_data_cleaned
-)
-
-
-# with a categorical variable 
+# with a categorical variable (srvyr package)
 survey_design %>% 
-  group_by(sex) %>% 
-  summarize(proportion = survey_mean(vartype = "ci"))
-
-svyciprop(~sex, suvery_design)
+  group_by(cause_of_death) %>% 
+  summarize(proportion = survey_mean(vartype = "ci", na.rm = TRUE))
 
 
-
-# srvyr package
+# with a binary variable (srvyr package)
 survey_design %>% 
   group_by(binary) %>% 
   summarize(proportion = survey_mean(vartype = "ci"))
-
-# survey package
-svyciprop(~binary, suvery_design)
 
 
 
 ## deaths per 10000 per day with srvyr package
 # (artificially ridiculously high!)
 survey_design %>% 
-  summarise(mortality = survey_ratio(died, obstime, vartype = "ci") * 10000)
-
+  summarise(mortality = survey_ratio(died, obstime, vartype = "ci") * 10000) %>% 
+  merge_ci_df(e = 1)
 
 ```
 
