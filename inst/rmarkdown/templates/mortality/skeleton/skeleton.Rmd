@@ -83,7 +83,7 @@ study_data_cleaned$binary <- c(1, 0)
 ```{r weights_person_days}
 
 ######## WEIGHTING ------------------------------------------------------------
-study_data_cleaned <- add_weights(survey_data_cleaned, population_data_age, 
+study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, 
                                   age_group, sex)
 
 

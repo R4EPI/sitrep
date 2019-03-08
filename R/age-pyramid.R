@@ -111,18 +111,14 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     plot_data <- dplyr::group_by(plot_data, !!ag, !!sb, !!st)
     plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
     plot_data <- dplyr::ungroup(plot_data)
-    if (proportional) {
-      plot_data$n <- plot_data$n / sum(plot_data$n, na.rm = TRUE)
-    }
   } else {
     plot_data <- srvyr::group_by(data, !!ag, !!sb, !!st)
-    if (proportional) {
-      plot_data <- srvyr::summarise(plot_data, 
-                                    n = srvyr::survey_mean(vartype = "ci", level = 0.95))
-    } else {
-      plot_data <- srvyr::summarise(plot_data,
-                                    n = srvyr::survey_total(vartype = "ci", level = 0.95))
-    }
+    plot_data <- srvyr::summarise(plot_data,
+                                  n = srvyr::survey_total(vartype = "ci", level = 0.95))
+
+  }
+  if (proportional) {
+    plot_data$n <- plot_data$n / sum(plot_data$n, na.rm = TRUE)
   }
   # find the maximum x axis position
   max_n <- dplyr::group_by(plot_data, !!ag, !!sb)
@@ -163,35 +159,35 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     scale_y_continuous(limits = c(-max_n, max_n),
                        breaks = the_breaks,
                        labels = lab_fun) +
-    theme_classic() +
-    theme(axis.line.y.left = element_blank()) +
-    labs(y = y_lab)
+theme_classic() +
+theme(axis.line.y.left = element_blank()) +
+labs(y = y_lab)
 
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
       geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dotted", colour = "grey")
   }
 
-  if (horizontal_lines == TRUE) {
-    pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
-  }
-  pyramid <- pyramid +
-    geom_hline(yintercept = 0) # add vertical line
+if (horizontal_lines == TRUE) {
+  pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
+}
+pyramid <- pyramid +
+  geom_hline(yintercept = 0) # add vertical line
 
-  if (stack_by != split_by) {
-    pyramid <- pyramid +
-      annotate(geom = "label",
-               x = max_age_group,
-               y = -step_size,
-               vjust = 0.5,
-               hjust = 1,
-               label = sex_levels[[1]]) +
-      annotate(geom = "label",
-               x = max_age_group,
-               y = step_size,
-               vjust = 0.5,
-               hjust = 0,
-               label = sex_levels[[2]])
-  }
-  pyramid
+if (stack_by != split_by) {
+  pyramid <- pyramid +
+    annotate(geom = "label",
+             x = max_age_group,
+             y = -step_size,
+             vjust = 0.5,
+             hjust = 1,
+             label = sex_levels[[1]]) +
+annotate(geom = "label",
+         x = max_age_group,
+         y = step_size,
+         vjust = 0.5,
+         hjust = 0,
+         label = sex_levels[[2]])
+}
+pyramid
 }
