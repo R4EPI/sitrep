@@ -71,6 +71,26 @@ merge_pci_df <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2) {
   x
 }
 
+#' @export
+#' @rdname fmt_ci
+fmt_ci_df_sep <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2, percent = TRUE) {
+  x <- merge_ci_df(x, e, l, u, digits)
+  fun <- if (percent) match.fun(scales::percent) else match.fun(scales::number)
+  ee  <- fun(x[[e]], scale = 1, accuracy = 1/(10^digits), big.mark = ",")
+  x[e] <- ee
+  x
+}
+
+#' @export
+#' @rdname fmt_ci
+fmt_pci_df_sep <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2, percent = TRUE) {
+  x <- merge_pci_df(x, e, l, u, digits)
+  fun <- if (percent) match.fun(scales::percent) else match.fun(scales::number)
+  ee  <- fun(x[[e]] * 100, scale = 1, accuracy = 1/(10^digits), big.mark = ",")
+  x[e] <- ee
+  x
+}
+
 #' Counts and proportions inline
 #'
 #' These functions will give proportions for different variables inline.
