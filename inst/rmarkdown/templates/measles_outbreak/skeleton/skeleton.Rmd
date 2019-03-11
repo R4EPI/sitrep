@@ -5,6 +5,8 @@ output: word_document
 
 # Introduction to this template
 
+Lorem ipsum
+
 This is a template which can be used to create an automated outbreak situation
 report for measles 
 
