@@ -57,5 +57,6 @@ Collate:
     'population_weights.R'
     'sample-size.R'
     'survey.R'
+    'unite_ci.R'
     'univariate-analysis.R'
     'zcurve.R'
