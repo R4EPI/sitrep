@@ -18,6 +18,13 @@
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_survey(stype, awards)
 #'
+#' apistrat %>%
+#'   as_survey_design(strata = stype, weights = pw) %>%
+#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"))
+#'
+#' apistrat %>%
+#'   as_survey_design(strata = stype, weights = pw) %>%
+#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
   stopifnot(inherits(x, "tbl_svy"))
 
@@ -53,4 +60,27 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
   x <- tidyr::spread(x, "tmp", "value")
   rename_at(x, dplyr::vars(dplyr::ends_with("prop")), 
             ~function(i) rep("% (95% CI)", length(i)))
+}
+
+#' @export
+#' @rdname tabulate_survey
+#' @param ... binary variables for tabulation
+#' @param keep a vector of binary values to keep
+#' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
+#'
+tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty = TRUE, digits = 1) {
+
+  stopifnot(inherits(x, "tbl_svy"))
+  if (is.null(keep)) {
+    stop("Please provide a list of values to keep in the output.")
+  }
+
+  vars <- tidyselect::vars_select(colnames(x), ...)
+  res <- lapply(vars, function(i) tabulate_survey(x, !! rlang::ensym(i), pretty = pretty, digits = digits))
+  for (i in seq_along(res)) {
+    names(res[[i]])[1] <- "value"
+  }
+  suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))
+  
+  res[if (invert) !res$value %in% keep else res$value %in% keep, ]
 }
