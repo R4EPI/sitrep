@@ -84,37 +84,8 @@ study_data_cleaned$binary <- c(1, 0)
 ```{r weights_person_days}
 
 ######## WEIGHTING ------------------------------------------------------------
-# study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
 
-
-# --- exchange with add_weight! ---
-# keep for now (as add_weights does not seem to work properly)
-# create a merger ID by age group and sex 	 
-population_data_age <- population_data_age %>% 
-  mutate(ID = paste0(age_group, "_", sex))	
- # get study sample counts 	
-counts <- study_data_cleaned %>% 	
-  group_by(age_group, sex) %>% 	
-  summarise(study = n()) %>% 	
-  mutate(ID = paste0(age_group, "_", sex)) %>% 	
-  ungroup() %>% 	
-  select(ID, study)	
- # merge counts to population data 	
-population_data_age <- left_join(population_data_age, 	
-                                 counts,	
-                                 by = "ID")	
- # create weight variable 	
-population_data_age <- population_data_age %>% 	
-  mutate(weight = population / study) %>% 	
-  select(ID, weight)	
- # merge to study sample 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(weight_ID = paste0(age_group, "_", sex))
-study_data_cleaned <- left_join(study_data_cleaned, 	
-                                population_data_age, 	
-                                by = c("weight_ID" = "ID"))
-# --- exchange with add_weight! --- (end)
-
+study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
 
 #### OBSERVATION DAYS ----------------------------------------------------------
 
