@@ -304,41 +304,16 @@ cause_of_death %>%
 Reported causes of death and cause-specific mortality rates, by age, weighted
 ```{r}
 
-cause_of_death_age <- survey_design %>% 
-  group_by(age_group, cause_of_death) %>% 
-  summarize(n = survey_total(vartype = "se", na.rm = TRUE),
-            proportion = survey_mean(vartype = "ci", na.rm = TRUE)) %>% 
-  mutate(n = round(n)) %>% 
-  select(-n_se)
-
-cause_of_death_age %>% 
-  unite_ci("prop", starts_with("proportion"), percent = TRUE, digits = 1) %>%
-  select(cause_of_death, age_group, n, prop) %>% 
-  gather(variable, value, -(cause_of_death:age_group)) %>%
-  unite(temp, age_group, variable, sep = " ") %>% 
-  spread(temp, value) %>% 
-  rename_at(vars(ends_with("prop")), ~function(i) rep("% (95% CI)", length(i))) %>%
+survey_design %>% 
+  tabulate_survey(cause_of_death, age_group) %>%
   kable()
 
 ```
 
 Reported causes of death and cause-specific mortality rates, by gender, weighted
 ```{r}
-
-cause_of_death_sex <- survey_design %>% 
-  group_by(sex, cause_of_death) %>% 
-  summarize(n = survey_total(vartype = "se", na.rm = TRUE),
-            proportion = survey_mean(vartype = "ci", na.rm = TRUE)) %>% 
-  mutate(n = round(n)) %>% 
-  select(-n_se)
-
-cause_of_death_sex %>% 
-  unite_ci("prop", starts_with("proportion"), percent = TRUE, digits = 1) %>%
-  select(cause_of_death, sex, n, prop) %>% 
-  gather(variable, value, -(cause_of_death:sex)) %>%
-  unite(temp, sex, variable, sep = " ") %>% 
-  spread(temp, value) %>% 
-  rename_at(vars(ends_with("prop")), ~function(i) rep("% (95% CI)", length(i))) %>%
+survey_design %>% 
+  tabulate_survey(cause_of_death, sex) %>%
   kable()
 
 ```
