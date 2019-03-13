@@ -75,8 +75,6 @@ study_data_cleaned <- linelist_raw %>%
   filter(!is.na(sex))
 
 
-## create a var with 1s and 0s for testing (DELETE LATER!!)
-study_data_cleaned$binary <- c(1, 0)
 ```
 
 
@@ -246,7 +244,7 @@ descriptive(study_data_cleaned,
             "age_group", 
             "sex", 
             rowtotals = TRUE, 
-            coltotals = TRUE) %>% 
+            coltotals = TRUE, proptotal = TRUE) %>% 
   rename("Age" = age_group, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
@@ -295,7 +293,7 @@ cause_of_death <- survey_design %>%
 
 cause_of_death %>% 
   unite_ci("% (95% CI)", starts_with("proportion"), percent = TRUE, digits = 1) %>%
-  unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), percent = TRUE) %>%
+  unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), percent = FALSE) %>%
   kable()
 
 
