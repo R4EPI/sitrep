@@ -343,6 +343,13 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   if (dictionary == "Measles") {
     dis_output$baby_born_with_complications[PREGNANT_FEMALE &
                                              dis_output$delivery_event != "1"] <- NA
+
+    # fix vaccine stuff among non vaccinated
+    NOTVACC <- which(!dis_output$previously_vaccinated %in% c("C", "V"))
+
+    dis_output$previous_vaccine_doses_received[NOTVACC] <- NA
+    dis_output$date_of_last_vaccination[NOTVACC] <- NA
+
   }
 
   if (dictionary == "Meningitis") {
@@ -355,6 +362,13 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
     # fix pregnancy delivery
     dis_output$delivery_event[dis_output$sex != "F"] <- "NA"
+
+    # fix vaccine stuff among not vaccinated
+    NOTVACC <- which(!dis_output$vaccinated_meningitis_routine %in% c("C", "V") &
+                       !dis_output$vaccinated_meningitis_mvc %in% c("C", "V"))
+
+    dis_output$name_meningitis_vaccine[NOTVACC] <- NA
+    dis_output$date_of_last_vaccination[NOTVACC] <- NA
   }
 
   if (dictionary == "Mortality") {
