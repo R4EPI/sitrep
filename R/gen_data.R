@@ -215,6 +215,35 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output[[i]] <- sample(categories[[i]], numcases, replace = TRUE)
   }
 
+  # Use data dictionary to define which vars are multiple choice
+
+  # sample of a single value and NA
+  sample_single <- function(x, size = numcases, prob = 0.1) {
+    sample(c(x, NA), size = size, prob = c(prob, 1 - prob), replace = TRUE)
+  }
+
+  # random data for one single "MULTI" variable (split into multiple columns)
+  sample_cats <- function(cat) {
+    lvls <- as.character(categories[[cat]])
+    # define suffixes for column names, e.g. 000, 001, 002, ...
+    suffixes <- formatC((1:length(lvls)) - 1, width = 3, format = "d", flag = "0")
+
+    # create columns with randomized lvls with randomized probability
+    extra_cols <- sapply(lvls, sample_single, size = numcases, prob = sample(5:15, 1) / 100)
+    colnames(extra_cols) <- paste0(cat, "_", suffixes)
+    extra_cols
+  }
+
+
+  multivars <- dat_dict[dat_dict$data_element_valuetype == "MULTI", varnames]
+  if (length(multivars) > 0) {
+    sample_multivars <- lapply(multivars, sample_cats)
+    sample_multivars <- do.call(cbind, sample_multivars)
+
+    dis_output[, multivars] <- NULL
+    dis_output <- cbind(dis_output, sample_multivars)
+  }
+
 
   # Use data dictionary to define which vars are dates
   datevars <- dat_dict[dat_dict$data_element_valuetype == "DATE", varnames]
