@@ -5,7 +5,7 @@
 \title{Unite estimates and confidence intervals}
 \usage{
 unite_ci(x, col = NULL, ..., remove = TRUE, digits = 2,
-  percent = FALSE, rate = FALSE)
+  m100 = TRUE, percent = FALSE)
 }
 \arguments{
 \item{x}{a data frame with at least three columns defining an estimate, lower
@@ -20,9 +20,9 @@ Upper.}
 
 \item{digits}{the number of digits to retain for the confidence interval.}
 
-\item{percent}{if the result should be multiplied by 100 and have a "%" symbol added.}
+\item{m100}{\code{TRUE} if the result should be multiplied by 100}
 
-\item{rate}{if \code{percent = FALSE}, \code{rate = TRUE} will add a percent symbol to the result.}
+\item{percent}{\code{TRUE} if the result should have a "%" symbol added.}
 }
 \description{
 Unite estimates and confidence intervals

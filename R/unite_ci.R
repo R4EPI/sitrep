@@ -7,8 +7,8 @@
 #' Upper.
 #' @param remove if `TRUE` (default), the three columns in `...` will be replaced by `col`
 #' @param digits the number of digits to retain for the confidence interval.
-#' @param percent if the result should be multiplied by 100 and have a "%" symbol added.
-#' @param rate if `percent = FALSE`, `rate = TRUE` will add a percent symbol to the result.
+#' @param m100 `TRUE` if the result should be multiplied by 100
+#' @param percent `TRUE` if the result should have a "%" symbol added.
 #'
 #' @export
 #' @examples
@@ -16,7 +16,7 @@
 #' print(cfr <- case_fatality_rate((1:4)*10, 50))
 #' unite_ci(cfr, "CFR (CI)", cfr, lower, upper, rate = TRUE)
 #'
-unite_ci <- function(x, col = NULL, ..., remove = TRUE, digits = 2, percent = FALSE, rate = FALSE) {
+unite_ci <- function(x, col = NULL, ..., remove = TRUE, digits = 2, m100 = TRUE, percent = FALSE) {
 
   from_vars <- tidyselect::vars_select(colnames(x), ...)
   if (length(from_vars) != 3) {
@@ -36,10 +36,10 @@ unite_ci <- function(x, col = NULL, ..., remove = TRUE, digits = 2, percent = FA
 
   
 
-  if (percent) {
-    new_col <- fmt_pci_df(x, e = from_vars[1], l = from_vars[2], u = from_vars[3], digits = digits)
+  if (m100) {
+    new_col <- fmt_pci_df(x, e = from_vars[1], l = from_vars[2], u = from_vars[3], digits = digits, percent = percent)
   } else {
-    new_col <- fmt_ci_df(x, e = from_vars[1], l = from_vars[2], u = from_vars[3], digits = digits, percent = rate)
+    new_col <- fmt_ci_df(x, e = from_vars[1], l = from_vars[2], u = from_vars[3], digits = digits, percent = percent)
   }
   after <- if (remove) first_pos - 1L else last_pos
   out <- tibble::add_column(out, !! col := new_col, .after = after)
