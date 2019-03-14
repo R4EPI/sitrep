@@ -59,3 +59,14 @@ age_categories <- function(x, breakers = NA,
   # return variable with groups
   output
 }
+
+
+group_age_categories <- function(x, years = NULL, months = NULL, weeks = NULL, days = NULL) {
+  dplyr::case_when(
+    is.na(years) & is.na(months) & is.na(weeks) ~ as.character(days),
+    is.na(years) & is.na(months)                ~ as.character(weeks),
+    is.na(years)                                ~ as.character(months),
+    TRUE                                        ~ as.character(years)
+  )
+
+}
