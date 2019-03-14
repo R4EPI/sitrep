@@ -283,15 +283,19 @@ Reported causes of death and cause-specific mortality rates, weighted
 ```{r}
 
 # you will get an extra column, for weighted counts, weighted % with CI, and mortality per 10,000 persons/day with CI
-cause_of_death <- survey_design %>% 
+cause_of_death_prop <- survey_design %>% 
   group_by(cause_of_death) %>% 
   summarize(n = survey_total(vartype = "se", na.rm = TRUE),
             proportion = survey_mean(vartype = "ci", na.rm = TRUE),
-            mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+            ) %>% 
   mutate(n = round(n)) %>% 
   select(-n_se)
 
-cause_of_death %>% 
+cause_of_death_mort <- survey_design %>% 
+  group_by(cause_of_death) %>% 
+  summarize( mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
+
+dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>% 
   unite_ci("% (95% CI)", starts_with("proportion"), percent = TRUE, digits = 1) %>%
   unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), percent = FALSE) %>%
   kable()
