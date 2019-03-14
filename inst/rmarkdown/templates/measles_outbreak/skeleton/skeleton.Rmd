@@ -464,10 +464,8 @@ linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months,
                                                  ceiling = TRUE)
 
 ## create an age group variable by specifying categorical breaks
-## categories are 0-5m, 6-11m, 12-23m, 24-59m, 5-14y, 15-29y, 30-44y, 45+
 linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years, 
-                                             breakers = c(0, 0.5, 1, 2, 5,
-                                                          15, 30, 45))
+                                             breakers = c(0, 5, 15, 30, 45))
 
 ## alternatively, create an age group variable specify a sequence
 # linelist_cleaned$age_group <- age_categories(linelist_cleaned$age,
@@ -617,7 +615,7 @@ Cases by age group and definition
 # get counts and props of age groups by case definition 
 # include column and row totals 
 # descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-#   rename("Age group (months or years)" = age_group, 
+#   rename("Age group" = age_group, 
 #          "Confirmed cases (n)" = Confirmed_n, 
 #          "%" = Confirmed_prop, 
 #          "Probable cases (n)" = Probable_n, 
@@ -634,7 +632,7 @@ Cases by age group and sex
 
 ```{r describe_by_age_group_and_sex}
 descriptive(linelist_cleaned, "age_group", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group (months or years)" = age_group, 
+  rename("Age group" = age_group, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
          "Male cases (n)" = Male_n, 
@@ -649,7 +647,7 @@ Alternatively if you would like proportions to be of the total population, use t
 ```{r total_props_agegroup_sex}
 descriptive(linelist_cleaned, "age_group", "sex", 
             coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group (years)" = age_group, 
+  rename("Age group" = age_group, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
          "Male cases (n)" = Male_n, 
@@ -671,7 +669,7 @@ There were `r fmt_count(linelist_cleaned, is.na(sex))` cases missing information
 plot_age_pyramid(linelist_cleaned, 
                  age_group = "age_group", 
                  split_by = "sex") + 
-  labs(y = "Cases (n)", x = "Age group (months or years)") + # change axis  labels (nb. x/y flip)
+  labs(y = "Cases (n)", x = "Age group") + # change axis  labels (nb. x/y flip)
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -693,11 +691,11 @@ filter(linelist_cleaned, age_years <= 2) %>%
        )
 ```
 
-Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpatient")` were seen as outpatients and `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` were seen as inpatients. For inpatients, the median number of days admitted was `r median(linelist_cleaned$obs_days)`, 
+Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpatient")` were seen as outpatients and `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` were inpatients. Among inpatients, the median number of days admitted was `r median(linelist_cleaned$obs_days)`, 
 with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_cleaned$obs_days)` days.
 
 
-Cases by illness severity at admission
+Cases by illness severity at visit/admission
 
 ```{r describe_by_illness_severity_admission}
 descriptive(linelist_cleaned, 
@@ -721,18 +719,18 @@ descriptive(linelist_cleaned,
   kable(digits = 2)
 ```
 
-`r fmt_count(linelist_cleaned, previously_vaccinated == "Yes - vaccination card/ink" | previously_vaccinated == "Yes - verbal")` reported previous vaccination, with `r fmt_count(linelist_cleaned, previously_vaccinated == "Yes - vaccination card/ink")` showing vaccination cards / ink and `r fmt_count(linelist_cleaned, previously_vaccinated == "Yes - verbal"` with recall only. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unsure")` were unsure.
+`r fmt_count(linelist_cleaned, previously_vaccinated == "Yes - vaccination card/ink" | previously_vaccinated == "Yes - verbal")` reported previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unsure")` were unsure.
 
 #### Case fatality ratio 
 
-To date, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status))` deaths, of which 
+Of `r linelist_cleaned %>% filter(patient_facility_type == "Inpatient") %>% count()` inpatients, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status), patient_facility_type == "Inpatient")` deaths, of which 
 `r fmt_count(linelist_cleaned, exit_status == "Dead on arrival")` 
 were dead on arrival. 
 
-Among those who died, the time to death is shown below. 
+Among inpatients who died, the time to death is shown below. 
 
 ```{r describe_time_to_death, warning = FALSE, message = FALSE}
-filter(linelist_cleaned, DIED) %>% 
+filter(linelist_cleaned, DIED, patient_facility_type == "Inpatient") %>% 
   descriptive(counter = "time_to_death", coltotals = TRUE) %>% 
   rename("Time (hours)" = time_to_death, 
          "Deaths (n)" = n, 
@@ -742,11 +740,12 @@ filter(linelist_cleaned, DIED) %>%
 
 
 
-The case fatality ratio among those with known outcomes is below
+The case fatality ratio among inpatients with known outcomes is below.
 
 ```{r overall_cfr, warning = FALSE, message = FALSE}
 # use arguments from above to produce overal CFR
 overall_cfr <- linelist_cleaned %>% 
+  filter(patient_facility_type == "Inpatient") %>%
   case_fatality_rate_df(deaths = DIED, mergeCI = TRUE) %>%
   rename("Deaths" = deaths,
          "Cases" = population,
@@ -757,10 +756,11 @@ overall_cfr <- linelist_cleaned %>%
 ```
 
 
-The case fatality ratio by sex among those with known outcomes is below. 
+The case fatality ratio by sex among inpatients with known outcomes is below. 
 
 ```{r cfr_by_sex, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
   mutate(sex = forcats::fct_explicit_na(sex, "-")) %>%
   case_fatality_rate_df(deaths = DIED, group = sex, mergeCI = TRUE, add_total = TRUE) %>%
   rename("Sex" = sex, 
@@ -773,10 +773,11 @@ linelist_cleaned %>%
 
 
 
-CFR by age group among those with known outcomes
+CFR by age group among inpatients with known outcomes
 
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
   case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
   rename("Age Group" = age_group, 
          "Deaths" = deaths, 
@@ -786,23 +787,26 @@ linelist_cleaned %>%
   knitr::kable(digits = 2)
 ```
 
-CFR by case definition among those with known outcomes
+
 
 ```{r cfr_by_case_def, warning = FALSE, message = FALSE}
-linelist_cleaned %>%
-  case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
-  rename("Case Definition" = case_def, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 2)
+# Use if you have enough confirmed cases for comparative analysis 
+#
+# linelist_cleaned %>%
+#   filter(patient_facility_type == "Inpatient") %>%
+#   case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
+#   rename("Case Definition" = case_def, 
+#          "Deaths" = deaths, 
+#          "Cases" = population, 
+#          "CFR (%)" = cfr, 
+#          "95%CI" = ci) %>% 
+#   knitr::kable(digits = 2)
 ```
 
 
 #### Attack rate
 
-The attack rate per 10,000 population is below - based on available population data available for the catchment area/region of interest. 
+The attack rate per 10,000 population is below (based on available population data available for the catchment area/region of interest). 
 
 ```{r collect_variables}
 # define population 
@@ -838,7 +842,7 @@ cases <- count(linelist_cleaned, age_group) %>%   # cases for each week
 attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, age_group), .) %>% 
-  rename("Age group (y)" = age_group, 
+  rename("Age group" = age_group, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
@@ -849,8 +853,8 @@ attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>%
 
 #### Mortality
 
-THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTING (e.g. refugee camp). 
-The assumptions don't hold in an open/community setting!
+THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTING (e.g. refugee camp) AND HAVE ALL MORTALITY IN YOUR LINE LIST. 
+The assumptions don't hold in an open/community setting. It is very unlikely that your disease-specific line list includes all-cause mortality.
 
 This demonstrates three ways of calculating mortality rate based on 
 catchment population (twice) and based on hospital population. 
@@ -883,8 +887,7 @@ mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
 
 To produce a crude mortality rate per 10,000 people per day, use the folowing 
 code chunk. 
-This assumes that you are capturing every death in your population and that 
-your population remains stable over the time period of interest. 
+This assumes that you are capturing every death in your population (unlikely for an outbreak-specific line list) and that your population remains stable over the time period of interest. 
 In this situation the time period of interest is from the beginning of the 
 epiweek your first case occured in, until the last day of the epiweek you are 
 currently reporting on. (see this [presentation](https://www.odi.org/sites/odi.org.uk/files/odi-assets/events-presentations/776.pdf) for more detail)
@@ -972,14 +975,13 @@ plot(inc_week_7_gender, show_cases = FALSE, border = "black", n_breaks = nrow(in
 ```
 
 
-You could similarly stratify by case definition (or any other categorical variable!)
+You could similarly stratify by vaccination status (or any other categorical variable!)
 
-
-```{r incidence_by_case_def, message = FALSE}
-inc_week_7_casedef <- incidence(linelist_cleaned$date_of_onset, 
+```{r incidence_by_vax_status, message = FALSE}
+inc_week_7_vax <- incidence(linelist_cleaned$date_of_onset, 
                         interval = 7, 
-                        groups = linelist_cleaned$case_def)
-plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
+                        groups = linelist_cleaned$previously_vaccinated)
+plot(inc_week_7_vax, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_vax)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
@@ -988,15 +990,14 @@ plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(in
   epicurve_theme
 ```
 
+Alternatively, you could stratify by sex among a subset of only inpatients. 
 
-Alternatively, you could stratify by sex among a subset of only confirmed cases. 
 
-
-```{r incidence_by_sex_confirmed, message = FALSE}
-inc_week_7_sex_conf <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def == "Confirmed"], 
+```{r incidence_by_sex_facility, message = FALSE}
+inc_week_7_sex_fac <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$patient_facility_type == "Inpatient"], 
                         interval = 7, 
-                        groups = linelist_cleaned$sex[linelist_cleaned$case_def == "Confirmed"])
-plot(inc_week_7_sex_conf, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_sex_conf)) + 
+                        groups = linelist_cleaned$sex[linelist_cleaned$patient_facility_type == "Inpatient"])
+plot(inc_week_7_sex_fac, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_sex_fac)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
@@ -1050,7 +1051,7 @@ attack_rate(cases$cumulative, population, multiplier = 100000) %>%
   knitr::kable(digits = 2, align = "r")
 ```
 
-The below gives case fatality rate per week as a proportion
+The below gives case fatality rate among inpatients per week as a proportion.
 
 ```{r cfr_per_week, warning = FALSE, message = FALSE}
 # group by known outcome and case definition 
@@ -1070,7 +1071,7 @@ cfr %>%
 ```
 
 
-You could plot the AR and CFR together as line graphs by epiweek. 
+You could plot the AR and CFR (among inpatients only) together as line graphs by epiweek. 
 
 ```{r ar_line_graph}
 ar_plot <- ggplot(ar, aes(x = epiweek, group = 1)) +
@@ -1118,19 +1119,17 @@ cowplot::plot_grid(
 
 We could then also look at admissions and exits by epiweek for operational purposes. 
 
-```{r describe_admissions_by_epiweek_casedef}
+```{r describe_admissions_by_epiweekf}
 # get counts and props of age groups by case definition 
 # include column and row totals 
-descriptive(linelist_cleaned, "epiweek", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
+descriptive(linelist_cleaned, "epiweek", 
+            coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = epiweek, 
-         "Confirmed cases (n)" = Confirmed_n, 
-         "%" = Confirmed_prop, 
-         "Probable cases (n)" = Probable_n, 
-         "%" = Probable_prop,
-         "Suspected cases (n)" = Suspected_n, 
-         "%" = Suspected_prop) %>% 
+         "Cases (n)" = n, 
+         "%" = prop) %>% 
   kable(digits = 2)
 ```
+
 
 
 ```{r describe_exits_by_epiweek}
@@ -1166,12 +1165,36 @@ descriptive(linelist_cleaned, "epiweek", "exit_status",
 *  [Across what area: one or several villages, all from same school, etc. You may want to include a map of the distribution of cases; attack rates by location]
 
 #### Descriptive
-To get a basic descriptive table of cases by region and outcome, see below. 
+To get a basic descriptive table of cases by region and facility, and region and outcome among inpatients, see below. 
+
+
+```{r describe_by_region_facility}
+# get counts and props of region by outcome 
+# include column and row totals 
+
+descriptive(linelist_cleaned, "patient_origin", 
+            "patient_facility_type",
+            coltotals = TRUE, rowtotals = TRUE) %>% 
+  rename("Region" = "patient_origin", 
+         "Inpatient (n)" = "Inpatient_n", 
+         "%" = "Inpatient_prop", 
+         "Outpatient (n)" = "Outpatient_n", 
+         "%" = "Outpatient_prop",
+         "Total" = "Total"
+         ) %>% 
+  kable(digits = 2)
+```
+
+
+
 
 ```{r describe_by_region_outcome}
 # get counts and props of region by outcome 
 # include column and row totals 
-descriptive(linelist_cleaned, "patient_origin", "exit_status", 
+
+descriptive(filter(linelist_cleaned, 
+                   patient_facility_type == "Inpatient"),
+            "patient_origin", "exit_status",
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Region" = "patient_origin", 
          "Died facility (n)" = "Dead in facility_n", 
@@ -1190,8 +1213,6 @@ descriptive(linelist_cleaned, "patient_origin", "exit_status",
          ) %>% 
   kable(digits = 2)
 ```
-
-
 
 
 If you do not have spatial data available, it may also be worth calculating attack rates by region. 
