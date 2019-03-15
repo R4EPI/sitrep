@@ -1282,7 +1282,6 @@ mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
 
 
 
-
 #### Maps 
 
 
