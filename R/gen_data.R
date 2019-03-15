@@ -9,7 +9,7 @@
 #' @param disease Specify which disease you would like to use.
 #' Currently supports "Cholera", "Measles" and "Meningitis".
 #' @param dictionary Specify which dictionary you would like to use.
-#' Currently supports "Cholera", "Measles", "Meningitis" and "Mortality".
+#' Currently supports "Cholera", "Measles", "Meningitis", "AJS" and "Mortality".
 #' @param varnames Specify name of column that contains varnames. Currently
 #' default set to "Item".  (this can probably be deleted once dictionaries
 #' standardise) If `dictionary` is "Mortality", `varnames` needs to be "column_name"`.
@@ -77,7 +77,7 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
     dat_dict$used_optionset_uid[dat_dict$data_element_valuetype == i] <- i
   }
 
-  # remove back end codes from frent end var in the options list
+  # remove back end codes from front end var in the options list
   dat_opts$option_name <- gsub(".*] ", "", dat_opts$option_name)
 
   # produce clean compact data dictionary for use in gen_data
@@ -123,7 +123,7 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
 
   }
 
-  # Return second option of list with data dictionary and category options seperate
+  # Return second option: a list with data dictionary and value options seperate
   if (compact == FALSE) {
 
     if (tibble == TRUE) {
@@ -181,10 +181,10 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   # get msf dictionary specific data dictionary
   if (dictionary == "Mortality") {
     dat_dict <- msf_dict_mortality(tibble = FALSE)
-  } else if (dictionary %in% c("Cholera", "Measles", "Meningitis")) {
+  } else if (dictionary %in% c("Cholera", "Measles", "Meningitis", "AJS")) {
     dat_dict <- msf_dict(disease = dictionary, tibble = FALSE, compact = TRUE)
   } else {
-    stop("'dictionary' must be one of: 'Cholera', 'Measles', 'Meningitis', 'Mortality'")
+    stop("'dictionary' must be one of: 'Cholera', 'Measles', 'Meningitis', 'AJS', 'Mortality'")
   }
 
 
@@ -321,7 +321,8 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
 
 
-  if (dictionary == "Cholera" | dictionary == "Measles") {
+  if (dictionary == "Cholera" | dictionary == "Measles" |
+      dictionary == "AJS") {
     # fix pregnancy stuff
     dis_output$pregnant[dis_output$sex != "F"] <- "NA"
     PREGNANT_FEMALE <- which(dis_output$sex != "F" |
@@ -343,6 +344,13 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   if (dictionary == "Measles") {
     dis_output$baby_born_with_complications[PREGNANT_FEMALE &
                                              dis_output$delivery_event != "1"] <- NA
+
+    # fix vaccine stuff among non vaccinated
+    NOTVACC <- which(!dis_output$previously_vaccinated %in% c("C", "V"))
+
+    dis_output$previous_vaccine_doses_received[NOTVACC] <- NA
+    dis_output$date_of_last_vaccination[NOTVACC] <- NA
+
   }
 
   if (dictionary == "Meningitis") {
@@ -355,6 +363,13 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
     # fix pregnancy delivery
     dis_output$delivery_event[dis_output$sex != "F"] <- "NA"
+
+    # fix vaccine stuff among not vaccinated
+    NOTVACC <- which(!dis_output$vaccinated_meningitis_routine %in% c("C", "V") &
+                       !dis_output$vaccinated_meningitis_mvc %in% c("C", "V"))
+
+    dis_output$name_meningitis_vaccine[NOTVACC] <- NA
+    dis_output$date_of_last_vaccination[NOTVACC] <- NA
   }
 
   if (dictionary == "Mortality") {
