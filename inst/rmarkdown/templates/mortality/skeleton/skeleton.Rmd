@@ -1,120 +1,330 @@
 ---
 title: "Mortality survey"
-output: github_document
+output: word_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      error = TRUE)
 library(dplyr)
+library(tidyr)
 library(knitr)
-library(epireports)
-library(survey)
+library(sitrep)
+library(survey) # for survey functions 
+library(srvyr) # dplyr wrapper for survey
+library(ggplot2)
 ```
 
-```{r, message=FALSE}
-# study_data_raw <- readxl::read_excel("...")
-study_data_raw <- outbreaks::fluH7N9_china_2013
+```{r read_data, message = FALSE}
+# use read_data stuff from outbreak?
 
-study_data_cleaned <- study_data_raw %>%
+
+## Read data ------------------------------------
+# CSV file
+# linelist_raw <- rio::import("linelist.csv")
+#
+# Excel file
+# to read in a specific sheet use "which"
+# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
+#
+# Stata data file
+# linelist_raw <- rio::import("linelist.dat")
+#
+# For password protected Excel file 
+# use the excel.link package 
+# library(excel.link)
+# linelist_raw <- excel.link::xl.read.file("linelist.xlsx",
+#                                          xl.sheet = "Sheet1",
+#                                          password = askpass::askpass(prompt = "please enter file
+#                                                                      password"))
+
+
+linelist_raw <- gen_data(dictionary = "Mortality", varnames = "column_name",
+                         numcases = 1000)
+
+
+```
+
+
+
+
+```{r read_population_data, warning = FALSE, message = FALSE}
+
+# create fake population by age and sex 
+population_data_age <- tibble(age_group = rep.int(c("0-4", "5-14", "15-29", "30-44", "45+"), 2), 
+                              sex = rep.int(c("Male", "Female"), 5))
+population_data_age$population <- as.integer(runif(nrow(population_data_age), 
+                                          min = 500, max = 2000))
+
+```
+
+```{r standardise_clean_data}
+
+study_data_cleaned <- linelist_raw %>%
   # some cleaning
-  mutate(age_in_years = as.integer(age),
-         age_group = cut(age_in_years, breaks = seq(0, 90, 5), right = FALSE),
-         sex = gender,
-         symp_Tuberculosis = runif(n()) < 0.5,
-         symp_Cancer = runif(n()) < 0.01,
-         symp_Mumps = runif(n()) < 0.1,
-         died = outcome == "Death") %>%
+  mutate(age_in_years = as.integer(q155_q5_age_year),
+         age_group = age_categories(age_in_years, breakers = c(0, 5, 15, 30, 45)),
+         sex = q4_q6_sex,
+         died = q136_q34_died == "Yes",
+         cause_of_death = factor(q138_q36_died_cause,
+                                 levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
+                                            "Trauma/accident", "Pregnancy-related", 
+                                            "Violence", "Outbreak disease (specify)", 
+                                            "Malnutrition", "Unknown", "Other (specify)"))) %>%
   filter(!is.na(sex))
+
+
 ```
+
+
+
+```{r weights_person_days}
+
+######## WEIGHTING ------------------------------------------------------------
+
+study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
+
+#### OBSERVATION DAYS ----------------------------------------------------------
+
+## define start and end of your recall period
+
+# set the start of your recall-period
+recall_start <- as.Date("2018-01-01")
+
+# set the end of your recall period (when your survey stopped) 
+recall_end <- as.Date("2018-05-01")
+
+
+
+
+## define start date 
+## this is either the begining of your recall period (which you define in advance)
+## or a date after the start of recal if applicable (e.g. arrivals or births)
+
+
+# choose earliest appropriate date entered in survey
+# from camp arrival, household arrival and born date (pmin) or the start of study period (pmax)
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(startdate = pmax(
+    pmin(q114_q16_date_arrival_camp,
+          q41_q25_hh_arrive_date,
+          q88_q33_born_date, na.rm = TRUE),
+    recall_start, na.rm = FALSE
+  ))
+
+
+# find which column had the minimum value 
+# (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
+
+
+
+
+## define end date 
+## this is either the end of your recall period 
+## or a date before the end of recall if applicable (e.g. departures, deaths)
+
+# choose earliest date entered in survey
+# from camp departures, death and end of the study
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(enddate = pmin(q45_q29_hh_leave_date, 
+                         q137_q35_died_date,
+                         recall_end, na.rm = TRUE))
+
+
+# find which column had the minimum value 
+# (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
+
+
+## Define observation time in days (need to fix negatives in gen_data)
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(obstime = as.numeric(enddate - startdate))
+
+# c(study_data_cleaned[53, c("q114_q16_date_arrival_camp", "q41_q25_hh_arrive_date", "q88_q33_born_date", "q45_q29_hh_leave_date", "q137_q35_died_date")])
+```
+
+
+
+
+```{r survey_design}
+## USE THIS TO SET THE STUDY DESIGN FOR YOUR SURVEY  ---------------------------
+##
+## This creates "survey objects" which can be used as data frames for calculating
+## weighted proportions etc. 
+## There are several options for study design here. 
+## At the basic level you want to decide if it is a simple random or a cluster
+## design study. You will then need to identify your weights variable. 
+## You can also create several study designs, e.g. if you would like to have
+## an overall design and a stratified design (e.g. by sex or by region). 
+##
+## Checklist for study design --------------------------------------------------
+## 
+## - [ ] Make sure you have created all necessary variables in earlier code chunks!!
+## - [ ] Decide on your study design (cluster or simple random)
+## - [ ] If doing cluster:
+##          - [ ] place your cluster ID variable in the ids option 
+##                (e.g. householdID - "fact_0_id" not availble in dat dict)
+##          - [ ] specify your weight variable (created previously)
+##                (set to NULL if want no weights)
+## - [ ] If doing simple random: 
+##          - [ ] set ids equals 1 to have no clustering 
+##          - [ ] specify your weight variable (created previously)
+##                (set to NULL if want no weights)
+## - [ ] Create additional study designs based on strata 
+##      (make sure that your weight variable is based on appropriately stratified
+##        population data)
+
+
+# simple random sample (using srvyr package)
+survey_design <- study_data_cleaned %>% 
+  as_survey_design(ids = 1, # 1 for no cluster ids 
+                   weights = weight # weight variable created above 
+                   )
+
+
+# simple random sample stratified by sex 
+survey_design_sex <- study_data_cleaned %>% 
+  as_survey_design(ids = 1, # 1 for no cluster ids 
+                   weights = weight, # weight variable created above 
+                   strata = sex
+                   )
+```
+
+
+
 
 
 # Introduction
 
-# Study Design 
+# Methods
 
-# Sample Size and Sampling methods
+## Study Design 
 
-## Sample Size
+## Sample Size and Sampling methods
 
-```{r}
-size <- sample_size(population_size = 10000,
-                    precision = 0.005, 
-                    design_effect = 1.5, 
-                    expected_prevalence = 0.005)
-size
-```
+### Sample Size
 
-```{r}
-sample_size_households(size, 
-                       avg_hh = 5, 
-                       prop_under_5 = 0.15, 
-                       frac_6_59 = 0.9, 
-                       non_response_rate = 0.03)
+### Sampling
 
-```
-
-
-## Sampling
-
-### Random sampling
+#### Random sampling
 
 ```{r}
 # Insert some code to generate a random number sequence
 ```
 
-### Cluster sampling
+#### Cluster sampling
 
 ```{r}
 # Insert some example code to do cluster sampling
 ```
 
-# Study Findings
+## Data collection
 
+## Data analysis
+<!-- TODO: add paragraph about R/sitrep -->
+
+# Results
 
 ```{r}
-# we first need to create a survery design that reflects the study
-suvery_design <- svydesign(
-  ids = ~1, # no cluster ids
-  weights = NULL, #no sampling weights in this example
-  data = study_data_cleaned
-)
+# TODO: Arrivals and departures of included household members during the recall period;
 ```
 
 
-## Demographics
+## Demographic information
 
 ```{r}
-plot_age_pyramid(study_data_cleaned)
+# add descriptive table with unweighted counts for different stuff
 ```
 
-## Morbitity
+TODO: add some sample text with inline R
 
-```{r}
-# symptoms start with sym_
-
-cols <- colnames(study_data_cleaned)
-symptom_columns <- cols[grepl(pattern = "^sym", x = cols)]
-
-survey_ciprop_foreach_binary_variable(design = suvery_design, 
-                                      variables = symptom_columns) %>%
-  knitr::kable()
+Age distribution of current household population by five year age groups, dependency age groups, and by child and adult populations, by gender.
+```{r describe_by_age_group_and_sex}
+descriptive(study_data_cleaned, 
+            "age_group", 
+            "sex", 
+            rowtotals = TRUE, 
+            coltotals = TRUE, proptotal = TRUE) %>% 
+  rename("Age" = age_group, 
+         "Female cases (n)" = Female_n, 
+         "%" = Female_prop, 
+         "Male cases (n)" = Male_n, 
+         "%" = Male_prop) %>% 
+  kable(digits = 2)
 ```
 
+
+Age and gender distribution of household population covered by the survey.
+```{r age_pyramid}
+plot_age_pyramid(study_data_cleaned, 
+                 age_group = "age_group", 
+                 split_by = "sex",
+                 proportion = TRUE) + 
+  labs(y = "Proportion", x = "Age group (years)") +                    # change axis labels
+  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
+```
+
+Weighted age distribution.
+```{r age_pyramid_survey}
+# TODO: Table - Age distribution of the sample population and of the study population.
+plot_age_pyramid(survey_design_sex,
+                 age_group = "age_group",
+                 split_by = "sex", 
+                 proportion = TRUE) +
+  labs(y = "Proportion", x = "Age group (years)") +                    # change axis labels
+  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
+```
 
 
 ## Mortality
 
+Reported causes of death and cause-specific mortality rates, weighted
 
 ```{r}
-suvery_ciprob(suvery_design, "died") %>%
-  knitr::kable()
-```
 
-```{r}
-suvery_ciprob_stratified(suvery_design, "died", "age_group") %>%
+# you will get an extra column, for weighted counts, weighted % with CI, and mortality per 10,000 persons/day with CI
+cause_of_death_prop <- survey_design %>% 
+  group_by(cause_of_death) %>% 
+  summarize(n = survey_total(vartype = "se", na.rm = TRUE),
+            proportion = survey_mean(vartype = "ci", na.rm = TRUE),
+            ) %>% 
+  mutate(n = round(n)) %>% 
+  select(-n_se)
+
+cause_of_death_mort <- survey_design %>% 
+  group_by(cause_of_death) %>% 
+  summarize( mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
+
+dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>% 
+  unite_ci("% (95% CI)", starts_with("proportion"), m100 = TRUE, percent = FALSE, digits = 1) %>%
+  unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
   kable()
+
+
 ```
 
+Reported causes of death and cause-specific mortality rates, by age, weighted
+```{r}
+
+survey_design %>% 
+  tabulate_survey(cause_of_death, age_group) %>%
+  kable()
+
+```
+
+Reported causes of death and cause-specific mortality rates, by gender, weighted
+```{r}
+survey_design %>% 
+  tabulate_survey(cause_of_death, sex) %>%
+  kable()
+
+```
+
+## Morbidity
+
+```{r}
+# symptoms
+```
 
 # Conclusions
 

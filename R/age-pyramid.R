@@ -71,34 +71,52 @@
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                              stack_by = split_by, proportional = FALSE, na.rm = FALSE,
                              vertical_lines = FALSE, horizontal_lines = TRUE) {
-  stopifnot(is.data.frame(data), c(age_group, split_by, stack_by) %in% colnames(data))
-  if (!is.character(data[[split_by]]) || !is.factor(data[[split_by]])) {
-    data[[split_by]] <- as.character(data[[split_by]])
-  }
-  if (!is.character(data[[stack_by]]) || !is.factor(data[[stack_by]])) {
-    data[[stack_by]] <- as.character(data[[stack_by]])
-  }
-  if (anyNA(data[[split_by]]) || anyNA(data[[stack_by]])) {
-    nas <- is.na(data[[split_by]]) | is.na(data[[stack_by]])
-    warning(sprintf("removing %d observations with missing values between the %s and %s columns.",
-                    sum(nas), split_by, stack_by))
-    data <- data[!nas, , drop = FALSE]
-  }
-  if (na.rm) {
-    nas <- is.na(data[[age_group]])
-    warning(sprintf("removing %d observations with missing values from the %s column.",
-                    sum(nas), age_group))
-    data <- data[!nas, , drop = FALSE]
-  } else {
-    data[[age_group]] <- forcats::fct_explicit_na(data[[age_group]])
+  is_df <- is.data.frame(data)
+  is_svy <- inherits(data, "tbl_svy")
+  impt_columns <- (is_df || is_svy) &&  c(age_group, split_by, stack_by) %in% colnames(data)
+  if (!impt_columns) {
+    if (is_df || is_svy) {
+      sprintf("The columns %s, %s, and %s were not found in %s",
+              age_group, split_by, stack_by, deparse(substitute(data)))
+    } else { 
+      sprintf("%s must be a data frame or %s object",
+              deparse(substitute(data)))
+    }
   }
   ag <- rlang::sym(age_group)
   sb <- rlang::sym(split_by)
   st <- rlang::sym(stack_by)
-  plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
-  plot_data <- dplyr::group_by(plot_data, !!ag, !!sb, !!st)
-  plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
-  plot_data <- dplyr::ungroup(plot_data)
+  if (is_df) {
+    if (!is.character(data[[split_by]]) || !is.factor(data[[split_by]])) {
+      data[[split_by]] <- as.character(data[[split_by]])
+    }
+    if (!is.character(data[[stack_by]]) || !is.factor(data[[stack_by]])) {
+      data[[stack_by]] <- as.character(data[[stack_by]])
+    }
+    if (anyNA(data[[split_by]]) || anyNA(data[[stack_by]])) {
+      nas <- is.na(data[[split_by]]) | is.na(data[[stack_by]])
+      warning(sprintf("removing %d observations with missing values between the %s and %s columns.",
+                      sum(nas), split_by, stack_by))
+      data <- data[!nas, , drop = FALSE]
+    }
+    if (na.rm) {
+      nas <- is.na(data[[age_group]])
+      warning(sprintf("removing %d observations with missing values from the %s column.",
+                      sum(nas), age_group))
+      data <- data[!nas, , drop = FALSE]
+    } else {
+      data[[age_group]] <- forcats::fct_explicit_na(data[[age_group]])
+    }
+    plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
+    plot_data <- dplyr::group_by(plot_data, !!ag, !!sb, !!st)
+    plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
+    plot_data <- dplyr::ungroup(plot_data)
+  } else {
+    plot_data <- srvyr::group_by(data, !!ag, !!sb, !!st)
+    plot_data <- srvyr::summarise(plot_data,
+                                  n = srvyr::survey_total(vartype = "ci", level = 0.95))
+
+  }
   if (proportional) {
     plot_data$n <- plot_data$n / sum(plot_data$n, na.rm = TRUE)
   }
@@ -124,8 +142,8 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
 
   age_levels <- levels(plot_data[[age_group]])
   max_age_group <- age_levels[length(age_levels)]
-  sex_levels <- unique(data[[split_by]])
-  stk_levels <- unique(data[[stack_by]])
+  sex_levels <- unique(plot_data[[split_by]])
+  stk_levels <- unique(plot_data[[stack_by]])
 
   stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
 
@@ -141,35 +159,35 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     scale_y_continuous(limits = c(-max_n, max_n),
                        breaks = the_breaks,
                        labels = lab_fun) +
-    theme_classic() +
-    theme(axis.line.y.left = element_blank()) +
-    labs(y = y_lab)
+theme_classic() +
+theme(axis.line.y.left = element_blank()) +
+labs(y = y_lab)
 
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
       geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dotted", colour = "grey")
   }
 
-  if (horizontal_lines == TRUE) {
-    pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
-  }
-  pyramid <- pyramid +
-    geom_hline(yintercept = 0) # add vertical line
+if (horizontal_lines == TRUE) {
+  pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
+}
+pyramid <- pyramid +
+  geom_hline(yintercept = 0) # add vertical line
 
-  if (stack_by != split_by) {
-    pyramid <- pyramid +
-      annotate(geom = "label",
-               x = max_age_group,
-               y = -step_size,
-               vjust = 0.5,
-               hjust = 1,
-               label = sex_levels[[1]]) +
-      annotate(geom = "label",
-               x = max_age_group,
-               y = step_size,
-               vjust = 0.5,
-               hjust = 0,
-               label = sex_levels[[2]])
-  }
-  pyramid
+if (stack_by != split_by) {
+  pyramid <- pyramid +
+    annotate(geom = "label",
+             x = max_age_group,
+             y = -step_size,
+             vjust = 0.5,
+             hjust = 1,
+             label = sex_levels[[1]]) +
+annotate(geom = "label",
+         x = max_age_group,
+         y = step_size,
+         vjust = 0.5,
+         hjust = 0,
+         label = sex_levels[[2]])
+}
+pyramid
 }
