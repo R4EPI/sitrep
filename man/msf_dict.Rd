@@ -37,7 +37,7 @@ default set to "Item".  (this can probably be deleted once dictionaries
 standardise) If \code{dictionary} is "Mortality", \code{varnames} needs to be "column_name"`.}
 
 \item{dictionary}{Specify which dictionary you would like to use.
-Currently supports "Cholera", "Measles", "Meningitis" and "Mortality".}
+Currently supports "Cholera", "Measles", "Meningitis", "AJS" and "Mortality".}
 
 \item{numcases}{For fake data, specify the number of cases you want (default is 300}
 
