@@ -178,13 +178,17 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   # 2) dat_output = formatting of data dictionary to make use for sampling
   # 3) dis_output = dictionary dataset generated from sampling (exported)
 
+  # define which ones are outbreaks and which ones are survey datasets
+  SURVEYS <- c("Mortality", "Nutrition", "Vaccination")
+  OUTBREAKS <- c("Cholera", "Measles", "Meningitis", "AJS")
+
   # get msf dictionary specific data dictionary
-  if (dictionary == "Mortality") {
-    dat_dict <- msf_dict_mortality(tibble = FALSE)
-  } else if (dictionary %in% c("Cholera", "Measles", "Meningitis", "AJS")) {
+  if (dictionary %in% SURVEYS) {
+    dat_dict <- msf_dict_survey(disease = dictionary, tibble = FALSE)
+  } else if (dictionary %in% OUTBREAKS) {
     dat_dict <- msf_dict(disease = dictionary, tibble = FALSE, compact = TRUE)
   } else {
-    stop("'dictionary' must be one of: 'Cholera', 'Measles', 'Meningitis', 'AJS', 'Mortality'")
+    stop("'dictionary' must be one of: 'Cholera', 'Measles', 'Meningitis', 'AJS', 'Mortality', 'Nutrition', 'Vaccination'")
   }
 
 
@@ -256,7 +260,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output[[i]] <- sample(posidates, numcases, replace = TRUE)
   }
 
-  if (dictionary != "Mortality") {
+  if (dictionary %in% OUTBREAKS) {
     # Fix DATES
     # exit dates before date of entry
     # just add 20 to admission.... (was easiest...)
