@@ -447,6 +447,42 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     # more plausibility checks of generated data might be implemented in the future
   }
 
+  if (dictionary == "Nutrition") {
+
+    # sample villages
+    dis_output$village <- sample(c("Village A", "Village B",
+                                   "Village C", "Village D"),
+                                 numcases, replace = TRUE)
+
+    # make two health districts
+    dis_output$health_district <- ifelse(dis_output$village == "Village A" |
+                                           dis_output$village == "Village B",
+                                         "District A", "District B")
+
+    # cluster ID (based on village)
+    dis_output$cluster_number <- as.numeric(factor(dis_output$village))
+
+    # household number just each its own
+    dis_output$household_id <- 1:numcases
+
+    # age in months (1 to 60 - i.e. under 5 years)
+    dis_output$age_month <- sample(1:60, numcases, replace = TRUE)
+
+    # height in cm
+    dis_output$height <- round(
+      runif(numcases, 40, 120),
+      digits = 1)
+
+    # weight in kg
+    dis_output$weight <- round(
+      runif(numcases, 2, 30),
+      digits = 1)
+
+    # MUAC in mm
+    dis_output$muac_mm_left_arm <- sample(80:190, numcases, replace = TRUE)
+
+  }
+
   # return dataset as a tibble
   dplyr::as_tibble(dis_output)
 
