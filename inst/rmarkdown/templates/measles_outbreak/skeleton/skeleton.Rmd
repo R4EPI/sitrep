@@ -520,8 +520,10 @@ linelist_cleaned <- linelist_cleaned %>%
                                            ">4-24 hours", 
                                            ">24-48 hours", 
                                            ">48 hours")
-  ))
-
+  ),
+  previously_vaccinated = fct_relevel(previously_vaccinated, 
+                                       "Yes - verbal",
+                                       "Yes - vaccination card/ink"))
 
 # change the order of levels of multiple categorical variables
 linelist_cleaned <- linelist_cleaned %>%
@@ -851,10 +853,12 @@ attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>%
 ```
 
 
-#### Mortality
+#### Mortality attributable to measles
 
-THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTING (e.g. refugee camp) AND HAVE ALL MORTALITY IN YOUR LINE LIST. 
-The assumptions don't hold in an open/community setting. It is very unlikely that your disease-specific line list includes all-cause mortality.
+THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTING (e.g. refugee camp)T. 
+The assumptions don't hold in an open/community setting.
+
+This section gives mortality rates attributable to measles in a closed population. It does not calculate all-cause mortality. It assumes that all measles deaths are among inpatients.
 
 This demonstrates three ways of calculating mortality rate based on 
 catchment population (twice) and based on hospital population. 
@@ -873,8 +877,8 @@ pat_obs_time <- linelist_cleaned %>%
   pull(days)
 ```
 
-To produce a mortality rate per 10,000 people use the following code chunk. 
-This assumes that you are capturing every death in your population. 
+To produce a mortality rate (attribuatble to measles) per 10,000 people use the following code chunk. 
+This assumes that you are capturing every measles death in your population. 
 
 ```{r mortality_rate}
 mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
@@ -885,9 +889,9 @@ mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
   kable(digits = 2)
 ```
 
-To produce a crude mortality rate per 10,000 people per day, use the folowing 
+To produce a crude mortality rate attributable to measles per 10,000 people per day, use the folowing 
 code chunk. 
-This assumes that you are capturing every death in your population (unlikely for an outbreak-specific line list) and that your population remains stable over the time period of interest. 
+This assumes that you are capturing every measles death in your population and that your population remains stable over the time period of interest. 
 In this situation the time period of interest is from the beginning of the 
 epiweek your first case occured in, until the last day of the epiweek you are 
 currently reporting on. (see this [presentation](https://www.odi.org/sites/odi.org.uk/files/odi-assets/events-presentations/776.pdf) for more detail)
@@ -896,14 +900,13 @@ currently reporting on. (see this [presentation](https://www.odi.org/sites/odi.o
 ```{r mortality_rate_CMR}
 mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
-         "person-days" = population, 
+         "Person-days" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
 
-Alternatively, if you are unsure whether your hospital deaths are representative
-of the wider population, use the following code chunk. 
+Alternatively, if you are unsure whether your hospital deaths are representative of the wider population, use the following code chunk. 
 This uses the person days of cases in your linelist with a known outcome. 
 However, this will give you an unreasonably high mortality rate, as 
 those in hospital will only be the most severely affected. 
@@ -1095,7 +1098,7 @@ cfr_plot <- ggplot(cfr, aes(x = epiweek, group = 1)) +
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   scale_x_discrete(limits = c(cfr$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Rate [95% CI]") + 
+  labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Rate [95% CI] Among Inpatients") + 
   # change visuals of dates and remove legend title
   epicurve_theme 
 ```
@@ -1117,12 +1120,14 @@ cowplot::plot_grid(
 ```
 
 
-We could then also look at admissions and exits by epiweek for operational purposes. 
+We could then also look at admissions and exits among inpatients by epiweek for operational purposes. 
 
 ```{r describe_admissions_by_epiweekf}
 # get counts and props of age groups by case definition 
 # include column and row totals 
-descriptive(linelist_cleaned, "epiweek", 
+linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
+descriptive("epiweek", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = epiweek, 
          "Cases (n)" = n, 
@@ -1135,7 +1140,10 @@ descriptive(linelist_cleaned, "epiweek",
 ```{r describe_exits_by_epiweek}
 # get counts and props of admissions by epiweek 
 # include column and row totals 
-descriptive(linelist_cleaned, "epiweek", "exit_status", 
+
+linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
+  descriptive("epiweek", "exit_status", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = "epiweek", 
          "Died facility (n)" = "Dead in facility_n", 
