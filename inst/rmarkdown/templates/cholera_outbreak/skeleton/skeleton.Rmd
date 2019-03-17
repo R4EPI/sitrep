@@ -307,7 +307,7 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 ##          - [ ] type in your population, groups, and respective proportions
 ##          - [ ] group can be any categorical variable you want
 ##          - [ ] make sure the groups match the appropriate variable in your linelist!
-## - [ ] DELETE OR COMMENT OUT THE FAKE DATA SECTION
+## - [ ] DELETE OR COMMENT OUT THE UNUSED SECTION
 
 
 ## Read data ------------------------------------
@@ -326,24 +326,33 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 #                                       proportions = c(0.182, 0.278, 0.26, 0.11, 0.07, 0.10)
 #                                       )
 
-## Fake data ------------------------------------ 
-## THE BELOW CAN BE DELETED IF YOU HAVE YOUR OWN (REAL) POPULATION DATA! 
-## its just to be able to demonstrate script in this template
+## Counts from population proportions ------------------------------------ 
+## if you only know the total population and the proportions in each age group, use this function 
 
-## generate some artificial population data by region 
-population_data_region <- distinct(linelist_cleaned, patient_origin)
-population_data_region$population <- as.integer(runif(nrow(population_data_region), 
-                                          min = 500, max = 2000))
 
-## generate some artificial population data by age groups (years)
-population_data_age <- tibble(age_group = c("0-4","5-14","15-29","30-44", "45+"))
-population_data_age$population <- as.integer(runif(nrow(population_data_age), 
-                                          min = 500, max = 2000))
+# generate population data by region 
+population_data_region <- gen_population(total_pop = 5000,         # set the total population 
+  groups = c("Village A", "Village B", "Village C", "Village D"),  # set the groups 
+  proportions = c(0.221, 0.174, 0.355, 0.245),                     # set the proportions for each group
+  strata = NULL) %>%               # do not stratify by gender 
+  rename(patient_origin = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
+         population = n)
 
-## generate some artifical population data by age group (months) 
-population_data_age_months <- tibble(age_group_mon = c("0-5", "6-8", "9-11","12-24"))
-population_data_age_months$population <- as.integer(runif(nrow(population_data_age_months), 
-                                          min = 500, max = 2000))
+# generate population data by age groups in years 
+population_data_age <- gen_population(total_pop = 5000,
+  groups = c("0-4", "5-14", "15-29", "30-44", "45+"),
+  proportions = c(0.182, 0.278, 0.26, 0.11, 0.07),
+  strata = NULL) %>%
+  rename(age_group = groups,
+    population = n)
+
+# generate population data by age group in months (under 2 years) 
+population_data_age_months <- gen_population(total_pop = 5000,
+  groups = c("0-5", "6-8", "9-11","12-24"),
+  proportions = c(0.278, 0.11, 0.18, 0.26),
+  strata = NULL) %>%
+  rename(age_group_mon = groups,
+    population = n)
 ```
 
 
@@ -363,6 +372,8 @@ View(linelist_cleaned)
 str(linelist_cleaned)
 
 ## gives mean, median and max values of variables
+## gives counts for categorical variables
+## also gives number of NAs
 summary(linelist_cleaned)
 
 ## view unique values contained in variables 
@@ -553,8 +564,27 @@ linelist_cleaned <- linelist_cleaned %>%
     grepl("Positive", cholera_rdt_result)     ~ "Probable",
     TRUE                                      ~ "Suspected"
   ))
+
+
+# Dropping observations (rows) and variables (columns)--------------------------
+
+# only keep variables with a case ID and a date of consultation
+linelist_cleaned <- linelist_cleaned %>% 
+  filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
+
+# OPTIONAL: drop several variables you might not want
+# the negative sign before the "c"" in select drops those variabels 
+# without the negative you would only keep the names variables
+# linelist_cleaned <- linelist_cleaned %>% 
+#   select(-c(msf_involvement, treatment_facility_name))
 ```
 
+
+```{r save_cleaned_data, eval = FALSE}
+## OPTIONAL: save your cleaned dataset as an excel file! 
+## put the current date in the name so you know!
+writexl::write_xlsx(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx")
+```
 
 
 ```{r define_current_week}
@@ -593,7 +623,7 @@ obs_end   <- ISOweek2date(sprintf("%s-7", reporting_week))
 
 ### Person
 
-* [Who is affected: how many in total; male or female; young, adult or old? What are the links between affected people – work place, school, social gathering?  Is there a high rate of illness in contacts?  Is there a high rate of illness in health workers? You may want to include:  a bar chart showing case numbers or incidence by age group and sex; attack rates (AR); and numbers of deaths (in suspected and confirmed cases), mortality rates and/or case fatality ratio (CFR)]  
+* [Who is affected: how many in total; male or female; young, adult or old? What are the links between affected people – work place, school, social gathering?  Is there a high rate of illness in contacts?  Is there a high rate of illness in a specific group of people (e.g. health workers)? You may want to include:  a bar chart showing case numbers or incidence by age group and sex; attack rates (AR); and numbers of deaths (in suspected and confirmed cases), mortality rates and/or case fatality ratio (CFR)]  
 
 
 From the start of the outbreak up until `r reporting_week` there were a 
@@ -761,14 +791,14 @@ descriptive(linelist_cleaned,
 
 #### Case fatality ratio 
 
-To date, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status))` deaths, of which 
+Of `r linelist_cleaned %>% filter(patient_facility_type == "Inpatient") %>% count()` inpatients, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status), patient_facility_type == "Inpatient")` deaths, of which 
 `r fmt_count(linelist_cleaned, exit_status == "Dead on arrival")` 
 were dead on arrival. 
 
-Among those who died, the time to death is shown below. 
+Among inpatients who died, the time to death is shown below. 
 
 ```{r describe_time_to_death, warning = FALSE, message = FALSE}
-filter(linelist_cleaned, DIED) %>% 
+filter(linelist_cleaned, DIED, patient_facility_type == "Inpatient") %>% 
   descriptive(counter = "time_to_death", coltotals = TRUE) %>% 
   rename("Time (hours)" = time_to_death, 
          "Deaths (n)" = n, 
@@ -778,11 +808,12 @@ filter(linelist_cleaned, DIED) %>%
 
 
 
-The case fatality ratio among those with known outcomes is below
+The case fatality ratio among inpatients with known outcomes is below
 
 ```{r overall_cfr, warning = FALSE, message = FALSE}
 # use arguments from above to produce overal CFR
 overall_cfr <- linelist_cleaned %>% 
+  filter(patient_facility_type == "Inpatient") %>%
   case_fatality_rate_df(deaths = DIED, mergeCI = TRUE) %>%
   rename("Deaths" = deaths,
          "Cases" = population,
@@ -793,10 +824,11 @@ overall_cfr <- linelist_cleaned %>%
 ```
 
 
-The case fatality ratio by sex among those with known outcomes is below. 
+The case fatality ratio by sex among inpatients with known outcomes is below. 
 
 ```{r cfr_by_sex, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
   mutate(sex = forcats::fct_explicit_na(sex, "-")) %>%
   case_fatality_rate_df(deaths = DIED, group = sex, mergeCI = TRUE, add_total = TRUE) %>%
   rename("Sex" = sex, 
@@ -809,10 +841,11 @@ linelist_cleaned %>%
 
 
 
-CFR by age group among those with known outcomes
+CFR by age group among inpatients with known outcomes
 
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
   case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
   rename("Age Group" = age_group, 
          "Deaths" = deaths, 
@@ -822,10 +855,11 @@ linelist_cleaned %>%
   knitr::kable(digits = 2)
 ```
 
-CFR by case definition among those with known outcomes
+CFR by case definition among inpatients with known outcomes
 
 ```{r cfr_by_case_def, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
   case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
   rename("Case Definition" = case_def, 
          "Deaths" = deaths, 
@@ -838,7 +872,7 @@ linelist_cleaned %>%
 
 #### Attack rate
 
-The attack rate per 10,000 population is below - based on available population data available for the catchment area/region of interest. 
+The attack rate per 10,000 population is below (based on available population data available for the catchment area/region of interest). 
 
 ```{r collect_variables}
 # define population 
@@ -883,10 +917,12 @@ attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>%
 ```
 
 
-#### Mortality
+#### Mortality attributable to cholera
 
 THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTING (e.g. refugee camp). 
 The assumptions don't hold in an open/community setting!
+
+This section gives mortality rates attributable to cholera in a closed population. It does not calculate all-cause mortality. It assumes that all cholera deaths are among inpatients.
 
 This demonstrates three ways of calculating mortality rate based on 
 catchment population (twice) and based on hospital population. 
@@ -905,8 +941,8 @@ pat_obs_time <- linelist_cleaned %>%
   pull(days)
 ```
 
-To produce a mortality rate per 10,000 people use the following code chunk. 
-This assumes that you are capturing every death in your population. 
+To produce a mortality rate (attributable to cholera) per 10,000 people use the following code chunk. 
+This assumes that you are capturing every cholera death in your population. 
 
 ```{r mortality_rate}
 mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
@@ -917,7 +953,7 @@ mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
   kable(digits = 2)
 ```
 
-To produce a crude mortality rate per 10,000 people per day, use the folowing 
+To produce a crude mortality rate attributable to cholera per 10,000 people per day, use the folowing 
 code chunk. 
 This assumes that you are capturing every death in your population and that 
 your population remains stable over the time period of interest. 
@@ -929,7 +965,7 @@ currently reporting on. (see this [presentation](https://www.odi.org/sites/odi.o
 ```{r mortality_rate_CMR}
 mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
-         "person-days" = population, 
+         "Person-days" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
   kable(digits = 2)
@@ -1086,11 +1122,12 @@ attack_rate(cases$cumulative, population, multiplier = 100000) %>%
   knitr::kable(digits = 2, align = "r")
 ```
 
-The below gives case fatality rate per week as a proportion
+The below gives case fatality ratio among inpatients per week as a proportion
 
 ```{r cfr_per_week, warning = FALSE, message = FALSE}
 # group by known outcome and case definition 
 cfr <- linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
   case_fatality_rate_df(grepl("Dead", exit_status), group = epiweek) %>%
   tidyr::complete(epiweek, fill = list(deaths = 0, population = 0, cfr = 0, lower = 0, upper = 0)) %>% # Ensure all levels are represented
   mutate(epiweek = as.character(epiweek))
@@ -1106,7 +1143,7 @@ cfr %>%
 ```
 
 
-You could plot the AR and CFR together as line graphs by epiweek. 
+You could plot the AR (in the population) and CFR (among inpatients only) together as line graphs by epiweek. 
 
 ```{r ar_line_graph}
 ar_plot <- ggplot(ar, aes(x = epiweek, group = 1)) +
@@ -1130,7 +1167,7 @@ cfr_plot <- ggplot(cfr, aes(x = epiweek, group = 1)) +
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   scale_x_discrete(limits = c(cfr$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Rate [95% CI]") + 
+  labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
   # change visuals of dates and remove legend title
   epicurve_theme 
 ```
@@ -1155,7 +1192,7 @@ cowplot::plot_grid(
 We could then also look at admissions and exits by epiweek for operational purposes. 
 
 ```{r describe_admissions_by_epiweek_casedef}
-# get counts and props of age groups by case definition 
+# get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "epiweek", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = epiweek, 
@@ -1202,12 +1239,36 @@ descriptive(linelist_cleaned, "epiweek", "exit_status",
 *  [Across what area: one or several villages, all from same school, etc. You may want to include a map of the distribution of cases; attack rates by location]
 
 #### Descriptive
-To get a basic descriptive table of cases by region and outcome, see below. 
+To get a basic descriptive table of cases by region and facility, as well as by region and outcome among inpatients, see below. 
+
+
+```{r describe_by_region_facility}
+# get counts and props of region by facility 
+# include column and row totals 
+
+descriptive(linelist_cleaned, "patient_origin", 
+            "patient_facility_type",
+            coltotals = TRUE, rowtotals = TRUE) %>% 
+  rename("Region" = "patient_origin", 
+         "Inpatient (n)" = "Inpatient_n", 
+         "%" = "Inpatient_prop", 
+         "Outpatient (n)" = "Outpatient_n", 
+         "%" = "Outpatient_prop",
+         "Total" = "Total"
+         ) %>% 
+  kable(digits = 2)
+```
+
+
+
 
 ```{r describe_by_region_outcome}
 # get counts and props of region by outcome 
 # include column and row totals 
-descriptive(linelist_cleaned, "patient_origin", "exit_status", 
+
+descriptive(filter(linelist_cleaned, 
+                   patient_facility_type == "Inpatient"),
+            "patient_origin", "exit_status",
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Region" = "patient_origin", 
          "Died facility (n)" = "Dead in facility_n", 
@@ -1226,7 +1287,6 @@ descriptive(linelist_cleaned, "patient_origin", "exit_status",
          ) %>% 
   kable(digits = 2)
 ```
-
 
 
 
