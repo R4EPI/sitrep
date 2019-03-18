@@ -119,18 +119,52 @@ study_data_dict <- msf_dict_dict("Mortality")
 
 
 
-
-
-
-
 ```{r read_population_data, warning = FALSE, message = FALSE}
 
-# create fake population by age and sex 
-population_data_age <- tibble(age_group = rep.int(c("0-4", "5-14", "15-29", "30-44", "45+"), 2), 
-                              sex = rep.int(c("Male", "Female"), 5))
-population_data_age$population <- as.integer(runif(nrow(population_data_age), 
-                                          min = 500, max = 2000))
+## There are two options for using population data here. 
+## The first one is where you only know the total population number, and the 
+## proportion breakdown for categories (e.g. by age group, sex or region). 
+## The second option is to read in population from excel. 
+## In both cases you will need to make sure that the respective groups for 
+## population fit the groups in your linelist data set!
+##
+## Checklist for population data ----------------------------------------------
+## 
+## - [ ] Decide if you have stratified population data available as counts or only proportions
+## - [ ] If you have counts available:
+##          - [ ] use View on the fake data generated to make sure your format in excel matches
+##          - [ ] read in and clean data appropriately in the "Read data" section
+##          - [ ] make sure the groups match the appropriate variable in your linelist!
+## - [ ] If have total population and proportion breakdown available: 
+##          - [ ] use the gen_population function in "counts from populaiton proportions" section
+##          - [ ] type in your population, groups, and respective proportions
+##          - [ ] group can be any categorical variable you want
+##          - [ ] make sure the groups match the appropriate variable in your linelist!
+## - [ ] DELETE OR COMMENT OUT THE UNUSED SECTION
 
+
+## Read data ------------------------------------
+
+## Excel file
+## See the gen_population function section below to see how to structure your data!!
+## to read in a specific sheet use "which"
+# population_data <- rio::import("population.xlsx", which = "Sheet1")
+
+## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
+## make sure your place variable name matches!
+
+## Counts from population proportions ------------------------------------ 
+## if you only know the total population and the proportions in each age group, use this function 
+
+
+# generate population data by age groups in years 
+population_data_age <- gen_population(total_pop = 10000, # set the total population 
+  groups = c("0-4", "5-14", "15-29", "30-44", "45+"),    # set the groups
+  proportions = c(0.182, 0.278, 0.26, 0.11, 0.07),       # set the proportions for each group
+  strata = c("Male", "Female")) %>%                      # stratify by gender 
+  rename(age_group = groups,                             # rename columns (syntax is NEW NAME = OLD NAME)
+         sex = strata,
+         population = n)
 ```
 
 ```{r standardise_clean_data}
