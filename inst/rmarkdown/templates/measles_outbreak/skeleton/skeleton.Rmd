@@ -1189,29 +1189,25 @@ cowplot::plot_grid(
 
 
 We could then also look at admissions and exits among inpatients by epiweek for operational purposes. 
-
 ```{r describe_admissions_by_epiweek}
-# get counts and props of admissions by epiweek 
+# get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
-linelist_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-descriptive("epiweek", 
-            coltotals = TRUE, rowtotals = TRUE) %>% 
+descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = epiweek, 
-         "Cases (n)" = n, 
-         "%" = prop) %>% 
+         "Inpatient cases (n)" = Inpatient_n, 
+         "%" = Inpatient_prop, 
+         "Outpatient cases (n)" = Outpatient_n, 
+         "%" = Outpatient_prop) %>% 
   kable(digits = 2)
 ```
 
-
-
+The exits are among inpatients only. 
 ```{r describe_exits_by_epiweek}
-# get counts and props of admissions by epiweek 
+# get counts and props of admissions by epiweek among inpatients
 # include column and row totals 
-
-linelist_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  descriptive("epiweek", "exit_status", 
+linelist_cleaned %>% 
+  filter(patient_facility_type == "Inpatient") %>% 
+descriptive("epiweek", "exit_status", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = "epiweek", 
          "Died facility (n)" = "Dead in facility_n", 

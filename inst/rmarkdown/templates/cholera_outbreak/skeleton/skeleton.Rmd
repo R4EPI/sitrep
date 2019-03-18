@@ -486,6 +486,16 @@ linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months,
 # Factor (categorical) variables ---------------------------------
 
 ## create a new variable from another character/factor variable
+## create a categories based on other categories 
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(patient_facility_type = if_else(
+    cholera_treatment_facility_type == "Cholera Treatment Centre" | 
+      cholera_treatment_facility_type == "Cholera Treatment Unit", 
+    "Inpatient", 
+    "Outpatient")
+    )
+
+## create a new variable from another character/factor variable
 ## create a binary variable if patients died 
 ## use this version if you have named values 
 ## (e.g. "Dead on arrival" or "Dead in facility")
@@ -1184,25 +1194,25 @@ cowplot::plot_grid(
 
 We could then also look at admissions and exits by epiweek for operational purposes. 
 
-```{r describe_admissions_by_epiweek_casedef}
+```{r describe_admissions_by_epiweek}
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
-descriptive(linelist_cleaned, "epiweek", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
+descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = epiweek, 
-         "Confirmed cases (n)" = Confirmed_n, 
-         "%" = Confirmed_prop, 
-         "Probable cases (n)" = Probable_n, 
-         "%" = Probable_prop,
-         "Suspected cases (n)" = Suspected_n, 
-         "%" = Suspected_prop) %>% 
+         "Inpatient cases (n)" = Inpatient_n, 
+         "%" = Inpatient_prop, 
+         "Outpatient cases (n)" = Outpatient_n, 
+         "%" = Outpatient_prop) %>% 
   kable(digits = 2)
 ```
 
-
+The exits are among inpatients only. 
 ```{r describe_exits_by_epiweek}
-# get counts and props of admissions by epiweek 
+# get counts and props of admissions by epiweek among inpatients
 # include column and row totals 
-descriptive(linelist_cleaned, "epiweek", "exit_status", 
+linelist_cleaned %>% 
+  filter(patient_facility_type == "Inpatient") %>% 
+descriptive("epiweek", "exit_status", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = "epiweek", 
          "Died facility (n)" = "Dead in facility_n", 
