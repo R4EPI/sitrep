@@ -16,9 +16,12 @@ library(srvyr) # dplyr wrapper for survey
 library(ggplot2)
 ```
 
-```{r read_data, message = FALSE}
-# use read_data stuff from outbreak?
 
+
+
+```{r read_data_generic, message = FALSE}
+
+## This section gives a variety of options for reading in datasets in different formats
 
 ## Read data ------------------------------------
 # CSV file
@@ -39,12 +42,83 @@ library(ggplot2)
 #                                          password = askpass::askpass(prompt = "please enter file
 #                                                                      password"))
 
+```
 
-linelist_raw <- gen_data(dictionary = "Mortality", varnames = "column_name",
+
+
+
+```{r read_dharma_excel_data, message = FALSE}
+
+# If your linelist is an excel export of data from Dharma use this code chunk
+# If that is not the case use the code chunk above reading in other formats
+
+## Read data ------------------------------------------------------
+
+# This assums that you have two levels in your survey (level 0 and level 1). 
+# These correspond to, for example, household and individual. 
+# We will read in and later merge these two levels in to one dataset. 
+# We will assume the data is not password protected (code for reading 
+# password protected excels is in the read_data_generic code chunk)
+
+## read in household data sheet
+# study_data_hh <- rio::import("mortality_survey.xlsx", 
+#                               which = "Level 0 Named")
+
+## read in individual level data sheet
+# study_data_indiv <- rio::import("mortality_survey.xlsx", 
+#                               which = "Level 1 Named")
+
+## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
+# generates a fake dataset for use as an example in this template
+study_data_raw <- gen_data(dictionary = "Mortality", 
+                         varnames = "column_name",
                          numcases = 1000)
 
+## Data dictionary ---------------
+## The data dictionary has variable names in the "column_name" column.
+## Possible values for variables are specified in the "choice_code" and "choice_name"
+## columns. 
+## Where code has the shortened values and name has the full text values.
 
+# read in data dictionary (for reference purposes)
+# study_data_dict <- import("mortality_survey.xlsx",
+#                       which = "Data Dictionary")
+
+## you can look at the dictionary by uncommenting the line below
+# View(study_data_dict) 
+
+## you can view variable names in the data dicationry uncommenting the line below
+# study_data_dict$column_name
+
+## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
+# generates a fake dataset for use as an example in this template
+# this dataset already has the two levels merged
+# variable names are in the column_name column
+# possible values for each variable are specified in the "Code" columns.
+study_data_dict <- msf_dict_dict("Mortality")
 ```
+
+
+```{r merge_data_levels}
+
+## Need to merge individual data with household data
+## This is done using a unique identifier for the household 
+## (which repeats in the individuals dataset) 
+## For a Dharma dataset this variable is "fact_0_id"
+
+## fact_0_id, the merging variable, needs to be applied to all relevant rows in the indidivual data set
+## (equivalent of dragging down with mouse in excel)
+## this is achieved using the fill function from the tidyr package
+# study_data_indiv <- study_data_indiv %>%
+#                       fill(fact_0_id)
+
+## join the individual and household data to form a complete data set
+#study_data_raw <- left_join(study_data_hh, study_data_indiv, by = "fact_0_id")
+```
+
+
+
+
 
 
 
@@ -61,7 +135,7 @@ population_data_age$population <- as.integer(runif(nrow(population_data_age),
 
 ```{r standardise_clean_data}
 
-study_data_cleaned <- linelist_raw %>%
+study_data_cleaned <- study_data_raw %>%
   # some cleaning
   mutate(age_in_years = as.integer(q155_q5_age_year),
          age_group = age_categories(age_in_years, breakers = c(0, 5, 15, 30, 45)),
