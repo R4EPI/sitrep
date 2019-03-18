@@ -81,18 +81,21 @@ age_categories <- function(x, breakers = NA,
 }
 
 
-#' @rdname age_categories
-#' @export
 #' @param dat a data frame with at least one column defining an age category
+#'
 #' @param years,months,weeks,days the bare name of the column defining years,
 #' months, weeks, or days (or NULL if the column doesn't exist)
+#'
 #' @param one_column if `TRUE` (default), the categories will be joined into a
 #' single column called "age_category" that appends the type of age category
 #' used. If `FALSE`, there will be one column with the grouped age categories
 #' called "age_category" and a second column indicating age unit called
 #' "age_unit".
+#'
 #' @return a data frame
 #'
+#' @rdname age_categories
+#' @export
 #'
 group_age_categories <- function(dat, years = NULL, months = NULL, weeks = NULL, days = NULL, one_column = TRUE) {
   da <- rlang::enquo(days)
