@@ -321,13 +321,6 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
 
 ## Counts from population proportions ------------------------------------ 
 ## if you only know the total population and the proportions in each age group, use this function 
-# population_data_age <- gen_population(total_pop = 1000, 
-#                                       groups = c("0-4","5-14","15-24","25-34","35-44","45+"),
-#                                       proportions = c(0.182, 0.278, 0.26, 0.11, 0.07, 0.10)
-#                                       )
-
-## Counts from population proportions ------------------------------------ 
-## if you only know the total population and the proportions in each age group, use this function 
 
 
 # generate population data by region 
