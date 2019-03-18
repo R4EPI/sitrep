@@ -122,10 +122,10 @@ group_age_categories <- function(dat, years = NULL, months = NULL, weeks = NULL,
     type = NULL
   }
   res <- dplyr::case_when(
-    is.na(ye) & is.na(mo) & is.na(we) ~ as.character(da),
-    is.na(ye) & is.na(mo)             ~ as.character(we),
-    is.na(ye)                         ~ as.character(mo),
-    TRUE                              ~ as.character(ye)
+    !is.na(da) ~ as.character(da),
+    !is.na(we) ~ as.character(we),
+    !is.na(mo) ~ as.character(mo),
+    TRUE       ~ as.character(ye)
   )
   
   res <- factor(res, levels = forcats::lvls_union(list(da, we, mo, ye)))
@@ -134,10 +134,10 @@ group_age_categories <- function(dat, years = NULL, months = NULL, weeks = NULL,
     res <- tibble::add_column(dat, age_category = res)
   } else {
     type <- dplyr::case_when(
-      is.na(ye) & is.na(mo) & is.na(we) ~ "days",
-      is.na(ye) & is.na(mo)             ~ "weeks",
-      is.na(ye)                         ~ "months",
-      TRUE                              ~ "years"
+      !is.na(da) ~ "days",
+      !is.na(we) ~ "weeks",
+      !is.na(mo) ~ "months",
+      TRUE       ~ "years"
     )
     type <- forcats::fct_drop(factor(type, c("days", "weeks", "months", "years")))
     res <- tibble::add_column(dat, age_category = res, age_unit = type)
