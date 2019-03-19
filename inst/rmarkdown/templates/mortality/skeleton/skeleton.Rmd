@@ -95,7 +95,7 @@ study_data_raw <- gen_data(dictionary = "Mortality",
 # this dataset already has the two levels merged
 # variable names are in the column_name column
 # possible values for each variable are specified in the "Code" columns.
-study_data_dict <- msf_dict_dict("Mortality")
+study_data_dict <- msf_survey_dict("Mortality")
 ```
 
 
@@ -169,6 +169,44 @@ population_data_age <- gen_population(total_pop = 10000, # set the total populat
 
 ```{r standardise_clean_data}
 
+## All your data cleaning and new variable creation should happen in this chunk. 
+## This way, if you mess up all you have to do is push the small arrow at the
+## top of this chunk between the cogg and the play buttons, to run all the 
+## code chunks up to the current one, then continue your cleaning from where you
+## started. 
+## 
+## YOU WILL NEED TO ADAPT THIS SECTION ACCORDING TO YOUR DATA!
+## 
+## currently there are examples of cleaning for: 
+##    - Date variables 
+##    - Numeric variables 
+##    - Categorical variables from numerics (e.g. age groups) 
+##    - Factor variables (for creating/manipulating categorical variables)
+##    - Dropping rows and columns 
+
+
+
+# Date variables ---------------------------------
+# IF YOU ARE USING THE DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
+# make sure all date variables are formatted as dates 
+DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>% 
+  select(data_element_shortname) # select date vars
+# change to dates 
+linelist_cleaned <- linelist_cleaned %>%
+  mutate_at(DATEVARS$data_element_shortname, as.Date)
+
+# if you dont have a data dictionary you could do it this way too
+# linelist_cleaned <- linelist_cleaned %>%
+#   mutate_at(vars(matches("date|Date")), as.Date)
+
+# set unrealistic dates to NA, based on having browsed dates in the previous chunk
+# linelist_cleaned <- mutate(linelist_cleaned,
+#                            date_of_onset < as.Date("2017-11-01") ~ NA, 
+#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+  
+
+
+
 study_data_cleaned <- study_data_raw %>%
   # some cleaning
   mutate(age_in_years = as.integer(q155_q5_age_year),
@@ -179,7 +217,11 @@ study_data_cleaned <- study_data_raw %>%
                                  levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
                                             "Trauma/accident", "Pregnancy-related", 
                                             "Violence", "Outbreak disease (specify)", 
-                                            "Malnutrition", "Unknown", "Other (specify)"))) %>%
+                                            "Malnutrition", "Unknown", "Other (specify)")))
+
+
+
+study_data_cleaned <- study_data_cleaned %>%
   filter(!is.na(sex))
 
 
@@ -204,8 +246,6 @@ recall_start <- as.Date("2018-01-01")
 recall_end <- as.Date("2018-05-01")
 
 
-
-
 ## define start date 
 ## this is either the begining of your recall period (which you define in advance)
 ## or a date after the start of recal if applicable (e.g. arrivals or births)
@@ -221,7 +261,7 @@ study_data_cleaned <- study_data_cleaned %>%
     recall_start, na.rm = FALSE
   ))
 
-
+# TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # find which column had the minimum value 
 # (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
 
@@ -240,6 +280,7 @@ study_data_cleaned <- study_data_cleaned %>%
                          recall_end, na.rm = TRUE))
 
 
+# TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # find which column had the minimum value 
 # (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
 
@@ -372,9 +413,9 @@ plot_age_pyramid(study_data_cleaned,
   theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
 ```
 
-Weighted age distribution.
+Weighted age distribution - if this is substantially different to your unweighted 
+pyramid, then it may suggest some sampling bias. 
 ```{r age_pyramid_survey}
-# TODO: Table - Age distribution of the sample population and of the study population.
 plot_age_pyramid(survey_design_sex,
                  age_group = "age_group",
                  split_by = "sex", 
@@ -394,7 +435,7 @@ Reported causes of death and cause-specific mortality rates, weighted
 cause_of_death_prop <- survey_design %>% 
   group_by(cause_of_death) %>% 
   summarize(n = survey_total(vartype = "se", na.rm = TRUE),
-            proportion = survey_mean(vartype = "ci", na.rm = TRUE),
+            proportion = survey_mean(vartype = "ci", na.rm = TRUE)
             ) %>% 
   mutate(n = round(n)) %>% 
   select(-n_se)
