@@ -62,11 +62,11 @@ library(ggplot2)
 
 ## read in household data sheet
 # study_data_hh <- rio::import("mortality_survey.xlsx", 
-#                               which = "Level 0 Named")
+#                               which = "Level 0 Named", na = ".")
 
 ## read in individual level data sheet
 # study_data_indiv <- rio::import("mortality_survey.xlsx", 
-#                               which = "Level 1 Named")
+#                               which = "Level 1 Named", na = ".")
 
 ## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
 # generates a fake dataset for use as an example in this template
@@ -95,7 +95,7 @@ study_data_raw <- gen_data(dictionary = "Mortality",
 # this dataset already has the two levels merged
 # variable names are in the column_name column
 # possible values for each variable are specified in the "Code" columns.
-study_data_dict <- msf_survey_dict("Mortality")
+study_data_dict <- msf_dict_survey("Mortality")
 ```
 
 
@@ -185,45 +185,83 @@ population_data_age <- gen_population(total_pop = 10000, # set the total populat
 ##    - Dropping rows and columns 
 
 
+## make a copy of your orginal dataset and name it study_data_cleaned
+study_data_cleaned <- study_data_raw
+
+# Rename variables  ---------------------------------
+# Some of the names outputed from Dharma are really long and painful, you can change these as below
+# The formula for this is rename(data, NEW_NAME = OLD_NAME). 
+
+study_data_cleaned <- rename(study_data_cleaned, 
+                              sex = q4_q6_sex, 
+                              age_in_years = q155_q5_age_year)
 
 # Date variables ---------------------------------
-# IF YOU ARE USING THE DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
+# IF YOU ARE USING A DHARMA DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
 # make sure all date variables are formatted as dates 
-DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>% 
-  select(data_element_shortname) # select date vars
+
+# DATEVARS <- filter(study_data_dict, type == "QuestionDate") %>% 
+#   select(column_name) # select date vars
+
+# using the fake dictionary (DELETE THIS)
+DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
+  select(column_name) # select date vars
+
 # change to dates 
-linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(DATEVARS$data_element_shortname, as.Date)
+study_data_cleaned <- study_data_cleaned %>%
+  mutate_at(DATEVARS$column_name, as.Date)
 
 # if you dont have a data dictionary you could do it this way too
-# linelist_cleaned <- linelist_cleaned %>%
+# study_data_cleaned <- study_data_cleaned %>%
 #   mutate_at(vars(matches("date|Date")), as.Date)
 
 # set unrealistic dates to NA, based on having browsed dates in the previous chunk
-# linelist_cleaned <- mutate(linelist_cleaned,
+# study_data_cleaned <- mutate(study_data_cleaned,
 #                            date_of_onset < as.Date("2017-11-01") ~ NA, 
 #                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
   
 
+# Age group variables ---------------------------------
+
+# make sure age is an integer 
+study_data_cleaned <- study_data_cleaned %>% 
+  as.integer(age_in_years)
+
+# create an age group variable by specifying categorical breaks (of years)
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_group = age_categories(age_in_years, 
+                                    breakers = c(0, 5, 15, 30, 45)
+                                    ))
 
 
-study_data_cleaned <- study_data_raw %>%
-  # some cleaning
-  mutate(age_in_years = as.integer(q155_q5_age_year),
-         age_group = age_categories(age_in_years, breakers = c(0, 5, 15, 30, 45)),
-         sex = q4_q6_sex,
-         died = q136_q34_died == "Yes",
-         cause_of_death = factor(q138_q36_died_cause,
+# Factor (categorical) variables ---------------------------------
+
+# Change a yes/no variable in to TRUE/FALSE
+# create a new variable called died 
+# where the old one is yes place TRUE in the new one
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(died = q136_q34_died == "Yes")
+
+# Set the levels of a factor 
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(cause_of_death = factor(q138_q36_died_cause,
                                  levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
                                             "Trauma/accident", "Pregnancy-related", 
                                             "Violence", "Outbreak disease (specify)", 
                                             "Malnutrition", "Unknown", "Other (specify)")))
 
+# change Dharma Multi-questions to TRUE/FALSE
+SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
+SYMPTOMS <- SYMPTOMS[-1] # drop the "other" symptoms free text var 
+
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate_at(SYMPTOMS, .funs = funs(ifelse(!is.na(.), TRUE, FALSE)))
 
 
+
+# drop unwanted rows  ---------------------------------
 study_data_cleaned <- study_data_cleaned %>%
   filter(!is.na(sex))
-
 
 ```
 
@@ -431,7 +469,8 @@ Reported causes of death and cause-specific mortality rates, weighted
 
 ```{r}
 
-# you will get an extra column, for weighted counts, weighted % with CI, and mortality per 10,000 persons/day with CI
+# you will get separate columns, for weighted counts (weighted % with CI), 
+# and mortality per 10,000 persons/day with CI
 cause_of_death_prop <- survey_design %>% 
   group_by(cause_of_death) %>% 
   summarize(n = survey_total(vartype = "se", na.rm = TRUE),
@@ -473,6 +512,8 @@ survey_design %>%
 
 ```{r}
 # symptoms
+survey_design %>% 
+  tabulate_binary_survey(SYMPTOMS, keep = TRUE)
 ```
 
 # Conclusions
