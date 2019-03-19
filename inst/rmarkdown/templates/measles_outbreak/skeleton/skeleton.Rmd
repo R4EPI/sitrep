@@ -483,6 +483,7 @@ linelist_cleaned <- linelist_cleaned %>%
     TRUE                                 ~ as.integer(age_years)
   ))
 
+
 ## OPTIONAL: change those who are above or below a certain age to NA
 # linelist_cleaned <- mutate(linelist_cleaned, 
 #                            age_years = case_when(
@@ -518,6 +519,14 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 ## arrange the categories
 # linelist_cleaned$age_group <- factor(linelist_cleaned$age_group,
 #                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
+
+
+## to combine different age categories use the following function 
+## this prioritises the smaller unit, i.e. if given months and years, will return months first
+linelist_cleaned <- group_age_categories(linelist_cleaned, 
+                                         years = age_group, 
+                                         months = age_group_mon)
+
 
 
 
