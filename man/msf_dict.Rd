@@ -5,7 +5,7 @@
 \alias{msf_dict_rename_helper}
 \alias{gen_data}
 \alias{switch_vals}
-\alias{msf_dict_mortality}
+\alias{msf_dict_survey}
 \title{MSF data dictionaries and dummy datasets}
 \usage{
 msf_dict(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
@@ -19,8 +19,7 @@ gen_data(dictionary, varnames = "data_element_shortname",
 
 switch_vals(df, disease)
 
-msf_dict_mortality(name = "MSF-mortality_survey-dict.xlsx",
-  tibble = TRUE)
+msf_dict_survey(disease, name = "MSF-survey-dict.xlsx", tibble = TRUE)
 }
 \arguments{
 \item{disease}{Specify which disease you would like to use.
