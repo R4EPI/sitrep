@@ -250,13 +250,18 @@ study_data_cleaned <- study_data_cleaned %>%
                                             "Violence", "Outbreak disease (specify)", 
                                             "Malnutrition", "Unknown", "Other (specify)")))
 
-# change Dharma Multi-questions to TRUE/FALSE
+## change Dharma Multi-questions to TRUE/FALSE
 SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
 SYMPTOMS <- SYMPTOMS[-1] # drop the "other" symptoms free text var 
 
+# set rows that are not empty to TRUE in each of the symptom variables
 study_data_cleaned <- study_data_cleaned %>% 
   mutate_at(SYMPTOMS, .funs = funs(ifelse(!is.na(.), TRUE, FALSE)))
 
+# define the labels for each of the symptoms 
+SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition", 
+                     "Pregnancy-related", "Malaria/fever", "Trauma", 
+                     "Violence", "Unknown", "Other")
 
 
 # drop unwanted rows  ---------------------------------
@@ -510,10 +515,17 @@ survey_design %>%
 
 ## Morbidity
 
+
+
+
+
 ```{r}
-# symptoms
+# symptoms reported among those who were sick 
 survey_design %>% 
-  tabulate_binary_survey(SYMPTOMS, keep = TRUE)
+  filter(q18_q8_sick == "Yes") %>% 
+  tabulate_binary_survey(SYMPTOMS, keep = TRUE) %>%
+  mutate(variable = SYMPTOMS_LABELS) %>% 
+  select(-value)
 ```
 
 # Conclusions
