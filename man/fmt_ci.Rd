@@ -6,17 +6,32 @@
 \alias{fmt_pci_df}
 \alias{fmt_ci_df}
 \alias{merge_ci_df}
+\alias{merge_pci_df}
+\alias{fmt_ci_df_sep}
+\alias{fmt_pci_df_sep}
 \title{Helper to format confidence interval for text}
 \usage{
-fmt_ci(e = numeric(), l = numeric(), u = numeric(), digits = 2)
+fmt_ci(e = numeric(), l = numeric(), u = numeric(), digits = 2,
+  percent = TRUE)
 
-fmt_pci(e = numeric(), l = numeric(), u = numeric(), digits = 2)
+fmt_pci(e = numeric(), l = numeric(), u = numeric(), digits = 2,
+  percent = TRUE)
 
-fmt_pci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
+fmt_pci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2,
+  percent = TRUE)
 
-fmt_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
+fmt_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2,
+  percent = TRUE)
 
 merge_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
+
+merge_pci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
+
+fmt_ci_df_sep(x, e = 3, l = e + 1, u = e + 2, digits = 2,
+  percent = TRUE)
+
+fmt_pci_df_sep(x, e = 3, l = e + 1, u = e + 2, digits = 2,
+  percent = TRUE)
 }
 \arguments{
 \item{e}{the column of the estimate (defaults to the third column). Otherwise, a number}
@@ -26,6 +41,9 @@ merge_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
 \item{u}{the column of the upper bound (defaults to the fifth column), otherwise, a number}
 
 \item{digits}{the number of digits to show}
+
+\item{percent}{if \code{TRUE} (default), converts the number to percent, otherwise
+it's treated as a raw value}
 
 \item{x}{a data frame}
 }
@@ -42,10 +60,11 @@ which will render like this: "The CFR for Bamako is 20.00\% (CI 11.24--33.04)"
 
 cfr <- case_fatality_rate(10, 50)
 fmt_ci_df(cfr)
-fmt_ci_df(cfr, d = 1)
+fmt_ci_df(cfr)
+
 # If the data starts at a different column, specify a different number
 fmt_ci_df(cfr[-1], 2, d = 1)
 
-# It's also possible to provide numbers directly
-fmt_ci(pi, pi - runif(1), pi + runif(1))
+# It's also possible to provide numbers directly and remove the percent sign.
+fmt_ci(pi, pi - runif(1), pi + runif(1), percent = FALSE)
 }

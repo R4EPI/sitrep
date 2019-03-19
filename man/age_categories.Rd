@@ -2,17 +2,21 @@
 % Please edit documentation in R/age-categories.R
 \name{age_categories}
 \alias{age_categories}
-\title{Create an age group variable
-either give distinct breaks or specify vals for sequence}
+\alias{group_age_categories}
+\title{Create an age group variable}
 \usage{
 age_categories(x, breakers = NA, lower = 0, upper = NA, by = 10,
-  separator = "-", above.char = "+")
+  separator = "-", ceiling = FALSE, above.char = "+")
+
+group_age_categories(dat, years = NULL, months = NULL, weeks = NULL,
+  days = NULL, one_column = TRUE)
 }
 \arguments{
 \item{x}{Your age variable}
 
-\item{breakers}{A string. Age category breaks you can define within c(). Alternatively use "lower",
-"upper" and "by" to set these breaks based on a sequence.}
+\item{breakers}{A string. Age category breaks you can define within c().
+Alternatively use "lower", "upper" and "by" to set these breaks based on a
+sequence.}
 
 \item{lower}{A number. The lowest age value you want to consider (default is 0)}
 
@@ -20,11 +24,49 @@ age_categories(x, breakers = NA, lower = 0, upper = NA, by = 10,
 
 \item{by}{A number. The number of years you want between groups}
 
-\item{separator}{A character that you want to have between ages in group names. The default is "-" producing e.g. 0-10.}
+\item{separator}{A character that you want to have between ages in group
+names. The default is "-" producing e.g. 0-10.}
 
-\item{above.char}{A character that you want to have after your highest age group. The default is "+" producing e.g. 80+}
+\item{ceiling}{A TRUE/FALSE variable. Specify whether you would like the
+highest value in your breakers, or alternatively the upper value specified,
+to be the endpoint. This would produce the highest group of "70-80" rather
+than "80+". The default is FALSE (to produce a group of 80+).}
+
+\item{above.char}{Only considered when ceiling == FALSE.  A character that
+you want to have after your highest age group. The default is "+" producing
+e.g. 80+}
+
+\item{dat}{a data frame with at least one column defining an age category}
+
+\item{years, months, weeks, days}{the bare name of the column defining years,
+months, weeks, or days (or NULL if the column doesn't exist)}
+
+\item{one_column}{if \code{TRUE} (default), the categories will be joined into a
+single column called "age_category" that appends the type of age category
+used. If \code{FALSE}, there will be one column with the grouped age categories
+called "age_category" and a second column indicating age unit called
+"age_unit".}
+}
+\value{
+a data frame
 }
 \description{
 Create an age group variable
-either give distinct breaks or specify vals for sequence
+}
+\examples{
+
+if (require("dplyr")) {
+set.seed(50)
+dat <- gen_data("Cholera", n = 100)
+ages <- dat \%>\% 
+  select(starts_with("age")) \%>\%
+  mutate(age_years = age_categories(age_years, breakers = c(0, 5, 10, 15, 20))) \%>\%
+  mutate(age_months = age_categories(age_months, breakers = c(0, 5, 10, 15, 20))) \%>\%
+  mutate(age_days = age_categories(age_days, breakers = c(0, 5, 15))) 
+
+ages \%>\%
+  group_age_categories(years = age_years, months = age_months, days = age_days) \%>\%
+  pull(age_category) \%>\%
+  table()
+}
 }

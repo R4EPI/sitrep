@@ -5,8 +5,8 @@
 \title{Plot a population pyramid (age-sex) from a dataframe.}
 \usage{
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
-  stack_by = split_by, vertical_lines = FALSE,
-  horizontal_lines = TRUE)
+  stack_by = split_by, proportional = FALSE, na.rm = FALSE,
+  vertical_lines = FALSE, horizontal_lines = TRUE)
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}
@@ -19,6 +19,13 @@ the bivariate column. Defaults to "sex"}
 
 \item{stack_by}{the name of the column in the data frame to use for shading
 the bars}
+
+\item{proportional}{If \code{TRUE}, bars will represent proportions of cases out
+of the entire population. Otherwise (\code{FALSE}, default), bars represent
+case counts}
+
+\item{na.rm}{If \code{TRUE}, this removes NA counts from the age groups. Defaults
+to \code{TRUE}.}
 
 \item{vertical_lines}{If you would like to add dashed vertical lines to help
 visual interpretation of numbers. Default is to not show (\code{FALSE}),
@@ -47,6 +54,14 @@ dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
 # Create the age pyramid, stratifying by sex
 print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
 
+# Remove NA categories with na.rm = TRUE
+dat2 <- dat
+dat2[1, 1] <- NA
+dat2[2, 2] <- NA
+dat2[3, 3] <- NA
+print(ap   <- plot_age_pyramid(dat2, age_group = "AGE"))
+print(ap   <- plot_age_pyramid(dat2, age_group = "AGE", na.rm = TRUE))
+
 # Stratify by case definition and customize with ggplot2
 ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
   theme_bw(base_size = 16) +
@@ -58,6 +73,16 @@ ap <- plot_age_pyramid(dat,
                        age_group = "AGE",
                        split_by = "sex",
                        stack_by = "ill",
+                       vertical_lines = TRUE) +
+  labs(title = "Age groups by case definition and sex")
+print(ap)
+
+# Display proportions
+ap <- plot_age_pyramid(dat,
+                       age_group = "AGE",
+                       split_by = "sex",
+                       stack_by = "ill",
+                       proportional = TRUE,
                        vertical_lines = TRUE) +
   labs(title = "Age groups by case definition and sex")
 print(ap)

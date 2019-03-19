@@ -1,0 +1,4 @@
+name: Measles outbreak report
+description: >
+  An automated outbreak report template for measles
+create_dir: false
