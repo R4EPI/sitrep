@@ -1,5 +1,5 @@
 #' Helper to format confidence interval for text
-#' 
+#'
 #' This function is mainly used for placing in the text fields of Rmarkdown
 #' reports. You can use it by writing it in something like this:
 #' \preformatted{The CFR for Bamako is `r fmt_pci(case_fatality_rate(10, 50))`}
@@ -31,9 +31,9 @@ fmt_ci <- function(e = numeric(), l = numeric(), u = numeric(), digits = 2, perc
   msg <- "%s (CI %.2f--%.2f)"
   msg <- gsub("2", digits, msg)
   fun <- if (percent) match.fun(scales::percent) else match.fun(scales::number)
-  e   <- fun(e, scale = 1, accuracy = 1/(10^digits), big.mark = ",") 
+  e   <- fun(e, scale = 1, accuracy = 1/(10^digits), big.mark = ",")
   sprintf(msg, e, l, u)
-} 
+}
 
 #' @export
 #' @rdname fmt_ci
@@ -62,12 +62,41 @@ merge_ci_df <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2) {
   x
 }
 
+#' @export
+#' @rdname fmt_ci
+merge_pci_df <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2) {
+  cis <- fmt_pci_df(x, e, l, u, digits)
+  x[c(l, u)] <- NULL
+  x$ci <- gsub("^.+?\\(CI ", "(", cis)
+  x
+}
+
+#' @export
+#' @rdname fmt_ci
+fmt_ci_df_sep <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2, percent = TRUE) {
+  x <- merge_ci_df(x, e, l, u, digits)
+  fun <- if (percent) match.fun(scales::percent) else match.fun(scales::number)
+  ee  <- fun(x[[e]], scale = 1, accuracy = 1/(10^digits), big.mark = ",")
+  x[e] <- ee
+  x
+}
+
+#' @export
+#' @rdname fmt_ci
+fmt_pci_df_sep <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2, percent = TRUE) {
+  x <- merge_pci_df(x, e, l, u, digits)
+  fun <- if (percent) match.fun(scales::percent) else match.fun(scales::number)
+  ee  <- fun(x[[e]] * 100, scale = 1, accuracy = 1/(10^digits), big.mark = ",")
+  x[e] <- ee
+  x
+}
+
 #' Counts and proportions inline
 #'
 #' These functions will give proportions for different variables inline.
 #'
 #' @param x a data frame
-#' 
+#'
 #' @param ... an expression or series of expressions to pass to [dplyr::filter()]
 #'
 #' @export

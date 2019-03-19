@@ -29,6 +29,7 @@ Imports:
     scales,
     sf,
     survey,
+    srvyr,
     tibble,
     huxtable,
     tidyr
@@ -53,7 +54,10 @@ Collate:
     'inline_fun.R'
     'msf_dict_mortality.R'
     'nutrition.R'
+    'population_weights.R'
     'sample-size.R'
     'survey.R'
+    'tabulate_survey.R'
+    'unite_ci.R'
     'univariate-analysis.R'
     'zcurve.R'

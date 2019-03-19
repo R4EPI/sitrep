@@ -41,7 +41,7 @@ msf_dict_mortality <- function(name = "MSF-mortality_survey-dict.xlsx",
 
   dat_dict_wide$data_element_valuetype[dat_dict_wide$data_element_valuetype == "Integer"] <- "INTEGER_POSITIVE"
   dat_dict_wide$data_element_valuetype[dat_dict_wide$data_element_valuetype == "Binary"] <- "TEXT"
-  dat_dict_wide$data_element_valuetype[dat_dict_wide$data_element_valuetype == "ChoiceMulti"] <- "TEXT"
+  dat_dict_wide$data_element_valuetype[dat_dict_wide$data_element_valuetype == "ChoiceMulti"] <- "MULTI"
   dat_dict_wide$data_element_valuetype[dat_dict_wide$data_element_valuetype == "Text"] <- "LONG_TEXT"
   dat_dict_wide$data_element_valuetype[dat_dict_wide$data_element_valuetype == "Geo"] <- "LONG_TEXT"
   dat_dict_wide$data_element_valuetype[dat_dict_wide$data_element_valuetype == "Date"] <- "DATE"

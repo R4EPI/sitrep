@@ -215,6 +215,35 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output[[i]] <- sample(categories[[i]], numcases, replace = TRUE)
   }
 
+  # Use data dictionary to define which vars are multiple choice
+
+  # sample of a single value and NA
+  sample_single <- function(x, size = numcases, prob = 0.1) {
+    sample(c(x, NA), size = size, prob = c(prob, 1 - prob), replace = TRUE)
+  }
+
+  # random data for one single "MULTI" variable (split into multiple columns)
+  sample_cats <- function(cat) {
+    lvls <- as.character(categories[[cat]])
+    # define suffixes for column names, e.g. 000, 001, 002, ...
+    suffixes <- formatC((1:length(lvls)) - 1, width = 3, format = "d", flag = "0")
+
+    # create columns with randomized lvls with randomized probability
+    extra_cols <- sapply(lvls, sample_single, size = numcases, prob = sample(5:15, 1) / 100)
+    colnames(extra_cols) <- paste0(cat, "_", suffixes)
+    extra_cols
+  }
+
+
+  multivars <- dat_dict[dat_dict$data_element_valuetype == "MULTI", varnames]
+  if (length(multivars) > 0) {
+    sample_multivars <- lapply(multivars, sample_cats)
+    sample_multivars <- do.call(cbind, sample_multivars)
+
+    dis_output[, multivars] <- NULL
+    dis_output <- cbind(dis_output, sample_multivars)
+  }
+
 
   # Use data dictionary to define which vars are dates
   datevars <- dat_dict[dat_dict$data_element_valuetype == "DATE", varnames]
@@ -385,11 +414,35 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     # pregnancy set to NA for males
     dis_output$q152_q7_pregnant[dis_output$q4_q6_sex == "Male"] <- NA
 
+    # resample death yes/no to have lower death rates
+    dis_output$q136_q34_died <- sample(c("Yes", "No"), nrow(dis_output), prob = c(0.05, 0.95), replace = TRUE)
     # set Columns that are relate to "death" as NA if "q136_q34_died" is "No"
     died <- dis_output$q136_q34_died == "No"
     dis_output[died, c("q137_q35_died_date", "q138_q36_died_cause",
                        "q141_q37_died_violence", "q143_q41_died_place",
                        "q145_q43_died_country")] <- NA
+    # pregnancy related cause of death n.a. for too old/young and for males
+    no_pregnancy <- dis_output$q138_q36_died_cause == "Pregnancy-related" &
+      (dis_output$q4_q6_sex == "Male" | dis_output$q155_q5_age_year >= 50 |
+         dis_output$q155_q5_age_year < 12)
+    no_pregnancy[is.na(no_pregnancy)] <- FALSE # replace NAs
+    dis_output[no_pregnancy, "q138_q36_died_cause"] <- "Unknown"
+
+    # fix arrival/leave dates
+    dis_output$q41_q25_hh_arrive_date <-
+      pmin(dis_output$q41_q25_hh_arrive_date, dis_output$q45_q29_hh_leave_date, dis_output$q88_q33_born_date, na.rm = TRUE)
+
+    # leave date
+    chn_date <- dis_output$q45_q29_hh_leave_date <= dis_output$q41_q25_hh_arrive_date
+    dis_output$q45_q29_hh_leave_date[chn_date] <- dis_output$q41_q25_hh_arrive_date[chn_date] + sample(5:30, sum(chn_date), replace = TRUE)
+
+    # died date
+    chn_date <- dis_output$q137_q35_died_date <= dis_output$q41_q25_hh_arrive_date
+    chn_date[is.na(chn_date)] <- FALSE
+    dis_output$q137_q35_died_date[chn_date] <- dis_output$q41_q25_hh_arrive_date[chn_date] + sample(5:30, sum(chn_date), replace = TRUE)
+
+    dis_output$q45_q29_hh_leave_date[!is.na(dis_output$q137_q35_died_date)] <- NA
+
     # more plausibility checks of generated data might be implemented in the future
   }
 
