@@ -7,14 +7,14 @@
 #' @importFrom dplyr mutate group_by row_number ungroup
 #' @export
 #' @rdname msf_dict
-msf_dict_mortality <- function(name = "MSF-mortality_survey-dict.xlsx",
+msf_dict_survey <- function(disease, name = "MSF-survey-dict.xlsx",
                                tibble = TRUE) {
 
   # get excel file path (need to specify the file name)
   path <- system.file("extdata", name, package = "sitrep")
 
   # read in data set - pasting the disease name for sheet
-  dat_dict <- rio::import(path, which = "Data Dictionary")
+  dat_dict <- rio::import(path, which = disease)
 
   # clean col names
   colnames(dat_dict) <- epitrix::clean_labels(colnames(dat_dict))

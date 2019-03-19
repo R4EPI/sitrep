@@ -178,13 +178,17 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   # 2) dat_output = formatting of data dictionary to make use for sampling
   # 3) dis_output = dictionary dataset generated from sampling (exported)
 
+  # define which ones are outbreaks and which ones are survey datasets
+  SURVEYS <- c("Mortality", "Nutrition", "Vaccination")
+  OUTBREAKS <- c("Cholera", "Measles", "Meningitis", "AJS")
+
   # get msf dictionary specific data dictionary
-  if (dictionary == "Mortality") {
-    dat_dict <- msf_dict_mortality(tibble = FALSE)
-  } else if (dictionary %in% c("Cholera", "Measles", "Meningitis", "AJS")) {
+  if (dictionary %in% SURVEYS) {
+    dat_dict <- msf_dict_survey(disease = dictionary, tibble = FALSE)
+  } else if (dictionary %in% OUTBREAKS) {
     dat_dict <- msf_dict(disease = dictionary, tibble = FALSE, compact = TRUE)
   } else {
-    stop("'dictionary' must be one of: 'Cholera', 'Measles', 'Meningitis', 'AJS', 'Mortality'")
+    stop("'dictionary' must be one of: 'Cholera', 'Measles', 'Meningitis', 'AJS', 'Mortality', 'Nutrition', 'Vaccination'")
   }
 
 
@@ -256,7 +260,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output[[i]] <- sample(posidates, numcases, replace = TRUE)
   }
 
-  if (dictionary != "Mortality") {
+  if (dictionary %in% OUTBREAKS) {
     # Fix DATES
     # exit dates before date of entry
     # just add 20 to admission.... (was easiest...)
@@ -441,6 +445,42 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output$q45_q29_hh_leave_date[!is.na(dis_output$q137_q35_died_date)] <- NA
 
     # more plausibility checks of generated data might be implemented in the future
+  }
+
+  if (dictionary == "Nutrition") {
+
+    # sample villages
+    dis_output$village <- sample(c("Village A", "Village B",
+                                   "Village C", "Village D"),
+                                 numcases, replace = TRUE)
+
+    # make two health districts
+    dis_output$health_district <- ifelse(dis_output$village == "Village A" |
+                                           dis_output$village == "Village B",
+                                         "District A", "District B")
+
+    # cluster ID (based on village)
+    dis_output$cluster_number <- as.numeric(factor(dis_output$village))
+
+    # household number just each its own
+    dis_output$household_id <- 1:numcases
+
+    # age in months (1 to 60 - i.e. under 5 years)
+    dis_output$age_month <- sample(1:60, numcases, replace = TRUE)
+
+    # height in cm
+    dis_output$height <- round(
+      runif(numcases, 40, 120),
+      digits = 1)
+
+    # weight in kg
+    dis_output$weight <- round(
+      runif(numcases, 2, 30),
+      digits = 1)
+
+    # MUAC in mm
+    dis_output$muac_mm_left_arm <- sample(80:190, numcases, replace = TRUE)
+
   }
 
   # return dataset as a tibble
