@@ -38,7 +38,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
 
   x <- srvyr::summarise(x,
                         n = survey_total(var = "se", na.rm = TRUE),
-                        proportion = survey_mean(vartype = "ci", na.rm = TRUE, prop_method = "logit")
+                        proportion = survey_mean(vartype = "ci", na.rm = TRUE)
                        )
   x$n <- round(x$n)
   x   <- x[!colnames(x) %in% "n_se"]
