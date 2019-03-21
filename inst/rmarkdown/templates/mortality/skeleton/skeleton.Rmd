@@ -221,11 +221,39 @@ study_data_cleaned <- study_data_cleaned %>%
 #                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
   
 
+
+# set the start of your recall-period
+# set the end of your recall period (when your survey stopped) 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(recall_start = as.Date("2018-01-01"), 
+         recall_end = as.Date("2018-05-01")
+  )
+
+# set inappropriate dates to NA
+
+# for arrivals an dirths before the recall period, set to NA 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(q114_q16_date_arrival_camp = ifelse(q114_q16_date_arrival_camp < recall_start, NA_real_, 
+                                             q114_q16_date_arrival_camp), 
+         q114_q16_date_arrival_camp = ifelse(q41_q25_hh_arrive_date < recall_start, NA_real_, 
+                                             q41_q25_hh_arrive_date), 
+         q88_q33_born_date = ifelse(q88_q33_born_date < recall_start, NA_real_, 
+                                             q88_q33_born_date)
+         )
+
+# for deaths and departures after the recall period, set to NA 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(q45_q29_hh_leave_date = ifelse(q45_q29_hh_leave_date > recall_end, NA_real_, 
+                                             q45_q29_hh_leave_date), 
+         q137_q35_died_date = ifelse(q137_q35_died_date > recall_end, NA_real_, 
+                                             q137_q35_died_date)
+         )
+
 # Age group variables ---------------------------------
 
 # make sure age is an integer 
 study_data_cleaned <- study_data_cleaned %>% 
-  as.integer(age_in_years)
+  mutate(age_in_years = as.integer(age_in_years))
 
 # create an age group variable by specifying categorical breaks (of years)
 study_data_cleaned <- study_data_cleaned %>% 
@@ -266,7 +294,14 @@ SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition",
 
 # drop unwanted rows  ---------------------------------
 study_data_cleaned <- study_data_cleaned %>%
-  filter(!is.na(sex))
+  filter(!is.na(sex) &
+           (is.na(q114_q16_date_arrival_camp) |
+              q114_q16_date_arrival_camp < recall_end) &
+           (is.na(q41_q25_hh_arrive_date) | 
+              q41_q25_hh_arrive_date < recall_end) & 
+           (is.na(q88_q33_born_date) | 
+              q88_q33_born_date < recall_end) 
+           )
 
 ```
 
@@ -282,17 +317,9 @@ study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_g
 
 ## define start and end of your recall period
 
-# set the start of your recall-period
-recall_start <- as.Date("2018-01-01")
-
-# set the end of your recall period (when your survey stopped) 
-recall_end <- as.Date("2018-05-01")
-
-
 ## define start date 
 ## this is either the begining of your recall period (which you define in advance)
 ## or a date after the start of recal if applicable (e.g. arrivals or births)
-
 
 # choose earliest appropriate date entered in survey
 # from camp arrival, household arrival and born date (pmin) or the start of study period (pmax)
@@ -304,12 +331,51 @@ study_data_cleaned <- study_data_cleaned %>%
     recall_start, na.rm = FALSE
   ))
 
-# TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# find which column had the minimum value 
-# (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
+# correct startdate to born date if not NA (cant have arrived before born) 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(startdate = ifelse(!is.na(q88_q33_born_date), 
+                                       q88_q33_born_date, 
+                                       startdate))
 
 
+# find which column had the minimum value
 
+# start with an empty var
+study_data_cleaned$startcause <- NA
+
+# row wise 
+for (i in 1:nrow(study_data_cleaned)) {
+  
+  # all three of the dates of interest are empty
+  # set start cause to be start of recall period  
+  if (length(which.min(study_data_cleaned[i, c("q114_q16_date_arrival_camp",
+                                               "q41_q25_hh_arrive_date",
+                                               "q88_q33_born_date")])) == 0) {
+          study_data_cleaned[i, "startcause"] <- "Present at start"
+  }
+  # otherwise extract the name which was the minimum  
+  else {
+    study_data_cleaned[i, "startcause"] <- names(study_data_cleaned[i, c("q114_q16_date_arrival_camp",
+                                                                         "q41_q25_hh_arrive_date",
+                                                                         "q88_q33_born_date")])[
+            which.min(study_data_cleaned[i, c("q114_q16_date_arrival_camp",
+                                               "q41_q25_hh_arrive_date",
+                                               "q88_q33_born_date")])]
+  }
+  
+  if (!is.na(study_data_cleaned[i, "q88_q33_born_date"])) {
+    study_data_cleaned[i, "startcause"] <- "Born"
+  }
+}
+
+
+# make sure there are the appropriate levels
+study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause, 
+                                               "Present at start" = "Present at start",
+                                               "Born" = "Born", 
+                                               "q114_q16_date_arrival_camp" = "Other arrival", 
+                                               "q41_q25_hh_arrive_date" = "Other arrival"
+                                               )
 
 ## define end date 
 ## this is either the end of your recall period 
@@ -323,16 +389,40 @@ study_data_cleaned <- study_data_cleaned %>%
                          recall_end, na.rm = TRUE))
 
 
-# TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # find which column had the minimum value 
-# (using names and which.min - but cant figure out with dplyr) - have an ugly base R solution
+
+# start with an empty var
+study_data_cleaned$endcause <- NA
+
+# row wise 
+for (i in 1:nrow(study_data_cleaned)) {
+  
+  # all three of the dates of interest are empty
+  # set endcause to be end of recall period  
+  if (length(which.min(study_data_cleaned[i, c("q45_q29_hh_leave_date", 
+                                               "q137_q35_died_date")])) == 0) {
+          study_data_cleaned[i, "endcause"] <- "Present at end"
+  }
+  # otherwise extract the name which was the minimum  
+  else {
+    study_data_cleaned[i, "endcause"] <- names(study_data_cleaned[i, c("q45_q29_hh_leave_date", 
+                                                                       "q137_q35_died_date")])[
+            which.min(study_data_cleaned[i, c("q45_q29_hh_leave_date", 
+                                               "q137_q35_died_date")])]
+  }
+}
+
+# make sure there are the appropriate levels
+study_data_cleaned$endcause <- recode_factor(study_data_cleaned$endcause, 
+                                             "Present at end" = "Present at end", 
+                                             "q137_q35_died_date" = "Died", 
+                                             "q45_q29_hh_leave_date" = "Other departure")
 
 
 ## Define observation time in days (need to fix negatives in gen_data)
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(obstime = as.numeric(enddate - startdate))
 
-# c(study_data_cleaned[53, c("q114_q16_date_arrival_camp", "q41_q25_hh_arrive_date", "q88_q33_born_date", "q45_q29_hh_leave_date", "q137_q35_died_date")])
 ```
 
 
@@ -417,16 +507,51 @@ survey_design_sex <- study_data_cleaned %>%
 
 # Results
 
+
+Below shows the arrivals and departures during the study period. 
+TO DO: Add example text of inline code - e.g. to show the net change in population. 
+
 ```{r}
-# TODO: Arrivals and departures of included household members during the recall period;
+descriptive(study_data_cleaned, 
+            "startcause", coltotals = TRUE)
 ```
+
+
+```{r}
+descriptive(study_data_cleaned, 
+            "endcause", coltotals = TRUE)
+```
+
 
 
 ## Demographic information
 
+Compare the proportions in each age group between your sample and the source population. 
+
 ```{r}
-# add descriptive table with unweighted counts for different stuff
+# bind together the columns of two tables 
+bind_cols(
+  # first the counts and props of the study population 
+  descriptive(study_data_cleaned, 
+              "age_group"), 
+  
+  # then the counts and props of the source population
+  group_by(population_data_age, age_group) %>% 
+    summarise(n = sum(population)) %>% 
+    mutate(prop = round(n / sum(n) * 100, digits = 1))  %>% 
+    select(-age_group)
+) %>% 
+  # rename the columns appropriatley 
+  rename("Age group" = age_group, 
+         "Study population (n)" = n, 
+         "%" = prop, 
+         "Source population (n)" = n1, 
+         "%" = prop1)
+
 ```
+
+
+
 
 TODO: add some sample text with inline R
 
