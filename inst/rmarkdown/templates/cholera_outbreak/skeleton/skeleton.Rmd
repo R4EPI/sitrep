@@ -39,7 +39,7 @@ library(ggplot2) # for plotting diagrams
 # epi packages
 library(sitrep) # for msf field epi functions
 library(incidence) # for epicurves
-library(ISOweek) # for creating epiweeks
+library(aweek) # for creating epiweeks
 library(epitools) # for creating 2by2 tables
 
 # spatial packages
@@ -421,15 +421,15 @@ linelist_cleaned <- linelist_cleaned %>%
 #                            date_of_onset < as.Date("2017-11-01") ~ NA, 
 #                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
   
-# create an epiweek variable 
-linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
-# make sure all the weeks are represented
-linelist_cleaned <- linelist_cleaned %>% 
-  mutate(ewdate = sprintf("%s-1", epiweek)) %>% 
-  mutate(ewdate = ISOweek2date(ewdate)) %>% 
-  mutate(epiweek = factor(epiweek, ISOweek(seq(min(ewdate, na.rm = TRUE), max(ewdate, na.rm = TRUE), by = "week")))) %>%
-  select(-ewdate)
-
+# create an epiweek variable
+# you can start the week on any day of the week
+# (the ISO standard is to start on Monday) 
+# floor_day shortens to only give you the week number (rather than including day as well) 
+# factor includes all weeks between the min and max as levels (useful for zero count weeks)
+linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
+                                             week_start = "Monday", 
+                                             floor_day = TRUE, 
+                                             factor = TRUE)
 
 # Numeric variables --------------------------------- 
 # create number of days under observation
@@ -599,24 +599,27 @@ writexl::write_xlsx(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".
 # however you can define epiweek by hand as below
 
 # define current week 
-reporting_week <- levels(linelist_cleaned$epiweek)[nlevels(linelist_cleaned$epiweek)]
 # reporting_week <- "2018-W10"
+
+# DELETE THIS LINE (this is just for the purpose of the template)
+reporting_week <- levels(linelist_cleaned$epiweek)[nlevels(linelist_cleaned$epiweek)]
+
 
 # drop cases after current week
 # you will probably have cases in your dataset if case finding continues
 # as these are after the week of reporting, drop them
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_onset <= ISOweek2date(sprintf("%s-7", reporting_week)))
+  filter(date_of_onset <= week2date(sprintf("%s-7", reporting_week)))
 
-
+# define the first week of outbreak (date of first case)
 first_week <- levels(linelist_cleaned$epiweek)[1]
 
 # outbreak start 
 # return the first day in the week of first case 
-obs_start <- ISOweek2date(sprintf("%s-1", first_week))
+obs_start <- week2date(sprintf("%s-1", first_week))
 
 # return last day of reporting week 
-obs_end   <- ISOweek2date(sprintf("%s-7", reporting_week))
+obs_end   <- week2date(sprintf("%s-7", reporting_week))
 
 ```
 
@@ -998,7 +1001,8 @@ There were `r fmt_count(linelist_cleaned, is.na(date_of_onset))` cases missing d
 
 ```{r create_incidence, message = FALSE}
 # This code creates case counts for each week of your outbreak, overall
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = 7)
+# As with aweek, you can change the start of your week to e.g. "Sunday week"
+inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = "Monday week")
 
 # this sets the theme in ggplot for epicurves
 epicurve_theme <- theme(
@@ -1007,7 +1011,7 @@ epicurve_theme <- theme(
   )
 ```
 
-The peak of the outbreak was in `r ISOweek(find_peak(inc_week_7))`
+The peak of the outbreak was in `r date2week(find_peak(inc_week_7), floor_day = TRUE)`
 
 ```{r epicurve, message = FALSE}
 # plot your epicurve as a ggplot (incidence::plot is different to base::plot)
@@ -1025,6 +1029,27 @@ basic_curve
 ```
 
 
+You could also plot biweekly if needed. There are also the options to do this by 
+month, quarter or year. 
+
+```{r biweekly_epicurve, message = FALSE}
+
+# This code creates case counts for two week groups of your outbreak, overall
+# As with aweek, you can change the start of your week to e.g. "2 sunday weeks"
+inc_week_14 <- incidence(linelist_cleaned$date_of_onset, interval = "2 Monday weeks")
+
+# plot your epicurve
+plot(inc_week_14, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_14)) + 
+  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "Cases (n)", 
+       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
+  # change visuals of dates, remove legend title and move legend to bottom
+  epicurve_theme
+
+```
+
+
 You may also want to stratify by gender. 
 
 
@@ -1032,7 +1057,7 @@ You may also want to stratify by gender.
 
 # get counts by gender
 inc_week_7_gender <- incidence(linelist_cleaned$date_of_onset, 
-                        interval = 7, 
+                        interval = "Monday week", 
                         groups = linelist_cleaned$sex)
 
 # plot your epicurve
@@ -1052,7 +1077,7 @@ You could similarly stratify by case definition (or any other categorical variab
 
 ```{r incidence_by_case_def, message = FALSE}
 inc_week_7_casedef <- incidence(linelist_cleaned$date_of_onset, 
-                        interval = 7, 
+                        interval = "Monday week", 
                         groups = linelist_cleaned$case_def)
 plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
@@ -1069,7 +1094,7 @@ Alternatively, you could stratify by sex among a subset of only confirmed cases.
 
 ```{r incidence_by_sex_confirmed, message = FALSE}
 inc_week_7_sex_conf <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def == "Confirmed"], 
-                        interval = 7, 
+                        interval = "Monday week", 
                         groups = linelist_cleaned$sex[linelist_cleaned$case_def == "Confirmed"])
 plot(inc_week_7_sex_conf, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_sex_conf)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
