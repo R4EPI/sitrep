@@ -348,6 +348,15 @@ population_data_age_months <- gen_population(total_pop = 5000,
   rename(age_group_mon = groups,
     population = n)
 
+
+# generate population data by age categories in months and years 
+population_data_age_categories <- gen_population(total_pop = 5000,
+  groups = c("0-5 months", "6-8 months", "9-11 months","12-24 months",
+             "3-14 years", "15-29 years", "30-44 years", "45+ years"),
+  proportions = c(0.278, 0.11, 0.18, 0.26, 0.278, 0.26, 0.11, 0.07),
+  strata = NULL) %>%
+  rename(age_category = groups,
+    population = n)
 ```
 
 
@@ -478,7 +487,11 @@ linelist_cleaned <- mutate(linelist_cleaned,
 ## OPTIONAL: add under 2 years to the age_years variable
 ## data dictionary defines that under 2s dont have year filled in (but months/days instead)
 linelist_cleaned <- linelist_cleaned %>% 
-  mutate(age_years = case_when(
+  mutate(age_months = case_when(
+    is.na(age_years) & is.na(age_months) ~ as.integer(age_days / 30), 
+    TRUE                                 ~ as.integer(age_months)
+  ),
+  age_years = case_when(
     is.na(age_years) & is.na(age_months) ~ as.integer(age_days / 365.25),
     is.na(age_years)                     ~ as.integer(age_months / 12),
     TRUE                                 ~ as.integer(age_years)
@@ -527,9 +540,17 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 linelist_cleaned <- group_age_categories(linelist_cleaned, 
                                          years = age_group, 
                                          months = age_group_mon)
-
-
-
+# drop the 0-2 years age level! (need to fix group_age_categories)
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(age_category = factor(age_category, 
+                                levels = c("0-5 months",
+                                           "6-8 months",
+                                           "9-11 months",
+                                           "12-24 months",
+                                           "3-14 years",
+                                           "15-29 years",
+                                           "30-44 years", 
+                                           "45+ years")))
 
 # Factor (categorical) variables ---------------------------------
 
@@ -543,6 +564,15 @@ linelist_cleaned$DIED <- grepl("Dead", linelist_cleaned$exit_status)
 ## use this version for coded values (e.g. "DOA", "DD")
 # linelist_cleaned$DIED <- linelist_cleaned$exit_status %in% c("DD", "DOA"))
 
+# create a new grouping for exit status variable 
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(exit_status2 = case_when(
+    exit_status %in% c("Dead on arrival", "Dead in facility") ~ "Died",
+    exit_status %in% c("Transferred (to an MSF facility)", 
+                       "Transferred (to External Facility)")  ~ "Transferred",
+    exit_status == "Discharged home"                          ~ "Discharged",
+    exit_status == "Left against medical advice"              ~ "Left"
+  ))
 
 ## recode a factor character variable
 ## fix any misspellings in the manually entered geographic region variables
@@ -677,7 +707,7 @@ total of `r nrow(linelist_cleaned)` cases. There were
 `r fmt_count(linelist_cleaned, sex == "Female")` females and
 `r fmt_count(linelist_cleaned, sex == "Male")` males. 
 
-The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` years. 
+The most affected age group was `r descriptive(linelist_cleaned, "age_category") %>% slice(which.max(n)) %>% pull(age_category)` years. 
 
 
 #### Demographics 
@@ -690,8 +720,8 @@ Cases by age group and definition
 # use if you have lab results in your data
 # get counts and props of age groups by case definition 
 # include column and row totals 
-# descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-#   rename("Age group" = age_group, 
+# descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
+#   rename("Age group" = age_category, 
 #          "Confirmed cases (n)" = Confirmed_n, 
 #          "%" = Confirmed_prop, 
 #          "Probable cases (n)" = Probable_n, 
@@ -707,8 +737,8 @@ Cases by age group and definition
 Cases by age group and sex 
 
 ```{r describe_by_age_group_and_sex}
-descriptive(linelist_cleaned, "age_group", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group" = age_group, 
+descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
+  rename("Age group" = age_category, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
          "Male cases (n)" = Male_n, 
@@ -721,9 +751,9 @@ descriptive(linelist_cleaned, "age_group", "sex", coltotals = TRUE, rowtotals = 
 Alternatively if you would like proportions to be of the total population, use the following. 
 
 ```{r total_props_agegroup_sex}
-descriptive(linelist_cleaned, "age_group", "sex", 
+descriptive(linelist_cleaned, "age_category", "sex", 
             coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group" = age_group, 
+  rename("Age group" = age_category, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
          "Male cases (n)" = Male_n, 
@@ -854,8 +884,10 @@ CFR by age group among inpatients with known outcomes
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
-  rename("Age Group" = age_group, 
+  case_fatality_rate_df(deaths = DIED, group = age_category, mergeCI = TRUE, add_total = TRUE) %>%
+  tidyr::complete(age_category, 
+                  fill = list(deaths = 0, population = 0, cfr = 0, ci = 0)) %>% # Ensure all levels are represented
+  rename("Age Group" = age_category, 
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
@@ -911,14 +943,14 @@ Here, we can see that the Attack Rate for a population of `r format(population, 
 To give attack rate by age group, with appropriate population denominators, use the following code. 
 
 ```{r attack_rate_by_agegroup, warning = FALSE}
-cases <- count(linelist_cleaned, age_group) %>%   # cases for each week
-  left_join(population_data_age, by = "age_group")    # merge population data 
+cases <- count(linelist_cleaned, age_category) %>%   # cases for each week
+  left_join(population_data_age_categories, by = "age_category")    # merge population data 
 
 # attack rate for each week
 attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>% 
   # add the epiweek column to table
-  bind_cols(select(cases, age_group), .) %>% 
-  rename("Age group" = age_group, 
+  bind_cols(select(cases, age_category), .) %>% 
+  rename("Age group" = age_category, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
@@ -1226,7 +1258,7 @@ cowplot::plot_grid(
 
 
 We could then also look at admissions and exits among inpatients by epiweek for operational purposes. 
-```{r describe_admissions_by_epiweek}
+```{r describe_admissions_by_epiweek, warning = FALSE}
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
@@ -1239,26 +1271,22 @@ descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TR
 ```
 
 The exits are among inpatients only. 
-```{r describe_exits_by_epiweek}
+```{r describe_exits_by_epiweek, warning = FALSE}
 # get counts and props of admissions by epiweek among inpatients
 # include column and row totals 
 linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>% 
-descriptive("epiweek", "exit_status", 
+descriptive("epiweek", "exit_status2", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = "epiweek", 
-         "Died facility (n)" = "Dead in facility_n", 
-         "%" = "Dead in facility_prop", 
-         "Died arrival (n)" = "Dead on arrival_n", 
-         "%" = "Dead on arrival_prop",
-         "Discharged (n)" = "Discharged home_n", 
-         "%" = "Discharged home_prop", 
-         "Left against advice (n)" = "Left against medical advice_n", 
-         "%" = "Left against medical advice_prop", 
-         "Transferred MSF facility (n)" = "Transferred (to an MSF facility)_n", 
-         "%" = "Transferred (to an MSF facility)_prop", 
-         "Transferred external facility (n)" = "Transferred (to External Facility)_n", 
-         "%" = "Transferred (to External Facility)_prop", 
+         "Died (n)" = "Died_n", 
+         "%" = "Died_prop", 
+         "Discharged (n)" = "Discharged_n", 
+         "%" = "Discharged_prop", 
+         "Left (n)" = "Left_n", 
+         "%" = "Left_prop", 
+         "Transferred (n)" = "Transferred_n", 
+         "%" = "Transferred_prop", 
          "Total" = "Total"
          ) %>% 
   kable(digits = 2)
@@ -1303,21 +1331,17 @@ descriptive(linelist_cleaned, "patient_origin",
 
 descriptive(filter(linelist_cleaned, 
                    patient_facility_type == "Inpatient"),
-            "patient_origin", "exit_status",
+            "patient_origin", "exit_status2",
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Region" = "patient_origin", 
-         "Died facility (n)" = "Dead in facility_n", 
-         "%" = "Dead in facility_prop", 
-         "Died arrival (n)" = "Dead on arrival_n", 
-         "%" = "Dead on arrival_prop",
-         "Discharged (n)" = "Discharged home_n", 
-         "%" = "Discharged home_prop", 
-         "Left against advice (n)" = "Left against medical advice_n", 
-         "%" = "Left against medical advice_prop", 
-         "Transferred MSF facility (n)" = "Transferred (to an MSF facility)_n", 
-         "%" = "Transferred (to an MSF facility)_prop", 
-         "Transferred external facility (n)" = "Transferred (to External Facility)_n", 
-         "%" = "Transferred (to External Facility)_prop", 
+         "Died (n)" = "Died_n", 
+         "%" = "Died_prop", 
+         "Discharged (n)" = "Discharged_n", 
+         "%" = "Discharged_prop", 
+         "Left (n)" = "Left_n", 
+         "%" = "Left_prop", 
+         "Transferred (n)" = "Transferred_n", 
+         "%" = "Transferred_prop", 
          "Total" = "Total"
          ) %>% 
   kable(digits = 2)

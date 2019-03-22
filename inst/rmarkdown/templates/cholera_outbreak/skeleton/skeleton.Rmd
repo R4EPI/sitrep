@@ -505,6 +505,16 @@ linelist_cleaned$DIED <- grepl("Dead", linelist_cleaned$exit_status)
 ## use this version for coded values (e.g. "DOA", "DD")
 # linelist_cleaned$DIED <- linelist_cleaned$exit_status %in% c("DD", "DOA"))
 
+# create a new grouping for exit status variable 
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(exit_status2 = case_when(
+    exit_status %in% c("Dead on arrival", "Dead in facility") ~ "Died",
+    exit_status %in% c("Transferred (to an MSF facility)", 
+                       "Transferred (to External Facility)")  ~ "Transferred",
+    exit_status == "Discharged home"                          ~ "Discharged",
+    exit_status == "Left against medical advice"              ~ "Left"
+  ))
+
 
 ## recode a factor character variable
 ## fix any misspellings in the manually entered geographic region variables
@@ -1219,7 +1229,7 @@ cowplot::plot_grid(
 
 We could then also look at admissions and exits by epiweek for operational purposes. 
 
-```{r describe_admissions_by_epiweek}
+```{r describe_admissions_by_epiweek, warning = FALSE}
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
@@ -1232,26 +1242,22 @@ descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TR
 ```
 
 The exits are among inpatients only. 
-```{r describe_exits_by_epiweek}
+```{r describe_exits_by_epiweek, warning = FALSE}
 # get counts and props of admissions by epiweek among inpatients
 # include column and row totals 
 linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>% 
-descriptive("epiweek", "exit_status", 
+descriptive("epiweek", "exit_status2", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = "epiweek", 
-         "Died facility (n)" = "Dead in facility_n", 
-         "%" = "Dead in facility_prop", 
-         "Died arrival (n)" = "Dead on arrival_n", 
-         "%" = "Dead on arrival_prop",
-         "Discharged (n)" = "Discharged home_n", 
-         "%" = "Discharged home_prop", 
-         "Left against advice (n)" = "Left against medical advice_n", 
-         "%" = "Left against medical advice_prop", 
-         "Transferred MSF facility (n)" = "Transferred (to an MSF facility)_n", 
-         "%" = "Transferred (to an MSF facility)_prop", 
-         "Transferred external facility (n)" = "Transferred (to External Facility)_n", 
-         "%" = "Transferred (to External Facility)_prop", 
+         "Died (n)" = "Died_n", 
+         "%" = "Died_prop", 
+         "Discharged (n)" = "Discharged_n", 
+         "%" = "Discharged_prop", 
+         "Left (n)" = "Left_n", 
+         "%" = "Left_prop", 
+         "Transferred (n)" = "Transferred_n", 
+         "%" = "Transferred_prop", 
          "Total" = "Total"
          ) %>% 
   kable(digits = 2)
@@ -1296,21 +1302,17 @@ descriptive(linelist_cleaned, "patient_origin",
 
 descriptive(filter(linelist_cleaned, 
                    patient_facility_type == "Inpatient"),
-            "patient_origin", "exit_status",
+            "patient_origin", "exit_status2",
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Region" = "patient_origin", 
-         "Died facility (n)" = "Dead in facility_n", 
-         "%" = "Dead in facility_prop", 
-         "Died arrival (n)" = "Dead on arrival_n", 
-         "%" = "Dead on arrival_prop",
-         "Discharged (n)" = "Discharged home_n", 
-         "%" = "Discharged home_prop", 
-         "Left against advice (n)" = "Left against medical advice_n", 
-         "%" = "Left against medical advice_prop", 
-         "Transferred MSF facility (n)" = "Transferred (to an MSF facility)_n", 
-         "%" = "Transferred (to an MSF facility)_prop", 
-         "Transferred external facility (n)" = "Transferred (to External Facility)_n", 
-         "%" = "Transferred (to External Facility)_prop", 
+         "Died (n)" = "Died_n", 
+         "%" = "Died_prop", 
+         "Discharged (n)" = "Discharged_n", 
+         "%" = "Discharged_prop", 
+         "Left (n)" = "Left_n", 
+         "%" = "Left_prop", 
+         "Transferred (n)" = "Transferred_n", 
+         "%" = "Transferred_prop", 
          "Total" = "Total"
          ) %>% 
   kable(digits = 2)
