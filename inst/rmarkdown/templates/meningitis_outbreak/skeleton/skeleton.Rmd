@@ -540,17 +540,6 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 linelist_cleaned <- group_age_categories(linelist_cleaned, 
                                          years = age_group, 
                                          months = age_group_mon)
-# drop the 0-2 years age level! (need to fix group_age_categories)
-linelist_cleaned <- linelist_cleaned %>% 
-  mutate(age_category = factor(age_category, 
-                                levels = c("0-5 months",
-                                           "6-8 months",
-                                           "9-11 months",
-                                           "12-24 months",
-                                           "3-14 years",
-                                           "15-29 years",
-                                           "30-44 years", 
-                                           "45+ years")))
 
 # Factor (categorical) variables ---------------------------------
 
