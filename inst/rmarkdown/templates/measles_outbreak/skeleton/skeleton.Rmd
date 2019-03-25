@@ -156,7 +156,7 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 
-## get MSF data dictionary for cholera 
+## get MSF data dictionary for measles 
 # linelist_dict <- msf_dict("Measles")
 
 ## Fixing variable names ----------------------
@@ -257,9 +257,10 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
 # )
 
 ## You can use the function msf_dict_rename_helper() to create a template based
-## on the Cholera dictionary. This will copy a rename command like the one above
+## on the measles dictionary. 
+# This will copy a rename command like the one above
 ## to your clipboard.
-# msf_dict_rename_helper("Cholera")
+# msf_dict_rename_helper("Measles")
 ## Paste the result here and add add the column names from linelist_cleaned
 ## to the appropriate variables. PLEASE NOTE: this is not a foolproof solution;
 ## you still need to be aware of what each variable means and what values it
