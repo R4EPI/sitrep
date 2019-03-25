@@ -86,4 +86,9 @@ ap <- plot_age_pyramid(dat,
                        vertical_lines = TRUE) +
   labs(title = "Age groups by case definition and sex")
 print(ap)
+
+# empty group levels will still be displayed
+dat3 <- dat2
+dat3[dat$AGE == "[0,5)", "sex"] <- NA
+plot_age_pyramid(dat3, age_group = "AGE") 
 }
