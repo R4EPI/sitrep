@@ -616,9 +616,15 @@ linelist_cleaned <- linelist_cleaned %>%
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
     grepl("Mening", pastorex_result)                        ~ "Confirmed",
+<<<<<<< HEAD
     fever == "Yes" & stiff_neck == "Yes"                    ~ "Probable",
     fever == "Yes" & 
       petechiae_purpura_at_admission == "Yes"               ~ "Probable",
+=======
+    fever == "Yes" &
+      (stiff_neck == "Yes" |
+         petechiae_purpura_at_admission == "Yes")           ~ "Probable",
+>>>>>>> 9a33bf5cdc94a01c4f69bf9f10d71dd6a96df4ec
     TRUE                                                    ~ "Suspected"
   ))
 
@@ -627,11 +633,20 @@ linelist_cleaned <- linelist_cleaned %>%
 # example: if no vaccine given previously or if unsure, data of last vax
 # should be NA
 
+<<<<<<< HEAD
 linelist_cleaned1 <- linelist_cleaned %>%
   mutate(date_of_last_vaccination = ifelse(
     previously_vaccinated == "Yes", 
     as.Date(date_of_last_vaccination), NA
   ))
+=======
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(date_of_last_vaccination =
+           ifelse(grepl("Yes", vaccinated_meningitis_mvc),
+                  date_of_last_vaccination,
+                  ifelse(grepl("Yes", vaccinated_meningitis_routine),
+                         date_of_last_vaccination, NA)))
+>>>>>>> 9a33bf5cdc94a01c4f69bf9f10d71dd6a96df4ec
 
 # Dropping observations (rows) and variables (columns)--------------------------
 
