@@ -1,12 +1,12 @@
 ---
-title: "Measles outbreak report"
+title: "Meningitis outbreak report"
 output: word_document
 ---
 
 # Introduction to this template
 
 This is a template which can be used to create an automated outbreak situation
-report for measles 
+report for meningitis.
 
 - It is organised by time, place and person. 
 - You can type normal text in white spaces (such as here) and r-code in grey
@@ -84,15 +84,15 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
 ## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
-linelist_raw <- gen_data("Measles") # generates a fake dataset for use as an example in this template
+linelist_raw <- gen_data("Meningitis") # generates a fake dataset for use as an example in this template
 
-## MSF Measles Dictionary ---------------
+## MSF Meningitis Dictionary ---------------
 ## The data dictionary has variable names in the data_element_shortname column. 
 ## Possible values for each variable are specified in the Code and Name columns.
 ## Where code has the shortened values and name has the full text values. 
 
-## get MSF data dictionary for measles 
-linelist_dict <- msf_dict("Measles")
+## get MSF data dictionary for meningitis 
+linelist_dict <- msf_dict("Meningitis")
 
 ## you can look at the standard dictionary by uncommenting the line below
 # View(linelist_dict) 
@@ -143,7 +143,7 @@ linelist_cleaned <- linelist_raw
 ## to save space. For example, Yes/No values will often be coded as 1 or 0 and
 ## sex coded as M or F. This line uses the MSF dictionary to recode these values
 ## back to a human-readable format.
-linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
+linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Meningitis")
 ```
 
 
@@ -156,8 +156,8 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 
-## get MSF data dictionary for cholera 
-# linelist_dict <- msf_dict("Measles")
+## get MSF data dictionary for meningitis 
+# linelist_dict <- msf_dict("Meningitis")
 
 ## Fixing variable names ----------------------
 ## make a copy of your original dataset and name it linelist_cleaned
@@ -182,7 +182,7 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
 ## to save space. For example, Yes/No values will often be coded as 1 or 0 and
 ## sex coded as M or F. This line uses the MSF dictionary to recode these values
 ## back to a human-readable format.
-## linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
+## linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Meningitis")
 ```
 
 
@@ -210,7 +210,7 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
 ## Where code has the shortened values and name has the full text values. 
 ##
 ## - [ ] run this to look at the data dictionary: 
-# linelist_dict <- msf_dict("Measles")
+# linelist_dict <- msf_dict("Meningitis")
 # View(linelist_dict) 
 
 
@@ -257,9 +257,9 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
 # )
 
 ## You can use the function msf_dict_rename_helper() to create a template based
-## on the Cholera dictionary. This will copy a rename command like the one above
-## to your clipboard.
-# msf_dict_rename_helper("Cholera")
+## on the meningitis dictionary. 
+## This will copy a rename command like the one above ## to your clipboard.
+# msf_dict_rename_helper("Meningitis")
 ## Paste the result here and add add the column names from linelist_cleaned
 ## to the appropriate variables. PLEASE NOTE: this is not a foolproof solution;
 ## you still need to be aware of what each variable means and what values it
@@ -361,8 +361,9 @@ population_data_age_categories <- gen_population(total_pop = 5000,
 
 
 ```{r lab_data}
-## OPTIONAL: this section can be used to read in lab data
-## make sure that your unique identifiers (e.g. case_number) match with the linelist! 
+## OPTIONAL: this section can be used to read in separate lab data
+## make sure that your unique identifiers (e.g. case_number) match
+## with the linelist! 
 ## - [ ] DELETE THE FAKE DATA SECTION!!
 
 ## Read data ------------------------------------
@@ -553,7 +554,7 @@ linelist_cleaned$DIED <- grepl("Dead", linelist_cleaned$exit_status)
 ## use this version for coded values (e.g. "DOA", "DD")
 # linelist_cleaned$DIED <- linelist_cleaned$exit_status %in% c("DD", "DOA"))
 
-# create a new grouping for exit status variable 
+# create a new grouping for exit status variable & combine vaccination vars
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(exit_status2 = case_when(
     exit_status %in% c("Dead on arrival", "Dead in facility") ~ "Died",
@@ -561,6 +562,13 @@ linelist_cleaned <- linelist_cleaned %>%
                        "Transferred (to External Facility)")  ~ "Transferred",
     exit_status == "Discharged home"                          ~ "Discharged",
     exit_status == "Left against medical advice"              ~ "Left"
+  ),
+  previously_vaccinated = case_when(
+    grepl("Yes", vaccinated_meningitis_mvc)                   ~ "Yes",
+    grepl("Yes", vaccinated_meningitis_routine)               ~ "Yes",
+    vaccinated_meningitis_routine == "No" &
+      vaccinated_meningitis_mvc == "No"                       ~ "No",
+    TRUE                                                      ~ "Unknown"
   ))
 
 ## recode a factor character variable
@@ -590,10 +598,7 @@ linelist_cleaned <- linelist_cleaned %>%
                                            ">4-24 hours", 
                                            ">24-48 hours", 
                                            ">48 hours")
-  ),
-  previously_vaccinated = fct_relevel(previously_vaccinated, 
-                                       "Yes - verbal",
-                                       "Yes - vaccination card/ink"))
+  ))
 
 # change the order of levels of multiple categorical variables
 linelist_cleaned <- linelist_cleaned %>%
@@ -602,28 +607,31 @@ linelist_cleaned <- linelist_cleaned %>%
            )
 
 # Create a factor variable based on rules from other simple character variables
-# If you have access to lab results, you can create a case definition variable 
+# If you have access to lab results and symptoms, you can create a case
+# definition variable. Please adapt to your outbreak case definition.
 # the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
 # starting from the specific to the general
 # TRUE assigns all remaining rows 
-# linelist_cleaned <- linelist_cleaned %>%
-#   mutate(case_def = case_when(
-#     test_result == "Positive"                               ~ "Confirmed",
-#     test_result == "Negative" & maculopapular_rash == "Yes" ~ "Probable",
-#     test_result == "Negative"                               ~ "Suspected",
-#     TRUE                                                    ~ "Unknown"
-#   ))
+
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(case_def = case_when(
+    grepl("Mening", pastorex_result)                        ~ "Confirmed",
+    fever == "Yes" & stiff_neck == "Yes"                    ~ "Probable",
+    fever == "Yes" & 
+      petechiae_purpura_at_admission == "Yes"               ~ "Probable",
+    TRUE                                                    ~ "Suspected"
+  ))
 
 
 # Fix logically inconsistent variables
-# example: if no vaccine given previously or if unsure, vaccine doses received
+# example: if no vaccine given previously or if unsure, data of last vax
 # should be NA
-#
-# linelist_cleaned <- linelist_cleaned %>%
-#   mutate(previous_vaccine_doses_received = 
-#            ifelse(grepl("Yes", previously_vaccinated), 
-#                   previous_vaccine_doses_received, NA))
 
+linelist_cleaned1 <- linelist_cleaned %>%
+  mutate(date_of_last_vaccination = ifelse(
+    previously_vaccinated == "Yes", 
+    as.Date(date_of_last_vaccination), NA
+  ))
 
 # Dropping observations (rows) and variables (columns)--------------------------
 
@@ -709,18 +717,16 @@ Cases by age group and definition
 # use if you have lab results in your data
 # get counts and props of age groups by case definition 
 # include column and row totals 
-# descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-#   rename("Age group" = age_category, 
-#          "Confirmed cases (n)" = Confirmed_n, 
-#          "%" = Confirmed_prop, 
-#          "Probable cases (n)" = Probable_n, 
-#          "%" = Probable_prop,
-#          "Suspected cases (n)" = Suspected_n, 
-#          "%" = Suspected_prop) %>% 
-#   kable(digits = 2)
+descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>%
+  rename("Age group" = age_category,
+         "Confirmed cases (n)" = Confirmed_n,
+         "%" = Confirmed_prop,
+         "Probable cases (n)" = Probable_n,
+         "%" = Probable_prop,
+         "Suspected cases (n)" = Suspected_n,
+         "%" = Suspected_prop) %>%
+  kable(digits = 2)
 ```
-
-
 
 
 Cases by age group and sex 
@@ -737,7 +743,8 @@ descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals
   kable(digits = 2)
 ```
 
-Alternatively if you would like proportions to be of the total population, use the following. 
+Alternatively if you would like proportions to be of the total linelist,
+use the following. 
 
 ```{r total_props_agegroup_sex}
 descriptive(linelist_cleaned, "age_category", "sex", 
@@ -792,18 +799,6 @@ Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpat
 with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_cleaned$obs_days)` days.
 
 
-Cases by illness severity at visit/admission
-
-```{r describe_by_illness_severity_admission}
-descriptive(linelist_cleaned, 
-            counter = "severity_of_illness", 
-            coltotals = TRUE) %>% 
-  rename("Illness severity" = severity_of_illness, 
-         "Cases (n)" = n, 
-         "%" = prop) %>% 
-  kable(digits = 2)
-```
-
 Cases by vaccination status
 
 ```{r describe_by_vaccination_status}
@@ -816,7 +811,7 @@ descriptive(linelist_cleaned,
   kable(digits = 2)
 ```
 
-`r fmt_count(linelist_cleaned, previously_vaccinated == "Yes - vaccination card/ink" | previously_vaccinated == "Yes - verbal")` reported previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unsure")` were unsure.
+`r fmt_count(linelist_cleaned, previously_vaccinated == "Yes")` reported previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unknown")` were unsure.
 
 #### Case fatality ratio 
 
@@ -950,14 +945,14 @@ attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>%
 ```
 
 
-#### Mortality attributable to measles
+#### Mortality attributable to meningitis
 
 THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTING 
 (e.g. refugee camp). 
 The assumptions don't hold in an open/community setting.
 
-This section gives mortality rates attributable to measles in a closed population. 
-It does not calculate all-cause mortality. It assumes that all measles deaths are 
+This section gives mortality rates attributable to meningitis in a closed population. 
+It does not calculate all-cause mortality. It assumes that all meningitis deaths are 
 among inpatients.
 
 This demonstrates three ways of calculating mortality rate based on 
@@ -977,9 +972,9 @@ pat_obs_time <- linelist_cleaned %>%
   pull(days)
 ```
 
-To produce a mortality rate (attribuatble to measles) per 10,000 people use the 
+To produce a mortality rate (attribuatble to meningitis) per 10,000 people use the 
 following code chunk. 
-This assumes that you are capturing every measles death in your population. 
+This assumes that you are capturing every meningitis death in your population. 
 
 ```{r mortality_rate}
 mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
@@ -990,10 +985,10 @@ mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
   kable(digits = 2)
 ```
 
-To produce a crude mortality rate attributable to measles per 10,000 people per 
-day, use the folowing code chunk. 
-This assumes that you are capturing every measles death in your population and 
-that your population remains stable over the time period of interest. 
+To produce a crude mortality rate attributable to meningitis per 10,000 people
+per day, use the folowing code chunk. 
+This assumes that you are capturing every meningitis death in your population 
+and that your population remains stable over the time period of interest. 
 In this situation the time period of interest is from the beginning of the 
 epiweek your first case occured in, until the last day of the epiweek you are 
 currently reporting on. (see this [presentation](https://www.odi.org/sites/odi.org.uk/files/odi-assets/events-presentations/776.pdf) for more detail)
@@ -1008,8 +1003,8 @@ mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) 
   kable(digits = 2)
 ```
 
-Alternatively, if you are unsure whether your hospital deaths are representative 
-of the wider population, use the following code chunk. 
+Alternatively, if you are unsure whether your hospital deaths are
+representative of the wider population, use the following code chunk. 
 This uses the person days of cases in your linelist with a known outcome. 
 However, this will give you an unreasonably high mortality rate, as 
 those in hospital will only be the most severely affected. 
