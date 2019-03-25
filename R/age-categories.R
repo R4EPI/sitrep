@@ -91,45 +91,75 @@ age_categories <- function(x, breakers = NA,
 #' used. If `FALSE`, there will be one column with the grouped age categories
 #' called "age_category" and a second column indicating age unit called
 #' "age_unit".
+#' 
+#' @param drop_empty_overlaps if `TRUE`, unused levels are dropped if they have
+#' been replaced by a more fine-grained definition and are empty. Practically,
+#' this means that the first level for years, months, and weeks are in
+#' consideration for being removed via [forcats::fct_drop()]
 #'
 #' @return a data frame
 #'
 #' @rdname age_categories
 #' @export
 #'
-group_age_categories <- function(dat, years = NULL, months = NULL, weeks = NULL, days = NULL, one_column = TRUE) {
+group_age_categories <- function(dat, years = NULL, months = NULL, weeks = NULL, days = NULL, one_column = TRUE, drop_empty_overlaps = TRUE) {
+
+  # capture the quosures of the columns
   da <- rlang::enquo(days)
   we <- rlang::enquo(weeks)
   mo <- rlang::enquo(months)
   ye <- rlang::enquo(years)
+
+  # check if they are null
   d <- !is.null(rlang::get_expr(da))
   w <- !is.null(rlang::get_expr(we))
   m <- !is.null(rlang::get_expr(mo))
   y <- !is.null(rlang::get_expr(ye))
+
+  # stop if none of them are filled
   stopifnot(d || w || m || y)
-  l <- length(d | w | m | y)
-  nas <- factor(rep(NA_character_, l))
+
+  # get the columns OR replace them with NA
+  nas <- factor(NA_character_)
   da <- if (d) dplyr::pull(dat, !!da) else nas
   we <- if (w) dplyr::pull(dat, !!we) else nas
   mo <- if (m) dplyr::pull(dat, !!mo) else nas
   ye <- if (y) dplyr::pull(dat, !!ye) else nas
+
+  # If there is one column, prepend the levels with the correct designation
   if (one_column) {
     levels(da) <- if (d) paste(levels(da), "days") else levels(da)
     levels(we) <- if (w) paste(levels(we), "weeks") else levels(we)
     levels(mo) <- if (m) paste(levels(mo), "months") else levels(mo)
     levels(ye) <- if (y) paste(levels(ye), "years") else levels(ye)
   } else {
-    type = NULL
+    type <- NULL
   }
+  dac <- as.character(da)
+  wec <- as.character(we)
+  moc <- as.character(mo)
+  yec <- as.character(ye)
+  # create the resulting column by grabbing first days, weeks, months, and years
   res <- dplyr::case_when(
-    !is.na(da) ~ as.character(da),
-    !is.na(we) ~ as.character(we),
-    !is.na(mo) ~ as.character(mo),
-    TRUE       ~ as.character(ye)
+    !is.na(da) ~ dac,
+    !is.na(we) ~ wec,
+    !is.na(mo) ~ moc,
+    TRUE       ~ yec
   )
-  
-  res <- factor(res, levels = forcats::lvls_union(list(da, we, mo, ye)))
+ 
+  # Combine the levels
+  levs <- forcats::lvls_union(list(da, we, mo, ye))
+  res  <- factor(res, levels = levs)
 
+  if (drop_empty_overlaps) {
+    # Remove any overlapping levels
+    droppings <- c(if (d) levels(we)[1] else NA, 
+                   if (w) levels(mo)[1] else NA, 
+                   if (m) levels(ye)[1] else NA)
+    res       <- forcats::fct_drop(res, droppings)
+  }
+
+  # Add the column(s) and return
   if (one_column) {
     res <- tibble::add_column(dat, age_category = res)
   } else {
