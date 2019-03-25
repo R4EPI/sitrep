@@ -616,15 +616,10 @@ linelist_cleaned <- linelist_cleaned %>%
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
     grepl("Mening", pastorex_result)                        ~ "Confirmed",
-<<<<<<< HEAD
     fever == "Yes" & stiff_neck == "Yes"                    ~ "Probable",
     fever == "Yes" & 
       petechiae_purpura_at_admission == "Yes"               ~ "Probable",
-=======
-    fever == "Yes" &
-      (stiff_neck == "Yes" |
-         petechiae_purpura_at_admission == "Yes")           ~ "Probable",
->>>>>>> 9a33bf5cdc94a01c4f69bf9f10d71dd6a96df4ec
+
     TRUE                                                    ~ "Suspected"
   ))
 
@@ -633,20 +628,11 @@ linelist_cleaned <- linelist_cleaned %>%
 # example: if no vaccine given previously or if unsure, data of last vax
 # should be NA
 
-<<<<<<< HEAD
-linelist_cleaned1 <- linelist_cleaned %>%
+linelist_cleaned <- linelist_cleaned %>%
   mutate(date_of_last_vaccination = ifelse(
     previously_vaccinated == "Yes", 
-    as.Date(date_of_last_vaccination), NA
+    as.Date(date_of_last_vaccination), as.Date(NA)
   ))
-=======
-linelist_cleaned <- linelist_cleaned %>%
-  mutate(date_of_last_vaccination =
-           ifelse(grepl("Yes", vaccinated_meningitis_mvc),
-                  date_of_last_vaccination,
-                  ifelse(grepl("Yes", vaccinated_meningitis_routine),
-                         date_of_last_vaccination, NA)))
->>>>>>> 9a33bf5cdc94a01c4f69bf9f10d71dd6a96df4ec
 
 # Dropping observations (rows) and variables (columns)--------------------------
 
@@ -901,15 +887,15 @@ linelist_cleaned %>%
 ```{r cfr_by_case_def, warning = FALSE, message = FALSE}
 # Use if you have enough confirmed cases for comparative analysis 
 #
-# linelist_cleaned %>%
-#   filter(patient_facility_type == "Inpatient") %>%
-#   case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
-#   rename("Case Definition" = case_def, 
-#          "Deaths" = deaths, 
-#          "Cases" = population, 
-#          "CFR (%)" = cfr, 
-#          "95%CI" = ci) %>% 
-#   knitr::kable(digits = 2)
+linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
+  case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
+  rename("Case Definition" = case_def,
+         "Deaths" = deaths,
+         "Cases" = population,
+         "CFR (%)" = cfr,
+         "95%CI" = ci) %>%
+  knitr::kable(digits = 2)
 ```
 
 
@@ -966,9 +952,9 @@ THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTIN
 (e.g. refugee camp). 
 The assumptions don't hold in an open/community setting.
 
-This section gives mortality rates attributable to meningitis in a closed population. 
-It does not calculate all-cause mortality. It assumes that all meningitis deaths are 
-among inpatients.
+This section gives mortality rates attributable to meningitis in
+a closed population. It does not calculate all-cause mortality. It 'assumes 
+that all meningitis deaths are among inpatients.
 
 This demonstrates three ways of calculating mortality rate based on 
 catchment population (twice) and based on hospital population. 
@@ -987,8 +973,8 @@ pat_obs_time <- linelist_cleaned %>%
   pull(days)
 ```
 
-To produce a mortality rate (attribuatble to meningitis) per 10,000 people use the 
-following code chunk. 
+To produce a mortality rate (attribuatble to meningitis) per 10,000 people
+use the following code chunk. 
 This assumes that you are capturing every meningitis death in your population. 
 
 ```{r mortality_rate}
@@ -1070,8 +1056,8 @@ basic_curve
 ```
 
 
-You could also plot biweekly if needed. There are also the options to do this by 
-month, quarter or year. 
+You could also plot biweekly if needed. There are also the options to do this
+by month, quarter or year. 
 
 ```{r biweekly_epicurve, message = FALSE}
 
@@ -1222,7 +1208,7 @@ ar_plot <- ggplot(ar, aes(x = epiweek, group = 1)) +
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   scale_x_discrete(limits = c(ar$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 100,000)") + 
+  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack rate (per 100,000)") + 
   # change visuals of dates and remove legend title
   epicurve_theme
 ```
@@ -1236,7 +1222,7 @@ cfr_plot <- ggplot(cfr, aes(x = epiweek, group = 1)) +
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   scale_x_discrete(limits = c(cfr$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
+  labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case fatality ratio [95% CI] among inpatients") + 
   # change visuals of dates and remove legend title
   epicurve_theme 
 ```
