@@ -33,6 +33,10 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
   null_strata <- is.null(rlang::get_expr(st))
 
   x <- srvyr::select(x, !! cod, !!st)
+
+  # here we are creating a dummy variable that is either the var or the
+  # combination of var and strata so that we can get the right proportions from
+  # the survey package in a loop below
   if (null_strata) {
     x <- srvyr::group_by(x, !! cod) 
     x <- srvyr::mutate(x, dummy = !! cod)
@@ -41,23 +45,32 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
     x <- srvyr::mutate(x, dummy = sprintf("%s %s", !! cod, !!st))
   }
   
-  p <- unique(dplyr::pull(srvyr::as_tibble(x), !!quote(dummy)))
-
   
 
   y <- srvyr::summarise(x, n = survey_total(var = "se", na.rm = TRUE))
+
+
+
+  # Here we pull out the relevant values for the proportions
+  p <- as.character(unique(dplyr::pull(srvyr::as_tibble(x), !!quote(dummy))))
+  p <- p[!is.na(p)]
   
-  res <- setNames(vector(mode = "list", length = nrow(x)), p)
+  # create an empty vector for the results
+  res <- setNames(vector(mode = "list", length = length(p)), p)
   
-  for (i in p) {
-    res[[p]] <- srvyr::summarise(x, 
-                                 proportion = srvyr::survey_mean(dummy == i, 
-                                                                 proportion = TRUE,
-                                                                 var = "ci",
-                                                                 na.rm = TRUE)
-                                 )
+  # loop over the values
+  for (i in p) { 
+    print(i)
+    if (y[y[[1]] == i, ]$n > 0) {
+      x <- srvyr::mutate(x, this = i)
+      res[[i]] <- survey::svyciprop(~I(dummy == this), x, method = "logit")
+      # construct the res into a data frame with the variables, upper, and lower
+    }
   }
   return(res)
+
+  # dplyr::bind_rows res
+  # dplyr::left_join with y on !! cod (and !! st if it's available)
 
   y$n <- round(y$n)
   y   <- y[!colnames(y) %in% "n_se"]
