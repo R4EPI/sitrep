@@ -756,13 +756,12 @@ descriptive(linelist_cleaned, "age_category", "sex",
 Age pyramid 
 
 There were `r fmt_count(linelist_cleaned, is.na(sex))` cases missing information on sex and 
-`r fmt_count(linelist_cleaned, is.na(age_group))` missing age group.
+`r fmt_count(linelist_cleaned, is.na(age_category))` missing age group.
 
 ```{r age_pyramid, warning=FALSE}
 # plot age pyramid 
- 
 plot_age_pyramid(linelist_cleaned, 
-                 age_group = "age_group", 
+                 age_group = "age_category", 
                  split_by = "sex") + 
   labs(y = "Cases (n)", x = "Age group") + # change axis  labels (nb. x/y flip)
   theme(legend.position = "bottom",     # move legend to bottom
@@ -773,7 +772,9 @@ plot_age_pyramid(linelist_cleaned,
 
 
 
-```{r age_pyramid_under_two, warning=FALSE}
+```{r age_pyramid_under_two, eval = FALSE, warning=FALSE}
+# alternatively you can also plot age in months separately (delete eval = FALSE above)
+
 # plot age pyramid under 2s
 filter(linelist_cleaned, age_years <= 2) %>%
   plot_age_pyramid(age_group = "age_group_mon",
