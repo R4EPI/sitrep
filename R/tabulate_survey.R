@@ -14,7 +14,7 @@
 #' data(api)
 #'
 #' # stratified sample
-#' apistrat %>%
+#' api %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_survey(stype, awards)
 #'
@@ -32,33 +32,52 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
   st  <- rlang::enquo(strata)
   null_strata <- is.null(rlang::get_expr(st))
 
+  x <- srvyr::select(x, !! cod, !!st)
+  if (null_strata) {
+    x <- srvyr::group_by(x, !! cod) 
+    x <- srvyr::mutate(x, dummy = !! cod)
+  } else {
+    x <- srvyr::group_by(x, !!st, !! cod)
+    x <- srvyr::mutate(x, dummy = sprintf("%s %s", !! cod, !!st))
+  }
+  
+  p <- unique(dplyr::pull(srvyr::as_tibble(x), !!quote(dummy)))
 
-  x <- if (null_strata) srvyr::group_by(x, !! cod) else srvyr::group_by(x, !!st, !! cod)
+  
 
+  y <- srvyr::summarise(x, n = survey_total(var = "se", na.rm = TRUE))
+  
+  res <- setNames(vector(mode = "list", length = nrow(x)), p)
+  
+  for (i in p) {
+    res[[p]] <- srvyr::summarise(x, 
+                                 proportion = srvyr::survey_mean(dummy == i, 
+                                                                 proportion = TRUE,
+                                                                 var = "ci",
+                                                                 na.rm = TRUE)
+                                 )
+  }
+  return(res)
 
-  x <- srvyr::summarise(x,
-                        n = survey_total(var = "se", na.rm = TRUE),
-                        proportion = survey_mean(vartype = "ci", na.rm = TRUE)
-                       )
-  x$n <- round(x$n)
-  x   <- x[!colnames(x) %in% "n_se"]
+  y$n <- round(y$n)
+  y   <- y[!colnames(y) %in% "n_se"]
 
   if (!pretty) {
-    return(x)
+    return(y)
   }
 
-  x <- unite_ci(x, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
+  y <- unite_ci(y, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
 
   if (null_strata) {
-    return(x)
+    return(y)
   }
 
-  x <- dplyr::select(x, !! cod, !! st, "n", "prop")
+  y <- dplyr::select(y, !! cod, !! st, "n", "prop")
 
-  x <- tidyr::gather(x, key = "variable", value = "value", -(1:2))
-  x <- tidyr::unite(x, "tmp", !! st, "variable", sep = " ")
-  x <- tidyr::spread(x, "tmp", "value")
-  rename_at(x, dplyr::vars(dplyr::ends_with("prop")),
+  y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
+  y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
+  y <- tidyr::spread(y, "tmp", "value")
+  rename_at(y, dplyr::vars(dplyr::ends_with("prop")),
             ~function(i) rep("% (95% CI)", length(i)))
 }
 

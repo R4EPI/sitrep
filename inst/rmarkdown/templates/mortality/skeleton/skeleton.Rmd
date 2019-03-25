@@ -284,7 +284,7 @@ SYMPTOMS <- SYMPTOMS[-1] # drop the "other" symptoms free text var
 
 # set rows that are not empty to TRUE in each of the symptom variables
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate_at(SYMPTOMS, .funs = funs(ifelse(!is.na(.), TRUE, FALSE)))
+  mutate_at(SYMPTOMS, .funs = ~ifelse(!is.na(.), TRUE, FALSE))
 
 # define the labels for each of the symptoms 
 SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition", 
