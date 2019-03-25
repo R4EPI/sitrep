@@ -320,25 +320,28 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   # set_age_na controlls if age_year_var should be set to NA if age_month_var is sampled
   # same is done for age_month_var and age_day_var
   set_age_na <- TRUE
-  if (dictionary == "Mortality")
+  if (dictionary == "Mortality") {
     set_age_na <- FALSE
+  }
 
   if (!is.na(age_year_var)) {
     # sample 0:120
     dis_output[, age_year_var] <- sample(0:120, numcases, replace = TRUE)
     U2_YEARS <- which(dis_output[, age_year_var] <= 2)
-    if (set_age_na)
+    if (set_age_na) {
       dis_output[U2_YEARS, age_year_var] <- NA
+    }
 
     if (!is.na(age_month_var)) {
       # age_month
       if (length(U2_YEARS) > 0) {
-        dis_output[U2_YEARS, age_month_var] <- sample(0:23,
+        dis_output[U2_YEARS, age_month_var] <- sample(0:24,
                                                       length(U2_YEARS),
                                                       replace = TRUE)
         U2_MONTHS <- which(dis_output[, age_month_var] <= 2)
-        if (set_age_na)
+        if (set_age_na) {
           dis_output[U2_MONTHS, age_month_var] <- NA
+        }
       }
 
       if (!is.na(age_day_var)) {
