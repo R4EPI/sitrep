@@ -485,6 +485,24 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output$muac_mm_left_arm <- sample(80:190, numcases, replace = TRUE)
 
   }
+  if (dictionary == "Vaccination") {
+
+
+    # number of households (1 to 300)
+    dis_output$q14_hh_no <- sample(1:300, numcases, replace = TRUE)
+
+
+    # cluster number (1 to 30)
+    dis_output$q77_what_is_the_cluster_number <- sample(1:30, numcases, replace = TRUE)
+
+
+    # age in yr (0 to 14)
+    dis_output$q10_age_yr <- sample(0:14, numcases, replace = TRUE)
+
+  }
+
+
+
 
   # return dataset as a tibble
   dplyr::as_tibble(dis_output)
