@@ -488,7 +488,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   if (dictionary == "Vaccination") {
 
 
-    # number of households (1 to 300)
+    # household ID (1 to 300)
     dis_output$q14_hh_no <- sample(1:300, numcases, replace = TRUE)
 
 
@@ -496,8 +496,18 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output$q77_what_is_the_cluster_number <- sample(1:30, numcases, replace = TRUE)
 
 
-    # age in yr (0 to 14)
+    # age in yr (0 to 14) - assuming doing vaccination coverage among those aged less than 15 yrs
     dis_output$q10_age_yr <- sample(0:14, numcases, replace = TRUE)
+
+    # age in mth (0 to 11)
+    dis_output$q55_age_mth <- sample(0:11, numcases, replace = TRUE)
+
+
+    # Did the child receive vaccination during the campaign (selected values)
+    dis_output$q17_vaccine_mass <- sample(c("No", "Yes - Verbal", "Yes - Vaccination card",
+                                            "Don't know", "No answer"), numcases, replace = TRUE)
+
+
 
   }
 

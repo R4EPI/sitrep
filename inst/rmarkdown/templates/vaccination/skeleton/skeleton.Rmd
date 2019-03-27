@@ -33,7 +33,7 @@ library(epitools) # for creating 2by2 tables
 library(survey)
 
 
-# devtools::install_github("R4EPI/sitrep")
+devtools::install_github("R4EPI/sitrep")
 
 #set default text size to 16 for plots
 ggplot2::theme_set(theme_bw(base_size = 18))
@@ -43,83 +43,97 @@ ggplot2::theme_set(theme_bw(base_size = 18))
 ```{r data import}
 # read in data
 # you can use rio to read in tabular data (Excel/csv) files
-# read in household data sheet
-vaccine_data_hh <- import("C:/Users/Patrick/Documents/GitHub/sitrep/test_vaccination_coverage_survey.xlsx", 
-                              which = "Level 0 Named")
+## Read data ------------------------------------
+# CSV file
+# vaccination_raw <- rio::import("vaccination.csv")
+#
+# Excel file
+# to read in a specific sheet use "which"
+# vaccination_raw <- rio::import("vaccination.xlsx", which = "Sheet1")
+#
+# Stata data file
+# vaccination_raw <- rio::import("vaccination.dat")
+#
+# For password protected Excel file 
+# use the excel.link package 
+# library(excel.link)
+# vaccineation_raw <- excel.link::xl.read.file("vaccination.xlsx",
+#                                          xl.sheet = "Sheet1",
+#                                          password = askpass::askpass(prompt = "please enter file
+#                                                                      password"))
 
-# read in individual level data sheet
-vaccine_data_indiv <- import("C:/Users/Patrick/Documents/GitHub/sitrep/test_vaccination_coverage_survey.xlsx", 
-                              which = "Level 1 Named")
 
-# read in data dictionary (for reference purposes)
-dictionary <- import("C:/Users/Patrick/Documents/GitHub/sitrep/test_vaccination_coverage_survey.xlsx",
-                      which = "Data Dictionary")
 
-# # read in population data
-# population <- import("your_data",
-#                      which = "sheetName")
+vaccination_raw <- sitrep::gen_data(dictionary = "Vaccination", varnames = "column_name",
+                         numcases = 1000)
+
+
+# Add in information on household number, age and cluster number
+vaccination_raw$q14_hh_no <- sample(1:300, 1000, replace = TRUE)
+
+vaccination_raw$q77_what_is_the_cluster_number <- sample(1:30, 1000, replace = TRUE)
+
+vaccination_raw$q10_age_yr <- sample(0:14, 1000, replace = TRUE)
+
+vaccination_raw$q55_age_mth <- sample(0:11, 1000, replace = TRUE)
+
+vaccination_raw$q17_vaccine_mass <- sample(c("No", "Yes - Verbal", "Yes - Vaccination card",
+                                            "Don't know", "No answer"), 1000, replace = TRUE)
 
 
 ```
+
+```{r read_population_data, warning = FALSE, message = FALSE}
+
+# create fake population by age and sex 
+population_data_age <- tibble(age_group = rep.int(c("0-0", "1-1", "2-2", "3-3", "4-4", "5+"), 2), 
+                              sex = rep.int(c("Male", "Female"), 6))
+population_data_age$population <- as.integer(runif(nrow(population_data_age), 
+                                          min = 500, max = 2000))
+
+```
+
 
 
 ```{r data cleaning}
 
-# Need to merge individual data with household data
-
-# fact_0_id, the merging variable needs to be applied to all relevant rows in the indidivual data set
-# this is achieved using the fill function from the tidyr package
-vaccine_data_indiv <- vaccine_data_indiv %>%
-                      fill(fact_0_id)
-
-# join the individual and household data to form a complete data set
-vaccine_data <-  vaccine_data_hh %>%
-                left_join(vaccine_data_indiv, by = "fact_0_id")
-
-
 # clean up the column names
-colnames(vaccine_data) <- clean_labels(colnames(vaccine_data))
-
-
-# Convert age group variables to numeric variables
-vaccine_data$l1_q10_age_yr <- as.numeric(vaccine_data$l1_q10_age_yr)
-vaccine_data$l1_q55_age_mth <- as.numeric(vaccine_data$l1_q55_age_mth)
-
-
-# Create an age group in months from the year variable
-vaccine_data$age_group <- vaccine_data$l1_q10_age_yr
-
-vaccine_data$age_group[vaccine_data$l1_q55_age_mth < 12 | vaccine_data$l1_q10_age_yr == 0] <- "0-11"
-vaccine_data$age_group[vaccine_data$age_group >= 1 & vaccine_data$age_group < 2] <- "12-23"
-vaccine_data$age_group[vaccine_data$age_group >= 2 & vaccine_data$age_group < 3] <- "24-35"
-vaccine_data$age_group[vaccine_data$age_group >= 3 & vaccine_data$age_group < 4] <- "36-47"
-vaccine_data$age_group[vaccine_data$age_group >= 4 & vaccine_data$age_group < 5] <- "48-59"
-vaccine_data$age_group[vaccine_data$age_group >= 5 & vaccine_data$age_group < 15] <- "60+"
+colnames(vaccination_raw) <- clean_labels(colnames(vaccination_raw))
 
 
 # Additional variable name cleaning and creation of vaccination status binary variable
-vaccine_data_clean <- vaccine_data %>%
-                      mutate(sex = l1_q5_sex,
-                             vaccination_status = l1_q2_vaccine_9months,
-                             area = l0_q4_settlement,
-                             cluster = l0_q77_what_is_the_cluster_number,
-                             vaccination_status_simple = ifelse(vaccination_status == "Yes - Verbal"
-                                                                | vaccination_status == "Yes - Vaccination card", "Yes",
-                                                                ifelse(vaccination_status == "No" |
-                                                                         vaccination_status == "Don't know", "No", NA)))
-
+vaccination_clean <- vaccination_raw %>%
+                      mutate(age_in_years = as.integer(q10_age_yr),
+                             age_in_months = as.integer(q55_age_mth),
+                             age_group = sitrep::age_categories(age_in_years, breakers = c(0,1,2,3,4,5)),
+                             sex = q5_sex,
+                             vaccination_routine = q2_vaccine_9months,
+                             vaccination_sia = q32_vaccine_sia,
+                             vaccine_mass = q17_vaccine_mass,
+                             disease_diagnosis = q47_disease_diagnosis,
+                             area = q4_settlement,
+                             cluster = q77_what_is_the_cluster_number)
+                             
 
 ```
 
 
-``` {r survey design}
-# TODO - figure out weights to use and design effect
+```{r survey weights}
+######## WEIGHTING 
+
+vaccination_clean <- add_weights(vaccination_clean, population_data_age, age_group, sex)
+```
+
+
+
+
+```{r survey design}
 
 # we first need to create a survey design that reflects the study
 survey_design <- svydesign(
   ids = ~ cluster, # cluster id is stored as cluster
   weights = weights, #sampling weights applied to this example
-  data = vaccine_data_clean
+  data = vaccination_raw_clean
 )
 ```
 
@@ -131,7 +145,7 @@ Children included in the survey by sex
 ```{r participant description by sex}
 
 # get counts and proportions of participants by sex
-descriptive(vaccine_data_clean, "sex") %>%
+descriptive(vaccination_raw_clean, "sex") %>%
   # change table column names 
   # rename( new variable name = old variable name)
   rename("Sex" = sex, "Number of participants (n)" = n,"Proportion (%)" =  prop) %>% 
@@ -143,7 +157,7 @@ Children included in the survey by age group
 ```{r participant description by age group}
 
 # get counts and proportions of participants by age group
-descriptive(vaccine_data_clean, "age_group") %>%
+descriptive(vaccination_raw_clean, "age_group") %>%
   # change table column names 
   # rename( new variable name = old variable name)
   rename("Age group" = age_group, "Number of participants (n)" = n,"Proportion (%)" =  prop) %>% 
@@ -154,7 +168,7 @@ Age pyramid
 
 ```{r age_pyramid, warning=FALSE}
 # plot age pyramid 
-plot_age_pyramid(vaccine_data_clean, age_group = "age_group", split_by = "sex") + 
+plot_age_pyramid(vaccination_raw_clean, age_group = "age_group", split_by = "sex") + 
   labs(x = "Number of included children", y = "Age group (months)") +                    # change axis labels
   theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
 ```
@@ -164,21 +178,21 @@ plot_age_pyramid(vaccine_data_clean, age_group = "age_group", split_by = "sex") 
 Accepting equal validity from self-reported and card-reported vaccination status
 ```{r vaccination coverage overall}
 
-suvery_ciprob(suvery_design, "vaccination_status_simple") %>%
+survey_ciprob(survey_design, "vaccination_status_simple") %>%
   kable()
 ```
 
 
 ```{r vaccination coverage by sex}
 
-suvery_ciprob(suvery_design, "vaccine_status_simple", "sex") %>%
+survey_ciprob(survey_design, "vaccine_status_simple", "sex") %>%
   kable()
 ```
 
 
 ```{r vaccination coverage by age group}
 
-suvery_ciprob(suvery_design, "vaccine_status_simple", "age_group") %>%
+survey_ciprob(survey_design, "vaccine_status_simple", "age_group") %>%
   kable()
 ```
 
