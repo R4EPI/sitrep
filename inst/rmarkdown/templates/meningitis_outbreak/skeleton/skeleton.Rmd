@@ -30,6 +30,13 @@ You will need to install these before starting.
 We will be using the following packages. Some of these packages automatically
 install other packages they need to work (called dependencies).
 
+These packages can be quite large and may take a while to download in the
+field. If you have access to a USB key with these packages, it makes sense to
+copy and paste the packages into Program Files/R/R-[version]/library.
+
+
+The packages used in this template are:
+
 - *knitr*: for creating output documents
 - *dplyr*: for cleaning/shaping data
 - *forcats*: for cleaning/shaping data
