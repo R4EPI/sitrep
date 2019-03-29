@@ -21,8 +21,41 @@ report for meningitis.
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
 - For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
-- ADD LIST ON WHICH PACKAGES WILL BE USED FOR WHAT REASONS! AND HOW TO INSTALL
-- OTHER INFO TO ADD??
+
+
+## Installing and loading required packages 
+
+Several packages are required for different aspects of  analysis with *R*. 
+You will need to install these before starting. 
+We will be using the following packages. Some of these packages automatically
+install other packages they need to work (called dependencies).
+
+- *knitr*: for creating output documents
+- *dplyr*: for cleaning/shaping data
+- *forcats*: for cleaning/shaping data
+- *ggplot2*: for plotting charts
+- *sitrep*: for MSF field epi functions
+- *incidence*: for epicurves
+- *aweek*: for creating epiweeks
+- *epitools*: for 2x2 tables and other epi goodness
+- *sf*: for encoding spatial vector data
+- *ggspatial*: for plotting maps
+
+
+
+```{r, echo = T, eval=FALSE, results='hide', message=FALSE, warning=FALSE}
+# Installing required packages for this case study
+required_packages <- c("knitr", "dplyr", "forcats", "ggplot2",
+                       "sitrep", "incidence", "aweek", "epitools",
+                       "sf", "ggspatial") 
+
+for(pkg in required_packages){
+  if(!pkg %in% rownames(installed.packages())) {
+    install.packages(pkg)
+  }
+}
+```
+
 
 
 ```{r setup, include=FALSE}
@@ -364,6 +397,10 @@ population_data_age_categories <- gen_population(total_pop = 5000,
 ## OPTIONAL: this section can be used to read in separate lab data
 ## make sure that your unique identifiers (e.g. case_number) match
 ## with the linelist! 
+##
+## Generally, lab data is included with the meningitis line list.
+## If you have additional lab data, you can use this section.
+##
 ## - [ ] DELETE THE FAKE DATA SECTION!!
 
 ## Read data ------------------------------------
@@ -376,20 +413,21 @@ population_data_age_categories <- gen_population(total_pop = 5000,
 ## make sure your unique ID variable name matches!
 
 ## Fake data ------------------------------------ 
-## THE BELOW CAN BE DELETED IF YOU HAVE YOUR OWN (REAL) LABORATORY DATA! 
-## its just to be able to demonstrate script in this template
-
-# generate artificial lab tests results
-lab_results <- linelist_cleaned %>% 
-                select(case_number) %>% 
-                mutate(test_result = sample(c("Positive", "Negative"),
-                                            nrow(linelist_cleaned), 
-                                            replace = TRUE)
-                       )
-
-# merging linelist with lab dataset 
-linelist_cleaned <- left_join(linelist_cleaned, lab_results, 
-                              by = "case_number")
+## THE GENERATE SECTION CAN BE DELETED IF YOU HAVE YOUR 
+## OWN (REAL) LABORATORY DATA! 
+## it's just to be able to demonstrate script in this template
+# 
+# # generate artificial lab tests results
+# lab_results <- linelist_cleaned %>% 
+#                 select(case_number) %>% 
+#                 mutate(test_result = sample(c("Positive", "Negative"),
+#                                             nrow(linelist_cleaned), 
+#                                             replace = TRUE)
+#                        )
+# 
+# # merging linelist with lab dataset 
+# linelist_cleaned <- left_join(linelist_cleaned, lab_results, 
+#                               by = "case_number")
 ```
 
 
@@ -812,7 +850,35 @@ descriptive(linelist_cleaned,
   kable(digits = 2)
 ```
 
-`r fmt_count(linelist_cleaned, previously_vaccinated == "Yes")` reported previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unknown")` were unsure.
+`r fmt_count(linelist_cleaned, previously_vaccinated == "Yes")` reported
+previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unknown")` were unsure.
+
+
+Cases by lab results
+
+You can describe the lab results by the detailed Pastorex result.
+
+```{r describe_detailed_pastorex}
+descriptive(linelist_cleaned, 
+            counter = "pastorex_result", 
+            coltotals = TRUE) %>% 
+  rename("Pastorex result" = pastorex_result, 
+         "Cases (n)" = n, 
+         "%" = prop) %>% 
+  kable(digits = 2)
+```
+
+If available, you can also describe the PCR results you have.
+
+```{r describe_pcr}
+descriptive(linelist_cleaned, 
+            counter = "ti_result_pcr", 
+            coltotals = TRUE) %>% 
+  rename("PCR result" = ti_result_pcr, 
+         "Cases (n)" = n, 
+         "%" = prop) %>% 
+  kable(digits = 2)
+```
 
 #### Case fatality ratio 
 
@@ -1018,6 +1084,7 @@ mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
          "95%CI" = ci) %>% 
   kable(digits = 2)
 ```
+
 
 
 ### Time
