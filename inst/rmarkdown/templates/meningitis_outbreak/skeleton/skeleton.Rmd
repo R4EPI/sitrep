@@ -35,26 +35,18 @@ field. If you have access to a USB key with these packages, it makes sense to
 copy and paste the packages into Program Files/R/R-[version]/library.
 
 
-The packages used in this template are:
-
-- *knitr*: for creating output documents
-- *dplyr*: for cleaning/shaping data
-- *forcats*: for cleaning/shaping data
-- *ggplot2*: for plotting charts
-- *sitrep*: for MSF field epi functions
-- *incidence*: for epicurves
-- *aweek*: for creating epiweeks
-- *epitools*: for 2x2 tables and other epi goodness
-- *sf*: for encoding spatial vector data
-- *ggspatial*: for plotting maps
-
-
-
 ```{r, echo = T, eval=FALSE, results='hide', message=FALSE, warning=FALSE}
-# Installing required packages for this case study
-required_packages <- c("knitr", "dplyr", "forcats", "ggplot2",
-                       "sitrep", "incidence", "aweek", "epitools",
-                       "sf", "ggspatial") 
+# Installing required packages for this template
+required_packages <- c("knitr",       # create output docs
+                       "dplyr",       # clean/shape data
+                       "forcats",     # clean/shape data
+                       "ggplot2",     # create plots and charts
+                       "sitrep",      # MSF field epi functions
+                       "incidence",   # create epicurves
+                       "aweek",       # define epi weeks
+                       "epitools",    # 2x2 tables and other epi goodness
+                       "sf",          # encode spatial vector data
+                       "ggspatial")   # plot maps
 
 for(pkg in required_packages){
   if(!pkg %in% rownames(installed.packages())) {
