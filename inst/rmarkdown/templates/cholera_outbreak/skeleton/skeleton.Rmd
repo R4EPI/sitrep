@@ -6,7 +6,7 @@ output: word_document
 # Introduction to this template
 
 This is a template which can be used to create an automated outbreak situation
-report for cholera. 
+report for cholera.
 
 - It is organised by time, place and person. 
 - You can type normal text in white spaces (such as here) and r-code in grey
@@ -21,35 +21,55 @@ report for cholera.
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
 - For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
-- ADD LIST ON WHICH PACKAGES WILL BE USED FOR WHAT REASONS! AND HOW TO INSTALL
-- OTHER INFO TO ADD??
 
 
-```{r setup, include=FALSE}
+## Installing and loading required packages 
+
+Several packages are required for different aspects of  analysis with *R*. 
+You will need to install these before starting. 
+We will be using the following packages. Some of these packages automatically
+install other packages they need to work (called dependencies).
+
+These packages can be quite large and may take a while to download in the
+field. If you have access to a USB key with these packages, it makes sense to
+copy and paste the packages into Program Files/R/R-[version]/library.
+
+
+```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
 # hide all code chunks in the output, but show errors
 knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
 # set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
 
+# Installing required packages for this template
+required_packages <- c("knitr",       # create output docs
+                       "dplyr",       # clean/shape data
+                       "forcats",     # clean/shape data
+                       "ggplot2",     # create plots and charts
+                       "sitrep",      # MSF field epi functions
+                       "incidence",   # create epicurves
+                       "aweek",       # define epi weeks
+                       "epitools",    # 2x2 tables and other epi goodness
+                       "sf",          # encode spatial vector data
+                       "ggspatial")   # plot maps
 
-library(knitr) # for creating output doc
-library(dplyr) # for cleaning/shaping data
-library(ggplot2) # for plotting diagrams
+for (pkg in required_packages) {
+  # install packages if not already present
+  if (!pkg %in% rownames(installed.packages())) {
+    install.packages(pkg)
+  }
+  
+  # load packages to this current session 
+  library(pkg, character.only = TRUE)
+}
 
-# epi packages
-library(sitrep) # for msf field epi functions
-library(incidence) # for epicurves
-library(aweek) # for creating epiweeks
-library(epitools) # for creating 2by2 tables
-
-# spatial packages
-library(sf)
-library(ggspatial)
 
 # set default text size to 16 for plots
 # give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
 ```
+
+
 
 
 
