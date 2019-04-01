@@ -21,8 +21,39 @@ report for measles
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
 - For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
-- ADD LIST ON WHICH PACKAGES WILL BE USED FOR WHAT REASONS! AND HOW TO INSTALL
-- OTHER INFO TO ADD??
+
+
+## Installing and loading required packages 
+
+Several packages are required for different aspects of  analysis with *R*. 
+You will need to install these before starting. 
+We will be using the following packages. Some of these packages automatically
+install other packages they need to work (called dependencies).
+
+These packages can be quite large and may take a while to download in the
+field. If you have access to a USB key with these packages, it makes sense to
+copy and paste the packages into Program Files/R/R-[version]/library.
+
+
+```{r, echo = T, eval=FALSE, results='hide', message=FALSE, warning=FALSE}
+# Installing required packages for this template
+required_packages <- c("knitr",       # create output docs
+                       "dplyr",       # clean/shape data
+                       "forcats",     # clean/shape data
+                       "ggplot2",     # create plots and charts
+                       "sitrep",      # MSF field epi functions
+                       "incidence",   # create epicurves
+                       "aweek",       # define epi weeks
+                       "epitools",    # 2x2 tables and other epi goodness
+                       "sf",          # encode spatial vector data
+                       "ggspatial")   # plot maps
+
+for(pkg in required_packages){
+  if(!pkg %in% rownames(installed.packages())) {
+    install.packages(pkg)
+  }
+}
+```
 
 
 ```{r setup, include=FALSE}
