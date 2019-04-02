@@ -15,8 +15,8 @@ report for acute jaundice syndrome (AJS).
     [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
 - Introductions and contents of sections are within square brackets "[...]" and
     can be deleted as appropriate
-- Examples of inline code (to automate updating numbers, e.g. in the "Person section"), can
-    similarly be removed/updated
+- Examples of inline code (to automate updating numbers, e.g. in the "Person
+    section"), can similarly be removed/updated
 - Code itself can be deleted, but as a word of caution: make sure you aren't
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
@@ -511,7 +511,8 @@ linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset,
 # Numeric variables --------------------------------- 
 # create number of days under observation
 linelist_cleaned <- mutate(linelist_cleaned, 
-                           obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
+                           obs_days = 
+                             as.numeric(date_of_exit - date_of_admission))
 
 
 # Age group variables ---------------------------------
@@ -569,20 +570,22 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 
 ## to combine different age categories use the following function 
 ## this prioritises the smaller unit, i.e. if given months and years, will return months first
-linelist_cleaned <- group_age_categories(linelist_cleaned, 
-                                         years = age_group, 
-                                         months = age_group_mon)
-# drop the 0-2 years age level! (need to fix group_age_categories)
-linelist_cleaned <- linelist_cleaned %>% 
-  mutate(age_category = factor(age_category, 
-                                levels = c("0-5 months",
-                                           "6-8 months",
-                                           "9-11 months",
-                                           "12-24 months",
-                                           "3-14 years",
-                                           "15-29 years",
-                                           "30-44 years", 
-                                           "45+ years")))
+## generally, these delineations are NOT used for AJS.
+##
+# linelist_cleaned <- group_age_categories(linelist_cleaned, 
+#                                          years = age_group, 
+#                                          months = age_group_mon)
+# # drop the 0-2 years age level! (need to fix group_age_categories)
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(age_category = factor(age_category, 
+#                                 levels = c("0-5 months",
+#                                            "6-8 months",
+#                                            "9-11 months",
+#                                            "12-24 months",
+#                                            "3-14 years",
+#                                            "15-29 years",
+#                                            "30-44 years", 
+#                                            "45+ years")))
 
 # Factor (categorical) variables ---------------------------------
 
@@ -632,11 +635,7 @@ linelist_cleaned <- linelist_cleaned %>%
                                 levels = c("0-4 hours", 
                                            ">4-24 hours", 
                                            ">24-48 hours", 
-                                           ">48 hours")
-  ),
-  previously_vaccinated = fct_relevel(previously_vaccinated, 
-                                       "Yes - verbal",
-                                       "Yes - vaccination card/ink"))
+                                           ">48 hours")))
 
 # change the order of levels of multiple categorical variables
 linelist_cleaned <- linelist_cleaned %>%
@@ -649,36 +648,29 @@ linelist_cleaned <- linelist_cleaned %>%
 # the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
 # starting from the specific to the general
 # TRUE assigns all remaining rows 
-# linelist_cleaned <- linelist_cleaned %>%
-#   mutate(case_def = case_when(
-#     test_result == "Positive"                               ~ "Confirmed",
-#     test_result == "Negative" & maculopapular_rash == "Yes" ~ "Probable",
-#     test_result == "Negative"                               ~ "Suspected",
-#     TRUE                                                    ~ "Unknown"
-#   ))
-
-
-# Fix logically inconsistent variables
-# example: if no vaccine given previously or if unsure, vaccine doses received
-# should be NA
+# You MUST modify this section to match your case definition. The below
+# uses positive RDT for Confirmed and epi link only for Probable.
 #
-# linelist_cleaned <- linelist_cleaned %>%
-#   mutate(previous_vaccine_doses_received = 
-#            ifelse(grepl("Yes", previously_vaccinated), 
-#                   previous_vaccine_doses_received, NA))
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(case_def = case_when(
+    hep_e_rdt == "Positive"                               ~ "Confirmed",
+    hep_e_rdt != "Positive" & other_cases_in_hh == "Yes"  ~ "Probable",
+    hep_e_rdt == "Negative"                               ~ "Suspected",
+    TRUE                                                  ~ "Unknown"
+  ))
 
 
 # Dropping observations (rows) and variables (columns)--------------------------
 
 # only keep variables with a case ID and a date of consultation
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
+  filter(!is.na(case_number) & !is.na(date_of_admission)) 
 
 # OPTIONAL: drop several variables you might not want
-# the negative sign before the "c"" in select drops those variabels 
+# the negative sign before the "c"" in select drops those variables
 # without the negative you would only keep the names variables
-# linelist_cleaned <- linelist_cleaned %>% 
-#   select(-c(msf_involvement, treatment_facility_name))
+# linelist_cleaned <- linelist_cleaned %>%
+#   select(-c(msf_involvement, treatment_facility_site))
 
 ```
 
@@ -752,15 +744,15 @@ Cases by age group and definition
 # use if you have lab results in your data
 # get counts and props of age groups by case definition 
 # include column and row totals 
-# descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-#   rename("Age group" = age_category, 
-#          "Confirmed cases (n)" = Confirmed_n, 
-#          "%" = Confirmed_prop, 
-#          "Probable cases (n)" = Probable_n, 
-#          "%" = Probable_prop,
-#          "Suspected cases (n)" = Suspected_n, 
-#          "%" = Suspected_prop) %>% 
-#   kable(digits = 2)
+descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>%
+  rename("Age group" = age_category,
+         "Confirmed cases (n)" = Confirmed_n,
+         "%" = Confirmed_prop,
+         "Probable cases (n)" = Probable_n,
+         "%" = Probable_prop,
+         "Suspected cases (n)" = Suspected_n,
+         "%" = Suspected_prop) %>%
+  kable(digits = 2)
 ```
 
 
@@ -845,19 +837,6 @@ descriptive(linelist_cleaned,
   kable(digits = 2)
 ```
 
-Cases by vaccination status
-
-```{r describe_by_vaccination_status}
-descriptive(linelist_cleaned, 
-            counter = "previously_vaccinated", 
-            coltotals = TRUE) %>% 
-  rename("Vaccination status" = previously_vaccinated, 
-         "Cases (n)" = n, 
-         "%" = prop) %>% 
-  kable(digits = 2)
-```
-
-`r fmt_count(linelist_cleaned, previously_vaccinated == "Yes - vaccination card/ink" | previously_vaccinated == "Yes - verbal")` reported previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unsure")` were unsure.
 
 #### Case fatality ratio 
 
@@ -993,8 +972,8 @@ attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>%
 
 #### Mortality attributable to AJS
 
-THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN A CLOSED SETTING 
-(e.g. refugee camp). 
+THIS WHOLE MORTALITY SECTION SHOULD BE DELETED UNLESS YOU ARE IN 
+A CLOSED SETTING (e.g. refugee camp). 
 The assumptions don't hold in an open/community setting.
 
 This section gives mortality rates attributable to AJS in a closed population. 
@@ -1049,8 +1028,8 @@ mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) 
   kable(digits = 2)
 ```
 
-Alternatively, if you are unsure whether your hospital deaths are representative 
-of the wider population, use the following code chunk. 
+Alternatively, if you are unsure whether your hospital deaths are
+representative of the wider population, use the following code chunk. 
 This uses the person days of cases in your linelist with a known outcome. 
 However, this will give you an unreasonably high mortality rate, as 
 those in hospital will only be the most severely affected. 
@@ -1146,13 +1125,14 @@ plot(inc_week_7_gender, show_cases = FALSE, border = "black", n_breaks = nrow(in
 ```
 
 
-You could similarly stratify by vaccination status (or any other categorical variable!)
+You could similarly stratify by water source (or any other categorical 
+variable!)
 
-```{r incidence_by_vax_status, message = FALSE}
-inc_week_7_vax <- incidence(linelist_cleaned$date_of_onset, 
+```{r incidence_by_water_source, message = FALSE}
+inc_week_7_water <- incidence(linelist_cleaned$date_of_onset, 
                         interval = "Monday week", 
-                        groups = linelist_cleaned$previously_vaccinated)
-plot(inc_week_7_vax, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_vax)) + 
+                        groups = linelist_cleaned$water_source)
+plot(inc_week_7_water, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_water)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "Cases (n)", 
