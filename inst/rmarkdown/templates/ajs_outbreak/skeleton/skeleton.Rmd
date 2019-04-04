@@ -35,7 +35,12 @@ field. If you have access to a USB key with these packages, it makes sense to
 copy and paste the packages into Program Files/R/R-[version]/library.
 
 
-```{r, echo = T, eval=FALSE, results='hide', message=FALSE, warning=FALSE}
+```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
+# hide all code chunks in the output, but show errors
+knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
+# set default NA to - in output, define figure width/height
+options(knitr.kable.NA = "-")
+
 # Installing required packages for this template
 required_packages <- c("knitr",       # create output docs
                        "dplyr",       # clean/shape data
@@ -48,35 +53,16 @@ required_packages <- c("knitr",       # create output docs
                        "sf",          # encode spatial vector data
                        "ggspatial")   # plot maps
 
-for(pkg in required_packages){
-  if(!pkg %in% rownames(installed.packages())) {
+for (pkg in required_packages) {
+  # install packages if not already present
+  if (!pkg %in% rownames(installed.packages())) {
     install.packages(pkg)
   }
+  
+  # load packages to this current session 
+  library(pkg, character.only = TRUE)
 }
-```
 
-
-```{r setup, include=FALSE}
-# hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
-# set default NA to - in output, define figure width/height
-options(knitr.kable.NA = "-")
-
-
-library(knitr) # for creating output doc
-library(dplyr) # for cleaning/shaping data
-library(forcats) # for cleaning/shaping data (factors)
-library(ggplot2) # for plotting diagrams
-
-# epi packages
-library(sitrep) # for msf field epi functions
-library(incidence) # for epicurves
-library(aweek) # for creating epiweeks
-library(epitools) # for creating 2by2 tables
-
-# spatial packages
-library(sf)
-library(ggspatial)
 
 # set default text size to 16 for plots
 # give classic black/white axes for plots
@@ -655,8 +641,7 @@ linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
     hep_e_rdt == "Positive"                               ~ "Confirmed",
     hep_e_rdt != "Positive" & other_cases_in_hh == "Yes"  ~ "Probable",
-    hep_e_rdt == "Negative"                               ~ "Suspected",
-    TRUE                                                  ~ "Unknown"
+    TRUE                                                  ~ "Suspected"
   ))
 
 
@@ -955,7 +940,7 @@ To give attack rate by age group, with appropriate population denominators, use 
 
 ```{r attack_rate_by_agegroup, warning = FALSE}
 cases <- count(linelist_cleaned, age_group) %>%   # cases for each week
-  left_join(population_data_age_categories, by = "age_group")    # merge population data 
+  left_join(population_data_age, by = "age_group")    # merge population data 
 
 # attack rate for each week
 attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>% 
