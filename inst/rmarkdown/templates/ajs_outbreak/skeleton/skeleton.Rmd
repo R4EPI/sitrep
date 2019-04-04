@@ -382,13 +382,13 @@ population_data_age_months <- gen_population(total_pop = 5000,
 
 
 # generate population data by age categories in months and years 
-population_data_age_categories <- gen_population(total_pop = 5000,
-  groups = c("0-5 months", "6-8 months", "9-11 months","12-24 months",
-             "3-14 years", "15-29 years", "30-44 years", "45+ years"),
-  proportions = c(0.278, 0.11, 0.18, 0.26, 0.278, 0.26, 0.11, 0.07),
-  strata = NULL) %>%
-  rename(age_category = groups,
-    population = n)
+# population_data_age_categories <- gen_population(total_pop = 5000,
+#   groups = c("0-5 months", "6-8 months", "9-11 months","12-24 months",
+#              "3-14 years", "15-29 years", "30-44 years", "45+ years"),
+#   proportions = c(0.278, 0.11, 0.18, 0.26, 0.278, 0.26, 0.11, 0.07),
+#   strata = NULL) %>%
+#   rename(age_category = groups,
+#     population = n)
 ```
 
 
@@ -410,17 +410,17 @@ population_data_age_categories <- gen_population(total_pop = 5000,
 ## THE BELOW CAN BE DELETED IF YOU HAVE YOUR OWN (REAL) LABORATORY DATA! 
 ## its just to be able to demonstrate script in this template
 
-# generate artificial lab tests results
-lab_results <- linelist_cleaned %>% 
-                select(case_number) %>% 
-                mutate(test_result = sample(c("Positive", "Negative"),
-                                            nrow(linelist_cleaned), 
-                                            replace = TRUE)
-                       )
-
-# merging linelist with lab dataset 
-linelist_cleaned <- left_join(linelist_cleaned, lab_results, 
-                              by = "case_number")
+# # generate artificial lab tests results
+# lab_results <- linelist_cleaned %>% 
+#                 select(case_number) %>% 
+#                 mutate(test_result = sample(c("Positive", "Negative"),
+#                                             nrow(linelist_cleaned), 
+#                                             replace = TRUE)
+#                        )
+# 
+# # merging linelist with lab dataset 
+# linelist_cleaned <- left_join(linelist_cleaned, lab_results, 
+#                               by = "case_number")
 ```
 
 
@@ -731,7 +731,7 @@ total of `r nrow(linelist_cleaned)` cases. There were
 `r fmt_count(linelist_cleaned, sex == "Female")` females and
 `r fmt_count(linelist_cleaned, sex == "Male")` males. 
 
-The most affected age group was `r descriptive(linelist_cleaned, "age_category") %>% slice(which.max(n)) %>% pull(age_category)` years. 
+The most affected age group was `r descriptive(linelist_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` years. 
 
 
 #### Demographics 
@@ -744,8 +744,8 @@ Cases by age group and definition
 # use if you have lab results in your data
 # get counts and props of age groups by case definition 
 # include column and row totals 
-descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>%
-  rename("Age group" = age_category,
+descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>%
+  rename("Age group" = age_group,
          "Confirmed cases (n)" = Confirmed_n,
          "%" = Confirmed_prop,
          "Probable cases (n)" = Probable_n,
@@ -761,8 +761,8 @@ descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowt
 Cases by age group and sex 
 
 ```{r describe_by_age_group_and_sex}
-descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group" = age_category, 
+descriptive(linelist_cleaned, "age_group", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
+  rename("Age group" = age_group, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
          "Male cases (n)" = Male_n, 
@@ -775,9 +775,9 @@ descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals
 Alternatively if you would like proportions to be of the total population, use the following. 
 
 ```{r total_props_agegroup_sex}
-descriptive(linelist_cleaned, "age_category", "sex", 
+descriptive(linelist_cleaned, "age_group", "sex", 
             coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group" = age_category, 
+  rename("Age group" = age_group, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
          "Male cases (n)" = Male_n, 
@@ -895,10 +895,10 @@ CFR by age group among inpatients with known outcomes
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, group = age_category, mergeCI = TRUE, add_total = TRUE) %>%
-  tidyr::complete(age_category, 
+  case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
+  tidyr::complete(age_group, 
                   fill = list(deaths = 0, population = 0, cfr = 0, ci = 0)) %>% # Ensure all levels are represented
-  rename("Age Group" = age_category, 
+  rename("Age Group" = age_group, 
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
@@ -954,14 +954,14 @@ Here, we can see that the Attack Rate for a population of `r format(population, 
 To give attack rate by age group, with appropriate population denominators, use the following code. 
 
 ```{r attack_rate_by_agegroup, warning = FALSE}
-cases <- count(linelist_cleaned, age_category) %>%   # cases for each week
-  left_join(population_data_age_categories, by = "age_category")    # merge population data 
+cases <- count(linelist_cleaned, age_group) %>%   # cases for each week
+  left_join(population_data_age_categories, by = "age_group")    # merge population data 
 
 # attack rate for each week
 attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>% 
   # add the epiweek column to table
-  bind_cols(select(cases, age_category), .) %>% 
-  rename("Age group" = age_category, 
+  bind_cols(select(cases, age_group), .) %>% 
+  rename("Age group" = age_group, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
