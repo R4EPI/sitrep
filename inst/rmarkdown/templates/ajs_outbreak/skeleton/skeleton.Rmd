@@ -812,14 +812,49 @@ with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_clea
 
 Cases by illness severity at visit/admission
 
-```{r describe_by_illness_severity_admission}
-descriptive(linelist_cleaned, 
-            counter = "severity_of_illness", 
-            coltotals = TRUE) %>% 
-  rename("Illness severity" = severity_of_illness, 
-         "Cases (n)" = n, 
-         "%" = prop) %>% 
+```{r describe_by_symptoms}
+
+SYMPTOMS <- c("generalized_itch", 
+              "history_of_fever", 
+              "fever",
+              "joint_pains",
+              "epigastric_pain_heartburn",
+              "nausea_anorexia",
+              "vomiting", 
+              "diarrhoea",
+              "bleeding", 
+              "headache",
+              "mental_state",
+              "convulsions",
+              "other_symptoms"  
+              )
+
+bind_rows(
+  lapply(
+    SYMPTOMS, function(i) {
+      # run descriptive function to get counts
+      descriptive(linelist_cleaned, i, coltotals = TRUE) %>%
+        # shift to be wide (note the need for !!sym as opposed to SEval for descriptive)
+        gather(key = "variable", value = "value", c(.data$n, .data$prop)) %>%
+        unite("temp", !!sym(i), .data$variable, sep = "_") %>%
+        spread(.data$temp, .data$value)
+    }
+  )
+) %>%
+  # add var for symptom names after binding rows
+  mutate(Symptom = SYMPTOMS) %>%
+  # re-order columns (drop total_prop too)
+  select(Symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
+  # rename accordingly
+  rename(
+    "Yes (n)" = Yes_n,
+    "%" = Yes_prop,
+    "No (n)" = No_n,
+    "%" = No_prop,
+    "Total (N)" = Total_n
+  ) %>% 
   kable(digits = 2)
+
 ```
 
 
