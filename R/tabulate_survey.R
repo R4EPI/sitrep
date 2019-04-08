@@ -6,6 +6,8 @@
 #' @param pretty if `TRUE`, default, the proportion and CI are merged
 #' @param digits if `prittey = FALSE`, this indicates the number of digits used
 #'   for proportion and CI
+#' @param method a method from [survey::svyciprop()] to calculate the confidence
+#'   interval. Defaults to "logit"
 #' @return a tibble
 #' @export
 #' @examples
@@ -14,7 +16,7 @@
 #' data(api)
 #'
 #' # stratified sample
-#' api %>%
+#' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_survey(stype, awards)
 #'
@@ -25,7 +27,7 @@
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
-tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
+tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1, method = "logit") {
   stopifnot(inherits(x, "tbl_svy"))
 
   cod <- rlang::enquo(var)
@@ -41,36 +43,53 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
     x <- srvyr::group_by(x, !! cod) 
     x <- srvyr::mutate(x, dummy = !! cod)
   } else {
+    # if there is a strata, create a unique, parseable dummy var by inserting
+    # the timestamp in between the vars
+    tim <- as.character(Sys.time())
     x <- srvyr::group_by(x, !!st, !! cod)
-    x <- srvyr::mutate(x, dummy = sprintf("%s %s", !! cod, !!st))
+    x <- srvyr::mutate(x, dummy = sprintf("%s %s %s", !! st, tim, !! cod))
   }
-  
-  
 
+  # Calculating the survey total will also give us zero counts 
   y <- srvyr::summarise(x, n = survey_total(var = "se", na.rm = TRUE))
 
+  # We can then set up the proportion calculations. Because of issues with using
+  # srvyr::survey_mean() on several variables, we have to roll our own.
+  y$proportion       <- NA_real_
+  y$proportion_lower <- NA_real_
+  y$proportion_upper <- NA_real_
 
 
   # Here we pull out the relevant values for the proportions
-  p <- as.character(unique(dplyr::pull(srvyr::as_tibble(x), !!quote(dummy))))
+  # first, filter out any rows with missing values
+  tx <- dplyr::filter(srvyr::as_tibble(x), !is.na(!! cod))
+  # Then pull out the unique dummy variable names
+  p <- as.character(unique(dplyr::pull(tx, !!quote(dummy))))
   p <- p[!is.na(p)]
   
-  # create an empty vector for the results
-  res <- setNames(vector(mode = "list", length = length(p)), p)
-  
-  # loop over the values
+  # loop over the values and caclucate CI proportion as needed. If they aren't
+  # present, then the proportion remains NA.
   for (i in p) { 
-    print(i)
-    if (y[y[[1]] == i, ]$n > 0) {
-      x <- srvyr::mutate(x, this = i)
-      res[[i]] <- survey::svyciprop(~I(dummy == this), x, method = "logit")
-      # construct the res into a data frame with the variables, upper, and lower
+    # Find the row that i corresponds to. It differs if there are strata or not
+    if (null_strata) {
+      val <- y[[1]] == i
+    } else {
+      val <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
+    }
+    if (y$n[val] > 0) {
+      # The peanutbutter and paperclips way of getting a proportion: 
+      # set a column to contain only the value you desire
+      x   <- srvyr::mutate(x, this = i)
+      # get the proportion of your target variable that matches the new column
+      # et voila!
+      tmp <- survey::svyciprop(~I(dummy == this), x, method = method)
+      ci  <- attr(tmp, "ci")
+      y$proportion[val]       <- tmp[[1]]
+      y$proportion_lower[val] <- ci[[1]]
+      y$proportion_upper[val] <- ci[[2]]
     }
   }
-  return(res)
 
-  # dplyr::bind_rows res
-  # dplyr::left_join with y on !! cod (and !! st if it's available)
 
   y$n <- round(y$n)
   y   <- y[!colnames(y) %in% "n_se"]
@@ -79,7 +98,10 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
     return(y)
   }
 
-  y <- unite_ci(y, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
+  y      <- unite_ci(y, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
+  
+  # convert any NA% proportions to just NA
+  y$prop <- dplyr::if_else(grepl("NA%", y$prop), NA_character_, y$prop)
 
   if (null_strata) {
     return(y)
@@ -100,7 +122,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
 #'
-tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty = TRUE, digits = 1) {
+tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty = TRUE, digits = 1, method = "logit") {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -108,7 +130,7 @@ tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty =
   }
 
   vars <- tidyselect::vars_select(colnames(x), ...)
-  res <- lapply(vars, function(i) tabulate_survey(x, !! rlang::ensym(i), pretty = pretty, digits = digits))
+  res <- lapply(vars, function(i) tabulate_survey(x, !! rlang::ensym(i), pretty = pretty, digits = digits, method = method))
   for (i in seq_along(res)) {
     names(res[[i]])[1] <- "value"
   }

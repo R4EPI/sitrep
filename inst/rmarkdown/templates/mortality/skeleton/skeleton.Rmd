@@ -648,7 +648,7 @@ survey_design %>%
 # symptoms reported among those who were sick 
 survey_design %>% 
   filter(q18_q8_sick == "Yes") %>% 
-  tabulate_binary_survey(SYMPTOMS, keep = TRUE) %>%
+  tabulate_binary_survey(SYMPTOMS, keep = TRUE, method = "xlogit") %>%
   mutate(variable = SYMPTOMS_LABELS) %>% 
   select(-value)
 ```
