@@ -2,31 +2,60 @@
 % Please edit documentation in R/descriptive-table.R
 \name{descriptive}
 \alias{descriptive}
-\title{Produces counts with respective proportions from specified variables in a dataframe.
-Option to add row and column totals}
+\alias{multi_descriptive}
+\title{Produces counts with respective proportions from specified variables in a dataframe.}
 \usage{
 descriptive(df, counter, grouper = NA, multiplier = 100, digits = 1,
-  proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE)
+  proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE,
+  single_row = FALSE)
+
+multi_descriptive(df, ..., multiplier = 100, digits = 1,
+  proptotal = FALSE, coltotals = TRUE, .id = "symptom")
 }
 \arguments{
 \item{df}{A dataframe (e.g. your linelist)}
 
-\item{counter}{A name of the variable (in quotation marks) that you would like to have as rows.}
+\item{counter}{A name of the variable (in quotation marks) that you would
+like to have as rows.}
 
-\item{grouper}{A name of the variable (in quotation marks) that you would like to have as columns.}
+\item{grouper}{A name of the variable (in quotation marks) that you would
+like to have as columns.}
 
-\item{multiplier}{What you would like to have your proportions as (default is per 100).}
+\item{multiplier}{What you would like to have your proportions as (default
+is per 100).}
 
-\item{digits}{The number of decimal places you would like in your proportions (default is 1).}
+\item{digits}{The number of decimal places you would like in your
+proportions (default is 1).}
 
-\item{proptotal}{A TRUE/FALSE variable specifying whether you would proportions to be of total cases.
-The default is FALSE and returns proportions for each column.}
+\item{proptotal}{A TRUE/FALSE variable specifying whether you would
+proportions to be of total cases.The default is FALSE and returns
+proportions for each column.}
 
 \item{coltotals}{Add column totals on the end}
 
 \item{rowtotals}{Add row totals (only sums counts)}
+
+\item{single_row}{if \code{TRUE} and \code{grouper = NA}, then the output is flattened
+to a single row so that variables can be concatenated into a data frame.
+Defaults to \code{FALSE}.}
+
+\item{...}{columns to pass to descriptive}
+
+\item{.id}{the name of the column identifying the aggregates}
 }
 \description{
-Produces counts with respective proportions from specified variables in a dataframe.
 Option to add row and column totals
+}
+\details{
+The \code{descriptive()} function, provided a counter and no grouper,
+will return A table giving counts and proportions of each variable in the
+counter. Adding a grouper adds more columns, stratifying "n" and "prop",
+coltotals adds one row and rowtotals (useful if a grouper is present) adds
+one column.
+
+The \code{multi_descriptive()} function allows you to group several counter
+variables into a single table where each row represents a variable and the
+columns represent counts and proportions of the values within those
+variables. This function assumes that all of the variables have the same
+values (e.g. Yes/No values) and atttempts no correction.
 }
