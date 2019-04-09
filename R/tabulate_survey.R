@@ -8,6 +8,7 @@
 #'   for proportion and CI
 #' @return a tibble
 #' @export
+#' @importFrom srvyr survey_total survey_mean
 #' @examples
 #' library(srvyr)
 #' library(survey)
@@ -37,8 +38,8 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
 
 
   x <- srvyr::summarise(x,
-                        n = survey_total(var = "se", na.rm = TRUE),
-                        proportion = survey_mean(vartype = "ci", na.rm = TRUE)
+                        !!quote(n) := srvyr::survey_total(var = "se", na.rm = TRUE),
+                        !!quote(proportion) := srvyr::survey_mean(vartype = "ci", na.rm = TRUE)
                        )
   x$n <- round(x$n)
   x   <- x[!colnames(x) %in% "n_se"]
@@ -58,8 +59,8 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1) {
   x <- tidyr::gather(x, key = "variable", value = "value", -(1:2))
   x <- tidyr::unite(x, "tmp", !! st, "variable", sep = " ")
   x <- tidyr::spread(x, "tmp", "value")
-  rename_at(x, dplyr::vars(dplyr::ends_with("prop")), 
-            ~function(i) rep("% (95% CI)", length(i)))
+  dplyr::rename_at(x, dplyr::vars(dplyr::ends_with("prop")), 
+                   ~function(i) rep("% (95% CI)", length(i)))
 }
 
 #' @export

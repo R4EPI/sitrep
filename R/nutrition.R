@@ -15,7 +15,7 @@ stratify_zscores <- function(survey_data, by, ...) {
     res <- dplyr::select(res, !!! rlang::ensyms(...), !! by)
     res <- tidyr::gather(res, "stratum", "flagged", -(!! by))
     res <- dplyr::group_by(res, .data$stratum, !!! group)
-    res <- dplyr::summarise(res, n = n(),
+    res <- dplyr::summarise(res, n = dplyr::n(),
               flagged = sum(.data$flagged, na.rm = TRUE),
               rel = .data$flagged / .data$n,
               ci = list(binom::binom.wilson(.data$flagged, .data$n)[, c("lower", "upper")]))

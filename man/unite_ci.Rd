@@ -22,14 +22,15 @@ Upper.}
 
 \item{m100}{\code{TRUE} if the result should be multiplied by 100}
 
-\item{percent}{\code{TRUE} if the result should have a "%" symbol added.}
+\item{percent}{\code{TRUE} if the result should have a percent symbol added.}
 }
 \description{
-Unite estimates and confidence intervals
+create a character column by combining estimate, lower and upper columns.
+This is similar to \code{\link[tidyr:unite]{tidyr::unite()}}.
 }
 \examples{
 
 print(cfr <- case_fatality_rate((1:4)*10, 50))
-unite_ci(cfr, "CFR (CI)", cfr, lower, upper, rate = TRUE)
+unite_ci(cfr, "CFR (CI)", cfr, lower, upper, m100 = FALSE, percent = TRUE)
 
 }
