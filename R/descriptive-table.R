@@ -1,21 +1,44 @@
 #' Produces counts with respective proportions from specified variables in a dataframe.
+#'
 #' Option to add row and column totals
+#' 
 #' @param df A dataframe (e.g. your linelist)
-#' @param counter A name of the variable (in quotation marks) that you would like to have as rows.
-#' @param grouper A name of the variable (in quotation marks) that you would like to have as columns.
-#' @param multiplier What you would like to have your proportions as (default is per 100).
-#' @param digits The number of decimal places you would like in your proportions (default is 1).
-#' @param proptotal A TRUE/FALSE variable specifying whether you would proportions to be of total cases.
-#' The default is FALSE and returns proportions for each column.
+#' @param counter A name of the variable (in quotation marks) that you would
+#'   like to have as rows.
+#' @param grouper A name of the variable (in quotation marks) that you would
+#'   like to have as columns.
+#' @param multiplier What you would like to have your proportions as (default
+#'   is per 100).
+#' @param digits The number of decimal places you would like in your
+#'   proportions (default is 1).
+#' @param proptotal A TRUE/FALSE variable specifying whether you would
+#'   proportions to be of total cases.The default is FALSE and returns
+#'   proportions for each column.
 #' @param coltotals Add column totals on the end
 #' @param rowtotals Add row totals (only sums counts)
+#' @param single_row if `TRUE` and `grouper = NA`, then the output is flattened
+#'   to a single row so that variables can be concatenated into a data frame.
+#'   Defaults to `FALSE`.
+#' @details The `descriptive()` function returns a single table with counts and
+#'   proportions of a categorical variable (`counter`). Adding a grouper adds
+#'   more columns, stratifying "n" and "prop", the option `coltotals = TRUE`
+#'   adds one row and `rowtotals = TRUE` (useful if a grouper is present) adds
+#'   one column. 
+#'
+#'   The `multi_descriptive()` function allows you to combine several counter
+#'   variables into a single table where each row represents a variable and the
+#'   columns represent counts and proportions of the values within those
+#'   variables. This function assumes that all of the variables have the same
+#'   values (e.g. Yes/No values) and atttempts no correction.
+#'
 #' @importFrom dplyr group_by ungroup bind_rows summarise_all funs count mutate mutate_at
 #' @importFrom tidyr complete gather unite spread
 #' @importFrom rlang sym "!!" ".data" ":="
 #' @importFrom stats setNames
 #' @export
 descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
-                        proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE) {
+                        proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE,
+                        single_row = FALSE) {
 
   # Using rlang::sym() allows us to use quoted arguments
   # If we wanted to go full NSE, we would use rlang::enquo() instead
@@ -91,5 +114,27 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
     l <- levels(count_data[[counter]])
     count_data[[counter]] <- factor(count_data[[counter]], levels = l[l != tmp_var])
   }
+
+  if (single_row){
+    count_data <- tidyr::gather(count_data, "variable", "value", -1)
+    count_data <- tidyr::unite(count_data, "tempvar", 1, .data$variable)
+    count_data <- tidyr::spread(count_data, "tempvar", "value")
+  }
   count_data
+
+}
+
+
+#' @rdname descriptive
+#' @param ... columns to pass to descriptive
+#' @param .id the name of the column identifying the aggregates
+#' @export
+multi_descriptive <- function(df, ..., multiplier = 100, digits = 1, proptotal = FALSE, coltotals = TRUE, .id = "symptom") { 
+  
+  the_vars <- tidyselect::vars_select(colnames(df), ...)
+  res <- lapply(the_vars, function(i) {
+    descriptive(df, i, multiplier = multiplier, digits = digits, 
+                proptotal = proptotal, coltotals = coltotals, single_row = TRUE)
+  })
+  bind_rows(res, .id = .id)
 }
