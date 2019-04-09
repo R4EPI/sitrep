@@ -25,6 +25,8 @@ msf_dict_survey(disease, name = "MSF-survey-dict.xlsx", tibble = TRUE)
 \item{disease}{Specify which disease you would like to use.
 Currently supports "Cholera", "Measles" and "Meningitis".}
 
+\item{name}{the name of the dictionary stored in the package.}
+
 \item{tibble}{Return data dictionary as a tidyverse tibble (default is TRUE)}
 
 \item{compact}{If TRUE, returns a neat data dictionary in single data frame.
@@ -35,16 +37,16 @@ other with content options.}
 default set to "Item".  (this can probably be deleted once dictionaries
 standardise) If \code{dictionary} is "Mortality", \code{varnames} needs to be "column_name"`.}
 
+\item{copy_to_clipboard}{if \code{TRUE} (default), the rename template will be
+copied to the user's clipboard with \code{\link[clipr:write_clip]{clipr::write_clip()}}. If \code{FALSE}, the
+rename template will be printed to the user's console.}
+
 \item{dictionary}{Specify which dictionary you would like to use.
 Currently supports "Cholera", "Measles", "Meningitis", "AJS" and "Mortality".}
 
 \item{numcases}{For fake data, specify the number of cases you want (default is 300}
 
 \item{df}{A dataframe (e.g. your linelist) which is passed to switch_vals function.}
-
-\item{copy_to_clipboard.}{if \code{TRUE} (default), the rename template will be
-copied to the user's clipboard with \code{\link[clipr:write_clip]{clipr::write_clip()}}. If \code{FALSE}, the
-rename template will be printed to the user's console.}
 }
 \description{
 These function reads in MSF data dictionaries and produces randomised

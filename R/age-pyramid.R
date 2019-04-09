@@ -15,7 +15,7 @@
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (`FALSE`),
 #' to turn on write `TRUE`.
-#' @param horizontal lines If `TRUE` (default), horizontal dashed lines will
+#' @param horizontal_lines If `TRUE` (default), horizontal dashed lines will
 #'   appear behind the bars of the pyramid
 #'
 #' @note if `split_by` and `stack_by` are not the same, The values of `spit_by`
