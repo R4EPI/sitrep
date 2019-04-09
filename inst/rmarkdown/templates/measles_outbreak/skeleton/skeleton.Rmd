@@ -23,6 +23,7 @@ report for measles.
 - For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
 
 
+
 ## Installing and loading required packages 
 
 Several packages are required for different aspects of  analysis with *R*. 
@@ -175,7 +176,7 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 
-## get MSF data dictionary for cholera 
+## get MSF data dictionary for measles 
 # linelist_dict <- msf_dict("Measles")
 
 ## Fixing variable names ----------------------
@@ -276,9 +277,10 @@ linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
 # )
 
 ## You can use the function msf_dict_rename_helper() to create a template based
-## on the Cholera dictionary. This will copy a rename command like the one above
+## on the measles dictionary. 
+# This will copy a rename command like the one above
 ## to your clipboard.
-# msf_dict_rename_helper("Cholera")
+# msf_dict_rename_helper("Measles")
 ## Paste the result here and add add the column names from linelist_cleaned
 ## to the appropriate variables. PLEASE NOTE: this is not a foolproof solution;
 ## you still need to be aware of what each variable means and what values it
@@ -643,6 +645,28 @@ linelist_cleaned <- linelist_cleaned %>%
 #            ifelse(grepl("Yes", previously_vaccinated), 
 #                   previous_vaccine_doses_received, NA))
 
+# vectors of variable names ----------------------------------------------------
+
+## You may want to group the names of several variables that have the same possible 
+## values in to a named vector. 
+## This way if you want to run the same function over these variables you can 
+## simply use the named vector rather than typing out each variable individually
+
+# create a grouping of all symptoms 
+SYMPTOMS <- c("fever",
+              "cough",
+              "nasal_discharge",
+              "croup",
+              "maculopapular_rash", 
+              "xerophthalmia", 
+              "candidiasis",
+              "severe_oral_lesions", 
+              "acute_otitis_media",
+              "seizure_episodes",
+              "encephalitis",
+              "late_complications"
+              )
+
 
 # Dropping observations (rows) and variables (columns)--------------------------
 
@@ -821,6 +845,28 @@ descriptive(linelist_cleaned,
          "%" = prop) %>% 
   kable(digits = 2)
 ```
+
+
+
+You could also look at the details of cases by symptoms. 
+
+```{r describe_by_symptoms}
+# get counts and proportions for all variables named in SYMPTOMS
+multi_descriptive(linelist_cleaned, SYMPTOMS) %>% 
+  # re-order columns (drop total_prop too)
+  select(symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
+  # rename accordingly
+  rename(
+    "Yes (n)" = Yes_n,
+    "%" = Yes_prop,
+    "No (n)" = No_n,
+    "%" = No_prop,
+    "Total (N)" = Total_n
+  ) %>% 
+  kable(digits = 2)
+
+```
+
 
 Cases by vaccination status
 

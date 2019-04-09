@@ -656,6 +656,37 @@ linelist_cleaned <- linelist_cleaned %>%
     as.Date(date_of_last_vaccination), as.Date(NA)
   ))
 
+# vectors of variable names ----------------------------------------------------
+
+## You may want to group the names of several variables that have the same possible 
+## values in to a named vector. 
+## This way if you want to run the same function over these variables you can 
+## simply use the named vector rather than typing out each variable individually
+
+# create a grouping of all symptoms 
+SYMPTOMS <- c("headache",
+              "chills", 
+              "fever", 
+              "stiff_neck", 
+              "neck_pain",
+              "upper_limb_pain",
+              "lower_limb_pain",
+              "vomiting", 
+              "petechiae_purpura_at_admission", 
+              "purpura_fulminans", 
+              "kernigs_brudzinski_signs",
+              "altered_consciousness",
+              "seizures_at_admission", 
+              "seizure_episodes",
+              "febrile_coma", 
+              "coma"
+              )
+
+# create a grouping of all lab tests 
+LABS <- c("ti_result_pcr",
+          "ti_result_culture"
+          )
+
 # Dropping observations (rows) and variables (columns)--------------------------
 
 # only keep variables with a case ID and a date of consultation
@@ -838,7 +869,46 @@ descriptive(linelist_cleaned,
 previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unknown")` were unsure.
 
 
-Cases by lab results
+Cases by symptoms. 
+
+```{r describe_by_symptoms}
+# get counts and proportions for all variables named in SYMPTOMS
+multi_descriptive(linelist_cleaned, SYMPTOMS) %>% 
+  # re-order columns (drop total_prop too)
+  select(symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
+  # rename accordingly
+  rename(
+    "Yes (n)" = Yes_n,
+    "%" = Yes_prop,
+    "No (n)" = No_n,
+    "%" = No_prop,
+    "Total (N)" = Total_n
+  ) %>% 
+  kable(digits = 2)
+
+```
+
+If available, you can also describe the cases by lab results 
+
+```{r describe_by_labs}
+# get counts and proportions for all variables named in LABS
+multi_descriptive(linelist_cleaned, LABS, .id = "Lab test") %>% 
+  # re-order columns (drop total_prop too)
+  select("Lab test", Positive_n, Positive_prop, Negative_n, Negative_prop, 
+         Unknown_n, Unknown_prop, Total_n) %>% 
+  # rename accordingly
+  rename(
+    "Positive (n)" = Positive_n, 
+    "%" = Positive_prop, 
+    "Negative (n)" =  Negative_n, 
+    "%" = Negative_prop, 
+    "Unknown (n)" = Unknown_n, 
+    "%" = Unknown_prop, 
+    "Total (N)" = Total_n
+  ) %>% 
+  kable(digits = 2)
+```
+
 
 You can describe the lab results by the detailed Pastorex result.
 
@@ -852,17 +922,6 @@ descriptive(linelist_cleaned,
   kable(digits = 2)
 ```
 
-If available, you can also describe the PCR results you have.
-
-```{r describe_pcr}
-descriptive(linelist_cleaned, 
-            counter = "ti_result_pcr", 
-            coltotals = TRUE) %>% 
-  rename("PCR result" = ti_result_pcr, 
-         "Cases (n)" = n, 
-         "%" = prop) %>% 
-  kable(digits = 2)
-```
 
 #### Case fatality ratio 
 
