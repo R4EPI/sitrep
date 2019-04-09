@@ -52,7 +52,7 @@ Collate:
     'gen_population.R'
     'helpers.R'
     'inline_fun.R'
-    'msf_dict_mortality.R'
+    'msf_dict_survey.R'
     'nutrition.R'
     'population_weights.R'
     'sample-size.R'
