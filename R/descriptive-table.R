@@ -19,13 +19,13 @@
 #' @param single_row if `TRUE` and `grouper = NA`, then the output is flattened
 #'   to a single row so that variables can be concatenated into a data frame.
 #'   Defaults to `FALSE`.
-#' @details The `descriptive()` function, provided a counter and no grouper,
-#'   will return A table giving counts and proportions of each variable in the
-#'   counter. Adding a grouper adds more columns, stratifying "n" and "prop",
-#'   coltotals adds one row and rowtotals (useful if a grouper is present) adds 
+#' @details The `descriptive()` function returns a single table with counts and
+#'   proportions of a categorical variable (`counter`). Adding a grouper adds
+#'   more columns, stratifying "n" and "prop", the option `coltotals = TRUE`
+#'   adds one row and `rowtotals = TRUE` (useful if a grouper is present) adds
 #'   one column. 
 #'
-#'   The `multi_descriptive()` function allows you to group several counter
+#'   The `multi_descriptive()` function allows you to combine several counter
 #'   variables into a single table where each row represents a variable and the
 #'   columns represent counts and proportions of the values within those
 #'   variables. This function assumes that all of the variables have the same
