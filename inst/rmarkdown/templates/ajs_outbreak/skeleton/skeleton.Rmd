@@ -644,6 +644,52 @@ linelist_cleaned <- linelist_cleaned %>%
     TRUE                                                  ~ "Suspected"
   ))
 
+# vectors of variable names ----------------------------------------------------
+
+## You may want to group the names of several variables that have the same possible 
+## values in to a named vector. 
+## This way if you want to run the same function over these variables you can 
+## simply use the named vector rather than typing out each variable individually
+
+# create a grouping of all symptoms 
+SYMPTOMS <- c("generalized_itch", 
+              "history_of_fever", 
+              "fever",
+              "joint_pains",
+              "epigastric_pain_heartburn",
+              "nausea_anorexia",
+              "vomiting", 
+              "diarrhoea",
+              "bleeding", 
+              "headache",
+              "mental_state",
+              "convulsions",
+              "other_symptoms"  
+              )
+
+# create a grouping of all lab tests 
+LABS <- c("hep_b_rdt", 
+          "hep_c_rdt",
+          "hep_e_rdt",
+          "test_hepatitis_a",
+          "test_hepatitis_b",
+          "test_hepatitis_c",
+          "test_hepatitis_e_igg",
+          "test_hepatitis_e_igm" ,
+          "test_hepatitis_e_genotype",
+          "test_hepatitis_e_virus",
+          "malaria_rdt_at_admission",
+          "malaria_blood_film", 
+          "dengue",
+          "dengue_rdt", 
+          "yellow_fever",
+          "typhoid",
+          "chikungunya_onyongnyong", 
+          "ebola_marburg",
+          "lassa_fever",
+          "other_arthropod_transmitted_virus", 
+          "other_pathogen"
+          )
 
 # Dropping observations (rows) and variables (columns)--------------------------
 
@@ -810,41 +856,13 @@ Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpat
 with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_cleaned$obs_days)` days.
 
 
-Cases by illness severity at visit/admission
+Cases by symptoms. 
 
 ```{r describe_by_symptoms}
-
-SYMPTOMS <- c("generalized_itch", 
-              "history_of_fever", 
-              "fever",
-              "joint_pains",
-              "epigastric_pain_heartburn",
-              "nausea_anorexia",
-              "vomiting", 
-              "diarrhoea",
-              "bleeding", 
-              "headache",
-              "mental_state",
-              "convulsions",
-              "other_symptoms"  
-              )
-
-bind_rows(
-  lapply(
-    SYMPTOMS, function(i) {
-      # run descriptive function to get counts
-      descriptive(linelist_cleaned, i, coltotals = TRUE) %>%
-        # shift to be wide (note the need for !!sym as opposed to SEval for descriptive)
-        gather(key = "variable", value = "value", c(.data$n, .data$prop)) %>%
-        unite("temp", !!sym(i), .data$variable, sep = "_") %>%
-        spread(.data$temp, .data$value)
-    }
-  )
-) %>%
-  # add var for symptom names after binding rows
-  mutate(Symptom = SYMPTOMS) %>%
+# get counts and proportions for all variables named in SYMPTOMS
+multi_descriptive(linelist_cleaned, SYMPTOMS) %>% 
   # re-order columns (drop total_prop too)
-  select(Symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
+  select(symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
   # rename accordingly
   rename(
     "Yes (n)" = Yes_n,
@@ -856,6 +874,29 @@ bind_rows(
   kable(digits = 2)
 
 ```
+
+Cases by lab results 
+
+```{r describe_by_labs}
+# get counts and proportions for all variables named in LABS
+multi_descriptive(linelist_cleaned, LABS, .id = "Lab test") %>% 
+  # re-order columns (drop total_prop too)
+  select("Lab test", Positive_n, Positive_prop, Negative_n, Negative_prop, 
+         "Not done_n", "Not done_prop", Total_n) %>% 
+  # rename accordingly
+  rename(
+    "Positive (n)" = Positive_n, 
+    "%" = Positive_prop, 
+    "Negative (n)" =  Negative_n, 
+    "%" = Negative_prop, 
+    "Unknown (n)" = "Not done_n", 
+    "%" = "Not done_prop", 
+    "Total (N)" = Total_n
+  ) %>% 
+  kable(digits = 2)
+```
+
+
 
 
 #### Case fatality ratio 
