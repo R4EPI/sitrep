@@ -598,6 +598,18 @@ linelist_cleaned <- linelist_cleaned %>%
     TRUE                                      ~ "Suspected"
   ))
 
+# vectors of variable names ----------------------------------------------------
+
+## You may want to group the names of several variables that have the same possible 
+## values in to a named vector. 
+## This way if you want to run the same function over these variables you can 
+## simply use the named vector rather than typing out each variable individually
+
+# create a grouping of all lab tests 
+LABS <- c("cholera_culture_result", 
+          "cholera_pcr_result", 
+          "cholera_rdt_result"
+          )
 
 # Dropping observations (rows) and variables (columns)--------------------------
 
