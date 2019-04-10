@@ -283,8 +283,24 @@ study_data_cleaned <- study_data_cleaned %>%
          recall_end = as.Date("2018-05-01")
   )
 
-# set inappropriate dates to NA
+# create columns for start and end dates
+study_data_cleaned <- study_data_cleaned %>%
+  find_start_date(contains("born_date"),
+                  contains("date_arrival"),
+                  contains("arrive_date"),
+                  cutoff = as.Date("2018-01-01"),
+                  datecol = "startdate",
+                  datereason = "startcause" 
+                 ) %>%
+  find_end_date(contains("leave_date"),
+                contains("died_date"),
+                cutoff = as.Date("2018-05-01"),
+                datecol = "enddate",
+                datereason = "endcause" 
+               )
+  
 
+# set inappropriate dates to NA
 # for arrivals an dirths before the recall period, set to NA 
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(q114_q16_date_arrival_camp = ifelse(q114_q16_date_arrival_camp < recall_start, NA_real_, 
@@ -384,6 +400,7 @@ study_data_cleaned <- study_data_cleaned %>%
           q88_q33_born_date, na.rm = TRUE),
     recall_start, na.rm = FALSE
   ))
+
 
 # correct startdate to born date if not NA (cant have arrived before born) 
 study_data_cleaned <- study_data_cleaned %>% 

@@ -47,6 +47,7 @@ Collate:
     'cfr.R'
     'descriptive-table.R'
     'find_breaks.R'
+    'find_date_cause.R'
     'gen_data.R'
     'gen_polygon.R'
     'gen_population.R'
