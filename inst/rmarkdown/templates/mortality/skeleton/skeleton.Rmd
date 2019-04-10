@@ -3,17 +3,71 @@ title: "Mortality survey"
 output: word_document
 ---
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = FALSE,
-                      warning = FALSE,
-                      error = TRUE)
-library(dplyr)
-library(tidyr)
-library(knitr)
-library(sitrep)
-library(survey) # for survey functions 
-library(srvyr) # dplyr wrapper for survey
-library(ggplot2)
+# Introduction to this template
+
+This is a template which can be used to create a report from a retrospective
+mortality survey. 
+
+- There are sections for reading and cleaning data, followed by 
+    weighting and observation time calculations and then survey analysis. 
+    Use the drop-down menu on the bottom left of this script window to jump 
+    between sections. 
+- You can type normal text in white spaces (such as here) and r-code in grey
+    spaces (denoted by three backticks and r) (see [Rmarkdown
+    introduction](https://rmarkdown.rstudio.com/articles_intro.html) and
+    [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
+- Introductions and contents of sections are within square brackets "[...]" and
+    can be deleted as appropriate
+- Examples of inline code (to automate updating numbers, e.g. in the "Results
+    section"), can similarly be removed/updated
+- Code itself can be deleted, but as a word of caution: make sure you aren't
+    deleting bits where variables are created/manipulated, or at least update
+    them appropriatley
+- For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
+
+
+
+## Installing and loading required packages 
+
+Several packages are required for different aspects of  analysis with *R*. 
+You will need to install these before starting. 
+We will be using the following packages. Some of these packages automatically
+install other packages they need to work (called dependencies).
+
+These packages can be quite large and may take a while to download in the
+field. If you have access to a USB key with these packages, it makes sense to
+copy and paste the packages into Program Files/R/R-[version]/library.
+
+
+```{r setup, include = FALSE, results='hide', message=FALSE, warning=FALSE}
+# hide all code chunks in the output, but show errors
+knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
+# set default NA to - in output, define figure width/height
+options(knitr.kable.NA = "-")
+
+# Installing required packages for this template
+required_packages <- c("knitr",       # create output docs
+                       "dplyr",       # clean/shape data
+                       "tidyr",       # clean/shape data
+                       "forcats",     # clean/shape data
+                       "ggplot2",     # create plots and charts
+                       "sitrep",      # MSF field epi functions
+                       "survey",      # for survey functions
+                       "srvyr"        # dplyr wrapper for survey package
+                       )
+
+for (pkg in required_packages) {
+  # install packages if not already present
+  if (!pkg %in% rownames(installed.packages())) {
+    install.packages(pkg)
+  }
+  
+  # load packages to this current session 
+  library(pkg, character.only = TRUE)
+}
+# set default text size to 16 for plots
+# give classic black/white axes for plots
+ggplot2::theme_set(theme_classic(base_size = 18))
 ```
 
 
