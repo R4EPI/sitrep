@@ -285,15 +285,15 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # create columns for start and end dates
 study_data_cleaned <- study_data_cleaned %>%
-  find_start_date(contains("born_date"),
-                  contains("date_arrival"),
-                  contains("arrive_date"),
+  find_start_date("q88_q33_born_date",
+                  "q114_q16_date_arrival_camp",
+                  "q41_q25_hh_arrive_date",
                   cutoff = as.Date("2018-01-01"),
                   datecol = "startdate",
                   datereason = "startcause" 
                  ) %>%
-  find_end_date(contains("leave_date"),
-                contains("died_date"),
+  find_end_date("q45_q29_hh_leave_date",
+                "q137_q35_died_date",
                 cutoff = as.Date("2018-05-01"),
                 datecol = "enddate",
                 datereason = "endcause" 

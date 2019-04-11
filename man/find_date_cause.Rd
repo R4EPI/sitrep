@@ -18,7 +18,8 @@ find_end_date(x, ..., datecol = "end_date",
 \arguments{
 \item{x}{a data frame}
 
-\item{...}{an ordered series of date columns.}
+\item{...}{an ordered series of date columns (i.e. the most important date
+to be considered first).}
 
 \item{datecol}{the name of the new column to contain the dates}
 

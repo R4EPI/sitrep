@@ -1,22 +1,23 @@
 #' Find the first date beyond a cutoff in several columns
 #'
-#' This function will find the first date in an orderd series of columns that 
-#' is either before or after a cutoff date, inclusive. 
-#' 
+#' This function will find the first date in an orderd series of columns that
+#' is either before or after a cutoff date, inclusive.
+#'
 #' @param x a data frame
-#' @param ... an ordered series of date columns.
+#' @param ... an ordered series of date columns (i.e. the most important date
+#'   to be considered first).
 #' @param datecol the name of the new column to contain the dates
 #' @param datereason the name of the column to contain the name of the column
 #'   from which the date came.
 #' @param cutoff the cutoff date
-#' @param period one of either "before" or "after" indicating that the new 
-#'   column should only contain dates before or after the cutoff date. 
+#' @param period one of either "before" or "after" indicating that the new
+#'   column should only contain dates before or after the cutoff date.
 #' @export
-find_date_cause <- function(x, 
+find_date_cause <- function(x,
                             ...,
-                            datecol = "start_date", 
-                            datereason = "start_date_reason", 
-                            cutoff = NA, 
+                            datecol = "start_date",
+                            datereason = "start_date_reason",
+                            cutoff = NA,
                             period = "after") {
 
   stopifnot(inherits(cutoff, "Date"))
@@ -29,7 +30,7 @@ find_date_cause <- function(x,
     stop("All columns in ... must be dates")
   }
   y <- x[.dots]
-  
+
   if (period == "after") {
     the_judge <- function(i, cutoff) dplyr::if_else(i >= cutoff, i, as.Date(NA))
   } else {
@@ -41,14 +42,14 @@ find_date_cause <- function(x,
   y <- choose_first_good_date(y[.dots])
   tibble::add_column(!! rlang::sym(datecol) := y[[1]],
                      !! rlang::sym(datereason) := y[[2]],
-                     .data = x, 
+                     .data = x,
                      .before = .dots[[1]])
 }
 
 #' @rdname find_date_cause
 #' @export
-find_start_date <- function(x, ..., 
-                            datecol = "start_date", 
+find_start_date <- function(x, ...,
+                            datecol = "start_date",
                             datereason = "start_date_reason",
                             cutoff = NA) {
 
@@ -58,8 +59,8 @@ find_start_date <- function(x, ...,
 
 #' @rdname find_date_cause
 #' @export
-find_end_date <- function(x, ..., 
-                          datecol = "end_date", 
+find_end_date <- function(x, ...,
+                          datecol = "end_date",
                           datereason = "end_date_reason",
                           cutoff = NA) {
 
@@ -73,8 +74,8 @@ find_end_date <- function(x, ...,
 #'   parsing of the same date vector
 #' @keywords internal
 #' @noRd
-#' @note: This function was written and modified by Zhian N. Kamvar and comes 
-#'   from the linelist package, 
+#' @note: This function was written and modified by Zhian N. Kamvar and comes
+#'   from the linelist package,
 choose_first_good_date <- function(date_a_frame) {
   n   <- nrow(date_a_frame)
   res <- data.frame(the_date = rep(as.Date(NA), length = n),
