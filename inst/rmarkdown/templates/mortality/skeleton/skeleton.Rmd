@@ -216,7 +216,7 @@ population_data_age <- gen_population(total_pop = 10000, # set the total populat
   groups = c("0-4", "5-14", "15-29", "30-44", "45+"),    # set the groups
   proportions = c(0.182, 0.278, 0.26, 0.11, 0.07),       # set the proportions for each group
   strata = c("Male", "Female")) %>%                      # stratify by gender 
-  rename(age_group = groups,                             # rename columns (syntax is NEW NAME = OLD NAME)
+  rename(age_group = groups,                        # rename columns (syntax is NEW NAME = OLD NAME)
          sex = strata,
          population = n)
 ```
@@ -251,73 +251,28 @@ study_data_cleaned <- rename(study_data_cleaned,
                               age_in_years = q155_q5_age_year)
 
 # Date variables ---------------------------------
-# IF YOU ARE USING A DHARMA DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
-# make sure all date variables are formatted as dates 
-
-# DATEVARS <- filter(study_data_dict, type == "QuestionDate") %>% 
-#   select(column_name) # select date vars
-
-# using the fake dictionary (DELETE THIS)
-DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
-  select(column_name) # select date vars
-
-# change to dates 
-study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(DATEVARS$column_name, as.Date)
-
-# if you dont have a data dictionary you could do it this way too
-# study_data_cleaned <- study_data_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), as.Date)
-
-# set unrealistic dates to NA, based on having browsed dates in the previous chunk
-# study_data_cleaned <- mutate(study_data_cleaned,
-#                            date_of_onset < as.Date("2017-11-01") ~ NA, 
-#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
-  
 
 
-# set the start of your recall-period
-# set the end of your recall period (when your survey stopped) 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(recall_start = as.Date("2018-01-01"), 
-         recall_end = as.Date("2018-05-01")
-  )
 
-# create columns for start and end dates
-study_data_cleaned <- study_data_cleaned %>%
-  find_start_date("q88_q33_born_date",
-                  "q114_q16_date_arrival_camp",
-                  "q41_q25_hh_arrive_date",
-                  cutoff = as.Date("2018-01-01"),
-                  datecol = "startdate",
-                  datereason = "startcause" 
-                 ) %>%
-  find_end_date("q45_q29_hh_leave_date",
-                "q137_q35_died_date",
-                cutoff = as.Date("2018-05-01"),
-                datecol = "enddate",
-                datereason = "endcause" 
-               )
-  
 
-# set inappropriate dates to NA
-# for arrivals an dirths before the recall period, set to NA 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(q114_q16_date_arrival_camp = ifelse(q114_q16_date_arrival_camp < recall_start, NA_real_, 
-                                             q114_q16_date_arrival_camp), 
-         q114_q16_date_arrival_camp = ifelse(q41_q25_hh_arrive_date < recall_start, NA_real_, 
-                                             q41_q25_hh_arrive_date), 
-         q88_q33_born_date = ifelse(q88_q33_born_date < recall_start, NA_real_, 
-                                             q88_q33_born_date)
-         )
 
-# for deaths and departures after the recall period, set to NA 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(q45_q29_hh_leave_date = ifelse(q45_q29_hh_leave_date > recall_end, NA_real_, 
-                                             q45_q29_hh_leave_date), 
-         q137_q35_died_date = ifelse(q137_q35_died_date > recall_end, NA_real_, 
-                                             q137_q35_died_date)
-         )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Age group variables ---------------------------------
 
@@ -362,16 +317,7 @@ SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition",
                      "Violence", "Unknown", "Other")
 
 
-# drop unwanted rows  ---------------------------------
-study_data_cleaned <- study_data_cleaned %>%
-  filter(!is.na(sex) &
-           (is.na(q114_q16_date_arrival_camp) |
-              q114_q16_date_arrival_camp < recall_end) &
-           (is.na(q41_q25_hh_arrive_date) | 
-              q41_q25_hh_arrive_date < recall_end) & 
-           (is.na(q88_q33_born_date) | 
-              q88_q33_born_date < recall_end) 
-           )
+
 
 ```
 
@@ -383,23 +329,124 @@ study_data_cleaned <- study_data_cleaned %>%
 
 study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
 
+
+
+
+
+
+
+
+
+######## GENERAL DATE STUFF ------------------------------------------------------------
+
+# IF YOU ARE USING A DHARMA DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
+# make sure all date variables are formatted as dates 
+
+# select all variables which are dates using the data dictionary
+# DATEVARS <- filter(study_data_dict, type == "QuestionDate") %>% 
+#   select(column_name) # select date vars
+
+# retrieving date vars from the fake dictionary (DELETE THIS)
+DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
+  select(column_name) # select date vars
+
+# change to dates 
+study_data_cleaned <- study_data_cleaned %>%
+  mutate_at(DATEVARS$column_name, as.Date)
+
+# if you dont have a data dictionary you could do it this way too
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate_at(vars(matches("date|Date")), as.Date)
+
+
+
+
+######## DEFINE RECALL PERIOD ------------------------------------------------------------
+
+# set the start of your recall-period
+# set the end of your recall period 
+  # (when your survey stopped or day of survey questionnaire) 
+  # IF day of questionnaire then use variable of date when form generated
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(recall_start = as.Date("2018-01-01"), 
+         recall_end = as.Date("2018-05-01")
+  )
+
+
+######## FIX WRONG DATES ------------------------------------------------------------
+
+# set unrealistic dates to NA, based on having browsed dates in the previous chunk
+# study_data_cleaned <- mutate(study_data_cleaned,
+#                            date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
+#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+  
+
+
+
+# set inappropriate dates to NA
+# for arrivals and dirths before the recall period, set to NA 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(q114_q16_date_arrival_camp = ifelse(q114_q16_date_arrival_camp < recall_start, as.Date(NA), 
+                                             q114_q16_date_arrival_camp), 
+         q41_q25_hh_arrive_date = ifelse(q41_q25_hh_arrive_date < recall_start, as.Date(NA), 
+                                             q41_q25_hh_arrive_date), 
+         q88_q33_born_date = ifelse(q88_q33_born_date < recall_start, as.Date(NA), 
+                                             q88_q33_born_date)
+         )
+
+# for deaths and departures after the recall period, set to NA 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(q45_q29_hh_leave_date = ifelse(q45_q29_hh_leave_date > recall_end, as.Date(NA), 
+                                             q45_q29_hh_leave_date), 
+         q137_q35_died_date = ifelse(q137_q35_died_date > recall_end, as.Date(NA), 
+                                             q137_q35_died_date)
+         )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #### OBSERVATION DAYS ----------------------------------------------------------
 
-## define start and end of your recall period
+# create columns for start and end dates
+# start date is the earliest appropriate arrival event within your recall period
+  # this is either the begining of your recall period (which you define in advance)
+  # or a date after the start of recall if applicable (e.g. arrivals or births)
+# end date is the earliest appropriate departure event within your recall period
+  # this is either the end of your recall period 
+  # or a date before the end of recall if applicable (e.g. departures, deaths)
 
-## define start date 
-## this is either the begining of your recall period (which you define in advance)
-## or a date after the start of recal if applicable (e.g. arrivals or births)
 
-# choose earliest appropriate date entered in survey
-# from camp arrival, household arrival and born date (pmin) or the start of study period (pmax)
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(startdate = pmax(
-    pmin(q114_q16_date_arrival_camp,
-          q41_q25_hh_arrive_date,
-          q88_q33_born_date, na.rm = TRUE),
-    recall_start, na.rm = FALSE
-  ))
+  # choose earliest date entered in survey
+  # from camp departures, death and end of the study
+  find_start_date("q88_q33_born_date",
+                  "q114_q16_date_arrival_camp",
+                  "q41_q25_hh_arrive_date",
+                  cutoff = as.Date("2018-01-01"),
+                  datecol = "startdate",
+                  datereason = "startcause" 
+                 ) %>%
+  # choose earliest date entered in survey
+  # from camp departures, death and end of the study
+  find_end_date("q45_q29_hh_leave_date",
+                "q137_q35_died_date",
+                cutoff = as.Date("2018-05-01"),
+                datecol = "enddate",
+                datereason = "endcause" 
+               )
+
 
 
 # correct startdate to born date if not NA (cant have arrived before born) 
@@ -409,37 +456,6 @@ study_data_cleaned <- study_data_cleaned %>%
                                        startdate))
 
 
-# find which column had the minimum value
-
-# start with an empty var
-study_data_cleaned$startcause <- NA
-
-# row wise 
-for (i in 1:nrow(study_data_cleaned)) {
-  
-  # all three of the dates of interest are empty
-  # set start cause to be start of recall period  
-  if (length(which.min(study_data_cleaned[i, c("q114_q16_date_arrival_camp",
-                                               "q41_q25_hh_arrive_date",
-                                               "q88_q33_born_date")])) == 0) {
-          study_data_cleaned[i, "startcause"] <- "Present at start"
-  }
-  # otherwise extract the name which was the minimum  
-  else {
-    study_data_cleaned[i, "startcause"] <- names(study_data_cleaned[i, c("q114_q16_date_arrival_camp",
-                                                                         "q41_q25_hh_arrive_date",
-                                                                         "q88_q33_born_date")])[
-            which.min(study_data_cleaned[i, c("q114_q16_date_arrival_camp",
-                                               "q41_q25_hh_arrive_date",
-                                               "q88_q33_born_date")])]
-  }
-  
-  if (!is.na(study_data_cleaned[i, "q88_q33_born_date"])) {
-    study_data_cleaned[i, "startcause"] <- "Born"
-  }
-}
-
-
 # make sure there are the appropriate levels
 study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause, 
                                                "Present at start" = "Present at start",
@@ -447,41 +463,6 @@ study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause,
                                                "q114_q16_date_arrival_camp" = "Other arrival", 
                                                "q41_q25_hh_arrive_date" = "Other arrival"
                                                )
-
-## define end date 
-## this is either the end of your recall period 
-## or a date before the end of recall if applicable (e.g. departures, deaths)
-
-# choose earliest date entered in survey
-# from camp departures, death and end of the study
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(enddate = pmin(q45_q29_hh_leave_date, 
-                         q137_q35_died_date,
-                         recall_end, na.rm = TRUE))
-
-
-# find which column had the minimum value 
-
-# start with an empty var
-study_data_cleaned$endcause <- NA
-
-# row wise 
-for (i in 1:nrow(study_data_cleaned)) {
-  
-  # all three of the dates of interest are empty
-  # set endcause to be end of recall period  
-  if (length(which.min(study_data_cleaned[i, c("q45_q29_hh_leave_date", 
-                                               "q137_q35_died_date")])) == 0) {
-          study_data_cleaned[i, "endcause"] <- "Present at end"
-  }
-  # otherwise extract the name which was the minimum  
-  else {
-    study_data_cleaned[i, "endcause"] <- names(study_data_cleaned[i, c("q45_q29_hh_leave_date", 
-                                                                       "q137_q35_died_date")])[
-            which.min(study_data_cleaned[i, c("q45_q29_hh_leave_date", 
-                                               "q137_q35_died_date")])]
-  }
-}
 
 # make sure there are the appropriate levels
 study_data_cleaned$endcause <- recode_factor(study_data_cleaned$endcause, 
@@ -493,6 +474,30 @@ study_data_cleaned$endcause <- recode_factor(study_data_cleaned$endcause,
 ## Define observation time in days (need to fix negatives in gen_data)
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(obstime = as.numeric(enddate - startdate))
+
+
+
+
+
+
+# drop unwanted rows  ---------------------------------
+
+# WE WANT TO IGNORE THOSE WHO HAVE A MISSING ID (i.e. drop empty excel rows)
+# WE WANT TO IGNORE THOSE THAT ARRIVED AFTER RECALL PERIOD 
+# OR LEFT BEFORE RECALL PERIOD (WITHOUT AN ARRIVAL IN RECALL - because ppl might come and go)
+study_data_cleaned <- study_data_cleaned %>%
+  filter(!is.na(sex) &
+           (is.na(q114_q16_date_arrival_camp) |
+              q114_q16_date_arrival_camp < recall_end) &
+           (is.na(q41_q25_hh_arrive_date) | 
+              q41_q25_hh_arrive_date < recall_end) & 
+           (is.na(q88_q33_born_date) | 
+              q88_q33_born_date < recall_end) 
+           )
+
+
+
+
 
 ```
 
