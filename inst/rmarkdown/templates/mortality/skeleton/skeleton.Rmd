@@ -236,6 +236,8 @@ population_data_age <- gen_population(total_pop = 10000, # set the total populat
 ##    - Numeric variables 
 ##    - Categorical variables from numerics (e.g. age groups) 
 ##    - Factor variables (for creating/manipulating categorical variables)
+##    - Adding weights based on population 
+##    - Calculating observation time with start and end causes
 ##    - Dropping rows and columns 
 
 
@@ -252,26 +254,61 @@ study_data_cleaned <- rename(study_data_cleaned,
 
 # Date variables ---------------------------------
 
+# IF YOU ARE USING A DHARMA DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
+# make sure all date variables are formatted as dates 
+
+# select all variables which are dates using the data dictionary
+# DATEVARS <- filter(study_data_dict, type == "QuestionDate") %>% 
+#   select(column_name) # select date vars
+
+# retrieving date vars from the fake dictionary (DELETE THIS)
+DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
+  select(column_name) # select date vars
+
+# change to dates 
+study_data_cleaned <- study_data_cleaned %>%
+  mutate_at(DATEVARS$column_name, as.Date)
+
+# if you dont have a data dictionary you could do it this way too
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate_at(vars(matches("date|Date")), as.Date)
 
 
 
+# defining the recall period 
+  # set the start of your recall-period
+  # set the end of your recall period 
+    # (when your survey stopped or day of survey questionnaire) 
+    # IF day of questionnaire then use variable of date when form generated
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(recall_start = as.Date("2018-01-01"), 
+         recall_end = as.Date("2018-05-01")
+  )
 
 
+# Ideally you should have defined rules in your forms to make sure dates collected are logical
+# If not then uncomment the following lines to fix wrong dates (or set them to NA)
+# Fixing wrong dates 
+# set unrealistic dates to NA, based on having browsed dates in the previous chunk
+# study_data_cleaned <- mutate(study_data_cleaned,
+#                            date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
+#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# set inappropriate dates to NA
+# for arrivals and dirths before the recall period, set to NA 
+# for deaths and departures after the recall period, set to NA
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate(q114_q16_date_arrival_camp = ifelse(q114_q16_date_arrival_camp < recall_start, as.Date(NA), 
+#                                              q114_q16_date_arrival_camp), 
+#          q41_q25_hh_arrive_date = ifelse(q41_q25_hh_arrive_date < recall_start, as.Date(NA), 
+#                                              q41_q25_hh_arrive_date), 
+#          q88_q33_born_date = ifelse(q88_q33_born_date < recall_start, as.Date(NA), 
+#                                              q88_q33_born_date), 
+#          q45_q29_hh_leave_date = ifelse(q45_q29_hh_leave_date > recall_end, as.Date(NA), 
+#                                              q45_q29_hh_leave_date), 
+#          q137_q35_died_date = ifelse(q137_q35_died_date > recall_end, as.Date(NA), 
+#                                              q137_q35_died_date)
+#   )
 
 
 # Age group variables ---------------------------------
@@ -316,108 +353,12 @@ SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition",
                      "Pregnancy-related", "Malaria/fever", "Trauma", 
                      "Violence", "Unknown", "Other")
 
-
-
-
-```
-
-
-
-```{r weights_person_days}
-
-######## WEIGHTING ------------------------------------------------------------
+######## weighting ------------------------------------------------------------
 
 study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
 
 
-
-
-
-
-
-
-
-######## GENERAL DATE STUFF ------------------------------------------------------------
-
-# IF YOU ARE USING A DHARMA DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
-# make sure all date variables are formatted as dates 
-
-# select all variables which are dates using the data dictionary
-# DATEVARS <- filter(study_data_dict, type == "QuestionDate") %>% 
-#   select(column_name) # select date vars
-
-# retrieving date vars from the fake dictionary (DELETE THIS)
-DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
-  select(column_name) # select date vars
-
-# change to dates 
-study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(DATEVARS$column_name, as.Date)
-
-# if you dont have a data dictionary you could do it this way too
-# study_data_cleaned <- study_data_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), as.Date)
-
-
-
-
-######## DEFINE RECALL PERIOD ------------------------------------------------------------
-
-# set the start of your recall-period
-# set the end of your recall period 
-  # (when your survey stopped or day of survey questionnaire) 
-  # IF day of questionnaire then use variable of date when form generated
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(recall_start = as.Date("2018-01-01"), 
-         recall_end = as.Date("2018-05-01")
-  )
-
-
-######## FIX WRONG DATES ------------------------------------------------------------
-
-# set unrealistic dates to NA, based on having browsed dates in the previous chunk
-# study_data_cleaned <- mutate(study_data_cleaned,
-#                            date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
-#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
-  
-
-
-
-# set inappropriate dates to NA
-# for arrivals and dirths before the recall period, set to NA 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(q114_q16_date_arrival_camp = ifelse(q114_q16_date_arrival_camp < recall_start, as.Date(NA), 
-                                             q114_q16_date_arrival_camp), 
-         q41_q25_hh_arrive_date = ifelse(q41_q25_hh_arrive_date < recall_start, as.Date(NA), 
-                                             q41_q25_hh_arrive_date), 
-         q88_q33_born_date = ifelse(q88_q33_born_date < recall_start, as.Date(NA), 
-                                             q88_q33_born_date)
-         )
-
-# for deaths and departures after the recall period, set to NA 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(q45_q29_hh_leave_date = ifelse(q45_q29_hh_leave_date > recall_end, as.Date(NA), 
-                                             q45_q29_hh_leave_date), 
-         q137_q35_died_date = ifelse(q137_q35_died_date > recall_end, as.Date(NA), 
-                                             q137_q35_died_date)
-         )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### OBSERVATION DAYS ----------------------------------------------------------
+#### observation time ----------------------------------------------------------
 
 # create columns for start and end dates
 # start date is the earliest appropriate arrival event within your recall period
@@ -448,15 +389,19 @@ study_data_cleaned <- study_data_cleaned %>%
                )
 
 
+# correct startdate/cause to born date if not NA (cant have arrived before born) 
+# THIS SHOULDNT OCCUR IF THE FUNCTION IS WORKING PROPERLY
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(startdate = ifelse(!is.na(q88_q33_born_date),
+                            q88_q33_born_date,
+                            startdate),
+         startcause = ifelse(!is.na(q88_q33_born_date),
+                             "q88_q33_born_date",
+                             startcause)
+  )
 
-# correct startdate to born date if not NA (cant have arrived before born) 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(startdate = ifelse(!is.na(q88_q33_born_date), 
-                                       q88_q33_born_date, 
-                                       startdate))
 
-
-# make sure there are the appropriate levels
+# make sure there are the appropriate levels (names)
 study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause, 
                                                "Present at start" = "Present at start",
                                                "Born" = "Born", 
@@ -464,23 +409,18 @@ study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause,
                                                "q41_q25_hh_arrive_date" = "Other arrival"
                                                )
 
-# make sure there are the appropriate levels
+# make sure there are the appropriate levels (names)
 study_data_cleaned$endcause <- recode_factor(study_data_cleaned$endcause, 
                                              "Present at end" = "Present at end", 
                                              "q137_q35_died_date" = "Died", 
                                              "q45_q29_hh_leave_date" = "Other departure")
 
 
-## Define observation time in days (need to fix negatives in gen_data)
+## Define observation time in days (need to highlight if negatives occur)
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(obstime = as.numeric(enddate - startdate))
 
-
-
-
-
-
-# drop unwanted rows  ---------------------------------
+# drop unwanted rows  ---------------------------------------------------------
 
 # WE WANT TO IGNORE THOSE WHO HAVE A MISSING ID (i.e. drop empty excel rows)
 # WE WANT TO IGNORE THOSE THAT ARRIVED AFTER RECALL PERIOD 
@@ -495,13 +435,13 @@ study_data_cleaned <- study_data_cleaned %>%
               q88_q33_born_date < recall_end) 
            )
 
-
-
-
-
 ```
 
-
+```{r save_cleaned_data, eval = FALSE}
+## OPTIONAL: save your cleaned dataset as an excel file! 
+## put the current date in the name so you know!
+writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date(), ".xlsx")
+```
 
 
 ```{r survey_design}
@@ -548,38 +488,6 @@ survey_design_sex <- study_data_cleaned %>%
                    )
 ```
 
-
-
-
-
-# Introduction
-
-# Methods
-
-## Study Design 
-
-## Sample Size and Sampling methods
-
-### Sample Size
-
-### Sampling
-
-#### Random sampling
-
-```{r}
-# Insert some code to generate a random number sequence
-```
-
-#### Cluster sampling
-
-```{r}
-# Insert some example code to do cluster sampling
-```
-
-## Data collection
-
-## Data analysis
-<!-- TODO: add paragraph about R/sitrep -->
 
 # Results
 
