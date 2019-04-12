@@ -9,62 +9,117 @@
 #' @param datecol the name of the new column to contain the dates
 #' @param datereason the name of the column to contain the name of the column
 #'   from which the date came.
-#' @param cutoff the cutoff date
-#' @param period one of either "before" or "after" indicating that the new
+#' @param period_start,period_end for the find_ functions, this should be the
+#'   name of a column in `x` that contains the start/end of the recall period.
+#'   For `constrain_dates`, this should be a vector of dates.
+#' @param na_fill one of either "before" or "after" indicating that the new
 #'   column should only contain dates before or after the cutoff date.
 #' @export
+#' 
+#' @examples
+#' d <- data.frame(
+#'   s1 = c(as.Date("2013-01-01") + 0:10, as.Date("2012-01-01")),
+#'   s2 = c(as.Date("2013-02-01") + 0:10, as.Date("2012-01-01")),
+#'   s3 = c(as.Date("2013-01-10") - 0:10, as.Date("2012-01-01")),
+#'   ps = as.Date("2012-12-31"),
+#'   pe = as.Date("2013-01-09")
+#' )
+#'
+#' find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe)
+#' find_date_cause(d, s3, s2, s1, period_start = ps, period_end = pe)
+#' 
+#' with(d, constrain_dates(s1, ps, pe))
+#' with(d, constrain_dates(s2, ps, pe))
+#' with(d, constrain_dates(s3, ps, pe))
+#'
 find_date_cause <- function(x,
                             ...,
+                            period_start = NULL,
+                            period_end = NULL,
                             datecol = "start_date",
                             datereason = "start_date_reason",
-                            cutoff = NA,
-                            period = "after") {
+                            na_fill = "start") {
 
-  stopifnot(inherits(cutoff, "Date"))
-  period <- match.arg(tolower(period), c("before", "after"))
-  .dots  <- tidyselect::vars_select(colnames(x), ...)
+  na_fill      <- match.arg(tolower(na_fill), c("start", "end"))
+  .dots        <- tidyselect::vars_select(colnames(x), ...)
+  period_start <- rlang::enquo(period_start)
+  period_end   <- rlang::enquo(period_end)
+  period_start <- tidyselect::vars_select(colnames(x), !! period_start)
+  period_end   <- tidyselect::vars_select(colnames(x), !! period_end)
 
-  are_dates <- vapply(x[.dots], inherits, logical(1), "Date")
+
+  are_dates <- vapply(x[c(.dots, period_start, period_end)], inherits, logical(1), "Date")
 
   if (!all(are_dates)) {
-    stop("All columns in ... must be dates")
+    stop("All columns in ..., period_start, and period_end must be dates")
   }
-  y <- x[.dots]
 
-  if (period == "after") {
-    the_judge <- function(i, cutoff) dplyr::if_else(i >= cutoff, i, as.Date(NA))
-  } else {
-    the_judge <- function(i, cutoff) dplyr::if_else(i <= cutoff, i, as.Date(NA))
-  }
+  y <- x[c(.dots, period_start, period_end)]
 
   # removing dates that don't conform
-  y <- dplyr::mutate_at(.tbl = x, .vars = .dots, .funs = ~the_judge(., cutoff))
+  y <- dplyr::mutate_at(.tbl         = y, 
+                        .vars        = .dots, 
+                        .funs        = constrain_dates, 
+                        period_start = y[[period_start]],
+                        period_end   = y[[period_end]])
+
   y <- choose_first_good_date(y[.dots])
-  tibble::add_column(!! rlang::sym(datecol) := y[[1]],
+
+  # filling the missing values with the start/end date
+  to_fill <- if (na_fill == "start") period_start else period_end
+  fillers <- is.na(y[[1]])
+  y[[1]][fillers] <- x[[to_fill]][fillers]
+  
+
+  tibble::add_column(!! rlang::sym(datecol)    := y[[1]],
                      !! rlang::sym(datereason) := y[[2]],
-                     .data = x,
+                     .data   = x,
                      .before = .dots[[1]])
+}
+
+#' @rdname find_date_cause
+#' @param i a vector of dates
+#' @export
+constrain_dates <- function(i, period_start, period_end) {
+
+  i[i < period_start | i > period_end] <- NA
+  i
+
 }
 
 #' @rdname find_date_cause
 #' @export
 find_start_date <- function(x, ...,
+                            period_start = NULL,
+                            period_end = NULL,
                             datecol = "start_date",
-                            datereason = "start_date_reason",
-                            cutoff = NA) {
+                            datereason = "start_date_reason"
+                            ) {
 
-  find_date_cause(x, ..., datecol = datecol, datereason = datereason, cutoff = cutoff, period = "after")
+  find_date_cause(x, ..., 
+                  period_start = !! rlang::enquo(period_start),
+                  period_end   = !! rlang::enquo(period_end),
+                  datecol      = datecol, 
+                  datereason   = datereason, 
+                  na_fill      = "start")
 
 }
 
 #' @rdname find_date_cause
 #' @export
 find_end_date <- function(x, ...,
+                          period_start = NULL,
+                          period_end = NULL,
                           datecol = "end_date",
-                          datereason = "end_date_reason",
-                          cutoff = NA) {
+                          datereason = "end_date_reason"
+                          ) {
 
-  find_date_cause(x, ..., datecol = datecol, datereason = datereason, cutoff = cutoff, period = "before")
+  find_date_cause(x, ..., 
+                  period_start = !! rlang::enquo(period_start),
+                  period_end   = !! rlang::enquo(period_end),
+                  datecol      = datecol, 
+                  datereason   = datereason, 
+                  na_fill      = "end")
 
 }
 
@@ -81,7 +136,7 @@ choose_first_good_date <- function(date_a_frame) {
   res <- data.frame(the_date = rep(as.Date(NA), length = n),
                     the_col  = character(n),
                     stringsAsFactors = FALSE
-                   )
+                    )
   for (i in seq_len(n)) {
     tmp <- date_a_frame[i, ]
     suppressWarnings(nona <- min(which(!is.na(tmp))))

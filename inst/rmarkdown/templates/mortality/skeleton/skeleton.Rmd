@@ -371,34 +371,36 @@ study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_g
 
 study_data_cleaned <- study_data_cleaned %>%
   # choose earliest date entered in survey
-  # from camp departures, death and end of the study
+  # from births, household arrivals, and camp arrivals 
   find_start_date("q88_q33_born_date",
-                  "q114_q16_date_arrival_camp",
                   "q41_q25_hh_arrive_date",
-                  cutoff = as.Date("2018-01-01"),
-                  datecol = "startdate",
-                  datereason = "startcause" 
+                  "q114_q16_date_arrival_camp",
+                  period_start = "recall_start",
+                  period_end   = "recall_end",
+                  datecol      = "startdate",
+                  datereason   = "startcause" 
                  ) %>%
   # choose earliest date entered in survey
   # from camp departures, death and end of the study
   find_end_date("q45_q29_hh_leave_date",
                 "q137_q35_died_date",
-                cutoff = as.Date("2018-05-01"),
-                datecol = "enddate",
-                datereason = "endcause" 
+                period_start = "recall_start",
+                period_end   = "recall_end",
+                datecol      = "enddate",
+                datereason   = "endcause" 
                )
 
 
 # correct startdate/cause to born date if not NA (cant have arrived before born) 
 # THIS SHOULDNT OCCUR IF THE FUNCTION IS WORKING PROPERLY
-study_data_cleaned <- study_data_cleaned %>%
-  mutate(startdate = ifelse(!is.na(q88_q33_born_date),
-                            q88_q33_born_date,
-                            startdate),
-         startcause = ifelse(!is.na(q88_q33_born_date),
-                             "q88_q33_born_date",
-                             startcause)
-  )
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate(startdate = ifelse(!is.na(q88_q33_born_date),
+#                             q88_q33_born_date,
+#                             startdate),
+#          startcause = ifelse(!is.na(q88_q33_born_date),
+#                              "q88_q33_born_date",
+#                              startcause)
+#   )
 
 
 # make sure there are the appropriate levels (names)
@@ -425,15 +427,15 @@ study_data_cleaned <- study_data_cleaned %>%
 # WE WANT TO IGNORE THOSE WHO HAVE A MISSING ID (i.e. drop empty excel rows)
 # WE WANT TO IGNORE THOSE THAT ARRIVED AFTER RECALL PERIOD 
 # OR LEFT BEFORE RECALL PERIOD (WITHOUT AN ARRIVAL IN RECALL - because ppl might come and go)
-study_data_cleaned <- study_data_cleaned %>%
-  filter(!is.na(sex) &
-           (is.na(q114_q16_date_arrival_camp) |
-              q114_q16_date_arrival_camp < recall_end) &
-           (is.na(q41_q25_hh_arrive_date) | 
-              q41_q25_hh_arrive_date < recall_end) & 
-           (is.na(q88_q33_born_date) | 
-              q88_q33_born_date < recall_end) 
-           )
+# study_data_cleaned <- study_data_cleaned %>%
+#   filter(!is.na(sex) &
+#            (is.na(q114_q16_date_arrival_camp) |
+#               q114_q16_date_arrival_camp < recall_end) &
+#            (is.na(q41_q25_hh_arrive_date) | 
+#               q41_q25_hh_arrive_date < recall_end) & 
+#            (is.na(q88_q33_born_date) | 
+#               q88_q33_born_date < recall_end) 
+#            )
 
 ```
 
