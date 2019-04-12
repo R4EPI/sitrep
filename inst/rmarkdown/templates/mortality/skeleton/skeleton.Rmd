@@ -390,17 +390,7 @@ study_data_cleaned <- study_data_cleaned %>%
                 datereason   = "endcause" 
                )
 
-
-# correct startdate/cause to born date if not NA (cant have arrived before born) 
-# THIS SHOULDNT OCCUR IF THE FUNCTION IS WORKING PROPERLY
-# study_data_cleaned <- study_data_cleaned %>%
-#   mutate(startdate = ifelse(!is.na(q88_q33_born_date),
-#                             q88_q33_born_date,
-#                             startdate),
-#          startcause = ifelse(!is.na(q88_q33_born_date),
-#                              "q88_q33_born_date",
-#                              startcause)
-#   )
+assert_positive_timespan(study_data_cleaned, startdate, enddate)
 
 
 # make sure there are the appropriate levels (names)

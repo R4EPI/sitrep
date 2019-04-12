@@ -2,6 +2,7 @@
 
 export(add_weights)
 export(age_categories)
+export(assert_positive_timespan)
 export(attack_rate)
 export(case_fatality_rate)
 export(case_fatality_rate_df)

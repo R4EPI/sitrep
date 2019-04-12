@@ -5,6 +5,7 @@
 \alias{constrain_dates}
 \alias{find_start_date}
 \alias{find_end_date}
+\alias{assert_positive_timespan}
 \title{Find the first date beyond a cutoff in several columns}
 \usage{
 find_date_cause(x, ..., period_start = NULL, period_end = NULL,
@@ -18,6 +19,8 @@ find_start_date(x, ..., period_start = NULL, period_end = NULL,
 
 find_end_date(x, ..., period_start = NULL, period_end = NULL,
   datecol = "end_date", datereason = "end_date_reason")
+
+assert_positive_timespan(x, date_start, date_end)
 }
 \arguments{
 \item{x}{a data frame}
@@ -38,6 +41,8 @@ from which the date came.}
 column should only contain dates before or after the cutoff date.}
 
 \item{i}{a vector of dates}
+
+\item{date_start, date_end}{column name of a date vector}
 }
 \description{
 This function will find the first date in an orderd series of columns that
@@ -51,9 +56,15 @@ d <- data.frame(
   ps = as.Date("2012-12-31"),
   pe = as.Date("2013-01-09")
 )
-
-find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe)
+print(dd <- find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe))
 find_date_cause(d, s3, s2, s1, period_start = ps, period_end = pe)
+
+# works
+assert_positive_timespan(dd, start_date, pe)
+
+# returns a warning because the last date isn't later than the start_date
+assert_positive_timespan(dd, start_date, s2)
+
 
 with(d, constrain_dates(s1, ps, pe))
 with(d, constrain_dates(s2, ps, pe))

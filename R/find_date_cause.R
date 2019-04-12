@@ -24,10 +24,16 @@
 #'   ps = as.Date("2012-12-31"),
 #'   pe = as.Date("2013-01-09")
 #' )
-#'
-#' find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe)
+#' print(dd <- find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe))
 #' find_date_cause(d, s3, s2, s1, period_start = ps, period_end = pe)
+#'
+#' # works
+#' assert_positive_timespan(dd, start_date, pe)
+#'
+#' # returns a warning because the last date isn't later than the start_date
+#' assert_positive_timespan(dd, start_date, s2)
 #' 
+#'
 #' with(d, constrain_dates(s1, ps, pe))
 #' with(d, constrain_dates(s2, ps, pe))
 #' with(d, constrain_dates(s3, ps, pe))
@@ -145,4 +151,21 @@ choose_first_good_date <- function(date_a_frame) {
     res$the_col[i]  <- names(date_a_frame)[nona]
   }
   res
+}
+
+#' @param date_start,date_end column name of a date vector
+#' @rdname find_date_cause
+#' @export
+assert_positive_timespan <- function(x, date_start, date_end) {
+
+  ds <- tidyselect::vars_select(colnames(x), !! rlang::enquo(date_start))
+  de <- tidyselect::vars_select(colnames(x), !! rlang::enquo(date_end  ))
+  res <- x[[de]] - x[[ds]]
+  all_right <- all(res >= 0, na.rm = TRUE)  
+  if (!all_right) {
+    y <- x[res < 0, , drop = FALSE]    
+    warning(sprintf("%d rows had negative timespans", nrow(y)), immediate. = TRUE)
+    return(y)
+  }
+  return(invisible(NULL))
 }
