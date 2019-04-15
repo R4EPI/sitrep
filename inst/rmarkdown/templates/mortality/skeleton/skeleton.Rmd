@@ -388,8 +388,12 @@ study_data_cleaned <- study_data_cleaned %>%
                 period_end   = "recall_end",
                 datecol      = "enddate",
                 datereason   = "endcause" 
-               ) 
+               )
 
+# remove any rows that have dates that do not span the timeframe
+study_data_cleaned <- filter(study_data_cleaned, !is.na(startdate) | !is.na(enddate)) 
+
+# ensure that there is a positive timeframe 
 assert_positive_timespan(study_data_cleaned, startdate, enddate)
 
 
