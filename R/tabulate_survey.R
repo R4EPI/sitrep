@@ -10,6 +10,7 @@
 #'   interval. Defaults to "logit"
 #' @return a tibble
 #' @export
+#' @importFrom srvyr survey_total survey_mean
 #' @examples
 #' library(srvyr)
 #' library(survey)

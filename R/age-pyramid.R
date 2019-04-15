@@ -15,7 +15,7 @@
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (`FALSE`),
 #' to turn on write `TRUE`.
-#' @param horizontal lines If `TRUE` (default), horizontal dashed lines will
+#' @param horizontal_lines If `TRUE` (default), horizontal dashed lines will
 #'   appear behind the bars of the pyramid
 #'
 #' @note if `split_by` and `stack_by` are not the same, The values of `spit_by`
@@ -68,6 +68,11 @@
 #'                        vertical_lines = TRUE) +
 #'   labs(title = "Age groups by case definition and sex")
 #' print(ap)
+#' 
+#' # empty group levels will still be displayed
+#' dat3 <- dat2
+#' dat3[dat$AGE == "[0,5)", "sex"] <- NA
+#' plot_age_pyramid(dat3, age_group = "AGE") 
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                              stack_by = split_by, proportional = FALSE, na.rm = FALSE,
                              vertical_lines = FALSE, horizontal_lines = TRUE) {
@@ -143,6 +148,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   age_levels <- levels(plot_data[[age_group]])
   max_age_group <- age_levels[length(age_levels)]
   sex_levels <- unique(plot_data[[split_by]])
+  sex_levels <- sex_levels[!is.na(sex_levels)]
   stk_levels <- unique(plot_data[[stack_by]])
 
   stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
@@ -159,35 +165,35 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     scale_y_continuous(limits = c(-max_n, max_n),
                        breaks = the_breaks,
                        labels = lab_fun) +
-theme_classic() +
-theme(axis.line.y.left = element_blank()) +
-labs(y = y_lab)
+    theme_classic() +
+    theme(axis.line.y.left = element_blank()) +
+    labs(y = y_lab)
 
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
       geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dotted", colour = "grey")
   }
 
-if (horizontal_lines == TRUE) {
-  pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
-}
-pyramid <- pyramid +
-  geom_hline(yintercept = 0) # add vertical line
-
-if (stack_by != split_by) {
+  if (horizontal_lines == TRUE) {
+    pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
+  }
   pyramid <- pyramid +
-    annotate(geom = "label",
-             x = max_age_group,
-             y = -step_size,
-             vjust = 0.5,
-             hjust = 1,
-             label = sex_levels[[1]]) +
-annotate(geom = "label",
-         x = max_age_group,
-         y = step_size,
-         vjust = 0.5,
-         hjust = 0,
-         label = sex_levels[[2]])
-}
-pyramid
+    geom_hline(yintercept = 0) # add vertical line
+
+  if (stack_by != split_by) {
+    pyramid <- pyramid +
+      annotate(geom = "label",
+               x = max_age_group,
+               y = -step_size,
+               vjust = 0.5,
+               hjust = 1,
+               label = sex_levels[[1]]) +
+      annotate(geom = "label",
+               x = max_age_group,
+               y = step_size,
+               vjust = 0.5,
+               hjust = 0,
+               label = sex_levels[[2]])
+  }
+  pyramid
 }

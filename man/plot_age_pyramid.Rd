@@ -31,7 +31,7 @@ to \code{TRUE}.}
 visual interpretation of numbers. Default is to not show (\code{FALSE}),
 to turn on write \code{TRUE}.}
 
-\item{horizontal}{lines If \code{TRUE} (default), horizontal dashed lines will
+\item{horizontal_lines}{If \code{TRUE} (default), horizontal dashed lines will
 appear behind the bars of the pyramid}
 }
 \description{
@@ -86,4 +86,9 @@ ap <- plot_age_pyramid(dat,
                        vertical_lines = TRUE) +
   labs(title = "Age groups by case definition and sex")
 print(ap)
+
+# empty group levels will still be displayed
+dat3 <- dat2
+dat3[dat$AGE == "[0,5)", "sex"] <- NA
+plot_age_pyramid(dat3, age_group = "AGE") 
 }

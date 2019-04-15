@@ -9,7 +9,7 @@ age_categories(x, breakers = NA, lower = 0, upper = NA, by = 10,
   separator = "-", ceiling = FALSE, above.char = "+")
 
 group_age_categories(dat, years = NULL, months = NULL, weeks = NULL,
-  days = NULL, one_column = TRUE)
+  days = NULL, one_column = TRUE, drop_empty_overlaps = TRUE)
 }
 \arguments{
 \item{x}{Your age variable}
@@ -46,6 +46,11 @@ single column called "age_category" that appends the type of age category
 used. If \code{FALSE}, there will be one column with the grouped age categories
 called "age_category" and a second column indicating age unit called
 "age_unit".}
+
+\item{drop_empty_overlaps}{if \code{TRUE}, unused levels are dropped if they have
+been replaced by a more fine-grained definition and are empty. Practically,
+this means that the first level for years, months, and weeks are in
+consideration for being removed via \code{\link[forcats:fct_drop]{forcats::fct_drop()}}}
 }
 \value{
 a data frame
@@ -55,6 +60,7 @@ Create an age group variable
 }
 \examples{
 
+\dontrun{
 if (require("dplyr")) {
 set.seed(50)
 dat <- gen_data("Cholera", n = 100)
@@ -68,5 +74,6 @@ ages \%>\%
   group_age_categories(years = age_years, months = age_months, days = age_days) \%>\%
   pull(age_category) \%>\%
   table()
+}
 }
 }
