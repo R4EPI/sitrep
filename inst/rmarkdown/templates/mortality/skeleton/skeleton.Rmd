@@ -388,7 +388,7 @@ study_data_cleaned <- study_data_cleaned %>%
                 period_end   = "recall_end",
                 datecol      = "enddate",
                 datereason   = "endcause" 
-               )
+               ) 
 
 assert_positive_timespan(study_data_cleaned, startdate, enddate)
 
