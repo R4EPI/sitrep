@@ -487,17 +487,25 @@ A total of `r nrow(study_data_cleaned)` surveyed individuals were included in th
 
 Below shows the arrivals and departures during the study period. 
 
-```{r}
+```{r descriptive_start_population}
 # get counts and proportions of start causes
 descriptive(study_data_cleaned, 
             "startcause", coltotals = TRUE) %>% 
+# rename columns appropriately
+  rename("Status" = startcause, 
+         "Individuals (n)" = n, 
+         "%" = prop) %>%
   kable(digits = 2)
 ```
 
 
-```{r}
+```{r descriptive_end_population}
+# get counts and proportions of end causes
 descriptive(study_data_cleaned, 
             "endcause", coltotals = TRUE) %>% 
+  rename("Status" = endcause, 
+         "Individuals (n)" = n, 
+         "%" = prop) %>%
   kable(digits = 2)
 ```
 
