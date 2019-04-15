@@ -10,6 +10,7 @@
 #'   interval. Defaults to "logit"
 #' @return a tibble
 #' @export
+#' @importFrom srvyr survey_total survey_mean
 #' @examples
 #' library(srvyr)
 #' library(survey)
@@ -51,7 +52,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1, me
   }
 
   # Calculating the survey total will also give us zero counts 
-  y <- srvyr::summarise(x, n = survey_total(var = "se", na.rm = TRUE))
+  y <- srvyr::summarise(x, n = survey_total(vartype = "se", na.rm = TRUE))
 
   # We can then set up the proportion calculations. Because of issues with using
   # srvyr::survey_mean() on several variables, we have to roll our own.
@@ -98,7 +99,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1, me
     return(y)
   }
 
-  y      <- unite_ci(y, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
+  y <- unite_ci(y, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
   
   # convert any NA% proportions to just NA
   y$prop <- dplyr::if_else(grepl("NA%", y$prop), NA_character_, y$prop)

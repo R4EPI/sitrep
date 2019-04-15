@@ -1,0 +1,4 @@
+name: AJS outbreak report
+description: >
+  An automated outbreak report template for acute jaundice syndrome
+create_dir: false

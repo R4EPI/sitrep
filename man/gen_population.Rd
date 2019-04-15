@@ -2,31 +2,30 @@
 % Please edit documentation in R/gen_population.R
 \name{gen_population}
 \alias{gen_population}
-\title{Generate population counts from estimated population age breakdowns.
-This generates based on predefined age groups and proportions,
-however you could also define these yourself.}
+\title{Generate population counts from estimated population age breakdowns.}
 \usage{
 gen_population(total_pop = 1000, groups = c("0-4", "5-14", "15-24",
   "25-34", "35-44", "45+"), strata = c("Male", "Female"),
   proportions = c(0.182, 0.278, 0.26, 0.11, 0.07, 0.1), tibble = TRUE)
 }
 \arguments{
-\item{total_pop}{The overal population count of interest - the default is 1000 people}
+\item{total_pop}{The overal population count of interest - the default is
+1000 people}
+
+\item{groups}{A character vector of groups - the default is set for age
+groups: c("0-4","5-14","15-24","25-34","35-44","45+")}
 
 \item{strata}{A character vector for stratifying groups -
 the default is set for gender: c("Male", "Female")}
 
-\item{proportions}{A numeric vector specifying the proportions (as decimals) for each age group -
-the default repeats c(0.182, 0.278, 0.26, 0.11, 0.07, 0.10) for genders.
-However you can change this manually, make sure to have the length equal to groups times strata.}
+\item{proportions}{A numeric vector specifying the proportions (as decimals)
+for each age group - the default repeats c(0.182, 0.278, 0.26, 0.11, 0.07,
+0.10) for genders.  However you can change this manually, make sure to
+have the length equal to groups times strata.}
 
 \item{tibble}{Return data as a tidyverse tibble (default is TRUE)}
-
-\item{age_groups}{A character vector of groups -
-the default is set for age groups: c("0-4","5-14","15-24","25-34","35-44","45+")}
 }
 \description{
-Generate population counts from estimated population age breakdowns.
 This generates based on predefined age groups and proportions,
 however you could also define these yourself.
 }

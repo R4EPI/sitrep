@@ -7,24 +7,27 @@
 #' coded to named form (e.g. 0/1 to No/Yes).
 #'
 #' @param disease Specify which disease you would like to use.
-#' Currently supports "Cholera", "Measles" and "Meningitis".
+#'   Currently supports "Cholera", "Measles" and "Meningitis".
+#' @param name the name of the dictionary stored in the package.
 #' @param dictionary Specify which dictionary you would like to use.
-#' Currently supports "Cholera", "Measles", "Meningitis", "AJS" and "Mortality".
+#'   Currently supports "Cholera", "Measles", "Meningitis", "AJS" and "Mortality".
 #' @param varnames Specify name of column that contains varnames. Currently
-#' default set to "Item".  (this can probably be deleted once dictionaries
-#' standardise) If `dictionary` is "Mortality", `varnames` needs to be "column_name"`.
+#'   default set to "Item".  (this can probably be deleted once dictionaries
+#'   standardise) If `dictionary` is "Mortality", `varnames` needs to be "column_name"`.
 #' @param numcases For fake data, specify the number of cases you want (default is 300
 #' @param tibble Return data dictionary as a tidyverse tibble (default is TRUE)
 #' @param compact If TRUE, returns a neat data dictionary in single data frame.
-#' If FALSE, returns a list with two data frames, one with variables and the
-#' other with content options.
+#'   If FALSE, returns a list with two data frames, one with variables and the
+#'   other with content options.
 #' @param df A dataframe (e.g. your linelist) which is passed to switch_vals function.
-#' @param copy_to_clipboard. if `TRUE` (default), the rename template will be
-#' copied to the user's clipboard with [clipr::write_clip()]. If `FALSE`, the
-#' rename template will be printed to the user's console.
+#' @param copy_to_clipboard if `TRUE` (default), the rename template will be
+#'   copied to the user's clipboard with [clipr::write_clip()]. If `FALSE`, the
+#'   rename template will be printed to the user's console.
 #' @importFrom rio import
 #' @importFrom epitrix clean_labels
 #' @importFrom tibble as_tibble
+#' @importFrom stats aggregate runif
+#' @importFrom utils read.csv
 #' @export
 
 
@@ -85,11 +88,12 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
     # change dat_opts to wide format
     # remove the optionset_UID for treatment_facility_site
     # (is just numbers 1:50 and dont want it in the data dictionary)
-    a <- aggregate(option_code ~ optionset_uid,
-                   dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    obs <- sapply(a$option_code, length) # count length of var opts for each
+    a <- stats::aggregate(option_code ~ optionset_uid,
+                          dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
+    browser()
+    obs     <- lengths(a$option_code) # count length of var opts for each
     highest <- seq_len(max(obs)) # create sequence for pulling out of list
-    out <- t(sapply(a$option_code, "[", i = highest)) # pull out of list and flip to make dataframe
+    out     <- t(sapply(a$option_code, "[", i = highest)) # pull out of list and flip to make dataframe
     colnames(out) <- sprintf("Code%d", seq(ncol(out))) # rename with code and num of columns
 
     # bind to above
@@ -97,11 +101,11 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
     a <- cbind(a, out)
 
     # repeat above for names
-    b <- aggregate(option_name ~ optionset_uid,
-                   dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    obs <- sapply(b$option_name, length) # count length of var opts for each
+    b <- stats::aggregate(option_name ~ optionset_uid,
+                          dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
+    obs     <- lengths(b$option_name) # count length of var opts for each
     highest <- seq_len(max(obs)) # create sequence for pulling out of list
-    out <- t(sapply(b$option_name, "[", i = highest)) # pull out of list and flip to make dataframe
+    out     <- t(sapply(b$option_name, "[", i = highest)) # pull out of list and flip to make dataframe
     colnames(out) <- sprintf("Name%d", seq(ncol(out))) # rename with code and num of column
 
     b$option_name <- NULL
@@ -320,25 +324,28 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   # set_age_na controlls if age_year_var should be set to NA if age_month_var is sampled
   # same is done for age_month_var and age_day_var
   set_age_na <- TRUE
-  if (dictionary == "Mortality")
+  if (dictionary == "Mortality") {
     set_age_na <- FALSE
+  }
 
   if (!is.na(age_year_var)) {
     # sample 0:120
     dis_output[, age_year_var] <- sample(0:120, numcases, replace = TRUE)
     U2_YEARS <- which(dis_output[, age_year_var] <= 2)
-    if (set_age_na)
+    if (set_age_na) {
       dis_output[U2_YEARS, age_year_var] <- NA
+    }
 
     if (!is.na(age_month_var)) {
       # age_month
       if (length(U2_YEARS) > 0) {
-        dis_output[U2_YEARS, age_month_var] <- sample(0:23,
+        dis_output[U2_YEARS, age_month_var] <- sample(0:24,
                                                       length(U2_YEARS),
                                                       replace = TRUE)
         U2_MONTHS <- which(dis_output[, age_month_var] <= 2)
-        if (set_age_na)
+        if (set_age_na) {
           dis_output[U2_MONTHS, age_month_var] <- NA
+        }
       }
 
       if (!is.na(age_day_var)) {

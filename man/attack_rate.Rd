@@ -40,6 +40,13 @@ confidence interval.}
 \item{mergeCI}{Whether or not to put the confidence intervals in one column (default is FALSE)}
 
 \item{digits}{if \code{mergeCI = TRUE}, this determines how many digits are printed}
+
+\item{x}{a data frame}
+
+\item{group}{the bare name of a column to use for stratifying the output}
+
+\item{add_total}{if \code{group} is not NULL, then this will add a row containing
+the total value across all groups.}
 }
 \description{
 Calculate attack rate, case fatality rate, and mortality rate

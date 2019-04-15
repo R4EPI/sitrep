@@ -1,4 +1,7 @@
 #' Unite estimates and confidence intervals
+#' 
+#' create a character column by combining estimate, lower and upper columns. 
+#' This is similar to [tidyr::unite()].
 #'
 #' @param x a data frame with at least three columns defining an estimate, lower
 #' bounds, and upper bounds.
@@ -8,13 +11,13 @@
 #' @param remove if `TRUE` (default), the three columns in `...` will be replaced by `col`
 #' @param digits the number of digits to retain for the confidence interval.
 #' @param m100 `TRUE` if the result should be multiplied by 100
-#' @param percent `TRUE` if the result should have a "%" symbol added.
+#' @param percent `TRUE` if the result should have a percent symbol added.
 #'
 #' @export
 #' @examples
 #'
 #' print(cfr <- case_fatality_rate((1:4)*10, 50))
-#' unite_ci(cfr, "CFR (CI)", cfr, lower, upper, rate = TRUE)
+#' unite_ci(cfr, "CFR (CI)", cfr, lower, upper, m100 = FALSE, percent = TRUE)
 #'
 unite_ci <- function(x, col = NULL, ..., remove = TRUE, digits = 2, m100 = TRUE, percent = FALSE) {
 

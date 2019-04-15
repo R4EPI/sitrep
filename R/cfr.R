@@ -2,9 +2,11 @@
 #'
 #' Calculate attack rate, case fatality rate, and mortality rate
 #'
+#' @param x a data frame
 #' @param cases,deaths number of cases or deaths in a population. For `_df`
 #'   functions, this can be the name of a logical column OR an evaluated
 #'   logical expression (see examples).
+#' @param group the bare name of a column to use for stratifying the output
 #' @param population the number of individuals in the population.
 #' @param conf_level a number representing the confidence level for which to
 #' calculate the confidence interval. Defaults to 0.95, representinc 95%
@@ -14,6 +16,8 @@
 #'  - `multiplier = 100`: proportion
 #'  - `multiplier = 10^4`: x per 10,000 people
 #' @param mergeCI Whether or not to put the confidence intervals in one column (default is FALSE)
+#' @param add_total if `group` is not NULL, then this will add a row containing
+#'   the total value across all groups.
 #' @param digits if `mergeCI = TRUE`, this determines how many digits are printed
 #' @export
 #' @rdname attack_rate
@@ -85,14 +89,14 @@ case_fatality_rate_df <- function(x, deaths, group = NULL, conf_level = 0.95,
   # calculated deaths and population before... so this means that 
   # THE ORDER OF THE STATEMENTS MATTER
   res <- dplyr::summarise(x,
-                          deaths := sum(!!qdeath, na.rm = TRUE), 
-                          population := dplyr::n(),
-                          cfr := list(case_fatality_rate(.data$deaths, 
-                                                         .data$population, 
-                                                         conf_level, 
-                                                         multiplier, 
-                                                         mergeCI, 
-                                                         digits)[-(1:2)]
+                          !!quote(deaths) := sum(!!qdeath, na.rm = TRUE), 
+                          !!quote(population) := dplyr::n(),
+                          !!quote(cfr) := list(case_fatality_rate(.data$deaths, 
+                                                                 .data$population, 
+                                                                 conf_level, 
+                                                                 multiplier, 
+                                                                 mergeCI, 
+                                                                 digits)[-(1:2)]
                           ))
 
   # unnesting the list column

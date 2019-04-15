@@ -1,14 +1,18 @@
 #' Generate population counts from estimated population age breakdowns.
+#'
 #' This generates based on predefined age groups and proportions,
 #' however you could also define these yourself.
-#' @param total_pop The overal population count of interest - the default is 1000 people
-#' @param age_groups A character vector of groups -
-#' the default is set for age groups: c("0-4","5-14","15-24","25-34","35-44","45+")
+#'
+#' @param total_pop The overal population count of interest - the default is
+#'   1000 people
+#' @param groups A character vector of groups - the default is set for age
+#' groups: c("0-4","5-14","15-24","25-34","35-44","45+")
 #' @param strata A character vector for stratifying groups -
-#' the default is set for gender: c("Male", "Female")
-#' @param proportions A numeric vector specifying the proportions (as decimals) for each age group -
-#' the default repeats c(0.182, 0.278, 0.26, 0.11, 0.07, 0.10) for genders.
-#' However you can change this manually, make sure to have the length equal to groups times strata.
+#'   the default is set for gender: c("Male", "Female")
+#' @param proportions A numeric vector specifying the proportions (as decimals)
+#'   for each age group - the default repeats c(0.182, 0.278, 0.26, 0.11, 0.07,
+#'   0.10) for genders.  However you can change this manually, make sure to
+#'   have the length equal to groups times strata.
 #' @param tibble Return data as a tidyverse tibble (default is TRUE)
 #' @importFrom dplyr bind_cols
 #' @export
