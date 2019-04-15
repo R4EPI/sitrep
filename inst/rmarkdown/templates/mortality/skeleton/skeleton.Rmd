@@ -398,7 +398,6 @@ check_dates <- assert_positive_timespan(study_data_cleaned, startdate, enddate)
 # (fact_0_id only exists in real dharma datasets - not those from gen_data function)
 # check_dates$fact_0_id
 
-
 # make sure there are the appropriate levels (names)
 study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause, 
                                                "Present at start" = "Present at start",
