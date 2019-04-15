@@ -390,13 +390,19 @@ study_data_cleaned <- study_data_cleaned %>%
                 datereason   = "endcause" 
                )
 
-assert_positive_timespan(study_data_cleaned, startdate, enddate)
+# check that you do not have any negative observation times
+# (e.g. any rows with end date before start date)
+check_dates <- assert_positive_timespan(study_data_cleaned, startdate, enddate)
+
+# return the unique identifiers which have negative observation time 
+# (fact_0_id only exists in real dharma datasets - not those from gen_data function)
+# check_dates$fact_0_id
 
 
 # make sure there are the appropriate levels (names)
 study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause, 
                                                "Present at start" = "Present at start",
-                                               "Born" = "Born", 
+                                               "q88_q33_born_date" = "Born", 
                                                "q114_q16_date_arrival_camp" = "Other arrival", 
                                                "q41_q25_hh_arrive_date" = "Other arrival"
                                                )
@@ -414,18 +420,12 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # drop unwanted rows  ---------------------------------------------------------
 
-# WE WANT TO IGNORE THOSE WHO HAVE A MISSING ID (i.e. drop empty excel rows)
-# WE WANT TO IGNORE THOSE THAT ARRIVED AFTER RECALL PERIOD 
-# OR LEFT BEFORE RECALL PERIOD (WITHOUT AN ARRIVAL IN RECALL - because ppl might come and go)
-# study_data_cleaned <- study_data_cleaned %>%
-#   filter(!is.na(sex) &
-#            (is.na(q114_q16_date_arrival_camp) |
-#               q114_q16_date_arrival_camp < recall_end) &
-#            (is.na(q41_q25_hh_arrive_date) | 
-#               q41_q25_hh_arrive_date < recall_end) & 
-#            (is.na(q88_q33_born_date) | 
-#               q88_q33_born_date < recall_end) 
-#            )
+# you may want to drop rows with missing IDs (i.e. blank rows from excel) 
+  # simply add a !is.na(fact_0_id) if using a dharma dataset
+# you will also want to drop those rows where both the start and enddate occur
+# outside of your recall period! 
+study_data_cleaned <- study_data_cleaned %>%
+  filter(!is.na(startcause) | !is.na(endcause))
 
 ```
 
@@ -483,19 +483,23 @@ survey_design_sex <- study_data_cleaned %>%
 
 # Results
 
+A total of `r nrow(study_data_cleaned)` surveyed individuals were included in the analyses. There were `r fmt_count(study_data_cleaned, startcause == "Present at start")` household members present at the start of the recall period. There were `r fmt_count(study_data_cleaned, startcause != "Present at start")` individuals who arrived during the recall period and `r fmt_count(study_data_cleaned, endcause != "Present at end")` who departed. This resulted in `r fmt_count(study_data_cleaned, endcause == "Present at end")` individuals who were present at the end of the recall period; for a net change in sample population of 
+`r round( ( 1 - abs(tally(study_data_cleaned, startcause == "Present at start") - tally(study_data_cleaned, endcause == "Present at end")) / tally(study_data_cleaned, startcause == "Present at start")) * 100, digits = 1)`%. 
 
 Below shows the arrivals and departures during the study period. 
 TO DO: Add example text of inline code - e.g. to show the net change in population. 
 
 ```{r}
 descriptive(study_data_cleaned, 
-            "startcause", coltotals = TRUE)
+            "startcause", coltotals = TRUE) %>% 
+  kable(digits = 2)
 ```
 
 
 ```{r}
 descriptive(study_data_cleaned, 
-            "endcause", coltotals = TRUE)
+            "endcause", coltotals = TRUE) %>% 
+  kable(digits = 2)
 ```
 
 
@@ -522,7 +526,8 @@ bind_cols(
          "Study population (n)" = n, 
          "%" = prop, 
          "Source population (n)" = n1, 
-         "%" = prop1)
+         "%" = prop1) %>% 
+  kable(digits = 2)
 
 ```
 
