@@ -18,13 +18,17 @@
 #' 
 #' @examples
 #' d <- data.frame(
-#'   s1 = c(as.Date("2013-01-01") + 0:10, as.Date("2012-01-01")),
-#'   s2 = c(as.Date("2013-02-01") + 0:10, as.Date("2012-01-01")),
-#'   s3 = c(as.Date("2013-01-10") - 0:10, as.Date("2012-01-01")),
+#'   s1 = c(as.Date("2013-01-01") + 0:10, as.Date(c("2012-01-01", "2014-01-01"))),
+#'   s2 = c(as.Date("2013-02-01") + 0:10, as.Date(c("2012-01-01", "2014-01-01"))),
+#'   s3 = c(as.Date("2013-01-10") - 0:10, as.Date(c("2012-01-01", "2014-01-01"))),
 #'   ps = as.Date("2012-12-31"),
 #'   pe = as.Date("2013-01-09")
 #' )
 #' print(dd <- find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe))
+#' print(bb <- find_date_cause(d, s1, s2, s3, period_start = ps, period_end = pe,
+#'                             na_fill = "end", 
+#'                             datecol = "enddate",
+#'                             datereason = "endcause"))
 #' find_date_cause(d, s3, s2, s1, period_start = ps, period_end = pe)
 #'
 #' # works
@@ -67,15 +71,10 @@ find_date_cause <- function(x,
                         .vars        = .dots, 
                         .funs        = constrain_dates, 
                         period_start = y[[period_start]],
-                        period_end   = y[[period_end]])
+                        period_end   = y[[period_end]],
+                        boundary     = na_fill)
 
   y <- choose_first_good_date(y[.dots])
-
-  # filling the missing values with the start/end date
-  to_fill <- if (na_fill == "start") period_start else period_end
-  fillers <- is.na(y[[1]])
-  y[[1]][fillers] <- x[[to_fill]][fillers]
-  
 
   tibble::add_column(!! rlang::sym(datecol)    := y[[1]],
                      !! rlang::sym(datereason) := y[[2]],
@@ -83,15 +82,6 @@ find_date_cause <- function(x,
                      .before = .dots[[1]])
 }
 
-#' @rdname find_date_cause
-#' @param i a vector of dates
-#' @export
-constrain_dates <- function(i, period_start, period_end) {
-
-  i[i < period_start | i > period_end] <- NA
-  i
-
-}
 
 #' @rdname find_date_cause
 #' @export
@@ -129,6 +119,31 @@ find_end_date <- function(x, ...,
 
 }
 
+#' @rdname find_date_cause
+#' @param i a vector of dates
+#' @param boundary one of "both", "start", or "end". Dates outside of the 
+#'   boundary will be set to NA. 
+#' @export
+constrain_dates <- function(i, period_start, period_end, boundary = "both") {
+
+  boundary  <- match.arg(boundary, c("both", "start", "end"))
+  nna       <- !is.na(i)
+  too_early <- nna & i < period_start
+  too_late  <- nna & i > period_end
+
+  if (boundary != "both") {
+    at_the_beginning <- boundary == "start"
+    trim    <- if (at_the_beginning) too_early    else too_late
+    repl    <- if (at_the_beginning) period_start else period_end
+    i[trim] <- repl[trim]
+  }
+
+  i[nna & (i < period_start | i > period_end)] <- NA
+
+  i
+
+}
+
 #' Choose the first non-missing date from a data frame of dates
 #'
 #' @param date_a_frame a data frame where each column contains a different
@@ -146,7 +161,9 @@ choose_first_good_date <- function(date_a_frame) {
   for (i in seq_len(n)) {
     tmp <- date_a_frame[i, ]
     suppressWarnings(nona <- min(which(!is.na(tmp))))
-    if (!is.finite(nona)) next
+    if (!is.finite(nona)) {
+      next
+    }
     res$the_date[i] <- tmp[[nona]]
     res$the_col[i]  <- names(date_a_frame)[nona]
   }
