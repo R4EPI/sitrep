@@ -482,13 +482,13 @@ survey_design_sex <- study_data_cleaned %>%
 
 # Results
 
-A total of `r nrow(study_data_cleaned)` surveyed individuals were included in the analyses. There were `r fmt_count(study_data_cleaned, startcause == "Present at start")` household members present at the start of the recall period. There were `r fmt_count(study_data_cleaned, startcause != "Present at start")` individuals who arrived during the recall period and `r fmt_count(study_data_cleaned, endcause != "Present at end")` who departed. This resulted in `r fmt_count(study_data_cleaned, endcause == "Present at end")` individuals who were present at the end of the recall period; for a net change in sample population of 
-`r round( ( 1 - abs(tally(study_data_cleaned, startcause == "Present at start") - tally(study_data_cleaned, endcause == "Present at end")) / tally(study_data_cleaned, startcause == "Present at start")) * 100, digits = 1)`%. 
+A total of `r nrow(study_data_cleaned)` surveyed individuals were included in the analyses. There were `r fmt_count(study_data_cleaned, startcause == "Present at start")` household members present at the start of the recall period. There were `r fmt_count(study_data_cleaned, startcause != "Present at start")` individuals who arrived during the recall period and `r fmt_count(study_data_cleaned, endcause != "Present at end")` who departed. This resulted in `r fmt_count(study_data_cleaned, endcause == "Present at end")` individuals who were present at the end of the recall period; for a net change in sample population of
+`r round( ( 1 - abs(tally(study_data_cleaned, startcause == "Present at start") - tally(study_data_cleaned, endcause == "Present at end")) / tally(study_data_cleaned, startcause == "Present at start")) * 100, digits = 1)`%.
 
 Below shows the arrivals and departures during the study period. 
-TO DO: Add example text of inline code - e.g. to show the net change in population. 
 
 ```{r}
+# get counts and proportions of start causes
 descriptive(study_data_cleaned, 
             "startcause", coltotals = TRUE) %>% 
   kable(digits = 2)
