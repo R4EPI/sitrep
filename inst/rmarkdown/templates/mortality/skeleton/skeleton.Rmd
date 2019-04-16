@@ -495,6 +495,7 @@ descriptive(study_data_cleaned,
   rename("Status" = startcause, 
          "Individuals (n)" = n, 
          "%" = prop) %>%
+# print table nicely for microsoft word
   kable(digits = 2)
 ```
 
@@ -513,9 +514,9 @@ descriptive(study_data_cleaned,
 
 ## Demographic information
 
-Compare the proportions in each age group between your sample and the source population. 
+Compare the proportions in each age group between your sample and the source population. This is important to be able to highlight potential sampling bias. You could similarly repeat this looking at distributions by sex. 
 
-```{r test_proportions}
+```{r descriptive_sampling_bias}
 # first the counts and props of the study population
 ag <- descriptive(study_data_cleaned, "age_group") %>%
   mutate(n_total = sum(n))
@@ -539,12 +540,13 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   unnest() %>% # important for expanding the binom.test data frame
   mutate(prop_pop = prop_pop * 100) %>%
 
-  # Adjusting the p-values to correct for false positives. This will only make 
+  # Adjusting the p-values to correct for false positives 
+  # (because testing multiple age groups). This will only make 
   # a difference if you have many age categories
   mutate(p.value = p.adjust(p.value, method = "holm")) %>%
   select(age_group, n, prop, n_pop, prop_pop, p.value) %>%
                       
-  # Only show p-values over 0.001
+  # Only show p-values over 0.001 (those under report as <0.001)
   mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
   # rename the columns appropriatley
@@ -560,18 +562,24 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
 
 ```
 
+Among the `r nrow(study_data_cleaned)` surveyed individuals, there were
+`r fmt_count(study_data_cleaned, sex == "Female")` females and
+`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). 
 
+The highest number of surveyed indivduals (unweighted) were in the `r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` year age group. 
 
-
-TODO: add some sample text with inline R
-
-Age distribution of current household population by five year age groups, dependency age groups, and by child and adult populations, by gender.
+Age distribution of household population by year age group and gender.
 ```{r describe_by_age_group_and_sex}
+
+# return counts and proportions of individuals by age and sex
+# note that proportions are of the total sample (not within each gender) 
+  # to change this, set proptotal = FALSE
 descriptive(study_data_cleaned, 
             "age_group", 
             "sex", 
             rowtotals = TRUE, 
             coltotals = TRUE, proptotal = TRUE) %>% 
+  # rename column names appropriately
   rename("Age" = age_group, 
          "Female cases (n)" = Female_n, 
          "%" = Female_prop, 
@@ -581,9 +589,18 @@ descriptive(study_data_cleaned,
 ```
 
 
+TODO: show breakdown as with measles with months and years combined 
+
+
+
+
+There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing information on sex and 
+`r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
+
 Age and gender distribution of household population covered by the survey.
 
-```{r age_pyramid}
+```{r age_pyramid, warning=FALSE}
+# This is unweighted as you are using study_data_cleaned
 plot_age_pyramid(study_data_cleaned, 
                  age_group = "age_group", 
                  split_by = "sex",
@@ -592,10 +609,12 @@ plot_age_pyramid(study_data_cleaned,
   theme(legend.position = "bottom", legend.title = element_blank()) # remove title and move legend
 ```
 
-Weighted age distribution - if this is substantially different to your unweighted 
-pyramid, then it may suggest some sampling bias. 
+Weighted age and gender distribution - if this is substantially different to your unweighted 
+pyramid, then it may suggest some sampling bias (similarly to the table comparing 
+sample and source population distributions by binomial test). 
 
-```{r age_pyramid_survey}
+```{r age_pyramid_survey, warning=FALSE}
+# Note that here you are using survey_design_sex so will produce weighted proportions
 plot_age_pyramid(survey_design_sex,
                  age_group = "age_group",
                  split_by = "sex", 
@@ -607,26 +626,35 @@ plot_age_pyramid(survey_design_sex,
 
 ## Mortality
 
-Reported causes of death and cause-specific mortality rates, weighted
+Reported causes of death and cause-specific mortality ratio, weighted counts and proportions
 
-```{r weighted_cod}
-
+```{r weighted_cause_death}
+# First retrieve weighted counts and proportions by cause of death 
 # you will get separate columns, for weighted counts (weighted % with CI), 
 # and mortality per 10,000 persons/day with CI
+# note that survey_design is used rather than study_data_cleaned (weighted survey object)
+# COUNTS ARE ALSO WEIGHTED HERE
 cause_of_death_prop <- survey_design %>% 
   group_by(cause_of_death) %>% 
-  summarize(n = survey_total(vartype = "se", na.rm = TRUE),
-            proportion = survey_mean(vartype = "ci", na.rm = TRUE)
+  summarize(n = survey_total(vartype = "se", na.rm = TRUE),         # return weighted counts
+            proportion = survey_mean(vartype = "ci", na.rm = TRUE)  # return weighted proportions
             ) %>% 
+  # round the weighted counts to have whole numbers
   mutate(n = round(n)) %>% 
+  # drop the standard error column produced by survey_total above (no need)
   select(-n_se)
 
+# Then retrieve weighted cause-specific mortality ratios
+# note that survey ratio includes the observation times in calculation
 cause_of_death_mort <- survey_design %>% 
   group_by(cause_of_death) %>% 
-  summarize( mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
+  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
 
+# Join the counts, props and mortality ratios together
 dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>% 
+  # merge the confidence intervals for proportions in to one column (and change to percent)
   unite_ci("% (95% CI)", starts_with("proportion"), m100 = TRUE, percent = FALSE, digits = 1) %>%
+  # merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
   kable()
 
@@ -635,7 +663,7 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>%
 
 Reported causes of death and cause-specific mortality rates, by age, weighted
 
-```{r, weighted_cod_by_age}
+```{r, weighted_death_cause_by_age}
 
 survey_design %>% 
   tabulate_survey(cause_of_death, age_group) %>%
@@ -645,7 +673,7 @@ survey_design %>%
 
 Reported causes of death and cause-specific mortality rates, by gender, weighted
 
-```{r, weighted_cod_by_gender}
+```{r, weighted_death_cause_by_gender}
 survey_design %>% 
   tabulate_survey(cause_of_death, sex) %>%
   kable()
@@ -657,7 +685,7 @@ survey_design %>%
 
 Symptoms reported among those who were sick 
 
-```{r symptoms_reported}
+```{r weighted_symptoms_reported}
 survey_design %>% 
   filter(q18_q8_sick == "Yes") %>% 
   tabulate_binary_survey(SYMPTOMS, keep = TRUE, method = "xlogit") %>%
