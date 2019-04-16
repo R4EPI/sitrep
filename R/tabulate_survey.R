@@ -113,8 +113,8 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1, me
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
   y <- tidyr::spread(y, "tmp", "value")
-  rename_at(y, dplyr::vars(dplyr::ends_with("prop")),
-            ~function(i) rep("% (95% CI)", length(i)))
+  dplyr::rename_at(y, dplyr::vars(dplyr::ends_with("prop")),
+                   ~function(i) rep("% (95% CI)", length(i)))
 }
 
 #' @export
