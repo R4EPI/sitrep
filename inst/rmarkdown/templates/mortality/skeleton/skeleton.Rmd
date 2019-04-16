@@ -515,46 +515,46 @@ descriptive(study_data_cleaned,
 
 Compare the proportions in each age group between your sample and the source population. 
 
-```{r}
-# bind together the columns of two tables
-bind_cols(
-  # first the counts and props of the study population
-  descriptive(
-    study_data_cleaned,
-    "age_group"),
+```{r test_proportions}
+# first the counts and props of the study population
+ag <- descriptive(study_data_cleaned, "age_group") %>%
+  mutate(n_total = sum(n))
 
-  # then the counts and props of the source population
-  group_by(population_data_age, age_group) %>%
-    summarise(n = sum(population)) %>%
-    mutate(prop = round(n / sum(n) * 100, digits = 1)) %>%
-    select(-age_group)
-) %>%
-  # add a fisher's exact test for each age category
-  mutate(pvalue = unlist(
-    lapply(a$age_group, function(i) {
-      top <- filter(a, age_group == i) %>% select(n, n1)
-      bottom <- filter(a, age_group != i) %>% select(n, n1)
-      counts <- bind_rows(
-        top,
-        colSums(bottom)
-      )
-      pval <- round(
-        fisher.test(counts)$p.value,
-        digits = 3
-      )
-    })
-  )) %>%
-  # correct p-value for those under 0.001
-  mutate(pvalue = ifelse(pvalue == 0, "<0.001", pvalue)) %>%
+# then the counts and props of the source population
+propcount <- group_by(population_data_age, age_group) %>%
+    tally(population) %>%
+    mutate(prop = n / sum(n))
+
+# bind together the columns of two tables, group by age, and perform a 
+# binomial test to see if n/total is significantly different from population
+# proportion.
+left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
+  group_by(age_group) %>%
+
+  # broom::tidy(binom.test()) makes a data frame out of the binomial test and
+  # will add the variables p.value, parameter, conf.low, conf.high, method, and
+  # alternative. We will only use p.value here. You can include other
+  # columns if you want to report confidence intervals
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, prop_pop)))) %>%
+  unnest() %>% # important for expanding the binom.test data frame
+  mutate(prop_pop = prop_pop * 100) %>%
+
+  # Adjusting the p-values to correct for false positives. This will only make 
+  # a difference if you have many age categories
+  mutate(p.value = p.adjust(p.value, method = "holm")) %>%
+  select(age_group, n, prop, n_pop, prop_pop, p.value) %>%
+                      
+  # Only show p-values over 0.001
+  mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
   # rename the columns appropriatley
   rename(
     "Age group" = age_group,
     "Study population (n)" = n,
     "%" = prop,
-    "Source population (n)" = n1,
-    "%" = prop1,
-    "P-value" = pvalue
+    "Source population (n)" = n_pop,
+    "%" = prop_pop,
+    "P-value" = p.value
   ) %>%
   kable(digits = 2)
 
@@ -582,24 +582,26 @@ descriptive(study_data_cleaned,
 
 
 Age and gender distribution of household population covered by the survey.
+
 ```{r age_pyramid}
 plot_age_pyramid(study_data_cleaned, 
                  age_group = "age_group", 
                  split_by = "sex",
                  proportion = TRUE) + 
-  labs(y = "Proportion", x = "Age group (years)") +                    # change axis labels
-  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
+  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  theme(legend.position = "bottom", legend.title = element_blank()) # remove title and move legend
 ```
 
 Weighted age distribution - if this is substantially different to your unweighted 
 pyramid, then it may suggest some sampling bias. 
+
 ```{r age_pyramid_survey}
 plot_age_pyramid(survey_design_sex,
                  age_group = "age_group",
                  split_by = "sex", 
                  proportion = TRUE) +
-  labs(y = "Proportion", x = "Age group (years)") +                    # change axis labels
-  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
+  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  theme(legend.position = "bottom", legend.title = element_blank()) # remove title and move legend
 ```
 
 
@@ -607,7 +609,7 @@ plot_age_pyramid(survey_design_sex,
 
 Reported causes of death and cause-specific mortality rates, weighted
 
-```{r}
+```{r weighted_cod}
 
 # you will get separate columns, for weighted counts (weighted % with CI), 
 # and mortality per 10,000 persons/day with CI
@@ -632,7 +634,8 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>%
 ```
 
 Reported causes of death and cause-specific mortality rates, by age, weighted
-```{r}
+
+```{r, weighted_cod_by_age}
 
 survey_design %>% 
   tabulate_survey(cause_of_death, age_group) %>%
@@ -641,7 +644,8 @@ survey_design %>%
 ```
 
 Reported causes of death and cause-specific mortality rates, by gender, weighted
-```{r}
+
+```{r, weighted_cod_by_gender}
 survey_design %>% 
   tabulate_survey(cause_of_death, sex) %>%
   kable()
@@ -651,16 +655,19 @@ survey_design %>%
 ## Morbidity
 
 
+Symptoms reported among those who were sick 
 
-
-
-```{r}
-# symptoms reported among those who were sick 
+```{r symptoms_reported}
 survey_design %>% 
   filter(q18_q8_sick == "Yes") %>% 
   tabulate_binary_survey(SYMPTOMS, keep = TRUE, method = "xlogit") %>%
   mutate(variable = SYMPTOMS_LABELS) %>% 
-  select(-value)
+  select(-value) %>%
+  rename("Symptom" = variable,
+         "N reported" = n,
+         "% (95% CI)" = prop
+        ) %>%
+  kable()
 ```
 
 # Conclusions
