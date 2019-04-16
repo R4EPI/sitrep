@@ -645,8 +645,6 @@ cause_of_death_mort <- survey_design %>%
 
 # Join the counts, props and mortality ratios together
 dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>% 
-  # merge the confidence intervals for proportions in to one column (and change to percent)
-  unite_ci("% (95% CI)", starts_with("proportion"), m100 = TRUE, percent = FALSE, digits = 1) %>%
   # merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
   kable()
