@@ -8,6 +8,7 @@ Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
 Imports: 
     binom,
+    broom,
     cowplot,
     clipr,
     dplyr (>= 0.7),
