@@ -516,24 +516,46 @@ descriptive(study_data_cleaned,
 Compare the proportions in each age group between your sample and the source population. 
 
 ```{r}
-# bind together the columns of two tables 
+# bind together the columns of two tables
 bind_cols(
-  # first the counts and props of the study population 
-  descriptive(study_data_cleaned, 
-              "age_group"), 
-  
+  # first the counts and props of the study population
+  descriptive(
+    study_data_cleaned,
+    "age_group"),
+
   # then the counts and props of the source population
-  group_by(population_data_age, age_group) %>% 
-    summarise(n = sum(population)) %>% 
-    mutate(prop = round(n / sum(n) * 100, digits = 1))  %>% 
+  group_by(population_data_age, age_group) %>%
+    summarise(n = sum(population)) %>%
+    mutate(prop = round(n / sum(n) * 100, digits = 1)) %>%
     select(-age_group)
-) %>% 
-  # rename the columns appropriatley 
-  rename("Age group" = age_group, 
-         "Study population (n)" = n, 
-         "%" = prop, 
-         "Source population (n)" = n1, 
-         "%" = prop1) %>% 
+) %>%
+  # add a fisher's exact test for each age category
+  mutate(pvalue = unlist(
+    lapply(a$age_group, function(i) {
+      top <- filter(a, age_group == i) %>% select(n, n1)
+      bottom <- filter(a, age_group != i) %>% select(n, n1)
+      counts <- bind_rows(
+        top,
+        colSums(bottom)
+      )
+      pval <- round(
+        fisher.test(counts)$p.value,
+        digits = 3
+      )
+    })
+  )) %>%
+  # correct p-value for those under 0.001
+  mutate(pvalue = ifelse(pvalue == 0, "<0.001", pvalue)) %>%
+
+  # rename the columns appropriatley
+  rename(
+    "Age group" = age_group,
+    "Study population (n)" = n,
+    "%" = prop,
+    "Source population (n)" = n1,
+    "%" = prop1,
+    "P-value" = pvalue
+  ) %>%
   kable(digits = 2)
 
 ```
