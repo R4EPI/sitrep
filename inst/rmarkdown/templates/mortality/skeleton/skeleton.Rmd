@@ -635,14 +635,7 @@ Reported causes of death and cause-specific mortality ratio, weighted counts and
 # note that survey_design is used rather than study_data_cleaned (weighted survey object)
 # COUNTS ARE ALSO WEIGHTED HERE
 cause_of_death_prop <- survey_design %>% 
-  group_by(cause_of_death) %>% 
-  summarize(n = survey_total(vartype = "se", na.rm = TRUE),         # return weighted counts
-            proportion = survey_mean(vartype = "ci", na.rm = TRUE)  # return weighted proportions
-            ) %>% 
-  # round the weighted counts to have whole numbers
-  mutate(n = round(n)) %>% 
-  # drop the standard error column produced by survey_total above (no need)
-  select(-n_se)
+  tabulate_survey(cause_of_death)
 
 # Then retrieve weighted cause-specific mortality ratios
 # note that survey ratio includes the observation times in calculation
