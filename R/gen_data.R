@@ -442,12 +442,19 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
     # leave date
     chn_date <- dis_output$q45_q29_hh_leave_date <= dis_output$q41_q25_hh_arrive_date
+    chn_date2 <- dis_output$q45_q29_hh_leave_date < dis_output$q88_q33_born_date
+    chn_date[is.na(chn_date)] <- FALSE
+    chn_date2[is.na(chn_date2)] <- FALSE
     dis_output$q45_q29_hh_leave_date[chn_date] <- dis_output$q41_q25_hh_arrive_date[chn_date] + sample(5:30, sum(chn_date), replace = TRUE)
+    dis_output$q45_q29_hh_leave_date[chn_date2] <- dis_output$q88_q33_born_date[chn_date2] + sample(5:30, sum(chn_date2), replace = TRUE)
 
     # died date
     chn_date <- dis_output$q137_q35_died_date <= dis_output$q41_q25_hh_arrive_date
+    chn_date2 <- dis_output$q137_q35_died_date < dis_output$q88_q33_born_date
     chn_date[is.na(chn_date)] <- FALSE
+    chn_date2[is.na(chn_date2)] <- FALSE
     dis_output$q137_q35_died_date[chn_date] <- dis_output$q41_q25_hh_arrive_date[chn_date] + sample(5:30, sum(chn_date), replace = TRUE)
+    dis_output$q137_q35_died_date[chn_date2] <- dis_output$q88_q33_born_date[chn_date2] + sample(5:30, sum(chn_date2), replace = TRUE)
 
     dis_output$q45_q29_hh_leave_date[!is.na(dis_output$q137_q35_died_date)] <- NA
 

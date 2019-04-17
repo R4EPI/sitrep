@@ -221,6 +221,56 @@ population_data_age <- gen_population(total_pop = 10000, # set the total populat
          population = n)
 ```
 
+
+
+
+```{r browse_data, eval = FALSE}
+## Browsing data ---------------------------------
+## here are a few ways to do data explorations 
+
+## view the first ten rows of data
+head(study_data_raw, n = 10)
+
+## view your whole dataset interactivley (in an excel style format)
+## Remember that `View` needs to be written with a capital *V*
+View(study_data_raw)
+
+## overview of variable types and contents
+str(study_data_raw)
+
+## gives mean, median and max values of variables
+## gives counts for categorical variables
+## also gives number of NAs
+summary(study_data_raw)
+
+## view unique values contained in variables 
+unique(study_data_raw$q4_q6_sex)
+
+## check for logical date inconsistencies 
+## for example check deaths before births and return corresponding IDs
+# (fact_0_id only exists in real dharma datasets - not those from gen_data function)
+study_data_raw %>% 
+  filter(q137_q35_died_date < q88_q33_born_date) %>% 
+  select(fact_0_id)
+
+
+## another alternative is with the "summarytools package"
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
+# install.packages("summarytools")
+# summarytools::view(summarytools::dfSummary(study_data_raw))
+```
+
+
+
+
+
+
+
+
+
+
+
 ```{r standardise_clean_data}
 
 ## All your data cleaning and new variable creation should happen in this chunk. 
@@ -281,7 +331,7 @@ study_data_cleaned <- study_data_cleaned %>%
     # (when your survey stopped or day of survey questionnaire) 
     # IF day of questionnaire then use variable of date when form generated
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(recall_start = as.Date("2018-01-01"), 
+  mutate(recall_start = as.Date("2018-02-01"), 
          recall_end = as.Date("2018-05-01")
   )
 
@@ -399,17 +449,17 @@ check_dates <- assert_positive_timespan(study_data_cleaned, startdate, enddate)
 # check_dates$fact_0_id
 
 # make sure there are the appropriate levels (names)
-study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause, 
+study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause,
                                                "Present at start" = "Present at start",
-                                               "q88_q33_born_date" = "Born", 
-                                               "q114_q16_date_arrival_camp" = "Other arrival", 
+                                               "q88_q33_born_date" = "Born",
+                                               "q114_q16_date_arrival_camp" = "Other arrival",
                                                "q41_q25_hh_arrive_date" = "Other arrival"
                                                )
 
 # make sure there are the appropriate levels (names)
-study_data_cleaned$endcause <- recode_factor(study_data_cleaned$endcause, 
-                                             "Present at end" = "Present at end", 
-                                             "q137_q35_died_date" = "Died", 
+study_data_cleaned$endcause <- recode_factor(study_data_cleaned$endcause,
+                                             "Present at end" = "Present at end",
+                                             "q137_q35_died_date" = "Died",
                                              "q45_q29_hh_leave_date" = "Other departure")
 
 
@@ -423,9 +473,9 @@ study_data_cleaned <- study_data_cleaned %>%
   # simply add a !is.na(fact_0_id) if using a dharma dataset
 # you will also want to drop those rows where both the start and enddate occur
 # outside of your recall period! 
+# if yor check_dates shows rows with negative obs time - make sure to solve those or drop!
 study_data_cleaned <- study_data_cleaned %>%
-  filter(!is.na(startcause) | !is.na(endcause))
-
+  filter(!(is.na(startdate) | is.na(enddate)))
 ```
 
 ```{r save_cleaned_data, eval = FALSE}
