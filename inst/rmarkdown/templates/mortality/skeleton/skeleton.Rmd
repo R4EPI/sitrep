@@ -213,7 +213,7 @@ study_data_dict <- msf_dict_survey("Mortality")
 
 # generate population data by age groups in years 
 population_data_age <- gen_population(total_pop = 10000, # set the total population 
-  groups = c("0-4", "5-14", "15-29", "30-44", "45+"),    # set the groups
+  groups = c("0-2", "3-14", "15-29", "30-44", "45+"),    # set the groups
   proportions = c(0.182, 0.278, 0.26, 0.11, 0.07),       # set the proportions for each group
   strata = c("Male", "Female")) %>%                      # stratify by gender 
   rename(age_group = groups,                        # rename columns (syntax is NEW NAME = OLD NAME)
@@ -370,8 +370,33 @@ study_data_cleaned <- study_data_cleaned %>%
 # create an age group variable by specifying categorical breaks (of years)
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(age_group = age_categories(age_in_years, 
-                                    breakers = c(0, 5, 15, 30, 45)
+                                    breakers = c(0, 3, 15, 30, 45)
                                     ))
+
+## create age group variable for under 2 years based on months
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_group_mon = age_categories(study_data_cleaned$q156_q3_age_month, 
+                                                 breakers = c(0, 6, 9, 12, 24), 
+                                                 ceiling = TRUE))
+
+
+## alternatively, create an age group variable specify a sequence
+# study_data_cleaned$age_group <- age_categories(study_data_cleaned$age,
+#                                              lower = 0, 
+#                                              upper = 100, 
+#                                              by = 10)
+
+## If you already have an age group variable defined, you should manually
+## arrange the categories
+# study_data_cleaned$age_group <- factor(study_data_cleaned$age_group,
+#                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
+
+
+## to combine different age categories use the following function 
+## this prioritises the smaller unit, i.e. if given months and years, will return months first
+study_data_cleaned <- group_age_categories(study_data_cleaned, 
+                                         years = age_group, 
+                                         months = age_group_mon)
 
 
 # Factor (categorical) variables ---------------------------------
@@ -564,8 +589,16 @@ descriptive(study_data_cleaned,
 
 ## Demographic information
 
-Compare the proportions in each age group between your sample and the source population. This is important to be able to highlight potential sampling bias. You could similarly repeat this looking at distributions by sex. 
+Compare the proportions in each age group between your sample and the source population. 
+This is important to be able to highlight potential sampling bias. 
+You could similarly repeat this looking at distributions by sex. 
 
+Note that these p-values are just indicative, and a descriptive discussion (or
+visualisation with age-pyramids below) of the distributions in your study sample 
+compared to the source population is more
+important that the binomial test itself. This is because increasing sample size
+will more often than not lead to differences that may be irrelevant after weighting
+your data. 
 ```{r descriptive_sampling_bias}
 # first the counts and props of the study population
 ag <- descriptive(study_data_cleaned, "age_group") %>%
@@ -638,10 +671,25 @@ descriptive(study_data_cleaned,
   kable(digits = 2)
 ```
 
+Using the combined age category you can show the above breakdown by months and years. 
+```{r describe_by_age_category_and_sex}
 
-TODO: show breakdown as with measles with months and years combined 
-
-
+# return counts and proportions of individuals by age and sex
+# note that proportions are of the total sample (not within each gender) 
+  # to change this, set proptotal = FALSE
+descriptive(study_data_cleaned, 
+            "age_category", 
+            "sex", 
+            rowtotals = TRUE, 
+            coltotals = TRUE, proptotal = TRUE) %>% 
+  # rename column names appropriately
+  rename("Age" = age_category, 
+         "Female cases (n)" = Female_n, 
+         "%" = Female_prop, 
+         "Male cases (n)" = Male_n, 
+         "%" = Male_prop) %>% 
+  kable(digits = 2)
+```
 
 
 There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing information on sex and 
@@ -676,7 +724,11 @@ plot_age_pyramid(survey_design_sex,
 
 ## Mortality
 
-Reported causes of death and cause-specific mortality ratio, weighted counts and proportions
+Reported causes of death and cause-specific mortality ratio, weighted counts and 
+proportions. 
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for mortality ratios. These should be interpreted
+as if no deaths (impossible to have negative deaths). 
 
 ```{r weighted_cause_death}
 # First retrieve weighted counts and proportions by cause of death 
@@ -689,6 +741,7 @@ cause_of_death_prop <- survey_design %>%
 
 # Then retrieve weighted cause-specific mortality ratios
 # note that survey ratio includes the observation times in calculation
+# note the posibility of negative confidence interval when low counts
 cause_of_death_mort <- survey_design %>% 
   group_by(cause_of_death) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
@@ -698,14 +751,12 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>%
   # merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
   kable()
-
-
 ```
 
 Reported causes of death and cause-specific mortality rates, by age, weighted
 
 ```{r, weighted_death_cause_by_age}
-
+# return weighted counts and weighted proportions 
 survey_design %>% 
   tabulate_survey(cause_of_death, age_group) %>%
   kable()
@@ -715,6 +766,7 @@ survey_design %>%
 Reported causes of death and cause-specific mortality rates, by gender, weighted
 
 ```{r, weighted_death_cause_by_gender}
+# return weighted counts and weighted proportions
 survey_design %>% 
   tabulate_survey(cause_of_death, sex) %>%
   kable()
@@ -727,11 +779,15 @@ survey_design %>%
 Symptoms reported among those who were sick 
 
 ```{r weighted_symptoms_reported}
-survey_design %>% 
-  filter(q18_q8_sick == "Yes") %>% 
+survey_design %>%                                 # use the survey object (weighted)
+  filter(q18_q8_sick == "Yes") %>%                # filter for those who were sick in last 2 weeks
+  # calculate weighted counts and weighted proportions 
+  # in your output table on keep rows with the value TRUE 
+    # (this could also be "yes" if your variables were yes/no; 
+    # or a combination, e.g. c("yes", TRUE, "sick"))
   tabulate_binary_survey(SYMPTOMS, keep = TRUE, method = "xlogit") %>%
-  mutate(variable = SYMPTOMS_LABELS) %>% 
-  select(-value) %>%
+  mutate(variable = SYMPTOMS_LABELS) %>%          # correct symptom names in output table 
+  select(-value) %>%                              # drop column which tells you which row values were kept 
   rename("Symptom" = variable,
          "N reported" = n,
          "% (95% CI)" = prop
