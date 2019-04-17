@@ -248,10 +248,11 @@ unique(study_data_raw$q4_q6_sex)
 
 ## check for logical date inconsistencies 
 ## for example check deaths before births and return corresponding IDs
-# (fact_0_id only exists in real dharma datasets - not those from gen_data function)
+# (fact_0_id only exists in real dharma datasets - not those from gen_data 
+#  function)
 study_data_raw %>% 
   filter(q137_q35_died_date < q88_q33_born_date) %>% 
-  select(fact_0_id)
+  select(matches("fact_0_id"))
 
 
 ## another alternative is with the "summarytools package"
@@ -463,7 +464,11 @@ study_data_cleaned <- study_data_cleaned %>%
                 period_end   = "recall_end",
                 datecol      = "enddate",
                 datereason   = "endcause" 
-               )
+               ) %>%
+  # label those that were present at the start/end
+  mutate(startcause = if_else(startdate == recall_start, "Present at start", startcause)) %>%
+  mutate(endcause = if_else(enddate == recall_end, "Present at end", endcause))
+
 
 # check that you do not have any negative observation times
 # (e.g. any rows with end date before start date)
@@ -557,8 +562,23 @@ survey_design_sex <- study_data_cleaned %>%
 
 # Results
 
-A total of `r nrow(study_data_cleaned)` surveyed individuals were included in the analyses. There were `r fmt_count(study_data_cleaned, startcause == "Present at start")` household members present at the start of the recall period. There were `r fmt_count(study_data_cleaned, startcause != "Present at start")` individuals who arrived during the recall period and `r fmt_count(study_data_cleaned, endcause != "Present at end")` who departed. This resulted in `r fmt_count(study_data_cleaned, endcause == "Present at end")` individuals who were present at the end of the recall period; for a net change in sample population of
-`r round( ( 1 - abs(tally(study_data_cleaned, startcause == "Present at start") - tally(study_data_cleaned, endcause == "Present at end")) / tally(study_data_cleaned, startcause == "Present at start")) * 100, digits = 1)`%.
+```{r tally_change, echo = FALSE}
+at_start <- tally(study_data_cleaned, startcause == "Present at start")
+at_end   <- tally(study_data_cleaned, endcause == "Present at end") 
+net_change <- round( (1 - abs(at_start - at_end) / at_start) * 100, digits = 1)[[1]]
+```
+
+
+A total of `r nrow(study_data_cleaned)` surveyed individuals were included in
+the analyses. There were 
+`r fmt_count(study_data_cleaned, startcause == "Present at start")` household 
+members present at the start of the recall period. There were 
+`r fmt_count(study_data_cleaned, startcause != "Present at start")` individuals 
+who arrived during the recall period and 
+`r fmt_count(study_data_cleaned, endcause != "Present at end")` who departed. 
+This resulted in `r fmt_count(study_data_cleaned, endcause == "Present at end")`
+individuals who were present at the end of the recall period; for a net change
+in sample population of `r net_change`%.
 
 Below shows the arrivals and departures during the study period. 
 
@@ -599,6 +619,7 @@ compared to the source population is more
 important that the binomial test itself. This is because increasing sample size
 will more often than not lead to differences that may be irrelevant after weighting
 your data. 
+
 ```{r descriptive_sampling_bias}
 # first the counts and props of the study population
 ag <- descriptive(study_data_cleaned, "age_group") %>%
@@ -652,6 +673,7 @@ Among the `r nrow(study_data_cleaned)` surveyed individuals, there were
 The highest number of surveyed indivduals (unweighted) were in the `r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` year age group. 
 
 Age distribution of household population by year age group and gender.
+
 ```{r describe_by_age_group_and_sex}
 
 # return counts and proportions of individuals by age and sex
@@ -672,6 +694,7 @@ descriptive(study_data_cleaned,
 ```
 
 Using the combined age category you can show the above breakdown by months and years. 
+
 ```{r describe_by_age_category_and_sex}
 
 # return counts and proportions of individuals by age and sex
@@ -779,15 +802,15 @@ survey_design %>%
 Symptoms reported among those who were sick 
 
 ```{r weighted_symptoms_reported}
-survey_design %>%                                 # use the survey object (weighted)
-  filter(q18_q8_sick == "Yes") %>%                # filter for those who were sick in last 2 weeks
+survey_design %>%                  # use the survey object (weighted)
+  filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions 
   # in your output table on keep rows with the value TRUE 
     # (this could also be "yes" if your variables were yes/no; 
     # or a combination, e.g. c("yes", TRUE, "sick"))
   tabulate_binary_survey(SYMPTOMS, keep = TRUE, method = "xlogit") %>%
-  mutate(variable = SYMPTOMS_LABELS) %>%          # correct symptom names in output table 
-  select(-value) %>%                              # drop column which tells you which row values were kept 
+  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
+  select(-value) %>%                     # drop column which tells you which row values were kept 
   rename("Symptom" = variable,
          "N reported" = n,
          "% (95% CI)" = prop
