@@ -51,6 +51,7 @@ required_packages <- c("knitr",       # create output docs
                        "tidyr",       # clean/shape data
                        "forcats",     # clean/shape data
                        "ggplot2",     # create plots and charts
+                       "ggforce",     # for visualising population flows
                        "sitrep",      # MSF field epi functions
                        "survey",      # for survey functions
                        "srvyr"        # dplyr wrapper for survey package
@@ -252,7 +253,7 @@ unique(study_data_raw$q4_q6_sex)
 #  function)
 study_data_raw %>% 
   filter(q137_q35_died_date < q88_q33_born_date) %>% 
-  select(matches("fact_0_id"))
+  select("fact_0_id")
 
 
 ## another alternative is with the "summarytools package"
@@ -465,9 +466,11 @@ study_data_cleaned <- study_data_cleaned %>%
                 datecol      = "enddate",
                 datereason   = "endcause" 
                ) %>%
-  # label those that were present at the start/end
-  mutate(startcause = if_else(startdate == recall_start, "Present at start", startcause)) %>%
-  mutate(endcause = if_else(enddate == recall_end, "Present at end", endcause))
+  # label those that were present at the start/end (except births/deaths)
+  mutate(startcause = if_else(startdate == recall_start & startcause != "q88_q33_born_date",
+                              "Present at start", startcause)) %>%
+  mutate(endcause = if_else(enddate == recall_end & endcause != "q137_q35_died_date", 
+                            "Present at end", endcause))
 
 
 # check that you do not have any negative observation times
@@ -605,6 +608,50 @@ descriptive(study_data_cleaned,
   kable(digits = 2)
 ```
 
+```{r visualise_population_flow}
+
+# summarize data
+flow_table <- study_data_cleaned %>%
+  group_by(startcause, endcause, sex) %>%
+  count()
+
+# collect parts needed for plotting 
+# grouping only by start and end cause, sex seperate
+flow_table <- gather_set_data(flow_table, 1:2)
+
+# make sure factor levels are correct 
+# SEEMS TO IGNORE FACTOR LEVELS AND PLOT ALPHABETICALLY!
+flow_table <- flow_table %>%
+  mutate(
+    x = factor(x, levels = c("startcause", "endcause")),
+    startcause = factor(startcause, levels = c("Present at start", 
+                                               "Born",
+                                               "Other arrival")), 
+    endcause = factor(endcause, levels = c("Present at end",
+                                           "Died",
+                                           "Other departure"))
+  )
+
+
+ggplot(flow_table, aes(x, id = id, split = y, value = n)) +
+  geom_parallel_sets(aes(fill = sex), alpha = 0.5, axis.width = 0.13) +
+  geom_parallel_sets_axes(axis.width = 0.1, fill = "grey80", color = "grey80") +
+  geom_parallel_sets_labels(
+    color = "black",
+    angle = 0
+  ) +
+  scale_x_discrete(
+    name = NULL,
+    expand = c(0, 0.2)
+  ) +
+  scale_y_continuous(breaks = NULL, expand = c(0, 0)) +
+  theme(
+    axis.line = element_blank(),
+    axis.ticks = element_blank()
+  )
+
+```
+
 
 
 ## Demographic information
@@ -633,6 +680,7 @@ propcount <- group_by(population_data_age, age_group) %>%
 # bind together the columns of two tables, group by age, and perform a 
 # binomial test to see if n/total is significantly different from population
 # proportion.
+  # suffix here adds to text to the end of columns in each of the two datasets
 left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   group_by(age_group) %>%
 
