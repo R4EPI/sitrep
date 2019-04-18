@@ -676,6 +676,7 @@ important that the binomial test itself. This is because increasing sample size
 will more often than not lead to differences that may be irrelevant after weighting
 your data. 
 
+
 ```{r descriptive_sampling_bias}
 # first the counts and props of the study population
 ag <- descriptive(study_data_cleaned, "age_group") %>%
@@ -723,11 +724,63 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
 
 ```
 
-Among the `r nrow(study_data_cleaned)` surveyed individuals, there were
-`r fmt_count(study_data_cleaned, sex == "Female")` females and
-`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). 
 
-The highest number of surveyed indivduals (unweighted) were in the `r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` year age group. 
+
+```{r median_age_sex_ratios}
+# compute the median age 
+medage <- median(study_data_cleaned$age_in_years)
+# paste the lower and uper quartile together
+iqr <- paste0(  # basically copy paste togehter the following
+  # calculate the 25% and 75% of distribution, with missings removed
+  quantile(     
+    study_data_cleaned$age_in_years, 
+    c(0.25, 0.75), 
+    na.rm = TRUE), 
+  # between lower and upper place a dash
+  collapse = "-")
+
+
+# compute overall sex ratio 
+sex_ratio <- study_data_cleaned %>% 
+  count(sex) %>% 
+  summarise(ratio = round(
+    n[sex == "Male"]/n[sex == "Female"], 
+    digits = 3)
+  )
+
+# compute sex ratios by age group 
+sex_ratio_age <- study_data_cleaned %>% 
+  group_by(age_group) %>% 
+  count(sex) %>% 
+  summarise(ratio = round(
+    n[sex == "Male"]/n[sex == "Female"], 
+    digits = 3)
+  )
+
+
+```
+
+
+Among the `r nrow(study_data_cleaned)` surveyed individuals, there were `r
+fmt_count(study_data_cleaned, sex == "Female")` females and `r
+fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
+female ratio was `r sex_ratio` in the surveyed population. The lowest male to
+female ratio was `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(ratio)`
+in the `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(age_group)`year age
+group.
+The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
+years). Children under five years of age made up 
+`r fmt_count(study_data_cleaned, age_in_years < 5)`of the surveyed individuals.
+The highest number of surveyed indivduals (unweighted) were in the 
+`r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` 
+year age group.
+The number of surveyed women who were pregnant was 
+`r fmt_count(study_data_cleaned %>% filter(sex == "Female"), q152_q7_pregnant == "Yes")`. 
+The highest proportion of pregnant women was among the 
+`r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(age_group)`year age group, at 
+`r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(Yes_prop)`%.
+
+TODO: The average number of people surveyed per house hold was ... 
 
 Age distribution of household population by year age group and gender.
 
@@ -810,7 +863,7 @@ Note that low counts or short observation times may lead to a confidence interva
 that crosses zero (i.e. negative) for mortality ratios. These should be interpreted
 as if no deaths (impossible to have negative deaths). 
 
-```{r weighted_cause_death}
+```{r weighted_cause_death_MR, warning = FALSE}
 # First retrieve weighted counts and proportions by cause of death 
 # you will get separate columns, for weighted counts (weighted % with CI), 
 # and mortality per 10,000 persons/day with CI
@@ -832,6 +885,23 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>%
   unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
   kable()
 ```
+
+
+```{r gender_CMR}
+
+# retrieve weighted gender-specific mortality ratios
+# note that survey ratio includes the observation times in calculation
+# note the posibility of negative confidence interval when low counts
+cause_of_death_sex <- survey_design_sex %>% 
+  group_by(sex) %>% 
+  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  # merge confidence intervals for mortality in to one column (do not change to percent)
+  unite_ci("mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
+
+```
+
+The gender specific mortality rate was `r cause_of_death_sex %>% slice(sex == "Female") %>% pull(mortality) ` deaths/10,000 persons/day amongst females and
+`r cause_of_death_sex %>% slice(sex == "Male") %>% pull(mortality) `deaths/10,000 persons/day amongst males.
 
 Reported causes of death and cause-specific mortality rates, by age, weighted
 
@@ -874,10 +944,4 @@ survey_design %>%                  # use the survey object (weighted)
         ) %>%
   kable()
 ```
-
-# Conclusions
-
-# Recommendations
-
-# References
 
