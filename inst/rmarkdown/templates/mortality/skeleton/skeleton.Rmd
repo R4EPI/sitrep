@@ -622,6 +622,7 @@ flow_table <- gather_set_data(flow_table, 1:2)
 # make sure factor levels are correct 
 # SEEMS TO IGNORE FACTOR LEVELS AND PLOT ALPHABETICALLY!
 flow_table <- flow_table %>%
+  ungroup() %>%  # not sure this ungroup is necessary!?
   mutate(
     x = factor(x, levels = c("startcause", "endcause")),
     startcause = factor(startcause, levels = c("Present at start", 
@@ -780,7 +781,8 @@ The highest proportion of pregnant women was among the
 `r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(age_group)`year age group, at 
 `r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(Yes_prop)`%.
 
-TODO: The average number of people surveyed per house hold was ... 
+The median number of people per surveyed house hold was `r median(study_data_cleaned$q65_iq4`,
+with a range of `r paste0(range(study_data_cleaned$q65_iq4), collapse = "-")`. 
 
 Age distribution of household population by year age group and gender.
 
@@ -932,9 +934,10 @@ Symptoms reported among those who were sick
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions 
-  # in your output table on keep rows with the value TRUE 
+  # in your output table, only keep rows with the value TRUE 
     # (this could also be "yes" if your variables were yes/no; 
     # or a combination, e.g. c("yes", TRUE, "sick"))
+    # method xlogit uses the CDC SUDAAN method of calculating confidence intervals
   tabulate_binary_survey(SYMPTOMS, keep = TRUE, method = "xlogit") %>%
   mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   select(-value) %>%                     # drop column which tells you which row values were kept 
@@ -944,4 +947,44 @@ survey_design %>%                  # use the survey object (weighted)
         ) %>%
   kable()
 ```
+
+
+
+
+```{r weighted_symptoms_reported_sex, eval = FALSE}
+survey_design %>%                  # use the survey object (weighted)
+  filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
+  # calculate weighted counts and weighted proportions - stratified by agegroup!!
+  tabulate_binary_survey(SYMPTOMS, strata = age_group, keep = TRUE) %>%
+  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
+  select(-value) %>%                     # drop column which tells you which row values were kept 
+  rename("Symptom" = variable,
+         "Male reported" = male_n,
+         "% (95% CI)" = male_prop, 
+         "Female reported" = female_n,
+         "% (95% CI)" = female_prop,
+        ) %>%
+  kable()
+```
+
+
+
+
+```{r weighted_symptoms_reported_sex, eval = FALSE}
+survey_design_sex %>%                  # use the survey object (weighted)
+  filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
+  # calculate weighted counts and weighted proportions - stratified by sex!!
+  tabulate_binary_survey(SYMPTOMS, strata = sex, keep = TRUE) %>%
+  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
+  select(-value) %>%                     # drop column which tells you which row values were kept 
+  rename("Symptom" = variable,
+         "Male reported" = male_n,
+         "% (95% CI)" = male_prop, 
+         "Female reported" = female_n,
+         "% (95% CI)" = female_prop,
+        ) %>%
+  kable()
+```
+
+
 
