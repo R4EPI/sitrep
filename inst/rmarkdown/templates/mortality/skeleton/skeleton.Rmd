@@ -583,7 +583,7 @@ This resulted in `r fmt_count(study_data_cleaned, endcause == "Present at end")`
 individuals who were present at the end of the recall period; for a net change
 in sample population of `r net_change`%.
 
-Below shows the arrivals and departures during the study period. 
+Below shows the arrivals during the study period. 
 
 ```{r descriptive_start_population}
 # get counts and proportions of start causes
@@ -597,7 +597,7 @@ descriptive(study_data_cleaned,
   kable(digits = 2)
 ```
 
-
+This shows the departures during the study period 
 ```{r descriptive_end_population}
 # get counts and proportions of end causes
 descriptive(study_data_cleaned, 
@@ -608,7 +608,11 @@ descriptive(study_data_cleaned,
   kable(digits = 2)
 ```
 
-```{r visualise_population_flow}
+
+This parallel set diagram helps in visualising the flow of population during the
+study period. 
+
+```{r visualise_population_flow, warning = FALSE}
 
 # summarize data
 flow_table <- study_data_cleaned %>%
@@ -762,9 +766,9 @@ sex_ratio_age <- study_data_cleaned %>%
 ```
 
 
-Among the `r nrow(study_data_cleaned)` surveyed individuals, there were `r
-fmt_count(study_data_cleaned, sex == "Female")` females and `r
-fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
+Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
+`r fmt_count(study_data_cleaned, sex == "Female")` females and 
+`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
 female ratio was `r sex_ratio` in the surveyed population. The lowest male to
 female ratio was `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(ratio)`
 in the `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(age_group)`year age
@@ -781,7 +785,7 @@ The highest proportion of pregnant women was among the
 `r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(age_group)`year age group, at 
 `r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(Yes_prop)`%.
 
-The median number of people per surveyed house hold was `r median(study_data_cleaned$q65_iq4`,
+The median number of people per surveyed house hold was `r median(study_data_cleaned$q65_iq4)`,
 with a range of `r paste0(range(study_data_cleaned$q65_iq4), collapse = "-")`. 
 
 Age distribution of household population by year age group and gender.
@@ -865,7 +869,7 @@ Note that low counts or short observation times may lead to a confidence interva
 that crosses zero (i.e. negative) for mortality ratios. These should be interpreted
 as if no deaths (impossible to have negative deaths). 
 
-```{r weighted_cause_death_MR, warning = FALSE}
+```{r weighted_cause_death_MR, warning = FALSE, message = FALSE}
 # First retrieve weighted counts and proportions by cause of death 
 # you will get separate columns, for weighted counts (weighted % with CI), 
 # and mortality per 10,000 persons/day with CI
@@ -951,7 +955,11 @@ survey_design %>%                  # use the survey object (weighted)
 
 
 
-```{r weighted_symptoms_reported_sex, eval = FALSE}
+```{r weighted_symptoms_reported_age, eval = FALSE}
+
+### DOESNT WORK NEED TO ADD STRATIFIED TO TABULATEBINARYSURVEY
+### issue is that when do pretty then %CI columns are same for strata and get ignored.... 
+
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
@@ -971,6 +979,11 @@ survey_design %>%                  # use the survey object (weighted)
 
 
 ```{r weighted_symptoms_reported_sex, eval = FALSE}
+
+### DOESNT WORK NEED TO ADD STRATIFIED TO TABULATEBINARYSURVEY
+### issue is that when do pretty then %CI columns are same for strata and get ignored.... 
+
+
 survey_design_sex %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by sex!!
