@@ -843,7 +843,10 @@ plot_age_pyramid(study_data_cleaned,
                  split_by = "sex",
                  proportion = TRUE) + 
   labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
-  theme(legend.position = "bottom", legend.title = element_blank()) # remove title and move legend
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
 ```
 
 Weighted age and gender distribution - if this is substantially different to your unweighted 
@@ -857,11 +860,40 @@ plot_age_pyramid(survey_design_sex,
                  split_by = "sex", 
                  proportion = TRUE) +
   labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
-  theme(legend.position = "bottom", legend.title = element_blank()) # remove title and move legend
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
 ```
 
 
 ## Mortality
+
+```{r CMR, warning = FALSE, message = FALSE}
+# weighted counts and proportion of dead
+# you will get separate columns, for weighted counts (weighted % with CI), 
+# note that survey_design is used rather than study_data_cleaned (weighted survey object)
+# COUNTS ARE ALSO WEIGHTED HERE
+death_props <- survey_design %>%
+  tabulate_survey(died)
+
+# mortality per 10,000 persons/day with CI
+# survey ratio used to account for observation time 
+CMR <- survey_design %>% 
+  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  # merge confidence intervals for mortality in to one column (do not change to percent)
+  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
+
+```
+
+
+
+During the recall period the weighted number of deaths in the population was 
+`r death_props %>% filter(died == TRUE) %>% pull(n)`, which gives a weighted 
+proportions of `r death_props %>% filter(died == TRUE) %>% pull(prop)`. 
+This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
+
+
 
 Reported causes of death and cause-specific mortality ratio, weighted counts and 
 proportions. 
@@ -875,7 +907,10 @@ as if no deaths (impossible to have negative deaths).
 # and mortality per 10,000 persons/day with CI
 # note that survey_design is used rather than study_data_cleaned (weighted survey object)
 # COUNTS ARE ALSO WEIGHTED HERE
+# you could return the proportion only among those who died by uncommenting 
+  # filter(died)
 cause_of_death_prop <- survey_design %>% 
+  # filter(died) %>%  # proportions only among those who died
   tabulate_survey(cause_of_death)
 
 # Then retrieve weighted cause-specific mortality ratios
@@ -894,7 +929,6 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>%
 
 
 ```{r gender_CMR}
-
 # retrieve weighted gender-specific mortality ratios
 # note that survey ratio includes the observation times in calculation
 # note the posibility of negative confidence interval when low counts
@@ -913,7 +947,10 @@ Reported causes of death and cause-specific mortality rates, by age, weighted
 
 ```{r, weighted_death_cause_by_age}
 # return weighted counts and weighted proportions 
+# you could return the proportion only among those who died by uncommenting 
+  # filter(died)
 survey_design %>% 
+  # filter(died) %>% 
   tabulate_survey(cause_of_death, age_group) %>%
   kable()
 
@@ -923,7 +960,10 @@ Reported causes of death and cause-specific mortality rates, by gender, weighted
 
 ```{r, weighted_death_cause_by_gender}
 # return weighted counts and weighted proportions
+# you could return the proportion only among those who died by uncommenting 
+  # filter(died)
 survey_design %>% 
+  # filter(died) %>% 
   tabulate_survey(cause_of_death, sex) %>%
   kable()
 
