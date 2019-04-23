@@ -19,6 +19,7 @@
 #' @export
 #' @examples
 #'
+#' \dontrun{
 #' if (require("dplyr")) {
 #' set.seed(50)
 #' dat <- gen_data("Cholera", n = 100)
@@ -32,6 +33,7 @@
 #'   group_age_categories(years = age_years, months = age_months, days = age_days) %>%
 #'   pull(age_category) %>%
 #'   table()
+#' }
 #' }
 
 

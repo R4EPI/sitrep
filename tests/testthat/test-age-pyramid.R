@@ -49,5 +49,5 @@ test_that("missing levels are still plotted", {
 test_that("missing split data are removed before plotting", {
   dat$sex[69] <- NA
   expect_warning(plot_age_pyramid(dat, age_group = "AGE"),
-                 "removing 1 observations with missing values in the sex column")
+                 "removing 1 observations with missing values between the sex and sex column")
 })

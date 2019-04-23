@@ -1,0 +1,4 @@
+name: Meningitis outbreak report
+description: >
+  An automated outbreak report template for meningitis
+create_dir: false
