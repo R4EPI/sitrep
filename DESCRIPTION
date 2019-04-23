@@ -8,6 +8,7 @@ Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
 Imports: 
     binom,
+    broom,
     cowplot,
     clipr,
     dplyr (>= 0.7),
@@ -52,6 +53,7 @@ Collate:
     'cfr.R'
     'descriptive-table.R'
     'find_breaks.R'
+    'find_date_cause.R'
     'gen_data.R'
     'gen_polygon.R'
     'gen_population.R'

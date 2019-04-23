@@ -5,10 +5,11 @@
 \alias{tabulate_binary_survey}
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
-tabulate_survey(x, var, strata = NULL, pretty = TRUE, digits = 1)
+tabulate_survey(x, var, strata = NULL, pretty = TRUE, digits = 1,
+  method = "logit")
 
 tabulate_binary_survey(x, ..., keep = NULL, invert = FALSE,
-  pretty = TRUE, digits = 1)
+  pretty = TRUE, digits = 1, method = "logit")
 }
 \arguments{
 \item{x}{a survey design object}
@@ -21,6 +22,9 @@ tabulate_binary_survey(x, ..., keep = NULL, invert = FALSE,
 
 \item{digits}{if \code{prittey = FALSE}, this indicates the number of digits used
 for proportion and CI}
+
+\item{method}{a method from \code{\link[survey:svyciprop]{survey::svyciprop()}} to calculate the confidence
+interval. Defaults to "logit"}
 
 \item{...}{binary variables for tabulation}
 
