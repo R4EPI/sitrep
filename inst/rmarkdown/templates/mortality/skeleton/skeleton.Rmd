@@ -253,7 +253,7 @@ unique(study_data_raw$q4_q6_sex)
 #  function)
 study_data_raw %>% 
   filter(q137_q35_died_date < q88_q33_born_date) %>% 
-  select("fact_0_id")
+  select(matches("fact_0_id"))
 
 
 ## another alternative is with the "summarytools package"
@@ -616,26 +616,9 @@ study period.
 
 # summarize data
 flow_table <- study_data_cleaned %>%
-  group_by(startcause, endcause, sex) %>%
-  count()
-
-# collect parts needed for plotting 
-# grouping only by start and end cause, sex seperate
-flow_table <- gather_set_data(flow_table, 1:2)
-
-# make sure factor levels are correct 
-# SEEMS TO IGNORE FACTOR LEVELS AND PLOT ALPHABETICALLY!
-flow_table <- flow_table %>%
-  ungroup() %>%  # not sure this ungroup is necessary!?
-  mutate(
-    x = factor(x, levels = c("startcause", "endcause")),
-    startcause = factor(startcause, levels = c("Present at start", 
-                                               "Born",
-                                               "Other arrival")), 
-    endcause = factor(endcause, levels = c("Present at end",
-                                           "Died",
-                                           "Other departure"))
-  )
+  count(startcause, endcause, sex) %>%
+  gather_set_data(x = c("startcause", "endcause")) %>%
+  mutate(x = factor(x, levels = c("startcause", "endcause")))
 
 # plot your dataset 
   # on the x axis is the start and end causes
@@ -648,15 +631,9 @@ ggplot(flow_table, aes(x, id = id, split = y, value = n)) +
   # fill in the label boxes grey
   geom_parallel_sets_axes(axis.width = 0.1, fill = "grey80", color = "grey80") +
   # change text colour and angle (needs to be adjusted)
-  geom_parallel_sets_labels(
-    color = "black",
-    angle = 0
-  ) +
+  geom_parallel_sets_labels(color = "black", angle = 0) +
   # adjusted y and x axes (probably needs more vertical space)
-  scale_x_discrete(
-    name = NULL,
-    expand = c(0, 0.2)
-  ) +
+  scale_x_discrete(name = NULL, expand = c(0, 0.2)) +
   scale_y_continuous(breaks = NULL, expand = c(0, 0)) +
   # remove axis labels
   theme(
