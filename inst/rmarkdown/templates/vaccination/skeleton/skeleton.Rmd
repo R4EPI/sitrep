@@ -224,8 +224,8 @@ study_data_dict <- msf_dict_survey("Vaccination")
 
 # generate population data by age groups in years 
 population_data_age <- gen_population(total_pop = 1000, # set the total population 
-  groups = c("1", "2", "3", "4", "5+"),    # set the groups
-  proportions = c(0.11, 0.07, 0.26, 0.182, 0.38),       # set the proportions for each group
+  groups = c("0", "1", "2", "3", "4", "5+"),    # set the groups
+  proportions = c(0.15, 0.11, 0.07, 0.26, 0.182, 0.38),       # set the proportions for each group
   strata = c("Male", "Female")) %>%                      # stratify by gender 
   rename(age_group = groups,                        # rename columns (syntax is NEW NAME = OLD NAME)
          sex = strata,
@@ -277,26 +277,6 @@ study_data_raw %>%
 
 
 
-
-
-
-```{r data cleaning}
-
-# Additional variable name cleaning and creation of vaccination status binary variable
-vaccination_clean <- vaccination_raw %>%
-                      mutate(age_in_years = as.integer(q10_age_yr),
-                             age_in_months = as.integer(q55_age_mth),
-                             age_group = sitrep::age_categories(age_in_years, 
-                                                                breakers 
-                                                                = c(0,1,2,3,4,5)),
-                             )
-                             
-
-```
-
-
-
-
 ```{r standardise_clean_data}
 
 ## All your data cleaning and new variable creation should happen in this chunk. 
@@ -337,6 +317,8 @@ colnames(study_data_cleaned) <- cleaned_colnames
 ## function. 
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME)
 study_data_cleaned <- rename(study_data_cleaned,
+                             age_in_years = q10_age_yr,
+                             age_in_months = q55_age_mth,
                              sex = q5_sex,
                              vaccination_routine = q2_vaccine_9months,
                              vaccination_sia = q32_vaccine_sia,
@@ -390,18 +372,32 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # make sure age is an integer 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(age_in_years = as.integer(age_in_years))
+  mutate(age_in_years = as.integer(age_in_years), 
+         age_in_months = as.integer(age_in_months))
+
+# create an age group variable (combining those over 5 years) 
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(age_group = factor(
+    if_else(age_in_years >= 5,
+      "5+",
+      as.character(age_in_years)
+    )
+  ))
+
+
+
+## alternatively you could use the age_categories function as below
 
 # create an age group variable by specifying categorical breaks (of years)
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(age_group = age_categories(age_in_years, 
-                                    breakers = c(0, 3, 15, 30, 45)
-                                    ))
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate(age_group = age_categories(age_in_years, 
+#                                     breakers = c(0, 3, 15, 30, 45)
+#                                     ))
 
-## create age group variable for under 2 years based on months
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(age_group_mon = age_categories(study_data_cleaned$q156_q3_age_month, 
-                                                 breakers = c(0, 6, 9, 12, 24), 
+# create age group variable for under 1 years based on months
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(age_group_mon = age_categories(study_data_cleaned$age_in_months,
+                                                 breakers = c(0, 6, 9, 12),
                                                  ceiling = TRUE))
 
 
@@ -427,31 +423,18 @@ study_data_cleaned <- group_age_categories(study_data_cleaned,
 # Factor (categorical) variables ---------------------------------
 
 # Change a yes/no variable in to TRUE/FALSE
-# create a new variable called died 
+# create a new variable called consent 
 # where the old one is yes place TRUE in the new one
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(died = q136_q34_died == "Yes")
+  mutate(consent = q58_consent == "Yes")
 
 # Set the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(cause_of_death = factor(q138_q36_died_cause,
-                                 levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
-                                            "Trauma/accident", "Pregnancy-related", 
-                                            "Violence", "Outbreak disease (specify)", 
-                                            "Malnutrition", "Unknown", "Other (specify)")))
-
-## change Dharma Multi-questions to TRUE/FALSE
-SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
-SYMPTOMS <- SYMPTOMS[-1] # drop the "other" symptoms free text var 
-
-# set rows that are not empty to TRUE in each of the symptom variables
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate_at(SYMPTOMS, .funs = ~ifelse(!is.na(.), TRUE, FALSE))
-
-# define the labels for each of the symptoms 
-SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition", 
-                     "Pregnancy-related", "Malaria/fever", "Trauma", 
-                     "Violence", "Unknown", "Other")
+  mutate(cause_of_death = factor(q65_consent_no_reason,
+                                 levels = c("Refuse to explain", 
+                                            "No time", 
+                                            "Bad experience" ,
+                                            "Other reason")))
 
 ######## weighting ------------------------------------------------------------
 
@@ -461,38 +444,57 @@ study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_g
 
 # you may want to drop rows with missing IDs (i.e. blank rows from excel) 
   # simply add a !is.na(fact_0_id) if using a dharma dataset
-# you will also want to drop those rows where both the start and enddate occur
-# outside of your recall period! 
-# if yor check_dates shows rows with negative obs time - make sure to solve those or drop!
-study_data_cleaned <- study_data_cleaned %>%
-  filter(!(is.na(startdate) | is.na(enddate)))
+# you will also want to drop those rows with no consent! 
+# study_data_cleaned <- study_data_cleaned %>%
+#   filter(consent)
+```
+
+```{r save_cleaned_data, eval = FALSE}
+## OPTIONAL: save your cleaned dataset as an excel file! 
+## put the current date in the name so you know!
+writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date(), ".xlsx"))
 ```
 
 
 
+```{r survey_design}
+## USE THIS TO SET THE STUDY DESIGN FOR YOUR SURVEY  ---------------------------
+##
+## This creates "survey objects" which can be used as data frames for calculating
+## weighted proportions etc. 
+## There are several options for study design here. 
+## At the basic level you want to decide if it is a simple random or a cluster
+## design study. You will then need to identify your weights variable. 
+## You can also create several study designs, e.g. if you would like to have
+## an overall design and a stratified design (e.g. by sex or by region). 
+##
+## Checklist for study design --------------------------------------------------
+## 
+## - [ ] Make sure you have created all necessary variables in earlier code chunks!!
+## - [ ] Decide on your study design (cluster or simple random)
+## - [ ] If doing cluster:
+##          - [ ] place your cluster ID variable in the ids option 
+##                (e.g. householdID - "fact_0_id" not availble in dat dict)
+##          - [ ] specify your weight variable (created previously)
+##                (set to NULL if want no weights)
+## - [ ] If doing simple random: 
+##          - [ ] set ids equals 1 to have no clustering 
+##          - [ ] specify your weight variable (created previously)
+##                (set to NULL if want no weights)
+## - [ ] Create additional study designs based on strata 
+##      (make sure that your weight variable is based on appropriately stratified
+##        population data)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-```{r survey design}
-
-# we first need to create a survey design that reflects the study
-survey_design <- svydesign(
-  ids = ~ cluster, # cluster id is stored as cluster
-  weights = weights, #sampling weights applied to this example
-  data = vaccination_raw_clean
-)
+# cluster sample (using srvyr package)
+survey_design <- study_data_cleaned %>% 
+  as_survey_design(ids = cluster, # cluster id variable (created during collection) 
+                   weights = weight # weight variable created above 
+                   )
 ```
+
+
+
 
 
 
@@ -531,7 +533,239 @@ plot_age_pyramid(vaccination_raw_clean, age_group = "age_group", split_by = "sex
 ```
 
 
-# Vaccination coverage
+
+
+
+## Demographic information
+
+Compare the proportions in each age group between your sample and the source population. 
+This is important to be able to highlight potential sampling bias. 
+You could similarly repeat this looking at distributions by sex. 
+
+Note that these p-values are just indicative, and a descriptive discussion (or
+visualisation with age-pyramids below) of the distributions in your study sample 
+compared to the source population is more
+important that the binomial test itself. This is because increasing sample size
+will more often than not lead to differences that may be irrelevant after weighting
+your data. 
+
+
+```{r descriptive_sampling_bias}
+# first the counts and props of the study population
+ag <- descriptive(study_data_cleaned, "age_group") %>%
+  mutate(n_total = sum(n))
+
+# then the counts and props of the source population
+propcount <- group_by(population_data_age, age_group) %>%
+    tally(population) %>%
+    mutate(prop = n / sum(n))
+
+# bind together the columns of two tables, group by age, and perform a 
+# binomial test to see if n/total is significantly different from population
+# proportion.
+  # suffix here adds to text to the end of columns in each of the two datasets
+left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
+  group_by(age_group) %>%
+
+  # broom::tidy(binom.test()) makes a data frame out of the binomial test and
+  # will add the variables p.value, parameter, conf.low, conf.high, method, and
+  # alternative. We will only use p.value here. You can include other
+  # columns if you want to report confidence intervals
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, prop_pop)))) %>%
+  unnest() %>% # important for expanding the binom.test data frame
+  mutate(prop_pop = prop_pop * 100) %>%
+
+  # Adjusting the p-values to correct for false positives 
+  # (because testing multiple age groups). This will only make 
+  # a difference if you have many age categories
+  mutate(p.value = p.adjust(p.value, method = "holm")) %>%
+  select(age_group, n, prop, n_pop, prop_pop, p.value) %>%
+                      
+  # Only show p-values over 0.001 (those under report as <0.001)
+  mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
+
+  # rename the columns appropriatley
+  rename(
+    "Age group" = age_group,
+    "Study population (n)" = n,
+    "%" = prop,
+    "Source population (n)" = n_pop,
+    "%" = prop_pop,
+    "P-value" = p.value
+  ) %>%
+  kable(digits = 2)
+
+```
+
+
+
+```{r median_age_sex_ratios}
+# compute the median age 
+medage <- median(study_data_cleaned$age_in_years)
+# paste the lower and uper quartile together
+iqr <- paste0(  # basically copy paste togehter the following
+  # calculate the 25% and 75% of distribution, with missings removed
+  quantile(     
+    study_data_cleaned$age_in_years, 
+    c(0.25, 0.75), 
+    na.rm = TRUE), 
+  # between lower and upper place a dash
+  collapse = "-")
+
+
+# compute overall sex ratio 
+sex_ratio <- study_data_cleaned %>% 
+  count(sex) %>% 
+  summarise(ratio = round(
+    n[sex == "Male"]/n[sex == "Female"], 
+    digits = 3)
+  )
+
+# compute sex ratios by age group 
+sex_ratio_age <- study_data_cleaned %>% 
+  group_by(age_group) %>% 
+  count(sex) %>% 
+  summarise(ratio = round(
+    n[sex == "Male"]/n[sex == "Female"], 
+    digits = 3)
+  )
+
+
+```
+
+
+Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
+`r fmt_count(study_data_cleaned, sex == "Female")` females and 
+`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
+female ratio was `r sex_ratio` in the surveyed population. The lowest male to
+female ratio was `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(ratio)`
+in the `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(age_group)`year age
+group.
+The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
+years). Children under five years of age made up 
+`r fmt_count(study_data_cleaned, age_in_years < 5)`of the surveyed individuals.
+The highest number of surveyed indivduals (unweighted) were in the 
+`r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` 
+year age group.
+
+
+```{r cluster_hh_size}
+# get counts of the number of households per cluster
+clustersize <- study_data_cleaned %>% 
+  count(cluster) 
+
+# get the median number of households per cluster
+clustermed <- clustersize %>% 
+  summarise(median(n))
+
+# get the min and max number of households per cluster
+# paste these together seperated by a dash 
+clusterrange <- paste0(range(clustersize$n), collapse = "-")
+
+# get counts of children per household 
+# do this by cluster as household IDs are only unique within clusters
+hhsize <- study_data_cleaned %>% 
+  group_by(cluster) %>% 
+  count(q14_hh_no) 
+
+# get median number of children per household
+# ungroup to give you the overall median 
+hhmed <- hhsize %>%
+  ungroup() %>% 
+  summarise(median(n))
+
+# get the min and max number of children per household
+# paste these together seperated by a dash 
+hhrange <- paste0(range(hhsize$n), collapse = "-")
+  
+```
+
+
+
+The median number of households per cluster was
+`r clustermed`, with a range of `r clusterrange`. The median number of children
+per household was `r hhmed` and the range was `r hhrange`. 
+
+Age distribution of household population by year age group and gender.
+
+```{r describe_by_age_group_and_sex}
+
+# return counts and proportions of individuals by age and sex
+# note that proportions are of the total sample (not within each gender) 
+  # to change this, set proptotal = FALSE
+descriptive(study_data_cleaned, 
+            "age_group", 
+            "sex", 
+            rowtotals = TRUE, 
+            coltotals = TRUE, proptotal = TRUE) %>% 
+  # rename column names appropriately
+  rename("Age" = age_group, 
+         "Female cases (n)" = Female_n, 
+         "%" = Female_prop, 
+         "Male cases (n)" = Male_n, 
+         "%" = Male_prop) %>% 
+  kable(digits = 2)
+```
+
+Using the combined age category you can show the above breakdown by months and years. 
+
+```{r describe_by_age_category_and_sex}
+
+# return counts and proportions of individuals by age and sex
+# note that proportions are of the total sample (not within each gender) 
+  # to change this, set proptotal = FALSE
+descriptive(study_data_cleaned, 
+            "age_category", 
+            "sex", 
+            rowtotals = TRUE, 
+            coltotals = TRUE, proptotal = TRUE) %>% 
+  # rename column names appropriately
+  rename("Age" = age_category, 
+         "Female cases (n)" = Female_n, 
+         "%" = Female_prop, 
+         "Male cases (n)" = Male_n, 
+         "%" = Male_prop) %>% 
+  kable(digits = 2)
+```
+
+
+There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing information on sex and 
+`r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
+
+Age and gender distribution of household population covered by the survey.
+
+```{r age_pyramid, warning=FALSE}
+# This is unweighted as you are using study_data_cleaned
+plot_age_pyramid(study_data_cleaned, 
+                 age_group = "age_group", 
+                 split_by = "sex",
+                 proportion = TRUE) + 
+  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+Weighted age and gender distribution - if this is substantially different to your unweighted 
+pyramid, then it may suggest some sampling bias (similarly to the table comparing 
+sample and source population distributions by binomial test). 
+
+```{r age_pyramid_survey, warning=FALSE}
+# Note that here you are using survey_design_sex so will produce weighted proportions
+plot_age_pyramid(survey_design,
+                 age_group = "age_group",
+                 split_by = "sex", 
+                 proportion = TRUE) +
+  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+
+## Vaccination coverage
 Accepting equal validity from self-reported and card-reported vaccination status
 ```{r vaccination coverage overall}
 
