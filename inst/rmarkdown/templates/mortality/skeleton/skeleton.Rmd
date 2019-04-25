@@ -618,15 +618,11 @@ study period.
 flow_table <- study_data_cleaned %>%
   count(startcause, endcause, sex) %>%
   gather_set_data(x = c("startcause", "endcause")) %>%
-  mutate(x = forcats::fct_recode(x, 
-                                 "Start \n cause" = "startcause", 
-                                 "End \n cause" = "endcause"), 
-         x = forcats::fct_relevel(x, c("Start \n cause", "End \n cause")),
-         y = forcats::fct_recode(y, 
-                                 "Present" = "Present at start", 
-                                 "Present" = "Present at end", 
-                                 "Arrival" = "Other arrival", 
-                                 "Departure" = "Other departure"))
+  mutate(x = fct_relevel(x, c("startcause", "endcause")),
+         x = fct_recode(x, 
+                        "Start \n cause" = "startcause", 
+                        "End \n cause" = "endcause") 
+        )
 
 # plot your dataset 
   # on the x axis is the start and end causes
