@@ -253,7 +253,7 @@ unique(study_data_raw$q4_q6_sex)
 #  function)
 study_data_raw %>% 
   filter(q137_q35_died_date < q88_q33_born_date) %>% 
-  select("fact_0_id")
+  select(matches("fact_0_id"))
 
 
 ## another alternative is with the "summarytools package"
@@ -1003,15 +1003,10 @@ survey_design %>%                  # use the survey object (weighted)
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
-  tabulate_binary_survey(SYMPTOMS, strata = age_group, keep = TRUE) %>%
+  tabulate_binary_survey(SYMPTOMS, strata = age_group, keep = TRUE, pretty = TRUE) %>%
   mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable,
-         "Male reported" = male_n,
-         "% (95% CI)" = male_prop, 
-         "Female reported" = female_n,
-         "% (95% CI)" = female_prop,
-        ) %>%
+  rename("Symptom" = variable) %>%
   kable()
 ```
 
@@ -1031,10 +1026,8 @@ survey_design_sex %>%                  # use the survey object (weighted)
   mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   select(-value) %>%                     # drop column which tells you which row values were kept 
   rename("Symptom" = variable,
-         "Male reported" = male_n,
-         "% (95% CI)" = male_prop, 
-         "Female reported" = female_n,
-         "% (95% CI)" = female_prop,
+         "Female reported" = "Female n",
+         "Male reported" = "Male n",
         ) %>%
   kable()
 ```

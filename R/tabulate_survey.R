@@ -145,7 +145,6 @@ widen_tabulation <- function(y, cod, st) {
   st  <- rlang::enquo(st)
   
   y <- dplyr::select(y, !! cod, !! st, "n", starts_with("prop"))
-
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
   y <- tidyr::spread(y, "tmp", "value")
@@ -160,7 +159,7 @@ widen_tabulation <- function(y, cod, st) {
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
 #'
-tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, digits = 1, method = "logit") {
+tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit") {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -169,14 +168,42 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = 
 
   vars <- tidyselect::vars_select(colnames(x), ...)
   strt <- rlang::enquo(strata)
-  res <- lapply(vars, function(i) {
-    i <- rlang::ensym(i)
-    tabulate_survey(x, !! i, strata = !! strt, pretty = pretty, digits = digits, method = method)
-  })
-  for (i in seq_along(res)) {
-    names(res[[i]])[1] <- "value"
+  null_strata <- is.null(rlang::get_expr(strt))
+
+  # Create list for results to go into that will eventually be bound together
+  res <- vector(mode = "list", length = length(vars))
+  names(res) <- vars
+
+  # loop over each name in the list and tabulate the survey for that variable
+  for (i in names(res)) {
+    i        <- rlang::ensym(i)
+    res[[i]] <- tabulate_survey(x, 
+                                var    = !! i, 
+                                strata = !! strt, 
+                                pretty = pretty, 
+                                digits = digits, 
+                                method = method, 
+                                wide   = wide)
+
+    # The ouptut columns will have the value as whatever i was, so we should
+    # rename this to "value" to make it consistent
+    names(res[[i]])[if (wide) 1 else 2] <- "value"
+
+    # If the user selects pretty, the %s should have the names of the categories
+    # prepended so they don't get clobbered by dplyr
+    if (pretty) {
+      percents <- grep("^\\%", names(res[[i]]))
+      preps    <- sprintf("%s %s", 
+                          gsub(" n$", "", names(res[[i]])[percents - 1]),
+                          names(res[[i]])[percents]
+                         )
+      names(res[[i]])[percents] <- preps
+    }
+
   }
+  # Combine the results into one table
   suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))
 
+  # return the results with only the selected values
   res[if (invert) !res$value %in% keep else res$value %in% keep, ]
 }

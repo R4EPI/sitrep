@@ -5,11 +5,12 @@
 \alias{tabulate_binary_survey}
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
-tabulate_survey(x, var, strata = NULL, pretty = TRUE, digits = 1,
-  method = "logit")
+tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
+  digits = 1, method = "logit")
 
-tabulate_binary_survey(x, ..., keep = NULL, invert = FALSE,
-  pretty = TRUE, digits = 1, method = "logit")
+tabulate_binary_survey(x, ..., strata = NULL, keep = NULL,
+  invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1,
+  method = "logit")
 }
 \arguments{
 \item{x}{a survey design object}
@@ -20,7 +21,13 @@ tabulate_binary_survey(x, ..., keep = NULL, invert = FALSE,
 
 \item{pretty}{if \code{TRUE}, default, the proportion and CI are merged}
 
-\item{digits}{if \code{prittey = FALSE}, this indicates the number of digits used
+\item{wide}{if \code{TRUE} (default) and strata is defined, then the results are
+presented in a wide table with each stratification counts and estimates in
+separate columns. If \code{FALSE}, then the data will be presented in a long
+format where the counts and estimates are presented in single columns. This
+has no effect if strata is not defined.}
+
+\item{digits}{if \code{pretty = FALSE}, this indicates the number of digits used
 for proportion and CI}
 
 \item{method}{a method from \code{\link[survey:svyciprop]{survey::svyciprop()}} to calculate the confidence
@@ -47,6 +54,11 @@ data(api)
 apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
   tabulate_survey(stype, awards)
+
+# long data
+apistrat \%>\%
+  as_survey_design(strata = stype, weights = pw) \%>\%
+  tabulate_survey(stype, awards, wide = FALSE)
 
 apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
