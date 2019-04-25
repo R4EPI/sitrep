@@ -144,7 +144,7 @@ widen_tabulation <- function(y, cod, st) {
   cod <- rlang::enquo(cod)
   st  <- rlang::enquo(st)
   
-  y <- dplyr::select(y, !! cod, !! st, "n", starts_with("prop"))
+  y <- dplyr::select(y, !! cod, !! st, "n", dplyr::starts_with("prop"))
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
   y <- tidyr::spread(y, "tmp", "value")
