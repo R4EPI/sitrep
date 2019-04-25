@@ -179,29 +179,164 @@ study_data_dict <- msf_dict_survey("Vaccination")
 ```
 
 
+
+
+
+
+
 ```{r read_population_data, warning = FALSE, message = FALSE}
 
-# create fake population by age and sex 
-population_data_age <- tibble(age_group = rep.int(c("0-0", "1-1", "2-2", "3-3", "4-4", "5+"), 2), 
-                              sex = rep.int(c("Male", "Female"), 6))
-population_data_age$population <- as.integer(runif(nrow(population_data_age), 
-                                          min = 500, max = 2000))
+## There are two options for using population data here. 
+## The first one is where you only know the total population number, and the 
+## proportion breakdown for categories (e.g. by age group, sex or region). 
+## The second option is to read in population from excel. 
+## In both cases you will need to make sure that the respective groups for 
+## population fit the groups in your linelist data set!
+##
+## Checklist for population data ----------------------------------------------
+## 
+## - [ ] Decide if you have stratified population data available as counts or only proportions
+## - [ ] If you have counts available:
+##          - [ ] use View on the fake data generated to make sure your format in excel matches
+##          - [ ] read in and clean data appropriately in the "Read data" section
+##          - [ ] make sure the groups match the appropriate variable in your linelist!
+## - [ ] If have total population and proportion breakdown available: 
+##          - [ ] use the gen_population function in "counts from populaiton proportions" section
+##          - [ ] type in your population, groups, and respective proportions
+##          - [ ] group can be any categorical variable you want
+##          - [ ] make sure the groups match the appropriate variable in your linelist!
+## - [ ] DELETE OR COMMENT OUT THE UNUSED SECTION
 
+
+## Read data ------------------------------------
+
+## Excel file
+## See the gen_population function section below to see how to structure your data!!
+## to read in a specific sheet use "which"
+# population_data <- rio::import("population.xlsx", which = "Sheet1")
+
+## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
+## make sure your place variable name matches!
+
+## Counts from population proportions ------------------------------------ 
+## if you only know the total population and the proportions in each age group, use this function 
+
+
+# generate population data by age groups in years 
+population_data_age <- gen_population(total_pop = 1000, # set the total population 
+  groups = c("1", "2", "3", "4", "5+"),    # set the groups
+  proportions = c(0.11, 0.07, 0.26, 0.182, 0.38),       # set the proportions for each group
+  strata = c("Male", "Female")) %>%                      # stratify by gender 
+  rename(age_group = groups,                        # rename columns (syntax is NEW NAME = OLD NAME)
+         sex = strata,
+         population = n)
 ```
+
+
+
+
+
+
+```{r browse_data, eval = FALSE}
+## Browsing data ---------------------------------
+## here are a few ways to do data explorations 
+
+## view the first ten rows of data
+head(study_data_raw, n = 10)
+
+## view your whole dataset interactivley (in an excel style format)
+## Remember that `View` needs to be written with a capital *V*
+View(study_data_raw)
+
+## overview of variable types and contents
+str(study_data_raw)
+
+## gives mean, median and max values of variables
+## gives counts for categorical variables
+## also gives number of NAs
+summary(study_data_raw)
+
+## view unique values contained in variables 
+unique(study_data_raw$q5_sex)
+
+## check for logical date inconsistencies 
+## for example check vaccinage greater than current age and return corresponding IDs
+# (fact_0_id only exists in real dharma datasets - not those from gen_data 
+#  function)
+study_data_raw %>% 
+  filter(q56_routine_vaccine_age_mth > q55_age_mth) %>% 
+  select("fact_0_id")
+
+
+## another alternative is with the "summarytools package"
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
+# install.packages("summarytools")
+# summarytools::view(summarytools::dfSummary(study_data_raw))
+```
+
+
+
 
 
 
 ```{r data cleaning}
 
-# clean up the column names
-colnames(vaccination_raw) <- clean_labels(colnames(vaccination_raw))
-
-
 # Additional variable name cleaning and creation of vaccination status binary variable
 vaccination_clean <- vaccination_raw %>%
                       mutate(age_in_years = as.integer(q10_age_yr),
                              age_in_months = as.integer(q55_age_mth),
-                             age_group = sitrep::age_categories(age_in_years, breakers = c(0,1,2,3,4,5)),
+                             age_group = sitrep::age_categories(age_in_years, 
+                                                                breakers 
+                                                                = c(0,1,2,3,4,5)),
+                             )
+                             
+
+```
+
+
+
+
+```{r standardise_clean_data}
+
+## All your data cleaning and new variable creation should happen in this chunk. 
+## This way, if you mess up all you have to do is push the small arrow at the
+## top of this chunk between the cogg and the play buttons, to run all the 
+## code chunks up to the current one, then continue your cleaning from where you
+## started. 
+## 
+## YOU WILL NEED TO ADAPT THIS SECTION ACCORDING TO YOUR DATA!
+## 
+## currently there are examples of cleaning for: 
+##    - Date variables 
+##    - Numeric variables 
+##    - Categorical variables from numerics (e.g. age groups) 
+##    - Factor variables (for creating/manipulating categorical variables)
+##    - Adding weights based on population 
+##    - Calculating observation time with start and end causes
+##    - Dropping rows and columns 
+
+
+## make a copy of your orginal dataset and name it study_data_cleaned
+study_data_cleaned <- study_data_raw
+
+
+# Clean variable names  ---------------------------------
+## define clean variable names using clean_labels from the epitrix package. This
+## function defines rules for variable naming; for example, it changes spaces
+## and dots to "_" and sets all characters to lowercase.
+
+# overwrite variable names with defined clean names
+cleaned_colnames <- epitrix::clean_labels(colnames(study_data_cleaned))
+colnames(study_data_cleaned) <- cleaned_colnames 
+
+
+## Some of the names outputed from Dharma are really long and painful, you can change these as below
+## in case you want to specifically change a
+## few names you can also change specific var names using the *rename*
+## function. 
+## The formula for this is rename(data, NEW_NAME = OLD_NAME)
+study_data_cleaned <- rename(study_data_cleaned,
                              sex = q5_sex,
                              vaccination_routine = q2_vaccine_9months,
                              vaccination_sia = q32_vaccine_sia,
@@ -209,16 +344,142 @@ vaccination_clean <- vaccination_raw %>%
                              disease_diagnosis = q47_disease_diagnosis,
                              area = q4_settlement,
                              cluster = q77_what_is_the_cluster_number)
-                             
 
+
+## OPTIONAL: if you only want to keep certain variables - 
+## you can select these by name or column number view the names of your vars
+## and their column number using: names(linelist_cleaned) this example keeps
+## the first three columns as well as age_years and sex variables
+
+# study_data_cleaned <- select(study_data_cleaned, c(1:3, "age_years", "sex")
+
+
+# Date variables ---------------------------------
+
+# IF YOU ARE USING A DHARMA DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
+# make sure all date variables are formatted as dates 
+
+# select all variables which are dates using the data dictionary
+# DATEVARS <- filter(study_data_dict, type == "QuestionDate") %>% 
+#   select(column_name) # select date vars
+
+# retrieving date vars from the fake dictionary (DELETE THIS)
+DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
+  select(column_name) # select date vars
+
+# change to dates 
+study_data_cleaned <- study_data_cleaned %>%
+  mutate_at(DATEVARS$column_name, as.Date)
+
+# if you dont have a data dictionary you could do it this way too
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate_at(vars(matches("date|Date")), as.Date)
+
+
+
+# Ideally you should have defined rules in your forms to make sure dates collected are logical
+# If not then uncomment the following lines to fix wrong dates (or set them to NA)
+# Fixing wrong dates 
+# set unrealistic dates to NA, based on having browsed dates in the previous chunk
+# study_data_cleaned <- mutate(study_data_cleaned,
+#                            date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
+#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+
+
+# Age group variables ---------------------------------
+
+# make sure age is an integer 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_in_years = as.integer(age_in_years))
+
+# create an age group variable by specifying categorical breaks (of years)
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_group = age_categories(age_in_years, 
+                                    breakers = c(0, 3, 15, 30, 45)
+                                    ))
+
+## create age group variable for under 2 years based on months
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_group_mon = age_categories(study_data_cleaned$q156_q3_age_month, 
+                                                 breakers = c(0, 6, 9, 12, 24), 
+                                                 ceiling = TRUE))
+
+
+## alternatively, create an age group variable specify a sequence
+# study_data_cleaned$age_group <- age_categories(study_data_cleaned$age,
+#                                              lower = 0, 
+#                                              upper = 100, 
+#                                              by = 10)
+
+## If you already have an age group variable defined, you should manually
+## arrange the categories
+# study_data_cleaned$age_group <- factor(study_data_cleaned$age_group,
+#                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
+
+
+## to combine different age categories use the following function 
+## this prioritises the smaller unit, i.e. if given months and years, will return months first
+study_data_cleaned <- group_age_categories(study_data_cleaned, 
+                                         years = age_group, 
+                                         months = age_group_mon)
+
+
+# Factor (categorical) variables ---------------------------------
+
+# Change a yes/no variable in to TRUE/FALSE
+# create a new variable called died 
+# where the old one is yes place TRUE in the new one
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(died = q136_q34_died == "Yes")
+
+# Set the levels of a factor 
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(cause_of_death = factor(q138_q36_died_cause,
+                                 levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
+                                            "Trauma/accident", "Pregnancy-related", 
+                                            "Violence", "Outbreak disease (specify)", 
+                                            "Malnutrition", "Unknown", "Other (specify)")))
+
+## change Dharma Multi-questions to TRUE/FALSE
+SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
+SYMPTOMS <- SYMPTOMS[-1] # drop the "other" symptoms free text var 
+
+# set rows that are not empty to TRUE in each of the symptom variables
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate_at(SYMPTOMS, .funs = ~ifelse(!is.na(.), TRUE, FALSE))
+
+# define the labels for each of the symptoms 
+SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition", 
+                     "Pregnancy-related", "Malaria/fever", "Trauma", 
+                     "Violence", "Unknown", "Other")
+
+######## weighting ------------------------------------------------------------
+
+study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
+
+# drop unwanted rows  ---------------------------------------------------------
+
+# you may want to drop rows with missing IDs (i.e. blank rows from excel) 
+  # simply add a !is.na(fact_0_id) if using a dharma dataset
+# you will also want to drop those rows where both the start and enddate occur
+# outside of your recall period! 
+# if yor check_dates shows rows with negative obs time - make sure to solve those or drop!
+study_data_cleaned <- study_data_cleaned %>%
+  filter(!(is.na(startdate) | is.na(enddate)))
 ```
 
 
-```{r survey weights}
-######## WEIGHTING 
 
-vaccination_clean <- add_weights(vaccination_clean, population_data_age, age_group, sex)
-```
+
+
+
+
+
+
+
+
+
+
 
 
 
