@@ -618,7 +618,15 @@ study period.
 flow_table <- study_data_cleaned %>%
   count(startcause, endcause, sex) %>%
   gather_set_data(x = c("startcause", "endcause")) %>%
-  mutate(x = factor(x, levels = c("startcause", "endcause")))
+  mutate(x = forcats::fct_recode(x, 
+                                 "Start \n cause" = "startcause", 
+                                 "End \n cause" = "endcause"), 
+         x = forcats::fct_relevel(x, c("Start \n cause", "End \n cause")),
+         y = forcats::fct_recode(y, 
+                                 "Present" = "Present at start", 
+                                 "Present" = "Present at end", 
+                                 "Arrival" = "Other arrival", 
+                                 "Departure" = "Other departure"))
 
 # plot your dataset 
   # on the x axis is the start and end causes
@@ -627,9 +635,9 @@ flow_table <- study_data_cleaned %>%
   # value as n gives it as counts (could also be changed to proportion if manipulate)
 ggplot(flow_table, aes(x, id = id, split = y, value = n)) +
   # colour lines by sex 
-  geom_parallel_sets(aes(fill = sex), alpha = 0.5, axis.width = 0.13) +
+  geom_parallel_sets(aes(fill = sex), alpha = 0.5, axis.width = 0.2) +
   # fill in the label boxes grey
-  geom_parallel_sets_axes(axis.width = 0.1, fill = "grey80", color = "grey80") +
+  geom_parallel_sets_axes(axis.width = 0.15, fill = "grey80", color = "grey80") +
   # change text colour and angle (needs to be adjusted)
   geom_parallel_sets_labels(color = "black", angle = 0) +
   # adjusted y and x axes (probably needs more vertical space)
