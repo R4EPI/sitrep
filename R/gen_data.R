@@ -414,7 +414,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
   if (dictionary == "Mortality") {
     # q65_iq4 GPS number (from Osmand) - use as a standin for fact_0_id as household num for now
-    dis_output$q65_iq4 <- sample(1:(nrow(dis_output)/5), nrow(dis_output), replace = TRUE)
+    dis_output$q65_iq4 <- sample(1:as.integer(numcases/5), numcases, replace = TRUE)
 
     # q53_cq4a ("Why is no occupant agreeing to participate?") shoud be NA if
     # Head of Household answers the questions (q49_cq3)
@@ -501,20 +501,25 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   }
   if (dictionary == "Vaccination") {
 
+    # cluster number (1 to a 30th of total cases)
+    dis_output$q77_what_is_the_cluster_number <- sample(1:as.integer(numcases/30), numcases, replace = TRUE)
 
-    # household ID (1 to 300)
-    dis_output$q14_hh_no <- sample(1:300, numcases, replace = TRUE)
+    # household ID (numbering starts again for each cluster)
+    for (i in unique(dis_output$q77_what_is_the_cluster_number)) {
 
+      nums <- nrow(dis_output[dis_output$q77_what_is_the_cluster_number == i,])
 
-    # cluster number (1 to 30)
-    dis_output$q77_what_is_the_cluster_number <- sample(1:30, numcases, replace = TRUE)
+      dis_output[dis_output$q77_what_is_the_cluster_number == i, "q14_hh_no"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
+    }
 
 
     # age in yr (0 to 14) - assuming doing vaccination coverage among those aged less than 15 yrs
     dis_output$q10_age_yr <- sample(0:14, numcases, replace = TRUE)
 
     # age in mth (0 to 11)
-    dis_output$q55_age_mth <- sample(0:11, numcases, replace = TRUE)
+    dis_output$q55_age_mth[dis_output$q10_age_yr < 1] <- sample(0:11,
+                                                                nrow(dis_output[dis_output$q10_age_yr < 1,]),
+                                                                replace = TRUE)
 
 
     # Did the child receive vaccination during the campaign (selected values)
