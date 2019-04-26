@@ -772,16 +772,28 @@ plot_age_pyramid(survey_design,
 Accepting equal validity from self-reported and card-reported vaccination status
 ```{r vaccination_coverage_overall}
 # return weighted counts and weighted proportions 
-survey_design %>% 
-  tabulate_survey(vaccination_status_simple) %>%
+survey_design %>%  # use the survey object (weighted)
+  # calculate weighted counts and weighted proportions, 
+  # include design effect because cluster sample
+  tabulate_survey(vaccination_status_simple, deff = TRUE) %>% 
+  rename("Vaccination status" = vaccination_status_simple, 
+         "Children (n)" = n, 
+         "Design effect" = deff, 
+         "% (95% CI)" = ci) %>% 
   kable()
 ```
 
 Distinguishing between vaccination cards and verbal confirmation 
 ```{r vaccination_coverage_overall_detail}
 # return weighted counts and weighted proportions 
-survey_design %>% 
-  tabulate_survey(vaccination_status) %>%
+survey_design %>% # use the survey object (weighted)
+  # calculate weighted counts and weighted proportions, 
+  # include design effect because cluster sample
+  tabulate_survey(vaccination_status, deff = TRUE) %>%
+  rename("Vaccination status" = vaccination_status, 
+         "Children (n)" = n, 
+         "Design effect" = deff, 
+         "% (95% CI)" = ci) %>% 
   kable()
 ```
 
@@ -789,8 +801,16 @@ survey_design %>%
 Accepting equal validity from self-reported and card-reported vaccination status, by sex
 ```{r vaccination_coverage_sex}
 # return weighted counts and weighted proportions 
-survey_design %>% 
-  tabulate_survey(vaccination_status_simple, sex) %>%
+survey_design %>% # use the survey object (weighted)
+  # calculate weighted counts and weighted proportions - stratified by sex
+  # include design effect because cluster sample
+  tabulate_survey(vaccination_status_simple, sex, deff = TRUE) %>%
+  rename("Vaccination status" = vaccination_status_simple) %>% 
+  # wrap all "n" variables in braces (note space before n).
+  augment_redundant(" n" = " (n)") %>% 
+  # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
+  rename_redundant("ci"   = "% (95% CI)", 
+                   "deff" = "Design effect") %>% 
   kable()
 ```
 
@@ -798,7 +818,13 @@ Distinguishing between vaccination cards and verbal confirmation, by sex
 ```{r vaccination_coverage_sex_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(vaccination_status, sex) %>%
+  tabulate_survey(vaccination_status, sex, deff = TRUE) %>%
+  rename("Vaccination status" = vaccination_status) %>% 
+  # wrap all "n" variables in braces (note space before n).
+  augment_redundant(" n" = " (n)") %>% 
+  # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
+  rename_redundant("ci"   = "% (95% CI)", 
+                   "deff" = "Design effect") %>%
   kable()
 ```
 
@@ -806,7 +832,13 @@ Accepting equal validity from self-reported and card-reported vaccination status
 ```{r vaccination_coverage_age_group}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(age_group, vaccination_status_simple) %>%
+  tabulate_survey(age_group, vaccination_status_simple, deff = TRUE) %>%
+  rename("Age group (years)" = age_group) %>% 
+  # wrap all "n" variables in braces (note space before n).
+  augment_redundant(" n" = " (n)") %>% 
+  # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
+  rename_redundant(" ci"   = "% (95% CI)", 
+                   "deff" = "Design effect") %>%
   kable()
 ```
 
@@ -814,6 +846,12 @@ Distinguishing between vaccination cards and verbal confirmation, by age group
 ```{r vaccination_coverage_age_group_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(age_group, vaccination_status) %>%
+  tabulate_survey(age_group, vaccination_status, deff = TRUE) %>%
+  rename("Age group (years)" = age_group) %>% 
+  # wrap all "n" variables in braces (note space before n).
+  augment_redundant(" n" = " (n)") %>% 
+  # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
+  rename_redundant(" ci"   = "% (95% CI)", 
+                   "deff" = "Design effect") %>%
   kable()
 ```
