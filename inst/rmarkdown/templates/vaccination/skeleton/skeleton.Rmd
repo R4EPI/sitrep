@@ -320,8 +320,8 @@ study_data_cleaned <- rename(study_data_cleaned,
                              age_in_years = q10_age_yr,
                              age_in_months = q55_age_mth,
                              sex = q5_sex,
-                             vaccination_routine = q2_vaccine_9months,
-                             vaccination_sia = q32_vaccine_sia,
+                             vaccine_routine = q2_vaccine_9months,
+                             vaccine_sia = q32_vaccine_sia,
                              vaccine_mass = q17_vaccine_mass,
                              disease_diagnosis = q47_disease_diagnosis,
                              area = q4_settlement,
@@ -428,13 +428,56 @@ study_data_cleaned <- group_age_categories(study_data_cleaned,
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(consent = q58_consent == "Yes")
 
-# Set the levels of a factor 
+# create a new variable by reordering the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(cause_of_death = factor(q65_consent_no_reason,
-                                 levels = c("Refuse to explain", 
-                                            "No time", 
-                                            "Bad experience" ,
-                                            "Other reason")))
+  mutate(cause_of_death = fct_relevel(q65_consent_no_reason,
+                                      "Refuse to explain", 
+                                      "No time", 
+                                      "Bad experience",
+                                      "Other reason")
+  )
+
+
+# combine all vaccine variables in to one 
+# where if any of the variables contain one yes then it is given that 
+# simplified, keep the yes answers and change others to no 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(vaccination_status = case_when(
+    vaccine_mass == "Yes - Vaccination card" ~ "Card", 
+    vaccine_routine == "Yes - Vaccination card" ~ "Card", 
+    vaccine_sia == "Yes - Vaccination card" ~ "Card", 
+    vaccine_mass == "Yes - Verbal" ~ "Verbal", 
+    vaccine_routine == "Yes - Verbal" ~ "Verbal", 
+    vaccine_sia == "Yes - Verbal" ~ "Verbal",
+    TRUE ~ "Unvaccinated"))
+
+# correct the order of levels
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(vaccination_status = fct_relevel(vaccination_status, 
+                                    "Card", 
+                                    "Verbal", 
+                                    "Unvaccinated")
+  )
+
+
+# create a new grouping for vaccine status variable 
+# simplified, card or verbal then yes otherwise no 
+# grepl searches for rows with "Yes"
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(vaccination_status_simple = case_when(
+    vaccination_status %in% c("Card", "Verbal") ~ "Vaccinated", 
+    TRUE ~ "Unvaccinated")
+  )
+
+# correct the order of levels
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(vaccination_status_simple = fct_relevel(vaccination_status_simple, 
+                                    "Vaccinated", 
+                                    "Unvaccinated")
+  )
+
+
+
 
 ######## weighting ------------------------------------------------------------
 
@@ -481,7 +524,8 @@ writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date()
 ##          - [ ] set ids equals 1 to have no clustering 
 ##          - [ ] specify your weight variable (created previously)
 ##                (set to NULL if want no weights)
-## - [ ] Create additional study designs based on strata 
+## - [ ] Create additional study designs based on strata if you did stratified 
+##        sampling 
 ##      (make sure that your weight variable is based on appropriately stratified
 ##        population data)
 
@@ -489,49 +533,9 @@ writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date()
 # cluster sample (using srvyr package)
 survey_design <- study_data_cleaned %>% 
   as_survey_design(ids = cluster, # cluster id variable (created during collection) 
-                   weights = weight # weight variable created above 
-                   )
+                   weights = weight,  # weight variable created above 
+                   strata = NULL)  # # sampling was clustered without strata
 ```
-
-
-
-
-
-
-## Characteristics of the sampled children
-
-Children included in the survey by sex
-```{r participant description by sex}
-
-# get counts and proportions of participants by sex
-descriptive(vaccination_raw_clean, "sex") %>%
-  # change table column names 
-  # rename( new variable name = old variable name)
-  rename("Sex" = sex, "Number of participants (n)" = n,"Proportion (%)" =  prop) %>% 
-  kable(digits = 2)
-```
-
-
-Children included in the survey by age group
-```{r participant description by age group}
-
-# get counts and proportions of participants by age group
-descriptive(vaccination_raw_clean, "age_group") %>%
-  # change table column names 
-  # rename( new variable name = old variable name)
-  rename("Age group" = age_group, "Number of participants (n)" = n,"Proportion (%)" =  prop) %>% 
-  kable(digits = 2)
-```
-
-Age pyramid
-
-```{r age_pyramid, warning=FALSE}
-# plot age pyramid 
-plot_age_pyramid(vaccination_raw_clean, age_group = "age_group", split_by = "sex") + 
-  labs(x = "Number of included children", y = "Age group (months)") +                    # change axis labels
-  theme(legend.position = "bottom", legend.title = element_blank())   # remove title and move legend
-```
-
 
 
 
@@ -602,6 +606,7 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
 ```{r median_age_sex_ratios}
 # compute the median age 
 medage <- median(study_data_cleaned$age_in_years)
+
 # paste the lower and uper quartile together
 iqr <- paste0(  # basically copy paste togehter the following
   # calculate the 25% and 75% of distribution, with missings removed
@@ -612,25 +617,22 @@ iqr <- paste0(  # basically copy paste togehter the following
   # between lower and upper place a dash
   collapse = "-")
 
-
 # compute overall sex ratio 
 sex_ratio <- study_data_cleaned %>% 
   count(sex) %>% 
-  summarise(ratio = round(
-    n[sex == "Male"]/n[sex == "Female"], 
-    digits = 3)
-  )
+  spread(sex, n) %>%
+  mutate(ratio = round(Male/Female, digits = 3)) %>%
+  pull(ratio)
 
 # compute sex ratios by age group 
 sex_ratio_age <- study_data_cleaned %>% 
-  group_by(age_group) %>% 
-  count(sex) %>% 
-  summarise(ratio = round(
-    n[sex == "Male"]/n[sex == "Female"], 
-    digits = 3)
-  )
+  count(age_group, sex) %>% 
+  spread(sex, n) %>%
+  mutate(ratio = round(Male/Female, digits = 3)) %>%
+  select(age_group, ratio)
 
-
+# sort table by ascending ratio then select the lowest (first)
+min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
 ```
 
 
@@ -638,9 +640,8 @@ Among the `r nrow(study_data_cleaned)` surveyed individuals, there were
 `r fmt_count(study_data_cleaned, sex == "Female")` females and 
 `r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
 female ratio was `r sex_ratio` in the surveyed population. The lowest male to
-female ratio was `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(ratio)`
-in the `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(age_group)`year age
-group.
+female ratio was `r min_sex_ratio_age$ratio`
+in the `r min_sex_ratio_age$age_group` year age group.
 The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under five years of age made up 
 `r fmt_count(study_data_cleaned, age_in_years < 5)`of the surveyed individuals.
@@ -676,7 +677,9 @@ hhmed <- hhsize %>%
 
 # get the min and max number of children per household
 # paste these together seperated by a dash 
-hhrange <- paste0(range(hhsize$n), collapse = "-")
+hhrange <- paste0(
+  range(hhsize$n), 
+  collapse = "-")
   
 ```
 
@@ -767,25 +770,50 @@ plot_age_pyramid(survey_design,
 
 ## Vaccination coverage
 Accepting equal validity from self-reported and card-reported vaccination status
-```{r vaccination coverage overall}
+```{r vaccination_coverage_overall}
+# return weighted counts and weighted proportions 
+survey_design %>% 
+  tabulate_survey(vaccination_status_simple) %>%
+  kable()
+```
 
-survey_ciprob(survey_design, "vaccination_status_simple") %>%
+Distinguishing between vaccination cards and verbal confirmation 
+```{r vaccination_coverage_overall_detail}
+# return weighted counts and weighted proportions 
+survey_design %>% 
+  tabulate_survey(vaccination_status) %>%
   kable()
 ```
 
 
-```{r vaccination coverage by sex}
-
-survey_ciprob(survey_design, "vaccine_status_simple", "sex") %>%
+Accepting equal validity from self-reported and card-reported vaccination status, by sex
+```{r vaccination_coverage_sex}
+# return weighted counts and weighted proportions 
+survey_design %>% 
+  tabulate_survey(vaccination_status_simple, sex) %>%
   kable()
 ```
 
-
-```{r vaccination coverage by age group}
-
-survey_ciprob(survey_design, "vaccine_status_simple", "age_group") %>%
+Distinguishing between vaccination cards and verbal confirmation, by sex 
+```{r vaccination_coverage_sex_detail}
+# return weighted counts and weighted proportions 
+survey_design %>% 
+  tabulate_survey(vaccination_status, sex) %>%
   kable()
 ```
 
-TO DO
-- Add similar breakdown but comparing self reporting vs card reporting
+Accepting equal validity from self-reported and card-reported vaccination status, by age group
+```{r vaccination_coverage_age_group}
+# return weighted counts and weighted proportions 
+survey_design %>% 
+  tabulate_survey(age_group, vaccination_status_simple) %>%
+  kable()
+```
+
+Distinguishing between vaccination cards and verbal confirmation, by age group  
+```{r vaccination_coverage_age_group_detail}
+# return weighted counts and weighted proportions 
+survey_design %>% 
+  tabulate_survey(age_group, vaccination_status) %>%
+  kable()
+```
