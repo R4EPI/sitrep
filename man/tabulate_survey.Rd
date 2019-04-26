@@ -6,11 +6,11 @@
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
 tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", deff = TRUE)
+  digits = 1, method = "logit", deff = FALSE)
 
 tabulate_binary_survey(x, ..., strata = NULL, keep = NULL,
   invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1,
-  method = "logit")
+  method = "logit", deff = FALSE)
 }
 \arguments{
 \item{x}{a survey design object}
@@ -62,10 +62,10 @@ s
 # making things pretty
 s \%>\%
   # wrap all "n" variables in braces (note space before n).
-  augment_redundant(" n" = " (n)") \%>\% 
+  augment_redundant(" n" = " (n)") \%>\%
   # relabel all columns containing "prop" to "\% (95\% CI)"
   rename_redundant("ci"   = "\% (95\% CI)",
-                   "deff" = "Design Effect") 
+                   "deff" = "Design Effect")
 
 # long data
 apistrat \%>\%
