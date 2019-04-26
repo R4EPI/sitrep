@@ -443,20 +443,20 @@ study_data_cleaned <- study_data_cleaned %>%
 # simplified, keep the yes answers and change others to no 
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(vaccination_status = case_when(
-    vaccine_mass == "Yes - Vaccination card" ~ "Card", 
+    vaccine_mass    == "Yes - Vaccination card" ~ "Card", 
     vaccine_routine == "Yes - Vaccination card" ~ "Card", 
-    vaccine_sia == "Yes - Vaccination card" ~ "Card", 
-    vaccine_mass == "Yes - Verbal" ~ "Verbal", 
+    vaccine_sia     == "Yes - Vaccination card" ~ "Card", 
+    vaccine_mass    == "Yes - Verbal" ~ "Verbal", 
     vaccine_routine == "Yes - Verbal" ~ "Verbal", 
-    vaccine_sia == "Yes - Verbal" ~ "Verbal",
+    vaccine_sia     == "Yes - Verbal" ~ "Verbal",
     TRUE ~ "Unvaccinated"))
 
 # correct the order of levels
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(vaccination_status = fct_relevel(vaccination_status, 
-                                    "Card", 
-                                    "Verbal", 
-                                    "Unvaccinated")
+                                          "Card", 
+                                          "Verbal", 
+                                          "Unvaccinated")
   )
 
 
@@ -472,8 +472,8 @@ study_data_cleaned <- study_data_cleaned %>%
 # correct the order of levels
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(vaccination_status_simple = fct_relevel(vaccination_status_simple, 
-                                    "Vaccinated", 
-                                    "Unvaccinated")
+                                                 "Vaccinated", 
+                                                 "Unvaccinated")
   )
 
 
@@ -586,7 +586,7 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   select(age_group, n, prop, n_pop, prop_pop, p.value) %>%
                       
   # Only show p-values over 0.001 (those under report as <0.001)
-  mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
+  mutate(p.value = if_else(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
   # rename the columns appropriatley
   rename(
@@ -809,7 +809,7 @@ survey_design %>% # use the survey object (weighted)
   # wrap all "n" variables in braces (note space before n).
   augment_redundant(" n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant("ci"   = "% (95% CI)", 
+  rename_redundant(" ci"   = "% (95% CI)", 
                    "deff" = "Design effect") %>% 
   kable()
 ```
@@ -823,7 +823,7 @@ survey_design %>%
   # wrap all "n" variables in braces (note space before n).
   augment_redundant(" n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant("ci"   = "% (95% CI)", 
+  rename_redundant(" ci"   = "% (95% CI)", 
                    "deff" = "Design effect") %>%
   kable()
 ```
