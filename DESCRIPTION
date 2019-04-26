@@ -62,6 +62,7 @@ Collate:
     'msf_dict_survey.R'
     'nutrition.R'
     'population_weights.R'
+    'relabel_proportions.R'
     'sample-size.R'
     'survey.R'
     'tabulate_survey.R'
