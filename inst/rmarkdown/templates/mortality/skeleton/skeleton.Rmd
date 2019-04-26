@@ -729,21 +729,18 @@ iqr <- paste0(  # basically copy paste togehter the following
 # compute overall sex ratio 
 sex_ratio <- study_data_cleaned %>% 
   count(sex) %>% 
-  summarise(ratio = round(
-    n[sex == "Male"]/n[sex == "Female"], 
-    digits = 3)
-  )
+  spread(sex, n) %>%
+  mutate(ratio = round(Male/Female, digits = 3)) %>%
+  pull(ratio)
 
 # compute sex ratios by age group 
 sex_ratio_age <- study_data_cleaned %>% 
-  group_by(age_group) %>% 
-  count(sex) %>% 
-  summarise(ratio = round(
-    n[sex == "Male"]/n[sex == "Female"], 
-    digits = 3)
-  )
+  count(age_group, sex) %>% 
+  spread(sex, n) %>%
+  mutate(ratio = round(Male/Female, digits = 3)) %>%
+  select(age_group, ratio)
 
-
+min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
 ```
 
 
@@ -751,9 +748,8 @@ Among the `r nrow(study_data_cleaned)` surveyed individuals, there were
 `r fmt_count(study_data_cleaned, sex == "Female")` females and 
 `r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
 female ratio was `r sex_ratio` in the surveyed population. The lowest male to
-female ratio was `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(ratio)`
-in the `r sex_ratio_age %>% slice(which.min(ratio)) %>% pull(age_group)`year age
-group.
+female ratio was `r min_sex_ratio_age$ratio` in the 
+`r min_sex_ratio_age$age_group` year age group.
 The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under five years of age made up 
 `r fmt_count(study_data_cleaned, age_in_years < 5)`of the surveyed individuals.
@@ -984,15 +980,10 @@ survey_design %>%                  # use the survey object (weighted)
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
-  tabulate_binary_survey(SYMPTOMS, strata = age_group, keep = TRUE) %>%
+  tabulate_binary_survey(SYMPTOMS, strata = age_group, keep = TRUE, pretty = TRUE) %>%
   mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable,
-         "Male reported" = male_n,
-         "% (95% CI)" = male_prop, 
-         "Female reported" = female_n,
-         "% (95% CI)" = female_prop,
-        ) %>%
+  rename("Symptom" = variable) %>%
   kable()
 ```
 
@@ -1012,10 +1003,8 @@ survey_design_sex %>%                  # use the survey object (weighted)
   mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   select(-value) %>%                     # drop column which tells you which row values were kept 
   rename("Symptom" = variable,
-         "Male reported" = male_n,
-         "% (95% CI)" = male_prop, 
-         "Female reported" = female_n,
-         "% (95% CI)" = female_prop,
+         "Female reported" = "Female n",
+         "Male reported" = "Male n",
         ) %>%
   kable()
 ```
