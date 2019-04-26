@@ -6,7 +6,7 @@
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
 tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", prop_label = "\% (95\% CI)")
+  digits = 1, method = "logit", deff = TRUE)
 
 tabulate_binary_survey(x, ..., strata = NULL, keep = NULL,
   invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1,
@@ -33,8 +33,8 @@ for proportion and CI}
 \item{method}{a method from \code{\link[survey:svyciprop]{survey::svyciprop()}} to calculate the confidence
 interval. Defaults to "logit"}
 
-\item{prop_label}{if \code{pretty = TRUE}, this will be used to label the
-confidence interval columns.}
+\item{deff}{a logical indicating if the design effect should be reported.
+Defaults to "TRUE"}
 
 \item{...}{binary variables for tabulation}
 
@@ -43,7 +43,7 @@ confidence interval columns.}
 \item{invert}{if \code{TRUE}, the kept values are rejected. Defaults to \code{FALSE}}
 }
 \value{
-a tibble
+a long or wide tibble with tabulations n, ci, and deff
 }
 \description{
 Tabulate survey design objects by a categorical and another stratifying variable
@@ -54,9 +54,18 @@ library(survey)
 data(api)
 
 # stratified sample
-apistrat \%>\%
+s <- apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
   tabulate_survey(stype, awards)
+s
+
+# making things pretty
+s \%>\%
+  # wrap all "n" variables in braces (note space before n).
+  augment_redundant(" n" = " (n)") \%>\% 
+  # relabel all columns containing "prop" to "\% (95\% CI)"
+  rename_redundant("ci"   = "\% (95\% CI)",
+                   "deff" = "Design Effect") 
 
 # long data
 apistrat \%>\%
@@ -70,4 +79,7 @@ apistrat \%>\%
 apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
+}
+\seealso{
+\code{\link[=rename_redundant]{rename_redundant()}}, \code{\link[=augment_redundant]{augment_redundant()}}
 }

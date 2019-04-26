@@ -13,10 +13,11 @@
 #'   for proportion and CI
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
-#' @param prop_label if `pretty = TRUE`, this will be used to label the 
-#'   confidence interval columns.
-#' @return a tibble
+#' @param deff a logical indicating if the design effect should be reported.
+#'   Defaults to "TRUE"
+#' @return a long or wide tibble with tabulations n, ci, and deff
 #' @export
+#' @seealso [rename_redundant()], [augment_redundant()]
 #' @importFrom srvyr survey_total survey_mean
 #' @examples
 #' library(srvyr)
@@ -24,10 +25,19 @@
 #' data(api)
 #'
 #' # stratified sample
-#' apistrat %>%
+#' s <- apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_survey(stype, awards)
-#'
+#' s
+#' 
+#' # making things pretty
+#' s %>%
+#'   # wrap all "n" variables in braces (note space before n).
+#'   augment_redundant(" n" = " (n)") %>% 
+#'   # relabel all columns containing "prop" to "% (95% CI)"
+#'   rename_redundant("ci"   = "% (95% CI)",
+#'                    "deff" = "Design Effect") 
+#' 
 #' # long data
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
@@ -40,7 +50,7 @@
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
-tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", prop_label = "% (95% CI)") {
+tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = TRUE) {
   stopifnot(inherits(x, "tbl_svy"))
 
   cod <- rlang::enquo(var)
@@ -64,13 +74,20 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
   }
 
   # Calculating the survey total will also give us zero counts 
-  y <- srvyr::summarise(x, n = survey_total(vartype = "se", na.rm = TRUE))
+  y <- srvyr::summarise(x, 
+                        n = survey_total(vartype = "se", na.rm = TRUE),
+                        mean = survey_mean(na.rm = TRUE, deff = TRUE))
 
   # We can then set up the proportion calculations. Because of issues with using
   # srvyr::survey_mean() on several variables, we have to roll our own.
   y$proportion       <- NA_real_
   y$proportion_lower <- NA_real_
   y$proportion_upper <- NA_real_
+  y$mean <- NULL
+  y$mean_se <- NULL
+  names(y)[names(y) == "mean_deff"] <- "deff"
+  y$deff <- round(y$deff, digits)
+  y$deff[!is.finite(y$deff)] <- NA
 
 
   # Here we pull out the relevant values for the proportions
@@ -115,10 +132,6 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
     y <- widen_tabulation(y, !! cod, !! st) 
   }
 
-  if (pretty && !is.null(prop_label)) {
-    y <- rename_redundant(y, contains = "prop", label = prop_label)
-  }
-
   return(y)
 }
 
@@ -133,10 +146,10 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
 #' @noRd
 prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
 
-  y <- unite_ci(y, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
+  y <- unite_ci(y, "ci", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
   
   # convert any NA% proportions to just NA
-  y$prop <- dplyr::if_else(grepl("NA%", y$prop), NA_character_, y$prop)
+  y$ci <- dplyr::if_else(grepl("NA%", y$ci), NA_character_, y$ci)
 
   # if (null_strata) {
     return(y)
@@ -149,9 +162,12 @@ widen_tabulation <- function(y, cod, st) {
   cod <- rlang::enquo(cod)
   st  <- rlang::enquo(st)
   
-  # Only select the necessary columns
-  y <- dplyr::select(y, !! cod, !! st, "n", dplyr::starts_with("prop"))
-  # gather "n" and "prop" into a single column 
+  # Only select the necessary columns. n, deff, and prop are all numeric columns
+  # that need to be gathered
+  y <- dplyr::select(y, !! cod, !! st, "n", 
+                     # deff, ci, and prop are all columns that _might_ exist
+                     dplyr::matches("prop"), dplyr::starts_with("ci"), dplyr::starts_with("deff"))
+  # gather "n", "deff", and "prop" into a single column 
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
   # make sure that everything is arranged in the correct order
   y <- dplyr::arrange(y, !! cod, !! st)
