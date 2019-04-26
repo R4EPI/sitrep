@@ -13,6 +13,8 @@
 #'   for proportion and CI
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
+#' @param prop_label if `pretty = TRUE`, this will be used to label the 
+#'   confidence interval columns.
 #' @return a tibble
 #' @export
 #' @importFrom srvyr survey_total survey_mean
@@ -38,7 +40,7 @@
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
-tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit") {
+tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", prop_label = "% (95% CI)") {
   stopifnot(inherits(x, "tbl_svy"))
 
   cod <- rlang::enquo(var)
@@ -113,6 +115,9 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
     y <- widen_tabulation(y, !! cod, !! st) 
   }
 
+  if (pretty && !is.null(prop_label)) {
+    y <- rename_redundant(y, contains = "prop", label = prop_label)
+  }
 
   return(y)
 }
@@ -144,12 +149,18 @@ widen_tabulation <- function(y, cod, st) {
   cod <- rlang::enquo(cod)
   st  <- rlang::enquo(st)
   
+  # Only select the necessary columns
   y <- dplyr::select(y, !! cod, !! st, "n", dplyr::starts_with("prop"))
+  # gather "n" and "prop" into a single column 
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
+  # make sure that everything is arranged in the correct order
+  y <- dplyr::arrange(y, !! cod, !! st)
+  # combine the stratifier and the n/prop signifier
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
+  # Make sure the factors are in the correct order
+  y$tmp <- forcats::fct_inorder(y$tmp)
+  # Spread out the combined stratifier and signifier to columns
   y <- tidyr::spread(y, "tmp", "value")
-  dplyr::rename_at(y, dplyr::vars(dplyr::ends_with("prop")),
-                   ~function(i) rep("% (95% CI)", length(i)))
 
 }
 

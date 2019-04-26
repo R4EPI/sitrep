@@ -6,7 +6,7 @@
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
 tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit")
+  digits = 1, method = "logit", prop_label = "\% (95\% CI)")
 
 tabulate_binary_survey(x, ..., strata = NULL, keep = NULL,
   invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1,
@@ -32,6 +32,9 @@ for proportion and CI}
 
 \item{method}{a method from \code{\link[survey:svyciprop]{survey::svyciprop()}} to calculate the confidence
 interval. Defaults to "logit"}
+
+\item{prop_label}{if \code{pretty = TRUE}, this will be used to label the
+confidence interval columns.}
 
 \item{...}{binary variables for tabulation}
 

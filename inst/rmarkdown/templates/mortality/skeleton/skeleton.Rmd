@@ -951,7 +951,9 @@ Reported causes of death and cause-specific mortality rates, by age group, weigh
   # filter(died)
 survey_design %>% 
   # filter(died) %>% 
-  tabulate_survey(cause_of_death, age_group) %>%
+  tabulate_survey(cause_of_death, age_group, prop_label = NULL) %>%
+  rename("Cause of Death" = "cause_of_death") %>%
+  rename_redundant(contains = "prop", label = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 
 ```
@@ -964,7 +966,9 @@ Reported causes of death and cause-specific mortality rates, by gender, weighted
   # filter(died)
 survey_design %>% 
   # filter(died) %>% 
-  tabulate_survey(cause_of_death, sex) %>%
+  tabulate_survey(cause_of_death, sex, prop_label = NULL) %>%
+  rename("Cause of Death" = "cause_of_death") %>%
+  rename_redundant(contains = "prop", label = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 
 ```
