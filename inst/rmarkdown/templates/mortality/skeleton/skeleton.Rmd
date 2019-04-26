@@ -47,6 +47,8 @@ options(knitr.kable.NA = "-")
 
 # Installing required packages for this template
 required_packages <- c("knitr",       # create output docs
+                       "rio",         # for importing data
+                       "epitrix",     # clean/shape data
                        "dplyr",       # clean/shape data
                        "tidyr",       # clean/shape data
                        "forcats",     # clean/shape data
@@ -136,7 +138,7 @@ study_data_raw <- gen_data(dictionary = "Mortality",
 ## Where code has the shortened values and name has the full text values.
 
 # read in data dictionary (for reference purposes)
-# study_data_dict <- import("mortality_survey.xlsx",
+# study_data_dict <- rio::import("mortality_survey.xlsx",
 #                       which = "Data Dictionary")
 
 ## you can look at the dictionary by uncommenting the line below
@@ -251,6 +253,7 @@ unique(study_data_raw$q4_q6_sex)
 ## for example check deaths before births and return corresponding IDs
 # (fact_0_id only exists in real dharma datasets - not those from gen_data 
 #  function)
+# the matches function here will search variable names
 study_data_raw %>% 
   filter(q137_q35_died_date < q88_q33_born_date) %>% 
   select(matches("fact_0_id"))
@@ -296,13 +299,33 @@ study_data_raw %>%
 ## make a copy of your orginal dataset and name it study_data_cleaned
 study_data_cleaned <- study_data_raw
 
-# Rename variables  ---------------------------------
+# Clean variable names  ---------------------------------
+## define clean variable names using clean_labels from the epitrix package. This
+## function defines rules for variable naming; for example, it changes spaces
+## and dots to "_" and sets all characters to lowercase.
+
+# overwrite variable names with defined clean names
+cleaned_colnames <- epitrix::clean_labels(colnames(study_data_cleaned))
+colnames(study_data_cleaned) <- cleaned_colnames 
+
 # Some of the names outputed from Dharma are really long and painful, you can change these as below
+## in case you want to specifically change a
+## few names you can also change specific var names using the *rename*
+## function. 
 # The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 
 study_data_cleaned <- rename(study_data_cleaned, 
                               sex = q4_q6_sex, 
                               age_in_years = q155_q5_age_year)
+
+
+## OPTIONAL: if you only want to keep certain variables - 
+## you can select these by name or column number view the names of your vars
+## and their column number using: names(linelist_cleaned) this example keeps
+## the first three columns as well as age_years and sex variables
+# study_data_cleaned <- select(study_data_cleaned, c(1:3, "age_years", "sex")
+
+
 
 # Date variables ---------------------------------
 
@@ -542,7 +565,8 @@ writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date()
 ##          - [ ] set ids equals 1 to have no clustering 
 ##          - [ ] specify your weight variable (created previously)
 ##                (set to NULL if want no weights)
-## - [ ] Create additional study designs based on strata 
+## - [ ] Create additional study designs based on strata if you did stratified 
+##        sampling 
 ##      (make sure that your weight variable is based on appropriately stratified
 ##        population data)
 
@@ -550,15 +574,8 @@ writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date()
 # simple random sample (using srvyr package)
 survey_design <- study_data_cleaned %>% 
   as_survey_design(ids = 1, # 1 for no cluster ids 
-                   weights = weight # weight variable created above 
-                   )
-
-
-# simple random sample stratified by sex 
-survey_design_sex <- study_data_cleaned %>% 
-  as_survey_design(ids = 1, # 1 for no cluster ids 
                    weights = weight, # weight variable created above 
-                   strata = sex
+                   strata = NULL # sampling was simple (no strata)
                    )
 ```
 
@@ -568,7 +585,7 @@ survey_design_sex <- study_data_cleaned %>%
 ```{r tally_change, echo = FALSE}
 at_start <- tally(study_data_cleaned, startcause == "Present at start")
 at_end   <- tally(study_data_cleaned, endcause == "Present at end") 
-net_change <- round( (1 - abs(at_start - at_end) / at_start) * 100, digits = 1)[[1]]
+net_change <- round( (1 - abs(at_start - at_end) / at_start) * 100, digits = 1) %>% pull(n)
 ```
 
 
@@ -616,11 +633,11 @@ study period.
 
 # summarize data
 flow_table <- study_data_cleaned %>%
-  count(startcause, endcause, sex) %>%
-  gather_set_data(x = c("startcause", "endcause")) %>%
-  mutate(x = fct_relevel(x, c("startcause", "endcause")),
+  count(startcause, endcause, sex) %>%  # get counts 
+  gather_set_data(x = c("startcause", "endcause")) %>%  # change to appropriate format for plotting
+  mutate(x = fct_relevel(x, c("startcause", "endcause")),  # set the factor levels to have start first
          x = fct_recode(x, 
-                        "Start \n cause" = "startcause", 
+                        "Start \n cause" = "startcause",  # add a return (\n): cause plots below start
                         "End \n cause" = "endcause") 
         )
 
@@ -740,6 +757,7 @@ sex_ratio_age <- study_data_cleaned %>%
   mutate(ratio = round(Male/Female, digits = 3)) %>%
   select(age_group, ratio)
 
+# sort table by ascending ratio then select the lowest (first)
 min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
 ```
 
@@ -831,8 +849,8 @@ pyramid, then it may suggest some sampling bias (similarly to the table comparin
 sample and source population distributions by binomial test). 
 
 ```{r age_pyramid_survey, warning=FALSE}
-# Note that here you are using survey_design_sex so will produce weighted proportions
-plot_age_pyramid(survey_design_sex,
+# Note that here you are using survey_design so will produce weighted proportions
+plot_age_pyramid(survey_design,
                  age_group = "age_group",
                  split_by = "sex", 
                  proportion = TRUE) +
@@ -867,7 +885,7 @@ CMR <- survey_design %>%
 
 During the recall period the weighted number of deaths in the population was 
 `r death_props %>% filter(died == TRUE) %>% pull(n)`, which gives a weighted 
-proportions of `r death_props %>% filter(died == TRUE) %>% pull(prop)`. 
+proportions of `r death_props %>% filter(died == TRUE) %>% pull(ci)`. 
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
 
 
@@ -900,7 +918,12 @@ cause_of_death_mort <- survey_design %>%
 # Join the counts, props and mortality ratios together
 dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>% 
   # merge confidence intervals for mortality in to one column (do not change to percent)
-  unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
+  unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"),
+           m100 = FALSE, percent = FALSE) %>%
+  rename("Cause of death" = cause_of_death,
+         "Deaths (n)" = n,
+         "% (95% CI)" = ci
+        ) %>% 
   kable()
 ```
 
@@ -909,7 +932,7 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>%
 # retrieve weighted gender-specific mortality ratios
 # note that survey ratio includes the observation times in calculation
 # note the posibility of negative confidence interval when low counts
-cause_of_death_sex <- survey_design_sex %>% 
+cause_of_death_sex <- survey_design %>% 
   group_by(sex) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   # merge confidence intervals for mortality in to one column (do not change to percent)
@@ -920,28 +943,34 @@ cause_of_death_sex <- survey_design_sex %>%
 The gender specific mortality rate was `r cause_of_death_sex %>% slice(sex == "Female") %>% pull(mortality) ` deaths/10,000 persons/day amongst females and
 `r cause_of_death_sex %>% slice(sex == "Male") %>% pull(mortality) `deaths/10,000 persons/day amongst males.
 
-Reported causes of death and cause-specific mortality rates, by age, weighted
+Reported causes of death and cause-specific mortality rates, by age group, weighted
 
-```{r, weighted_death_cause_by_age}
+```{r weighted_death_cause_by_age}
 # return weighted counts and weighted proportions 
 # you could return the proportion only among those who died by uncommenting 
   # filter(died)
 survey_design %>% 
   # filter(died) %>% 
   tabulate_survey(cause_of_death, age_group) %>%
+  rename("Cause of Death" = "cause_of_death") %>%
+  augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
+  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 
 ```
 
 Reported causes of death and cause-specific mortality rates, by gender, weighted
 
-```{r, weighted_death_cause_by_gender}
+```{r weighted_death_cause_by_gender}
 # return weighted counts and weighted proportions
 # you could return the proportion only among those who died by uncommenting 
   # filter(died)
 survey_design %>% 
   # filter(died) %>% 
   tabulate_survey(cause_of_death, sex) %>%
+  rename("Cause of Death" = "cause_of_death") %>%
+  augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
+  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 
 ```
@@ -964,19 +993,15 @@ survey_design %>%                  # use the survey object (weighted)
   select(-value) %>%                     # drop column which tells you which row values were kept 
   rename("Symptom" = variable,
          "N reported" = n,
-         "% (95% CI)" = prop
+         "% (95% CI)" = ci
         ) %>%
   kable()
 ```
 
 
 
-
-```{r weighted_symptoms_reported_age, eval = FALSE}
-
-### DOESNT WORK NEED TO ADD STRATIFIED TO TABULATEBINARYSURVEY
-### issue is that when do pretty then %CI columns are same for strata and get ignored.... 
-
+Symptoms reported among those who were sick, stratified by age group 
+```{r weighted_symptoms_reported_age}
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
@@ -984,28 +1009,25 @@ survey_design %>%                  # use the survey object (weighted)
   mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   select(-value) %>%                     # drop column which tells you which row values were kept 
   rename("Symptom" = variable) %>%
+  augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
+  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 ```
 
 
 
+Symptoms reported among those who were sick, stratified by gender
 
-```{r weighted_symptoms_reported_sex, eval = FALSE}
-
-### DOESNT WORK NEED TO ADD STRATIFIED TO TABULATEBINARYSURVEY
-### issue is that when do pretty then %CI columns are same for strata and get ignored.... 
-
-
-survey_design_sex %>%                  # use the survey object (weighted)
+```{r weighted_symptoms_reported_sex}
+survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by sex!!
   tabulate_binary_survey(SYMPTOMS, strata = sex, keep = TRUE) %>%
   mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable,
-         "Female reported" = "Female n",
-         "Male reported" = "Male n",
-        ) %>%
+  rename("Symptom" = variable) %>%
+  augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
+  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 ```
 

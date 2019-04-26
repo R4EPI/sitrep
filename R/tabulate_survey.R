@@ -8,13 +8,16 @@
 #'   presented in a wide table with each stratification counts and estimates in
 #'   separate columns. If `FALSE`, then the data will be presented in a long
 #'   format where the counts and estimates are presented in single columns. This
-#'   has no effect if strata is not defined. 
+#'   has no effect if strata is not defined.
 #' @param digits if `pretty = FALSE`, this indicates the number of digits used
 #'   for proportion and CI
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
-#' @return a tibble
+#' @param deff a logical indicating if the design effect should be reported.
+#'   Defaults to "TRUE"
+#' @return a long or wide tibble with tabulations n, ci, and deff
 #' @export
+#' @seealso [rename_redundant()], [augment_redundant()]
 #' @importFrom srvyr survey_total survey_mean
 #' @examples
 #' library(srvyr)
@@ -22,9 +25,18 @@
 #' data(api)
 #'
 #' # stratified sample
-#' apistrat %>%
+#' s <- apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_survey(stype, awards)
+#' s
+#'
+#' # making things pretty
+#' s %>%
+#'   # wrap all "n" variables in braces (note space before n).
+#'   augment_redundant(" n" = " (n)") %>%
+#'   # relabel all columns containing "prop" to "% (95% CI)"
+#'   rename_redundant("ci"   = "% (95% CI)",
+#'                    "deff" = "Design Effect")
 #'
 #' # long data
 #' apistrat %>%
@@ -38,7 +50,7 @@
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
-tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit") {
+tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
 
   cod <- rlang::enquo(var)
@@ -51,7 +63,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
   # combination of var and strata so that we can get the right proportions from
   # the survey package in a loop below
   if (null_strata) {
-    x <- srvyr::group_by(x, !! cod) 
+    x <- srvyr::group_by(x, !! cod)
     x <- srvyr::mutate(x, dummy = !! cod)
   } else {
     # if there is a strata, create a unique, parseable dummy var by inserting
@@ -61,14 +73,23 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
     x <- srvyr::mutate(x, dummy = sprintf("%s %s %s", !! st, tim, !! cod))
   }
 
-  # Calculating the survey total will also give us zero counts 
-  y <- srvyr::summarise(x, n = survey_total(vartype = "se", na.rm = TRUE))
+  # Calculating the survey total will also give us zero counts
+  y <- srvyr::summarise(x,
+                        n = survey_total(vartype = "se", na.rm = TRUE),
+                        mean = survey_mean(na.rm = TRUE, deff = deff))
 
   # We can then set up the proportion calculations. Because of issues with using
   # srvyr::survey_mean() on several variables, we have to roll our own.
   y$proportion       <- NA_real_
   y$proportion_lower <- NA_real_
   y$proportion_upper <- NA_real_
+  y$mean <- NULL
+  y$mean_se <- NULL
+  if (deff) {
+    names(y)[names(y) == "mean_deff"] <- "deff"
+    y$deff <- round(y$deff, digits)
+    y$deff[!is.finite(y$deff)] <- NA
+  }
 
 
   # Here we pull out the relevant values for the proportions
@@ -77,10 +98,10 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
   # Then pull out the unique dummy variable names
   p <- as.character(unique(dplyr::pull(tx, !!quote(dummy))))
   p <- p[!is.na(p)]
-  
+
   # loop over the values and caclucate CI proportion as needed. If they aren't
   # present, then the proportion remains NA.
-  for (i in p) { 
+  for (i in p) {
     # Find the row that i corresponds to. It differs if there are strata or not
     if (null_strata) {
       val <- y[[1]] == i
@@ -88,7 +109,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
       val <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
     }
     if (y$n[val] > 0) {
-      # The peanutbutter and paperclips way of getting a proportion: 
+      # The peanutbutter and paperclips way of getting a proportion:
       # set a column to contain only the value you desire
       x   <- srvyr::mutate(x, this = i)
       # get the proportion of your target variable that matches the new column
@@ -110,15 +131,14 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
   }
 
   if (wide && !null_strata) {
-    y <- widen_tabulation(y, !! cod, !! st) 
+    y <- widen_tabulation(y, !! cod, !! st)
   }
-
 
   return(y)
 }
 
 
-#' Make the tabulation pretty by uniting the confindence intervals 
+#' Make the tabulation pretty by uniting the confindence intervals
 #'
 #' @param y a data frame
 #' @param digits number of digits to round to
@@ -128,14 +148,12 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
 #' @noRd
 prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
 
-  y <- unite_ci(y, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
-  
-  # convert any NA% proportions to just NA
-  y$prop <- dplyr::if_else(grepl("NA%", y$prop), NA_character_, y$prop)
+  y <- unite_ci(y, "ci", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
 
-  # if (null_strata) {
-    return(y)
-  # }
+  # convert any NA% proportions to just NA
+  y$ci <- dplyr::if_else(grepl("NA%", y$ci), NA_character_, y$ci)
+
+  return(y)
 
 }
 
@@ -143,13 +161,22 @@ widen_tabulation <- function(y, cod, st) {
 
   cod <- rlang::enquo(cod)
   st  <- rlang::enquo(st)
-  
-  y <- dplyr::select(y, !! cod, !! st, "n", dplyr::starts_with("prop"))
+
+  # Only select the necessary columns. n, deff, and prop are all numeric columns
+  # that need to be gathered
+  y <- dplyr::select(y, !! cod, !! st, "n",
+                     # deff, ci, and prop are all columns that _might_ exist
+                     dplyr::matches("prop"), dplyr::starts_with("ci"), dplyr::starts_with("deff"))
+  # gather "n", "deff", and "prop" into a single column
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
+  # make sure that everything is arranged in the correct order
+  y <- dplyr::arrange(y, !! cod, !! st)
+  # combine the stratifier and the n/prop signifier
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
+  # Make sure the factors are in the correct order
+  y$tmp <- forcats::fct_inorder(y$tmp)
+  # Spread out the combined stratifier and signifier to columns
   y <- tidyr::spread(y, "tmp", "value")
-  dplyr::rename_at(y, dplyr::vars(dplyr::ends_with("prop")),
-                   ~function(i) rep("% (95% CI)", length(i)))
 
 }
 
@@ -159,7 +186,7 @@ widen_tabulation <- function(y, cod, st) {
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
 #'
-tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit") {
+tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -177,28 +204,18 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = 
   # loop over each name in the list and tabulate the survey for that variable
   for (i in names(res)) {
     i        <- rlang::ensym(i)
-    res[[i]] <- tabulate_survey(x, 
-                                var    = !! i, 
-                                strata = !! strt, 
-                                pretty = pretty, 
-                                digits = digits, 
-                                method = method, 
-                                wide   = wide)
+    res[[i]] <- tabulate_survey(x,
+                                var    = !! i,
+                                strata = !! strt,
+                                pretty = pretty,
+                                digits = digits,
+                                method = method,
+                                wide   = wide,
+                                deff   = deff)
 
     # The ouptut columns will have the value as whatever i was, so we should
     # rename this to "value" to make it consistent
     names(res[[i]])[if (wide) 1 else 2] <- "value"
-
-    # If the user selects pretty, the %s should have the names of the categories
-    # prepended so they don't get clobbered by dplyr
-    if (pretty) {
-      percents <- grep("^\\%", names(res[[i]]))
-      preps    <- sprintf("%s %s", 
-                          gsub(" n$", "", names(res[[i]])[percents - 1]),
-                          names(res[[i]])[percents]
-                         )
-      names(res[[i]])[percents] <- preps
-    }
 
   }
   # Combine the results into one table

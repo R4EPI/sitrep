@@ -5,7 +5,7 @@
 \title{Unite estimates and confidence intervals}
 \usage{
 unite_ci(x, col = NULL, ..., remove = TRUE, digits = 2,
-  m100 = TRUE, percent = FALSE)
+  m100 = TRUE, percent = FALSE, ci = FALSE)
 }
 \arguments{
 \item{x}{a data frame with at least three columns defining an estimate, lower
@@ -23,6 +23,8 @@ Upper.}
 \item{m100}{\code{TRUE} if the result should be multiplied by 100}
 
 \item{percent}{\code{TRUE} if the result should have a percent symbol added.}
+
+\item{ci}{\code{TRUE} if the result should include "CI" within the braces (defaults to FALSE)}
 }
 \description{
 create a character column by combining estimate, lower and upper columns.
