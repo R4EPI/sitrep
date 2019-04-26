@@ -4,7 +4,12 @@
 #' @param var the bare name of a categorical variable
 #' @param strata a variable to stratify the results by
 #' @param pretty if `TRUE`, default, the proportion and CI are merged
-#' @param digits if `prittey = FALSE`, this indicates the number of digits used
+#' @param wide if `TRUE` (default) and strata is defined, then the results are
+#'   presented in a wide table with each stratification counts and estimates in
+#'   separate columns. If `FALSE`, then the data will be presented in a long
+#'   format where the counts and estimates are presented in single columns. This
+#'   has no effect if strata is not defined. 
+#' @param digits if `pretty = FALSE`, this indicates the number of digits used
 #'   for proportion and CI
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
@@ -21,6 +26,11 @@
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_survey(stype, awards)
 #'
+#' # long data
+#' apistrat %>%
+#'   as_survey_design(strata = stype, weights = pw) %>%
+#'   tabulate_survey(stype, awards, wide = FALSE)
+#'
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"))
@@ -28,7 +38,7 @@
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
 #'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
-tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1, method = "logit") {
+tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit") {
   stopifnot(inherits(x, "tbl_svy"))
 
   cod <- rlang::enquo(var)
@@ -95,26 +105,52 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1, me
   y$n <- round(y$n)
   y   <- y[!colnames(y) %in% "n_se"]
 
-  if (!pretty) {
-    return(y)
+  if (pretty) {
+    y <- prettify_tabulation(y, digits, null_strata, !! cod, !! st)
   }
+
+  if (wide && !null_strata) {
+    y <- widen_tabulation(y, !! cod, !! st) 
+  }
+
+
+  return(y)
+}
+
+
+#' Make the tabulation pretty by uniting the confindence intervals 
+#'
+#' @param y a data frame
+#' @param digits number of digits to round to
+#' @param null_strata a logical value specifyingif there is a null strata variable
+#' @param cod variable of interest
+#' @param st stratifying variable
+#' @noRd
+prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
 
   y <- unite_ci(y, "prop", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
   
   # convert any NA% proportions to just NA
   y$prop <- dplyr::if_else(grepl("NA%", y$prop), NA_character_, y$prop)
 
-  if (null_strata) {
+  # if (null_strata) {
     return(y)
-  }
+  # }
 
-  y <- dplyr::select(y, !! cod, !! st, "n", "prop")
+}
 
+widen_tabulation <- function(y, cod, st) {
+
+  cod <- rlang::enquo(cod)
+  st  <- rlang::enquo(st)
+  
+  y <- dplyr::select(y, !! cod, !! st, "n", dplyr::starts_with("prop"))
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
   y <- tidyr::spread(y, "tmp", "value")
   dplyr::rename_at(y, dplyr::vars(dplyr::ends_with("prop")),
                    ~function(i) rep("% (95% CI)", length(i)))
+
 }
 
 #' @export
@@ -123,7 +159,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, digits = 1, me
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
 #'
-tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty = TRUE, digits = 1, method = "logit") {
+tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit") {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -131,11 +167,43 @@ tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty =
   }
 
   vars <- tidyselect::vars_select(colnames(x), ...)
-  res <- lapply(vars, function(i) tabulate_survey(x, !! rlang::ensym(i), pretty = pretty, digits = digits, method = method))
-  for (i in seq_along(res)) {
-    names(res[[i]])[1] <- "value"
+  strt <- rlang::enquo(strata)
+  null_strata <- is.null(rlang::get_expr(strt))
+
+  # Create list for results to go into that will eventually be bound together
+  res <- vector(mode = "list", length = length(vars))
+  names(res) <- vars
+
+  # loop over each name in the list and tabulate the survey for that variable
+  for (i in names(res)) {
+    i        <- rlang::ensym(i)
+    res[[i]] <- tabulate_survey(x, 
+                                var    = !! i, 
+                                strata = !! strt, 
+                                pretty = pretty, 
+                                digits = digits, 
+                                method = method, 
+                                wide   = wide)
+
+    # The ouptut columns will have the value as whatever i was, so we should
+    # rename this to "value" to make it consistent
+    names(res[[i]])[if (wide) 1 else 2] <- "value"
+
+    # If the user selects pretty, the %s should have the names of the categories
+    # prepended so they don't get clobbered by dplyr
+    if (pretty) {
+      percents <- grep("^\\%", names(res[[i]]))
+      preps    <- sprintf("%s %s", 
+                          gsub(" n$", "", names(res[[i]])[percents - 1]),
+                          names(res[[i]])[percents]
+                         )
+      names(res[[i]])[percents] <- preps
+    }
+
   }
+  # Combine the results into one table
   suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))
 
+  # return the results with only the selected values
   res[if (invert) !res$value %in% keep else res$value %in% keep, ]
 }
