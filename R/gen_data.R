@@ -90,7 +90,6 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
     # (is just numbers 1:50 and dont want it in the data dictionary)
     a <- stats::aggregate(option_code ~ optionset_uid,
                           dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    browser()
     obs     <- lengths(a$option_code) # count length of var opts for each
     highest <- seq_len(max(obs)) # create sequence for pulling out of list
     out     <- t(sapply(a$option_code, "[", i = highest)) # pull out of list and flip to make dataframe

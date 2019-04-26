@@ -74,7 +74,7 @@ merge_pci_df <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2) {
 #' @export
 #' @rdname fmt_ci
 fmt_ci_df_sep <- function(x, e = 3, l = e + 1, u = e + 2, digits = 2, percent = TRUE) {
-  x <- merge_ci_df(x, e, l, u, digits)
+  x   <- merge_ci_df(x, e, l, u, digits)
   fun <- if (percent) match.fun(scales::percent) else match.fun(scales::number)
   ee  <- fun(x[[e]], scale = 1, accuracy = 1/(10^digits), big.mark = ",")
   x[e] <- ee

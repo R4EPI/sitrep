@@ -12,6 +12,7 @@
 #' @param digits the number of digits to retain for the confidence interval.
 #' @param m100 `TRUE` if the result should be multiplied by 100
 #' @param percent `TRUE` if the result should have a percent symbol added.
+#' @param ci `TRUE` if the result should include "CI" within the braces (defaults to FALSE)
 #'
 #' @export
 #' @examples
@@ -19,7 +20,7 @@
 #' print(cfr <- case_fatality_rate((1:4)*10, 50))
 #' unite_ci(cfr, "CFR (CI)", cfr, lower, upper, m100 = FALSE, percent = TRUE)
 #'
-unite_ci <- function(x, col = NULL, ..., remove = TRUE, digits = 2, m100 = TRUE, percent = FALSE) {
+unite_ci <- function(x, col = NULL, ..., remove = TRUE, digits = 2, m100 = TRUE, percent = FALSE, ci = FALSE) {
 
   from_vars <- tidyselect::vars_select(colnames(x), ...)
   if (length(from_vars) != 3) {
@@ -44,8 +45,10 @@ unite_ci <- function(x, col = NULL, ..., remove = TRUE, digits = 2, m100 = TRUE,
   } else {
     new_col <- fmt_ci_df(x, e = from_vars[1], l = from_vars[2], u = from_vars[3], digits = digits, percent = percent)
   }
-  after <- if (remove) first_pos - 1L else last_pos
-  out <- tibble::add_column(out, !! col := new_col, .after = after)
+  # remove the CI label if needed
+  new_col <- if (ci) new_col else gsub("\\(CI ", "(", new_col)
+  after   <- if (remove) first_pos - 1L else last_pos
+  out     <- tibble::add_column(out, !! col := new_col, .after = after)
 
   out
 
