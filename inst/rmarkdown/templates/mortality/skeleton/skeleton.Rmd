@@ -922,7 +922,7 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>%
            m100 = FALSE, percent = FALSE) %>%
   rename("Cause of death" = cause_of_death,
          "Deaths (n)" = n,
-         "% (95% CI)" = prop
+         "% (95% CI)" = ci,
         ) %>% 
   kable()
 ```
