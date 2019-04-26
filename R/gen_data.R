@@ -521,16 +521,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
                                                                 nrow(dis_output[dis_output$q10_age_yr < 1,]),
                                                                 replace = TRUE)
 
-
-    # Did the child receive vaccination during the campaign (selected values)
-    dis_output$q17_vaccine_mass <- sample(c("No", "Yes - Verbal", "Yes - Vaccination card",
-                                            "Don't know", "No answer"), numcases, replace = TRUE)
-
-
-
   }
-
-
 
 
   # return dataset as a tibble
