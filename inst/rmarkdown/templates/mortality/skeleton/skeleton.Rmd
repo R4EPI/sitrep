@@ -885,7 +885,7 @@ CMR <- survey_design %>%
 
 During the recall period the weighted number of deaths in the population was 
 `r death_props %>% filter(died == TRUE) %>% pull(n)`, which gives a weighted 
-proportions of `r death_props %>% filter(died == TRUE) %>% pull(prop)`. 
+proportions of `r death_props %>% filter(died == TRUE) %>% pull(ci)`. 
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
 
 
@@ -922,7 +922,7 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>%
            m100 = FALSE, percent = FALSE) %>%
   rename("Cause of death" = cause_of_death,
          "Deaths (n)" = n,
-         "% (95% CI)" = ci,
+         "% (95% CI)" = ci
         ) %>% 
   kable()
 ```
@@ -954,8 +954,7 @@ survey_design %>%
   tabulate_survey(cause_of_death, age_group) %>%
   rename("Cause of Death" = "cause_of_death") %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
-  rename_redundant("ci"   = "% (95% CI)",
-                   "deff" = "Design Effect") %>% # relabel all columns containing "prop" to "% (95% CI)"
+  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 
 ```
@@ -971,8 +970,7 @@ survey_design %>%
   tabulate_survey(cause_of_death, sex) %>%
   rename("Cause of Death" = "cause_of_death") %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
-  rename_redundant("ci"   = "% (95% CI)",
-                   "deff" = "Design Effect") %>% # relabel all columns containing "prop" to "% (95% CI)"
+  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 
 ```
@@ -995,8 +993,7 @@ survey_design %>%                  # use the survey object (weighted)
   select(-value) %>%                     # drop column which tells you which row values were kept 
   rename("Symptom" = variable,
          "N reported" = n,
-         "% (95% CI)" = ci,
-         "Design Effect" = deff,
+         "% (95% CI)" = ci
         ) %>%
   kable()
 ```
@@ -1013,8 +1010,7 @@ survey_design %>%                  # use the survey object (weighted)
   select(-value) %>%                     # drop column which tells you which row values were kept 
   rename("Symptom" = variable) %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
-  rename_redundant("ci"   = "% (95% CI)",
-                   "deff" = "Design Effect") %>% # relabel all columns containing "prop" to "% (95% CI)"
+  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 ```
 
@@ -1031,8 +1027,7 @@ survey_design %>%                  # use the survey object (weighted)
   select(-value) %>%                     # drop column which tells you which row values were kept 
   rename("Symptom" = variable) %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
-  rename_redundant("ci"   = "% (95% CI)",
-                   "deff" = "Design Effect") %>% # relabel all columns containing "prop" to "% (95% CI)"
+  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
 ```
 
