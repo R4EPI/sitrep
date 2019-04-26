@@ -15,6 +15,10 @@
 #'   interval. Defaults to "logit"
 #' @param deff a logical indicating if the design effect should be reported.
 #'   Defaults to "TRUE"
+#' @param coltotals if `TRUE` a new row with totals for each "n" column is
+#'   created.
+#' @param rowtotals if `TRUE` and `strata` is defined, then an extra "Total"
+#'   column will be added tabulating all of the rows across strata.
 #' @return a long or wide tibble with tabulations n, ci, and deff
 #' @export
 #' @seealso [rename_redundant()], [augment_redundant()]
@@ -29,7 +33,7 @@
 #' # stratified sample
 #' s <- apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_survey(stype, awards, coltotals = TRUE)
+#'   tabulate_survey(stype, awards, coltotals = TRUE, rowtotals = TRUE, deff = TRUE)
 #' s
 #'
 #' # making things pretty
@@ -128,16 +132,20 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
   y$n <- round(y$n)
   y   <- y[!colnames(y) %in% "n_se"]
 
-  if (coltotals && !null_strata) {
-    # group by stratifier
-    y <- dplyr::group_by(y, !! st)
-    # tally up the Ns
-    tot <- dplyr::tally(y, !! rlang::quo(n))
-    # bind to the long data frame
-    y <- dplyr::ungroup(y)
+  if (coltotals) {
+    if (null_strata) {
+      tot <- data.frame(n = sum(y$n, na.rm = TRUE))
+    } else {
+      # group by stratifier
+      y <- dplyr::group_by(y, !! st)
+      # tally up the Ns
+      tot <- dplyr::tally(y, !! rlang::sym("n"))
+      # bind to the long data frame
+      y <- dplyr::ungroup(y)
+    }
     suppressMessages(y <- dplyr::bind_rows(y, tot))
     # replace any NAs in the cause of death with "Total"
-    # y <- dplyr::mutate_at(rlang::get_expr(st), ~forcats::fct_explicit_na(!! cod, "Total"))  
+    y <- dplyr::mutate(y, !! cod := forcats::fct_explicit_na(!! cod, "Total"))  
     
   }
 
@@ -145,12 +153,12 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
     # group by cause of death
     y <- dplyr::group_by(y, !! cod)
     # tally up the Ns
-    tot <- dplyr::tally(y, !! rlang::quo(n))
+    tot <- dplyr::tally(y, !! rlang::sym("n"))
     # bind to the long data frame
     y <- dplyr::ungroup(y)
     suppressMessages(y <- dplyr::bind_rows(y, tot))
     # replace any NAs in the stratifier with "Total"
-    y <- dplyr::mutate(!! st := forcats::fct_explicit_na(!! st, "Total"))  
+    y <- dplyr::mutate(y, !! st := forcats::fct_explicit_na(!! st, "Total"))
   }
 
   if (pretty) {
@@ -160,6 +168,8 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
   if (wide && !null_strata) {
     y <- widen_tabulation(y, !! cod, !! st)
   }
+  y$"Total deff" <- NULL
+  y$"Total ci"   <- NULL
 
   return(y)
 }

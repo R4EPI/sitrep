@@ -7,7 +7,7 @@
 #' - augment_redundant will take a regular expression and rename columns 
 #'     via [gsub()]. 
 #' @param x a data frame
-#' @param a series of keys and values to replace columns that match specific
+#' @param ... a series of keys and values to replace columns that match specific
 #'   patterns.
 #' @export
 #' @author Zhian N. Kamvar

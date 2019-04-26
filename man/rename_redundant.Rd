@@ -12,7 +12,7 @@ augment_redundant(x, ...)
 \arguments{
 \item{x}{a data frame}
 
-\item{a}{series of keys and values to replace columns that match specific
+\item{...}{a series of keys and values to replace columns that match specific
 patterns.}
 }
 \description{
