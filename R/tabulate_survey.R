@@ -76,7 +76,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
   # Calculating the survey total will also give us zero counts 
   y <- srvyr::summarise(x, 
                         n = survey_total(vartype = "se", na.rm = TRUE),
-                        mean = survey_mean(na.rm = TRUE, deff = TRUE))
+                        mean = survey_mean(na.rm = TRUE, deff = deff))
 
   # We can then set up the proportion calculations. Because of issues with using
   # srvyr::survey_mean() on several variables, we have to roll our own.
@@ -85,9 +85,11 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
   y$proportion_upper <- NA_real_
   y$mean <- NULL
   y$mean_se <- NULL
-  names(y)[names(y) == "mean_deff"] <- "deff"
-  y$deff <- round(y$deff, digits)
-  y$deff[!is.finite(y$deff)] <- NA
+  if (deff) {
+    names(y)[names(y) == "mean_deff"] <- "deff"
+    y$deff <- round(y$deff, digits)
+    y$deff[!is.finite(y$deff)] <- NA
+  }
 
 
   # Here we pull out the relevant values for the proportions
@@ -151,9 +153,7 @@ prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
   # convert any NA% proportions to just NA
   y$ci <- dplyr::if_else(grepl("NA%", y$ci), NA_character_, y$ci)
 
-  # if (null_strata) {
-    return(y)
-  # }
+  return(y)
 
 }
 
@@ -186,7 +186,7 @@ widen_tabulation <- function(y, cod, st) {
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
 #'
-tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit") {
+tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = TRUE) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -210,22 +210,12 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = 
                                 pretty = pretty, 
                                 digits = digits, 
                                 method = method, 
-                                wide   = wide)
+                                wide   = wide,
+                                deff   = deff)
 
     # The ouptut columns will have the value as whatever i was, so we should
     # rename this to "value" to make it consistent
     names(res[[i]])[if (wide) 1 else 2] <- "value"
-
-    # If the user selects pretty, the %s should have the names of the categories
-    # prepended so they don't get clobbered by dplyr
-    if (pretty) {
-      percents <- grep("^\\%", names(res[[i]]))
-      preps    <- sprintf("%s %s", 
-                          gsub(" n$", "", names(res[[i]])[percents - 1]),
-                          names(res[[i]])[percents]
-                         )
-      names(res[[i]])[percents] <- preps
-    }
 
   }
   # Combine the results into one table
