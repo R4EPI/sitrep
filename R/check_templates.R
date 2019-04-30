@@ -23,7 +23,7 @@ check_sitrep_templates <- function(templates = available_sitrep_templates(),
                                    mustwork = FALSE) {
 
   stopifnot(is.character(templates), length(templates) > 0)
-  
+
   res <- vector(mode = "list", length = length(templates))
   names(res) <- templates
   for (i in templates) {
@@ -51,6 +51,10 @@ check_sitrep_templates <- function(templates = available_sitrep_templates(),
 available_sitrep_templates <- function(categorise = FALSE) {
 
   res <- dir(system.file("rmarkdown", "templates", package = "sitrep"))
+  if (categorise) {
+    res <- split(res, ifelse(grepl("outbreak", res), "outbreak", "survey"))
+  }
+  res
 
 }
 
