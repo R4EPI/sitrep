@@ -6,7 +6,8 @@
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
 tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", deff = FALSE)
+  digits = 1, method = "logit", deff = FALSE, rowtotals = FALSE,
+  coltotals = FALSE)
 
 tabulate_binary_survey(x, ..., strata = NULL, keep = NULL,
   invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1,
@@ -36,6 +37,12 @@ interval. Defaults to "logit"}
 \item{deff}{a logical indicating if the design effect should be reported.
 Defaults to "TRUE"}
 
+\item{rowtotals}{if \code{TRUE} and \code{strata} is defined, then an extra "Total"
+column will be added tabulating all of the rows across strata.}
+
+\item{coltotals}{if \code{TRUE} a new row with totals for each "n" column is
+created.}
+
 \item{...}{binary variables for tabulation}
 
 \item{keep}{a vector of binary values to keep}
@@ -48,6 +55,10 @@ a long or wide tibble with tabulations n, ci, and deff
 \description{
 Tabulate survey design objects by a categorical and another stratifying variable
 }
+\note{
+The proportions presented here represent the proportions of the total
+population, not for the stratified samples
+}
 \examples{
 library(srvyr)
 library(survey)
@@ -56,7 +67,7 @@ data(api)
 # stratified sample
 s <- apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
-  tabulate_survey(stype, awards)
+  tabulate_survey(stype, awards, coltotals = TRUE, rowtotals = TRUE, deff = TRUE)
 s
 
 # making things pretty
