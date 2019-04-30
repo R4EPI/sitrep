@@ -41,7 +41,8 @@ Imports:
     huxtable,
     tidyr
 Suggests:
-    testthat
+    testthat,
+    sessioninfo
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

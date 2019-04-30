@@ -4,16 +4,15 @@ test_that("templates can be built", {
 
   skip_if_offline() 
   skip_on_cran()
-  avail <- available_sitrep_templates()
+  avail <- available_sitrep_templates(full.names = TRUE)
   p     <- file.path(tempdir(), "template_tests", as.character(Sys.time()))
-  dir.create(p)
+  dir.create(p, recursive = TRUE)
 
   for (i in avail) {
   
-    if (i == "nutrition") skip("Nutrition survey is not ready yet")
-    expect_identical(check_sitrep_templates(i, path = p, quiet = TRUE, mustwork = FALSE),
-                     expected = p, 
-                     label = i)
+    if (basename(i) == "nutrition") skip("Nutrition survey is not ready yet")
+    tmp <- check_sitrep_templates(i, path = p, quiet = TRUE, mustwork = TRUE)
+    expect_is(tmp, "character", label = sprintf("f: %s, msg: %s", i, tmp[[1]]))
 
   }
 })

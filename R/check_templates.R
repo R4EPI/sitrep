@@ -43,18 +43,30 @@ check_sitrep_templates <- function(templates = available_sitrep_templates(),
 #' 
 #' @param categorise if `TRUE`, the results are split into a list of outbreak
 #'   and survey categories. Defaults to `FALSE`. 
+#' @param ... options to pass on to dir
 #' @return a vector of available templates in the sitrep package
 #'
 #' @export
 #'
 #' @examples
 #' available_sitrep_templates(categorise = TRUE)
-available_sitrep_templates <- function(categorise = FALSE) {
+#' available_sitrep_templates(categorise = TRUE, full.names = TRUE)
+available_sitrep_templates <- function(categorise = FALSE, ...) {
 
-  res <- dir(system.file("rmarkdown", "templates", package = "sitrep"))
+  res <- dir(system.file("rmarkdown", "templates", package = "sitrep"), ...)
+
+  if (requireNamespace("sessioninfo", quietly = TRUE)) {
+    p <- sessioninfo::session_info()$package
+    sr <- p$package == "sitrep"
+    if (p$path[sr] != p$loadedpath[sr]) {
+      res <- dir(file.path(p$loadedpath[sr], "inst", "rmarkdown", "templates"), ...)
+    }
+  } 
+
   if (categorise) {
     res <- split(res, ifelse(grepl("outbreak", res), "outbreak", "survey"))
   }
+
   res
 
 }
@@ -62,11 +74,11 @@ available_sitrep_templates <- function(categorise = FALSE) {
 # Draft and build a sitrep template (internal)
 build_sitrep_template <- function(template, path, progress = FALSE) {
 
-  path_to_template <- file.path(path, sprintf("%s.Rmd", template))
+  path_to_template <- file.path(path, sprintf("%s.Rmd", basename(template)))
   res <- tryCatch({
     rmarkdown::draft(path_to_template,
                      template = template,
-                     package = "sitrep",
+                     package = if (file.exists(template)) NULL else "sitrep",
                      edit = FALSE
                      )
     rmarkdown::render(path_to_template,

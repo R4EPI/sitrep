@@ -4,11 +4,13 @@
 \alias{available_sitrep_templates}
 \title{Display the available sitrep templates}
 \usage{
-available_sitrep_templates(categorise = FALSE)
+available_sitrep_templates(categorise = FALSE, ...)
 }
 \arguments{
 \item{categorise}{if \code{TRUE}, the results are split into a list of outbreak
 and survey categories. Defaults to \code{FALSE}.}
+
+\item{...}{options to pass on to dir}
 }
 \value{
 a vector of available templates in the sitrep package
@@ -18,4 +20,5 @@ Display the available sitrep templates
 }
 \examples{
 available_sitrep_templates(categorise = TRUE)
+available_sitrep_templates(categorise = TRUE, full.names = TRUE)
 }
