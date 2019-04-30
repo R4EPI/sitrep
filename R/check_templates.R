@@ -30,9 +30,10 @@ check_sitrep_templates <- function(templates = available_sitrep_templates(),
     if (!quiet) message(sprintf("Building %s", i))
     res[[i]] <- build_sitrep_template(i, path, progress)
   }
-  if (mustwork && any(errs <- vapply(res, inherits, logical(1), "try-error"))) {
+  if (mustwork && any(errs <- vapply(res, inherits, logical(1), "error"))) {
     errs <- paste(names(res)[errs], collapse = ", ")
-    stop(sprintf("Errors were found in the following templates: %s", errs))
+    message(sprintf("Errors were found in the following templates: %s", errs))
+    return(res[errs])
   }
   return(path)
 }
@@ -62,7 +63,7 @@ available_sitrep_templates <- function(categorise = FALSE) {
 build_sitrep_template <- function(template, path, progress = FALSE) {
 
   path_to_template <- file.path(path, sprintf("%s.Rmd", template))
-  res <- try({
+  res <- tryCatch({
     rmarkdown::draft(path_to_template,
                      template = template,
                      package = "sitrep",
@@ -73,7 +74,7 @@ build_sitrep_template <- function(template, path, progress = FALSE) {
                       encoding = "UTF-8",
                       quiet = !progress
                       )
-  })
+  }, error = function(e) e)
   res
 
 }
