@@ -441,6 +441,9 @@ study_data_cleaned <- study_data_cleaned %>%
                                             "Malnutrition", "Unknown", "Other (specify)")))
 
 ## change Dharma Multi-questions to TRUE/FALSE
+# TODO: Don't need to change these to TRUE/FALSE, we just need to make sure to
+# collect all the non-NA levels and then use that in tabulate_binary_survey.
+
 # SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
 # SYMPTOMS <- SYMPTOMS[SYMPTOMS != "q20_q10_symptom_other"] # drop the "other" symptoms free text var 
 
