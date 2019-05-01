@@ -256,7 +256,7 @@ unique(study_data_raw$q4_q6_sex)
 # the matches function here will search variable names
 study_data_raw %>% 
   filter(q137_q35_died_date < q88_q33_born_date) %>% 
-  select(dplyr::matches("fact_0_id"))
+  select("fact_0_id")
 
 
 ## another alternative is with the "summarytools package"
@@ -995,6 +995,7 @@ survey_design %>%                  # use the survey object (weighted)
          "% (95% CI)" = ci
         ) %>%
   kable()
+
 ```
 
 
