@@ -112,7 +112,10 @@ linelist_raw <- gen_data("Measles") # generates a fake dataset for use as an exa
 ## Where code has the shortened values and name has the full text values. 
 
 ## get MSF data dictionary for measles 
-linelist_dict <- msf_dict("Measles")
+linelist_dict <- msf_dict("Measles", compact = FALSE) %>%
+  select(option_code, option_name, everything())
+
+
 
 ## you can look at the standard dictionary by uncommenting the line below
 # View(linelist_dict) 
@@ -163,7 +166,11 @@ linelist_cleaned <- linelist_raw
 ## to save space. For example, Yes/No values will often be coded as 1 or 0 and
 ## sex coded as M or F. This line uses the MSF dictionary to recode these values
 ## back to a human-readable format.
-linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Measles")
+linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
+                                            wordlists = linelist_dict,
+                                            spelling_vars = "data_element_shortname",
+                                            sort_by = "option_order_in_set"
+                                           )
 ```
 
 

@@ -247,7 +247,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   #   dis_output[[i]] <- sample(categories[[i]], numcases, replace = TRUE)
   # }
 
-  dis_output <- template_data_frame_categories(dat_dict, numcases, varnames)
+  dis_output <- template_data_frame_categories(dat_dict, numcases, varnames, dictionary %in% SURVEYS)
 
   # Use data dictionary to define which vars are multiple choice
   # ZNK 2019-05-01 ----

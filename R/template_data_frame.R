@@ -1,4 +1,4 @@
-template_data_frame_categories <- function(dat_dict, numcases, varnames) {
+template_data_frame_categories <- function(dat_dict, numcases, varnames, survey = FALSE) {
 
   dat_output <- dat_dict[, c(varnames, "options"), drop = FALSE]
 
@@ -13,7 +13,11 @@ template_data_frame_categories <- function(dat_dict, numcases, varnames) {
   # take samples for vars with defined options (non empties)
   for (i in unique(categories[[varnames]])) {
     vals <- categories[categories[[varnames]] == i, ]
-    vals <- factor(vals$option_code, vals$option_code[vals$option_order_in_set])
+    if (survey) {
+      vals <- factor(vals$option_name, vals$option_name[vals$option_order_in_set])
+    } else {
+      vals <- factor(vals$option_code, vals$option_code[vals$option_order_in_set])
+    }
     dis_output[[i]] <- sample(vals, numcases, replace = TRUE)
   }
 
