@@ -441,12 +441,12 @@ study_data_cleaned <- study_data_cleaned %>%
                                             "Malnutrition", "Unknown", "Other (specify)")))
 
 ## change Dharma Multi-questions to TRUE/FALSE
-SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
-SYMPTOMS <- SYMPTOMS[SYMPTOMS != "q20_q10_symptom_other"] # drop the "other" symptoms free text var 
+# SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
+# SYMPTOMS <- SYMPTOMS[SYMPTOMS != "q20_q10_symptom_other"] # drop the "other" symptoms free text var 
 
-# set rows that are not empty to TRUE in each of the symptom variables
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate_at(SYMPTOMS, .funs = ~ifelse(!is.na(.), TRUE, FALSE))
+# # set rows that are not empty to TRUE in each of the symptom variables
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate_at(SYMPTOMS, .funs = ~ifelse(!is.na(.), TRUE, FALSE))
 
 # define the labels for each of the symptoms 
 SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition", 
@@ -988,10 +988,9 @@ survey_design %>%                  # use the survey object (weighted)
     # (this could also be "yes" if your variables were yes/no; 
     # or a combination, e.g. c("yes", TRUE, "sick"))
     # method xlogit uses the CDC SUDAAN method of calculating confidence intervals
-  tabulate_binary_survey(SYMPTOMS, keep = TRUE, method = "xlogit") %>%
-  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
-  select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable,
+  tabulate_survey(q19_q9_symptoms, method = "xlogit") %>%
+  # mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
+  rename("Symptom" = q19_q9_symptoms,
          "N reported" = n,
          "% (95% CI)" = ci
         ) %>%
@@ -1006,10 +1005,8 @@ Symptoms reported among those who were sick, stratified by age group
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
-  tabulate_binary_survey(SYMPTOMS, strata = age_group, keep = TRUE, pretty = TRUE) %>%
-  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
-  select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable) %>%
+  tabulate_survey(q19_q9_symptoms, strata = age_group, pretty = TRUE) %>%
+  rename("Symptom" = q19_q9_symptoms) %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
@@ -1023,10 +1020,8 @@ Symptoms reported among those who were sick, stratified by gender
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by sex!!
-  tabulate_binary_survey(SYMPTOMS, strata = sex, keep = TRUE) %>%
-  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
-  select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable) %>%
+  tabulate_survey(q19_q9_symptoms, strata = sex) %>%
+  rename("Symptom" = q19_q9_symptoms) %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
