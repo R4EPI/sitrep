@@ -256,7 +256,7 @@ unique(study_data_raw$q4_q6_sex)
 # the matches function here will search variable names
 study_data_raw %>% 
   filter(q137_q35_died_date < q88_q33_born_date) %>% 
-  select(matches("fact_0_id"))
+  select(dplyr::matches("fact_0_id"))
 
 
 ## another alternative is with the "summarytools package"
@@ -442,7 +442,7 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ## change Dharma Multi-questions to TRUE/FALSE
 SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
-SYMPTOMS <- SYMPTOMS[-1] # drop the "other" symptoms free text var 
+SYMPTOMS <- SYMPTOMS[SYMPTOMS != "q20_q10_symptom_other"] # drop the "other" symptoms free text var 
 
 # set rows that are not empty to TRUE in each of the symptom variables
 study_data_cleaned <- study_data_cleaned %>% 
@@ -629,7 +629,7 @@ descriptive(study_data_cleaned,
 This parallel set diagram helps in visualising the flow of population during the
 study period. 
 
-```{r visualise_population_flow, warning = FALSE}
+```{r visualise_population_flow, warning = FALSE, fig.width = 12}
 
 # summarize data
 flow_table <- study_data_cleaned %>%
