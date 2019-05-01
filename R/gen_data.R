@@ -425,6 +425,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   if (dictionary == "Mortality") {
     # q65_iq4 GPS number (from Osmand) - use as a standin for fact_0_id as household num for now
     dis_output$q65_iq4 <- sample(1:as.integer(numcases/5), numcases, replace = TRUE)
+    dis_output$fact_0_id <- dis_output$q65_iq4
 
     # q53_cq4a ("Why is no occupant agreeing to participate?") shoud be NA if
     # Head of Household answers the questions (q49_cq3)
@@ -521,6 +522,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
       dis_output[dis_output$q77_what_is_the_cluster_number == i, "q14_hh_no"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
     }
+    dis_output$fact_0_id <- dis_output$q14_hh_no
 
 
     # age in yr (0 to 14) - assuming doing vaccination coverage among those aged less than 15 yrs
