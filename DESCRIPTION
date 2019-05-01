@@ -55,6 +55,7 @@ Collate:
     'descriptive-table.R'
     'find_breaks.R'
     'find_date_cause.R'
+    'template_data_frame.R'
     'gen_data.R'
     'gen_polygon.R'
     'gen_population.R'

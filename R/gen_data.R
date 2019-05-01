@@ -8,21 +8,30 @@
 #'
 #' @param disease Specify which disease you would like to use.
 #'   Currently supports "Cholera", "Measles" and "Meningitis".
+#'
 #' @param name the name of the dictionary stored in the package.
+#'
 #' @param dictionary Specify which dictionary you would like to use.
 #'   Currently supports "Cholera", "Measles", "Meningitis", "AJS" and "Mortality".
+#'
 #' @param varnames Specify name of column that contains varnames. Currently
 #'   default set to "Item".  (this can probably be deleted once dictionaries
 #'   standardise) If `dictionary` is "Mortality", `varnames` needs to be "column_name"`.
+#'
 #' @param numcases For fake data, specify the number of cases you want (default is 300
+#'
 #' @param tibble Return data dictionary as a tidyverse tibble (default is TRUE)
+#'
 #' @param compact If TRUE, returns a neat data dictionary in single data frame.
 #'   If FALSE, returns a list with two data frames, one with variables and the
 #'   other with content options.
+#'
 #' @param df A dataframe (e.g. your linelist) which is passed to switch_vals function.
+#'
 #' @param copy_to_clipboard if `TRUE` (default), the rename template will be
 #'   copied to the user's clipboard with [clipr::write_clip()]. If `FALSE`, the
 #'   rename template will be printed to the user's console.
+#'
 #' @importFrom rio import
 #' @importFrom epitrix clean_labels
 #' @importFrom tibble as_tibble
@@ -33,7 +42,7 @@
 
 # function to pull outbreak data dicationaries together
 msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
-                     compact = TRUE) {
+                     compact = TRUE, long = TRUE) {
 
   # get excel file path (need to specify the file name)
   path <- system.file("extdata", name, package = "sitrep")
@@ -56,19 +65,19 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
 
   # Adding hardcoded var types to options list
   # 2 types added to - BOOLEAN, TRUE_ONLY
-  BOOLEAN           <- data.frame(option_code = c(1, 0),
-                         option_name = c("[1] Yes", "[0] No"),
-                         option_uid = c(NA, NA),
-                         option_order_in_set = c(1,2),
-                         optionset_uid = c("BOOLEAN", "BOOLEAN")
-                         )
+  BOOLEAN   <- data.frame(option_code = c(1, 0),
+                 option_name = c("[1] Yes", "[0] No"),
+                 option_uid = c(NA, NA),
+                 option_order_in_set = c(1,2),
+                 optionset_uid = c("BOOLEAN", "BOOLEAN")
+               )
 
-  TRUE_ONLY         <- data.frame(option_code = c(1, "NA"),
-                          option_name = c("[1] TRUE", "[NA] Not TRUE"),
-                          option_uid = c(NA, NA),
-                          option_order_in_set = c(1,2),
-                          optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
-                          )
+  TRUE_ONLY <- data.frame(option_code = c(1, "NA"),
+                 option_name = c("[1] TRUE", "[NA] Not TRUE"),
+                 option_uid = c(NA, NA),
+                 option_order_in_set = c(1,2),
+                 optionset_uid = c("TRUE_ONLY", "TRUE_ONLY")
+               )
 
   # bind these on to the bottom of dat_opts (option list) as rows
   dat_opts <- do.call("rbind", list(dat_opts, BOOLEAN, TRUE_ONLY))
@@ -83,51 +92,66 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
   # remove back end codes from front end var in the options list
   dat_opts$option_name <- gsub(".*] ", "", dat_opts$option_name)
 
+  if (long) {
+  
+    outtie <- dplyr::left_join(dat_dict, dat_opts, 
+                               by = c("used_optionset_uid" = "optionset_uid"))
+    outtie <- if (tibble) tibble::as_tibble(outtie) else outtie
+    
+  }
   # produce clean compact data dictionary for use in gen_data
-  if (compact == TRUE) {
+  if (long && compact == TRUE) {
+    
+    squished <- dplyr::group_by(outtie, !! quote(data_element_shortname))
+    squished <- tidyr::nest(squished,  dplyr::starts_with("option_"), .key = "options")
+    outtie   <- dplyr::select(outtie, -dplyr::starts_with("option_"))
+    outtie   <- dplyr::distinct(outtie)
+    outtie   <- dplyr::left_join(outtie, squished, by = "data_element_shortname")
+
+    return(tibble::as_tibble(outtie))
     # change dat_opts to wide format
     # remove the optionset_UID for treatment_facility_site
     # (is just numbers 1:50 and dont want it in the data dictionary)
-    a <- stats::aggregate(option_code ~ optionset_uid,
-                          dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    obs     <- lengths(a$option_code) # count length of var opts for each
-    highest <- seq_len(max(obs)) # create sequence for pulling out of list
-    out     <- t(sapply(a$option_code, "[", i = highest)) # pull out of list and flip to make dataframe
-    colnames(out) <- sprintf("Code%d", seq(ncol(out))) # rename with code and num of columns
+    # a <- stats::aggregate(option_code ~ optionset_uid,
+    #                       dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
+    # obs     <- lengths(a$option_code) # count length of var opts for each
+    # highest <- seq_len(max(obs)) # create sequence for pulling out of list
+    # out     <- t(sapply(a$option_code, "[", i = highest)) # pull out of list and flip to make dataframe
+    # colnames(out) <- sprintf("Code%d", seq(ncol(out))) # rename with code and num of columns
 
-    # bind to above
-    a$option_code <- NULL
-    a <- cbind(a, out)
+    # # bind to above
+    # a$option_code <- NULL
+    # a <- cbind(a, out)
 
-    # repeat above for names
-    b <- stats::aggregate(option_name ~ optionset_uid,
-                          dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    obs     <- lengths(b$option_name) # count length of var opts for each
-    highest <- seq_len(max(obs)) # create sequence for pulling out of list
-    out     <- t(sapply(b$option_name, "[", i = highest)) # pull out of list and flip to make dataframe
-    colnames(out) <- sprintf("Name%d", seq(ncol(out))) # rename with code and num of column
+    # # repeat above for names
+    # b <- stats::aggregate(option_name ~ optionset_uid,
+    #                       dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
+    # obs     <- lengths(b$option_name) # count length of var opts for each
+    # highest <- seq_len(max(obs)) # create sequence for pulling out of list
+    # out     <- t(sapply(b$option_name, "[", i = highest)) # pull out of list and flip to make dataframe
+    # colnames(out) <- sprintf("Name%d", seq(ncol(out))) # rename with code and num of column
 
-    b$option_name <- NULL
-    b$optionset_uid <- NULL
-    b <- cbind(b, out)
+    # b$option_name <- NULL
+    # b$optionset_uid <- NULL
+    # b <- cbind(b, out)
 
-    # bind code and name together
-    combiner <- cbind(a, b)
+    # # bind code and name together
+    # combiner <- cbind(a, b)
 
-    # merge with data dicationry
-    outtie <- merge(dat_dict, combiner,
-                    by.x = "used_optionset_uid", by.y = "optionset_uid",
-                    all.x = TRUE)
+    # # merge with data dicationry
+    # outtie <- merge(dat_dict, combiner,
+    #                 by.x = "used_optionset_uid", by.y = "optionset_uid",
+    #                 all.x = TRUE)
 
-    # return a tibble
-    if (tibble == TRUE) {
-      outtie <- tibble::as_tibble(outtie)
-    }
+    # # return a tibble
+    # if (tibble == TRUE) {
+    #   outtie <- tibble::as_tibble(outtie)
+    # }
 
   }
 
   # Return second option: a list with data dictionary and value options seperate
-  if (compact == FALSE) {
+  if (!long) {
 
     if (tibble == TRUE) {
       outtie <- list(dictionary = tibble::as_tibble(dat_dict),
@@ -187,7 +211,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
   # get msf dictionary specific data dictionary
   if (dictionary %in% SURVEYS) {
-    dat_dict <- msf_dict_survey(disease = dictionary, tibble = FALSE)
+    dat_dict <- msf_dict_survey(disease = dictionary, tibble = FALSE, compact = TRUE)
   } else if (dictionary %in% OUTBREAKS) {
     dat_dict <- msf_dict(disease = dictionary, tibble = FALSE, compact = TRUE)
   } else {
@@ -195,65 +219,52 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   }
 
 
-  # drop extra columns (keep varnames and code options)
-  varcol <- which(names(dat_dict) == varnames)
-  codecol <- grep("Code", names(dat_dict))
-  dat_output <- dat_dict[, c(varcol, codecol), drop = FALSE]
+  # # drop extra columns (keep varnames and code options)
+  # varcol  <- which(names(dat_dict) == varnames)
+  # codecol <- grep("Code", names(dat_dict))
+  # dat_output <- dat_dict[, c(varcol, codecol), drop = FALSE]
 
-  # use the var names as rows
-  row.names(dat_output) <- dat_output[[varnames]]
-  # remove the var names column
-  dat_output <- dat_output[-1]
-  # flip the dataset
-  dat_output <- data.frame(t(dat_output))
-  # remove rownames
-  row.names(dat_output) <- NULL
+  
+  # # use the var names as rows
+  # row.names(dat_output) <- dat_output[[varnames]]
+  # # remove the var names column
+  # dat_output <- dat_output[-1]
+  # # flip the dataset
+  # dat_output <- data.frame(t(dat_output))
+  # # remove rownames
+  # row.names(dat_output) <- NULL
 
-  # define variables that do not have any contents in the data dictionary
+  # # define variables that do not have any contents in the data dictionary
 
-  # create a NEW empty dataframe with the names from the data dictionary
-  dis_output <- data.frame(matrix(ncol = ncol(dat_output), nrow = numcases) )
-  colnames(dis_output) <- colnames(dat_output)
+  # # create a NEW empty dataframe with the names from the data dictionary
+  # dis_output <- data.frame(matrix(ncol = ncol(dat_output), nrow = numcases) )
+  # colnames(dis_output) <- colnames(dat_output)
 
-  # take samples for vars with defined options (non empties)
-  categories <- lapply(dat_output, function(i) i[!is.na(i)])
-  categories <- categories[lengths(categories) > 0]
-  for (i in names(categories)) {
-    dis_output[[i]] <- sample(categories[[i]], numcases, replace = TRUE)
-  }
+  # # take samples for vars with defined options (non empties)
+  # categories <- lapply(dat_output, function(i) i[!is.na(i)])
+  # categories <- categories[lengths(categories) > 0]
+  # for (i in names(categories)) {
+  #   dis_output[[i]] <- sample(categories[[i]], numcases, replace = TRUE)
+  # }
+
+  dis_output <- template_data_frame_categories(dat_dict, numcases, varnames)
 
   # Use data dictionary to define which vars are multiple choice
+  # ZNK 2019-05-01 ----
+  # These type of columns are currently only present in the survey data sets
+  # multivars <- dat_dict[dat_dict$data_element_valuetype == "MULTI", varnames]
 
-  # sample of a single value and NA
-  sample_single <- function(x, size = numcases, prob = 0.1) {
-    sample(c(x, NA), size = size, prob = c(prob, 1 - prob), replace = TRUE)
-  }
+  # if (length(multivars) > 0) {
+  #   sample_multivars <- lapply(multivars, sample_cats)
+  #   sample_multivars <- do.call(cbind, sample_multivars)
 
-  # random data for one single "MULTI" variable (split into multiple columns)
-  sample_cats <- function(cat) {
-    lvls <- as.character(categories[[cat]])
-    # define suffixes for column names, e.g. 000, 001, 002, ...
-    suffixes <- formatC((1:length(lvls)) - 1, width = 3, format = "d", flag = "0")
-
-    # create columns with randomized lvls with randomized probability
-    extra_cols <- sapply(lvls, sample_single, size = numcases, prob = sample(5:15, 1) / 100)
-    colnames(extra_cols) <- paste0(cat, "_", suffixes)
-    extra_cols
-  }
-
-
-  multivars <- dat_dict[dat_dict$data_element_valuetype == "MULTI", varnames]
-  if (length(multivars) > 0) {
-    sample_multivars <- lapply(multivars, sample_cats)
-    sample_multivars <- do.call(cbind, sample_multivars)
-
-    dis_output[, multivars] <- NULL
-    dis_output <- cbind(dis_output, sample_multivars)
-  }
+  #   dis_output[, multivars] <- NULL
+  #   dis_output <- cbind(dis_output, sample_multivars)
+  # }
 
 
   # Use data dictionary to define which vars are dates
-  datevars <- dat_dict[dat_dict$data_element_valuetype == "DATE", varnames]
+  datevars <- dat_dict[[varnames]][dat_dict$data_element_valuetype == "DATE"]
 
   # sample between two dates
   posidates <- seq(as.Date("2018-01-01"), as.Date("2018-04-30"), by = "day")
@@ -417,9 +428,9 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
     # q53_cq4a ("Why is no occupant agreeing to participate?") shoud be NA if
     # Head of Household answers the questions (q49_cq3)
-    dis_output$q53_cq4a[dis_output$q49_cq3 == "Yes"] <- NA
+    dis_output$q53_cq4a[dis_output$q49_cq3 == "Yes"] <- factor(NA, levels(dis_output$q53_cq4a))
     # assume person is not born during study when age > 1
-    dis_output$q87_q32_born[dis_output$q155_q5_age_year > 1] <- "No"
+    dis_output$q87_q32_born[dis_output$q155_q5_age_year > 1] <- factor("No", levels(dis_output$q87_q32_born))
     dis_output$q88_q33_born_date[dis_output$q155_q5_age_year > 1] <- NA
     # pregnancy set to NA for males
     dis_output$q152_q7_pregnant[dis_output$q4_q6_sex == "Male"] <- NA
@@ -560,8 +571,6 @@ switch_vals <- function(df, disease) {
   }
   df
 }
-
-
 
 
 

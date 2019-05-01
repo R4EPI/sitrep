@@ -37,8 +37,12 @@ copy and paste the packages into Program Files/R/R-[version]/library.
 
 ```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
 # hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
-# set default NA to - in output, define figure width/height
+knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
+                      error = TRUE,       # show errors if they appear, but don't stop
+                      fig.width = 6*1.25, # Figure width
+                      fig.height = 6      # Figure height
+                     )
+# set default NA to - in output
 options(knitr.kable.NA = "-")
 
 # Installing required packages for this template
