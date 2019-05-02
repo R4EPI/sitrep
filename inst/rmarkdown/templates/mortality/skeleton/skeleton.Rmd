@@ -441,6 +441,8 @@ study_data_cleaned <- study_data_cleaned %>%
                                             "Malnutrition", "Unknown", "Other (specify)")))
 
 ## change Dharma Multi-questions to TRUE/FALSE
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate_at(vars(contains("_symptoms_")), ~if_else(is.na(.), "", .))
 # TODO: Don't need to change these to TRUE/FALSE, we just need to make sure to
 # collect all the non-NA levels and then use that in tabulate_binary_survey.
 
@@ -991,7 +993,7 @@ survey_design %>%                  # use the survey object (weighted)
     # (this could also be "yes" if your variables were yes/no; 
     # or a combination, e.g. c("yes", TRUE, "sick"))
     # method xlogit uses the CDC SUDAAN method of calculating confidence intervals
-  tabulate_survey(q19_q9_symptoms, method = "xlogit") %>%
+  tabulate_binary_survey(q19_q9_symptoms, keep = NA, invert = TRUE, method = "xlogit") %>%
   # mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   rename("Symptom" = q19_q9_symptoms,
          "N reported" = n,
