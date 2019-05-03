@@ -439,16 +439,24 @@ study_data_cleaned <- study_data_cleaned %>%
                                             "Trauma/accident", "Pregnancy-related", 
                                             "Violence", "Outbreak disease (specify)", 
                                             "Malnutrition", "Unknown", "Other (specify)")))
+# explicitly replace NA of a factor
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(cause_of_death = fct_explicit_na(cause_of_death, na_level = "Not Applicable"))
+
 
 ## replace missing values in Dharma multi-choice questions to "" so that we can
-## filter them out later
+## filter them out later.
 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(vars(contains("_symptom")), ~replace_na(., "")) 
+  mutate_at(.vars = vars(contains("symptom")), # all variables that contain the word "symptom"
+            .funs = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
+            ) 
 
 ######## weighting ------------------------------------------------------------
 
-study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
+study_data_cleaned <- add_weights(x = study_data_cleaned, 
+                                  p = population_data_age, 
+                                  age_group, sex)
 
 
 #### observation time ----------------------------------------------------------
