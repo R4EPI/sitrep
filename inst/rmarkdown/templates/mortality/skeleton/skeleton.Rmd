@@ -878,7 +878,8 @@ death_props <- survey_design %>%
 CMR <- survey_design %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   # merge confidence intervals for mortality in to one column (do not change to percent)
-  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
+  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
+  pull("Mortality")
 
 ```
 
