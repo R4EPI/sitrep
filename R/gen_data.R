@@ -340,28 +340,28 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
   if (!is.na(age_year_var)) {
     # sample 0:120
-    dis_output[, age_year_var] <- sample(0:120, numcases, replace = TRUE)
+    dis_output[, age_year_var] <- sample(0:120L, numcases, replace = TRUE)
     U2_YEARS <- which(dis_output[, age_year_var] <= 2)
     if (set_age_na) {
-      dis_output[U2_YEARS, age_year_var] <- NA
+      dis_output[U2_YEARS, age_year_var] <- NA_integer_
     }
 
     if (!is.na(age_month_var)) {
       # age_month
       if (length(U2_YEARS) > 0) {
-        dis_output[U2_YEARS, age_month_var] <- sample(0:24,
+        dis_output[U2_YEARS, age_month_var] <- sample(0:24L,
                                                       length(U2_YEARS),
                                                       replace = TRUE)
         U2_MONTHS <- which(dis_output[, age_month_var] <= 2)
         if (set_age_na) {
-          dis_output[U2_MONTHS, age_month_var] <- NA
+          dis_output[U2_MONTHS, age_month_var] <- NA_integer_
         }
       }
 
       if (!is.na(age_day_var)) {
         # age_days
         if (length(U2_MONTHS) > 0) {
-          dis_output[U2_MONTHS, age_day_var] <- sample(0:60,
+          dis_output[U2_MONTHS, age_day_var] <- sample(0:60L,
                                                        length(U2_MONTHS),
                                                        replace = TRUE)
         }
@@ -494,7 +494,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output$household_id <- 1:numcases
 
     # age in months (1 to 60 - i.e. under 5 years)
-    dis_output$age_month <- sample(1:60, numcases, replace = TRUE)
+    dis_output$age_month <- sample(1:60L, numcases, replace = TRUE)
 
     # height in cm
     dis_output$height <- round(
@@ -526,10 +526,10 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
 
     # age in yr (0 to 14) - assuming doing vaccination coverage among those aged less than 15 yrs
-    dis_output$q10_age_yr <- sample(0:14, numcases, replace = TRUE)
+    dis_output$q10_age_yr <- sample(0:14L, numcases, replace = TRUE)
 
     # age in mth (0 to 11)
-    dis_output$q55_age_mth[dis_output$q10_age_yr < 1] <- sample(0:11,
+    dis_output$q55_age_mth[dis_output$q10_age_yr < 1] <- sample(0:11L,
                                                                 nrow(dis_output[dis_output$q10_age_yr < 1,]),
                                                                 replace = TRUE)
 
