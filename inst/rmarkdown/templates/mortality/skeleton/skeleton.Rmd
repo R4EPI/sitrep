@@ -907,13 +907,14 @@ as if no deaths (impossible to have negative deaths).
 # you could return the proportion only among those who died by uncommenting 
   # filter(died)
 cause_of_death_prop <- survey_design %>% 
-  # filter(died) %>%  # proportions only among those who died
+  filter(died) %>%  # proportions only among those who died
   tabulate_survey(cause_of_death)
 
 # Then retrieve weighted cause-specific mortality ratios
 # note that survey ratio includes the observation times in calculation
 # note the posibility of negative confidence interval when low counts
 cause_of_death_mort <- survey_design %>% 
+  filter(died) %>%  # proportions only among those who died
   group_by(cause_of_death) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
 
@@ -922,6 +923,7 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort, by = "cause_of_death"
   # merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"),
            m100 = FALSE, percent = FALSE) %>%
+  filter(cause_of_death != "Not Applicable") %>%
   rename("Cause of death" = cause_of_death,
          "Deaths (n)" = n,
          "% (95% CI)" = ci
@@ -952,8 +954,9 @@ Reported causes of death and cause-specific mortality rates, by age group, weigh
 # you could return the proportion only among those who died by uncommenting 
   # filter(died)
 survey_design %>% 
-  # filter(died) %>% 
+  filter(died) %>% 
   tabulate_survey(cause_of_death, age_group) %>%
+  filter(cause_of_death != "Not Applicable") %>%
   rename("Cause of Death" = "cause_of_death") %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
@@ -968,8 +971,9 @@ Reported causes of death and cause-specific mortality rates, by gender, weighted
 # you could return the proportion only among those who died by uncommenting 
   # filter(died)
 survey_design %>% 
-  # filter(died) %>% 
+  filter(died) %>% 
   tabulate_survey(cause_of_death, sex) %>%
+  filter(cause_of_death != "Not Applicable") %>%
   rename("Cause of Death" = "cause_of_death") %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
@@ -991,7 +995,6 @@ survey_design %>%                  # use the survey object (weighted)
     # or a combination, e.g. c("yes", TRUE, "sick"))
     # method xlogit uses the CDC SUDAAN method of calculating confidence intervals
   tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, method = "xlogit") %>%
-  # mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
   select(-variable) %>%
   rename("Symptom" = value,
          "N reported" = n,
