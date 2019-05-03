@@ -75,10 +75,6 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
     # if there is a strata, create a unique, parseable dummy var by inserting
     # the timestamp in between the vars
     tim <- as.character(Sys.time())
-    # This is to handle situations where you have a binary variable that is a
-    # character vector and only has one of the responses recorded (factors 
-    # should be fine here)
-    x <- srvyr::mutate(x, !! cod := if (is.factor(!! cod)) !! cod else factor(!! cod, unique(!! cod)))
     x <- srvyr::group_by(x, !!st, !! cod)
     x <- srvyr::mutate(x, dummy = sprintf("%s %s %s", !! st, tim, !! cod))
   }
