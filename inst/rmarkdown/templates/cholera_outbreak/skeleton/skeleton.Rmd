@@ -168,7 +168,7 @@ linelist_cleaned <- linelist_raw
 ## sex coded as M or F. This line uses the MSF dictionary to recode these values
 ## back to a human-readable format.
 linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
-                                            wordlists = linelist_dict,
+                                            wordlists = filter(linelist_dict, !is.na(option_code)),
                                             spelling_vars = "data_element_shortname",
                                             sort_by = "option_order_in_set"
                                            )
