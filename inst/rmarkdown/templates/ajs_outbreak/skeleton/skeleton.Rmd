@@ -900,6 +900,7 @@ multi_descriptive(linelist_cleaned, LABS, .id = "Lab test") %>%
     "Total (N)" = Total_n
   ) %>% 
   kable(digits = 2)
+
 ```
 
 
@@ -907,7 +908,7 @@ multi_descriptive(linelist_cleaned, LABS, .id = "Lab test") %>%
 
 #### Case fatality ratio 
 
-Of `r linelist_cleaned %>% filter(patient_facility_type == "Inpatient") %>% count()` inpatients, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status), patient_facility_type == "Inpatient")` deaths, of which 
+Of `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` inpatients, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status), patient_facility_type == "Inpatient")` deaths, of which 
 `r fmt_count(linelist_cleaned, exit_status == "Dead on arrival")` 
 were dead on arrival. 
 
