@@ -9,7 +9,7 @@
 \title{MSF data dictionaries and dummy datasets}
 \usage{
 msf_dict(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
-  compact = TRUE)
+  compact = TRUE, long = TRUE)
 
 msf_dict_rename_helper(disease, varnames = "data_element_shortname",
   copy_to_clipboard = TRUE)
@@ -19,7 +19,8 @@ gen_data(dictionary, varnames = "data_element_shortname",
 
 switch_vals(df, disease)
 
-msf_dict_survey(disease, name = "MSF-survey-dict.xlsx", tibble = TRUE)
+msf_dict_survey(disease, name = "MSF-survey-dict.xlsx", tibble = TRUE,
+  compact = FALSE)
 }
 \arguments{
 \item{disease}{Specify which disease you would like to use.
