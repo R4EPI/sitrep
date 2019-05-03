@@ -23,6 +23,7 @@ Imports:
     ISOweek,
     knitr,
     lwgeom,
+    linelist,
     outbreaks,
     plyr,
     purrr,
@@ -43,6 +44,8 @@ Imports:
 Suggests:
     testthat,
     sessioninfo
+Remotes:
+  reconhub/linelist
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
