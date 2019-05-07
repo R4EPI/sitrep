@@ -54,6 +54,11 @@ library(epitools) # for creating 2by2 tables
 
 #set default text size to 16 for plots
 ggplot2::theme_set(theme_bw(base_size = 18))
+
+# Set the day that defines the beginning of your epiweek.
+# you can start the week on any day of the week
+# (the ISO standard is to start on Monday) 
+aweek::set_week_start("Monday")
 ```
 
 
@@ -221,8 +226,12 @@ linelist_cleaned <- linelist_cleaned %>%
 #     "Peking" = "Beijing"
 #   ))
 
-# create an epiweek variable 
-linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
+# create an epiweek variable
+# floor_day shortens to only give you the week number (rather than including day as well) 
+# factor includes all weeks between the min and max as levels (useful for zero count weeks)
+linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
+                                             floor_day = TRUE, 
+                                             factor = TRUE)
 
 # ... TODO: add some snippets for cleaing data
 # TODO: showcase and recommend the linelist package

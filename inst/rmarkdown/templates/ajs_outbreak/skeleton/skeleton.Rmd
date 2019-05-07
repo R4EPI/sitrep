@@ -68,6 +68,11 @@ for (pkg in required_packages) {
 # set default text size to 16 for plots
 # give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
+
+# Set the day that defines the beginning of your epiweek.
+# you can start the week on any day of the week
+# (the ISO standard is to start on Monday) 
+aweek::set_week_start("Monday")
 ```
 
 
@@ -490,12 +495,9 @@ linelist_cleaned <- linelist_cleaned %>%
 #                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
   
 # create an epiweek variable
-# you can start the week on any day of the week
-# (the ISO standard is to start on Monday) 
 # floor_day shortens to only give you the week number (rather than including day as well) 
 # factor includes all weeks between the min and max as levels (useful for zero count weeks)
 linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
-                                             week_start = "Monday", 
                                              floor_day = TRUE, 
                                              factor = TRUE)
 
@@ -503,8 +505,7 @@ linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset,
 # Numeric variables --------------------------------- 
 # create number of days under observation
 linelist_cleaned <- mutate(linelist_cleaned, 
-                           obs_days = 
-                             as.numeric(date_of_exit - date_of_admission))
+                           obs_days = as.numeric(date_of_exit - date_of_admission))
 
 
 # Age group variables ---------------------------------
