@@ -37,8 +37,12 @@ copy and paste the packages into Program Files/R/R-[version]/library.
 
 ```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
 # hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
-# set default NA to - in output, define figure width/height
+knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
+                      error = TRUE,       # show errors if they appear, but don't stop
+                      fig.width = 6*1.25, # Figure width
+                      fig.height = 6      # Figure height
+                     )
+# set default NA to - in output
 options(knitr.kable.NA = "-")
 
 # Installing required packages for this template
@@ -67,6 +71,11 @@ for (pkg in required_packages) {
 # set default text size to 16 for plots
 # give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
+
+# Set the day that defines the beginning of your epiweek.
+# you can start the week on any day of the week
+# (the ISO standard is to start on Monday) 
+aweek::set_week_start("Monday")
 ```
 
 
@@ -111,7 +120,8 @@ linelist_raw <- gen_data("Cholera") # generates a fake dataset for use as an exa
 ## Where code has the shortened values and name has the full text values. 
 
 ## get MSF data dictionary for cholera 
-linelist_dict <- msf_dict("Cholera")
+linelist_dict <- msf_dict("Cholera", compact = FALSE) %>%
+  select(option_code, option_name, everything())
 
 ## you can look at the standard dictionary by uncommenting the line below
 # View(linelist_dict) 
@@ -162,7 +172,11 @@ linelist_cleaned <- linelist_raw
 ## to save space. For example, Yes/No values will often be coded as 1 or 0 and
 ## sex coded as M or F. This line uses the MSF dictionary to recode these values
 ## back to a human-readable format.
-linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "Cholera")
+linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
+                                            wordlists = filter(linelist_dict, !is.na(option_code)),
+                                            spelling_vars = "data_element_shortname",
+                                            sort_by = "option_order_in_set"
+                                           )
 ```
 
 
@@ -442,12 +456,9 @@ linelist_cleaned <- linelist_cleaned %>%
 #                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
   
 # create an epiweek variable
-# you can start the week on any day of the week
-# (the ISO standard is to start on Monday) 
 # floor_day shortens to only give you the week number (rather than including day as well) 
 # factor includes all weeks between the min and max as levels (useful for zero count weeks)
 linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
-                                             week_start = "Monday", 
                                              floor_day = TRUE, 
                                              factor = TRUE)
 
@@ -628,7 +639,7 @@ linelist_cleaned <- linelist_cleaned %>%
 ```{r save_cleaned_data, eval = FALSE}
 ## OPTIONAL: save your cleaned dataset as an excel file! 
 ## put the current date in the name so you know!
-writexl::write_xlsx(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx")
+writexl::write_xlsx(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
 ```
 
 
@@ -692,13 +703,9 @@ Cases by age group and definition
 # get counts and props of age groups by case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group (years)" = age_group, 
-         "Confirmed cases (n)" = Confirmed_n, 
-         "%" = Confirmed_prop, 
-         "Probable cases (n)" = Probable_n, 
-         "%" = Probable_prop,
-         "Suspected cases (n)" = Suspected_n, 
-         "%" = Suspected_prop) %>% 
+  rename("Age group (years)" = age_group) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 
@@ -709,13 +716,10 @@ Cases by age group and sex
 
 ```{r describe_by_age_group_and_sex}
 descriptive(linelist_cleaned, "age_group", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group (years)" = age_group, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop,
-         "Missing (n)" = NA_n, 
-         "%" = NA_prop) %>% 
+  rename("Age group (years)" = age_group,
+         "Missing (n)" = NA_n) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 
@@ -724,13 +728,10 @@ Alternatively if you would like proportions to be of the total population, use t
 ```{r total_props_agegroup_sex}
 descriptive(linelist_cleaned, "age_group", "sex", 
             coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group (years)" = age_group, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop,
-         "Missing (n)" = NA_n, 
-         "%" = NA_prop) %>% 
+  rename("Age group (years)" = age_group,
+         "Missing (n)" = NA_n) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 
@@ -796,13 +797,9 @@ descriptive(linelist_cleaned,
             grouper = "case_def", 
             coltotals = TRUE, 
             rowtotals = TRUE) %>% 
-  rename("Fluid treatment plan" = fluids_treatment_plan, 
-         "Confirmed cases (n)" = Confirmed_n, 
-         "%" = Confirmed_prop, 
-         "Probable cases (n)" = Probable_n, 
-         "%" = Probable_prop,
-         "Suspected cases (n)" = Suspected_n, 
-         "%" = Suspected_prop) %>% 
+  rename("Fluid treatment plan" = fluids_treatment_plan) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 
@@ -839,7 +836,7 @@ descriptive(linelist_cleaned,
 
 #### Case fatality ratio 
 
-Of `r linelist_cleaned %>% filter(patient_facility_type == "Inpatient") %>% count()` inpatients, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status), patient_facility_type == "Inpatient")` deaths, of which 
+Of `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` inpatients, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status), patient_facility_type == "Inpatient")` deaths, of which 
 `r fmt_count(linelist_cleaned, exit_status == "Dead on arrival")` 
 were dead on arrival. 
 
@@ -936,7 +933,6 @@ ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
 ar %>%
   merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
   rename("Cases (n)" = cases, 
-         "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
          "95%CI" = ci) %>% 
@@ -1049,8 +1045,16 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = "Monday week"
 # this sets the theme in ggplot for epicurves
 epicurve_theme <- theme(
   axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-  legend.title = element_blank()
-  )
+  legend.title = element_blank(),
+  panel.grid.major.x = element_line(color = "grey60", linetype = 3),
+  panel.grid.major.y = element_line(color = "grey60", linetype = 3)
+)
+# This sets the labels in ggplot for the epicurves
+epicurve_labels <- labs(x = "Calendar week", 
+                        y = "Cases (n)", 
+                        title = "Cases by week of onset",
+                        subtitle = sprintf("Source: MSF data from %s", reporting_week)
+                       ) 
 ```
 
 The peak of the outbreak was in `r date2week(find_peak(inc_week_7), floor_day = TRUE)`
@@ -1060,9 +1064,7 @@ The peak of the outbreak was in `r date2week(find_peak(inc_week_7), floor_day = 
 basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "Cases (n)", 
-       title = "Cases by week of onset",
-       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
+  epicurve_labels +
   # change visuals of dates and remove legend title
   epicurve_theme
 
@@ -1084,12 +1086,13 @@ inc_week_14 <- incidence(linelist_cleaned$date_of_onset, interval = "2 Monday we
 plot(inc_week_14, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_14)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "Cases (n)", 
-       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
-  # change visuals of dates, remove legend title and move legend to bottom
+  epicurve_labels +
+  # change visuals of dates and remove legend title
   epicurve_theme
 
 ```
+
+
 
 
 You may also want to stratify by gender. 
@@ -1099,19 +1102,19 @@ You may also want to stratify by gender.
 
 # get counts by gender
 inc_week_7_gender <- incidence(linelist_cleaned$date_of_onset, 
-                        interval = "Monday week", 
-                        groups = linelist_cleaned$sex)
+                               interval = "Monday week", 
+                               groups = linelist_cleaned$sex)
 
 # plot your epicurve
 # here we remove the boxes around each case as it makes gender colours hard to see! (show_cases = FALSE)
 plot(inc_week_7_gender, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_7_gender)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "Cases (n)", 
-       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
+  epicurve_labels +
   # change visuals of dates, remove legend title and move legend to bottom
   epicurve_theme
 ```
+
 
 
 You could similarly stratify by case definition (or any other categorical variable!)
@@ -1119,13 +1122,12 @@ You could similarly stratify by case definition (or any other categorical variab
 
 ```{r incidence_by_case_def, message = FALSE}
 inc_week_7_casedef <- incidence(linelist_cleaned$date_of_onset, 
-                        interval = "Monday week", 
-                        groups = linelist_cleaned$case_def)
+                                interval = "Monday week", 
+                                groups = linelist_cleaned$case_def)
 plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "Cases (n)", 
-       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
+  epicurve_labels +
   # change visuals of dates, remove legend title and move legend to bottom
   epicurve_theme
 ```
@@ -1135,14 +1137,14 @@ Alternatively, you could stratify by sex among a subset of only confirmed cases.
 
 
 ```{r incidence_by_sex_confirmed, message = FALSE}
-inc_week_7_sex_conf <- incidence(linelist_cleaned$date_of_onset[linelist_cleaned$case_def == "Confirmed"], 
-                        interval = "Monday week", 
-                        groups = linelist_cleaned$sex[linelist_cleaned$case_def == "Confirmed"])
+inc_week_7_sex_conf <- linelist_cleaned %>%
+  filter(case_def == "Confirmed") %>%
+  with(incidence(date_of_onset, interval = "Monday week", groups = sex))
+
 plot(inc_week_7_sex_conf, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_sex_conf)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "Cases (n)", 
-       subtitle = paste0("Source: MSF data from ", reporting_week)) + 
+  epicurve_labels +
   # change visuals of dates, remove legend title and move legend to bottom
   epicurve_theme
 ```
@@ -1159,11 +1161,7 @@ cases <- linelist_cleaned %>%
 
 # attack rate for each week
 ar <- attack_rate(cases$n, population, multiplier = 100000) %>% 
-  # add the epiweek column to table
-  bind_cols(select(cases, epiweek), .) %>% 
-  tidyr::complete(epiweek, 
-                  fill = list(cases = 0, population = 0, ar = 0, lower = 0, upper = 0)) %>% # Ensure all levels are represented
-  mutate(epiweek = as.character(epiweek))
+  bind_cols(select(cases, epiweek), .) # add the epiweek column to table
 
 ar %>%
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
@@ -1176,13 +1174,13 @@ ar %>%
 ```
  
 
+
 The below gives the cumulative attack rate per week. 
 
 ```{r cumulative_attack_rate_per_week}
 # cumulative attack rate by week
 attack_rate(cases$cumulative, population, multiplier = 100000) %>% 
-  # add the epiweek column to table
-  bind_cols(select(cases, epiweek), .) %>% 
+  bind_cols(select(cases, epiweek), .) %>% # add the epiweek column to table
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
   rename("Epiweek" = epiweek, 
          "Cases (n)" = cases, 
@@ -1192,15 +1190,13 @@ attack_rate(cases$cumulative, population, multiplier = 100000) %>%
   knitr::kable(digits = 2, align = "r")
 ```
 
-The below gives case fatality ratio among inpatients per week as a proportion
+The below gives case fatality ratio among inpatients per week as a proportion.
 
 ```{r cfr_per_week, warning = FALSE, message = FALSE}
 # group by known outcome and case definition 
 cfr <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(grepl("Dead", exit_status), group = epiweek) %>%
-  tidyr::complete(epiweek, fill = list(deaths = 0, population = 0, cfr = 0, lower = 0, upper = 0)) %>% # Ensure all levels are represented
-  mutate(epiweek = as.character(epiweek))
+  case_fatality_rate_df(grepl("Dead", exit_status), group = epiweek)
 
 cfr %>%
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
@@ -1216,12 +1212,13 @@ cfr %>%
 You could plot the AR (in the population) and CFR (among inpatients only) together as line graphs by epiweek. 
 
 ```{r ar_line_graph}
-ar_plot <- ggplot(ar, aes(x = epiweek, group = 1)) +
+ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "blue", fill = "blue", linetype = 2, alpha = 0.2, show.legend = FALSE) +
   geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  scale_x_discrete(limits = c(ar$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
+  # scale the x axis the same as the incidence curve. Expand forces it to align. 
+  incidence::scale_x_incidence(inc_week_7, n_breaks = nrow(inc_week_7), expand = c(0, 7 * 1.5)) +
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 100,000)") + 
   # change visuals of dates and remove legend title
@@ -1230,16 +1227,19 @@ ar_plot <- ggplot(ar, aes(x = epiweek, group = 1)) +
 
 
 ```{r cfr_line_graph}
-cfr_plot <- ggplot(cfr, aes(x = epiweek, group = 1)) +
+cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "red", fill = "red", linetype = 2, alpha = 0.2, show.legend = FALSE) +
   geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  scale_x_discrete(limits = c(cfr$epiweek, ""), expand = c(0, 1)) + # add extra break to match epicurve
+  # scale the x axis the same as the incidence curve. Expand forces it to align. 
+  incidence::scale_x_incidence(inc_week_7, n_breaks = nrow(inc_week_7), expand = c(0, 7 * 1.5)) +
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "CFR [95% CI]", subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
+  labs(x = "Calendar week", y = "CFR [95% CI]", 
+       subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
   # change visuals of dates and remove legend title
   epicurve_theme 
+
 ```
 
 
@@ -1258,22 +1258,19 @@ cowplot::plot_grid(
 )
 ```
 
-
-We could then also look at admissions and exits by epiweek for operational purposes. 
+We could then also look at admissions and exits among inpatients by epiweek for operational purposes. 
 
 ```{r describe_admissions_by_epiweek, warning = FALSE}
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Week" = epiweek, 
-         "Inpatient cases (n)" = Inpatient_n, 
-         "%" = Inpatient_prop, 
-         "Outpatient cases (n)" = Outpatient_n, 
-         "%" = Outpatient_prop) %>% 
+  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
 
 The exits are among inpatients only. 
+
 ```{r describe_exits_by_epiweek, warning = FALSE}
 # get counts and props of admissions by epiweek among inpatients
 # include column and row totals 
@@ -1281,30 +1278,19 @@ linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>% 
 descriptive("epiweek", "exit_status2", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Week" = "epiweek", 
-         "Died (n)" = "Died_n", 
-         "%" = "Died_prop", 
-         "Discharged (n)" = "Discharged_n", 
-         "%" = "Discharged_prop", 
-         "Left (n)" = "Left_n", 
-         "%" = "Left_prop", 
-         "Transferred (n)" = "Transferred_n", 
-         "%" = "Transferred_prop", 
-         "Total" = "Total"
-         ) %>% 
+  rename("Week" = "epiweek") %>%
+  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
 
 
-
-
-
-
-### Place
+### Place 
 
 *  [Across what area: one or several villages, all from same school, etc. You may want to include a map of the distribution of cases; attack rates by location]
 
 #### Descriptive
+
 To get a basic descriptive table of cases by region and facility, as well as by region and outcome among inpatients, see below. 
 
 
@@ -1315,13 +1301,9 @@ To get a basic descriptive table of cases by region and facility, as well as by 
 descriptive(linelist_cleaned, "patient_origin", 
             "patient_facility_type",
             coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin", 
-         "Inpatient (n)" = "Inpatient_n", 
-         "%" = "Inpatient_prop", 
-         "Outpatient (n)" = "Outpatient_n", 
-         "%" = "Outpatient_prop",
-         "Total" = "Total"
-         ) %>% 
+  rename("Region" = "patient_origin") %>%
+  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
 
@@ -1329,28 +1311,18 @@ descriptive(linelist_cleaned, "patient_origin",
 
 
 ```{r describe_by_region_outcome}
-# get counts and props of region by outcome 
+# get counts and props of region by outcome among inpatients
 # include column and row totals 
 
 descriptive(filter(linelist_cleaned, 
                    patient_facility_type == "Inpatient"),
             "patient_origin", "exit_status2",
             coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin", 
-         "Died (n)" = "Died_n", 
-         "%" = "Died_prop", 
-         "Discharged (n)" = "Discharged_n", 
-         "%" = "Discharged_prop", 
-         "Left (n)" = "Left_n", 
-         "%" = "Left_prop", 
-         "Transferred (n)" = "Transferred_n", 
-         "%" = "Transferred_prop", 
-         "Total" = "Total"
-         ) %>% 
+  rename("Region" = "patient_origin") %>%
+  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
-
-
 
 If you do not have spatial data available, it may also be worth calculating attack rates by region. 
 
@@ -1400,8 +1372,7 @@ You could also calculate mortality rate by region (cross reference with the mort
 ```{r mortality_rate_region}
 
 deaths <- group_by(linelist_cleaned, patient_origin) %>%
-   filter(exit_status == "Dead in facility" | 
-            exit_status == "Dead on arrival") %>% 
+  filter(exit_status2 == "Dead") %>% 
   summarise(deaths = n()) %>%                 # count deaths by region
   left_join(population_data_region, by = "patient_origin")    # merge population data 
 
@@ -1539,8 +1510,7 @@ linelist_cleaned$patient_origin <- as.factor(linelist_cleaned$patient_origin)
 # case counts
 cases <- linelist_cleaned %>% 
   group_by(epiweek) %>%
-  count(patient_origin) %>%   # cases for each week by region
-  tidyr::complete(patient_origin, fill = list(n = 0)) %>% # include zero counts
+  count(patient_origin, .drop = FALSE) %>%   # cases for each week by region
   left_join(population_data_region, by = "patient_origin")    # merge population data 
 
 # attack rate for region

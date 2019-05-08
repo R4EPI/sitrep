@@ -22,13 +22,22 @@ report.
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
 - For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
-- ADD LIST ON WHICH PACKAGES WILL BE USED FOR WHAT REASONS! AND HOW TO INSTALL
-- OTHER INFO TO ADD??
+
+## Installing and loading required packages 
+
+Several packages are required for different aspects of  analysis with *R*. 
+You will need to install these before starting. 
+We will be using the following packages. Some of these packages automatically
+install other packages they need to work (called dependencies).
+
+These packages can be quite large and may take a while to download in the
+field. If you have access to a USB key with these packages, it makes sense to
+copy and paste the packages into Program Files/R/R-[version]/library.
 
 
 ```{r setup, include=FALSE}
 # hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 16, fig.height = 12)
+knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
 # set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
 
@@ -45,6 +54,11 @@ library(epitools) # for creating 2by2 tables
 
 #set default text size to 16 for plots
 ggplot2::theme_set(theme_bw(base_size = 18))
+
+# Set the day that defines the beginning of your epiweek.
+# you can start the week on any day of the week
+# (the ISO standard is to start on Monday) 
+aweek::set_week_start("Monday")
 ```
 
 
@@ -212,8 +226,12 @@ linelist_cleaned <- linelist_cleaned %>%
 #     "Peking" = "Beijing"
 #   ))
 
-# create an epiweek variable 
-linelist_cleaned$epiweek <- ISOweek(linelist_cleaned$date_of_onset)
+# create an epiweek variable
+# floor_day shortens to only give you the week number (rather than including day as well) 
+# factor includes all weeks between the min and max as levels (useful for zero count weeks)
+linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
+                                             floor_day = TRUE, 
+                                             factor = TRUE)
 
 # ... TODO: add some snippets for cleaing data
 # TODO: showcase and recommend the linelist package

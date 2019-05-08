@@ -8,6 +8,7 @@ Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
 Imports: 
     anthro,
+    aweek,
     binom,
     broom,
     cowplot,
@@ -20,9 +21,9 @@ Imports:
     ggspatial,
     here,
     incidence,
-    ISOweek,
     knitr,
     lwgeom,
+    linelist,
     outbreaks,
     plyr,
     purrr,
@@ -43,6 +44,9 @@ Imports:
 Suggests:
     testthat,
     sessioninfo
+Remotes:
+  reconhub/linelist,
+  reconhub/aweek@release
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
@@ -67,6 +71,7 @@ Collate:
     'sample-size.R'
     'survey.R'
     'tabulate_survey.R'
+    'template_data_frame.R'
     'unite_ci.R'
     'univariate-analysis.R'
     'zcurve.R'

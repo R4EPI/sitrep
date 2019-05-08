@@ -256,7 +256,7 @@ unique(study_data_raw$q4_q6_sex)
 # the matches function here will search variable names
 study_data_raw %>% 
   filter(q137_q35_died_date < q88_q33_born_date) %>% 
-  select(matches("fact_0_id"))
+  select("fact_0_id")
 
 
 ## another alternative is with the "summarytools package"
@@ -439,23 +439,24 @@ study_data_cleaned <- study_data_cleaned %>%
                                             "Trauma/accident", "Pregnancy-related", 
                                             "Violence", "Outbreak disease (specify)", 
                                             "Malnutrition", "Unknown", "Other (specify)")))
+# explicitly replace NA of a factor
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(cause_of_death = fct_explicit_na(cause_of_death, na_level = "Not Applicable"))
 
-## change Dharma Multi-questions to TRUE/FALSE
-SYMPTOMS <- grep("symptom", names(study_data_cleaned), value = TRUE) # get varsnames with symptom in
-SYMPTOMS <- SYMPTOMS[-1] # drop the "other" symptoms free text var 
 
-# set rows that are not empty to TRUE in each of the symptom variables
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate_at(SYMPTOMS, .funs = ~ifelse(!is.na(.), TRUE, FALSE))
+## replace missing values in Dharma multi-choice questions to "" so that we can
+## filter them out later.
 
-# define the labels for each of the symptoms 
-SYMPTOMS_LABELS <- c("Diarrhoea", "Respiratory", "Malnutrition", 
-                     "Pregnancy-related", "Malaria/fever", "Trauma", 
-                     "Violence", "Unknown", "Other")
+study_data_cleaned <- study_data_cleaned %>%
+  mutate_at(.vars = vars(contains("symptom")), # all variables that contain the word "symptom"
+            .funs = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
+            ) 
 
 ######## weighting ------------------------------------------------------------
 
-study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
+study_data_cleaned <- add_weights(x = study_data_cleaned, 
+                                  p = population_data_age, 
+                                  age_group, sex)
 
 
 #### observation time ----------------------------------------------------------
@@ -629,7 +630,7 @@ descriptive(study_data_cleaned,
 This parallel set diagram helps in visualising the flow of population during the
 study period. 
 
-```{r visualise_population_flow, warning = FALSE}
+```{r visualise_population_flow, warning = FALSE, fig.width = 12}
 
 # summarize data
 flow_table <- study_data_cleaned %>%
@@ -877,7 +878,8 @@ death_props <- survey_design %>%
 CMR <- survey_design %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   # merge confidence intervals for mortality in to one column (do not change to percent)
-  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
+  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
+  pull("Mortality")
 
 ```
 
@@ -905,21 +907,23 @@ as if no deaths (impossible to have negative deaths).
 # you could return the proportion only among those who died by uncommenting 
   # filter(died)
 cause_of_death_prop <- survey_design %>% 
-  # filter(died) %>%  # proportions only among those who died
+  filter(died) %>%  # proportions only among those who died
   tabulate_survey(cause_of_death)
 
 # Then retrieve weighted cause-specific mortality ratios
 # note that survey ratio includes the observation times in calculation
 # note the posibility of negative confidence interval when low counts
 cause_of_death_mort <- survey_design %>% 
+  filter(died) %>%  # proportions only among those who died
   group_by(cause_of_death) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
 
 # Join the counts, props and mortality ratios together
-dplyr::left_join(cause_of_death_prop, cause_of_death_mort) %>% 
+dplyr::left_join(cause_of_death_prop, cause_of_death_mort, by = "cause_of_death") %>% 
   # merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"),
            m100 = FALSE, percent = FALSE) %>%
+  filter(cause_of_death != "Not Applicable") %>%
   rename("Cause of death" = cause_of_death,
          "Deaths (n)" = n,
          "% (95% CI)" = ci
@@ -950,8 +954,9 @@ Reported causes of death and cause-specific mortality rates, by age group, weigh
 # you could return the proportion only among those who died by uncommenting 
   # filter(died)
 survey_design %>% 
-  # filter(died) %>% 
+  filter(died) %>% 
   tabulate_survey(cause_of_death, age_group) %>%
+  filter(cause_of_death != "Not Applicable") %>%
   rename("Cause of Death" = "cause_of_death") %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
@@ -966,8 +971,9 @@ Reported causes of death and cause-specific mortality rates, by gender, weighted
 # you could return the proportion only among those who died by uncommenting 
   # filter(died)
 survey_design %>% 
-  # filter(died) %>% 
+  filter(died) %>% 
   tabulate_survey(cause_of_death, sex) %>%
+  filter(cause_of_death != "Not Applicable") %>%
   rename("Cause of Death" = "cause_of_death") %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
@@ -988,14 +994,14 @@ survey_design %>%                  # use the survey object (weighted)
     # (this could also be "yes" if your variables were yes/no; 
     # or a combination, e.g. c("yes", TRUE, "sick"))
     # method xlogit uses the CDC SUDAAN method of calculating confidence intervals
-  tabulate_binary_survey(SYMPTOMS, keep = TRUE, method = "xlogit") %>%
-  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
-  select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable,
+  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, method = "xlogit") %>%
+  select(-variable) %>%
+  rename("Symptom" = value,
          "N reported" = n,
          "% (95% CI)" = ci
         ) %>%
   kable()
+
 ```
 
 
@@ -1006,10 +1012,10 @@ Symptoms reported among those who were sick, stratified by age group
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
-  tabulate_binary_survey(SYMPTOMS, strata = age_group, keep = TRUE, pretty = TRUE) %>%
-  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
-  select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable) %>%
+  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, 
+                         strata = age_group, pretty = TRUE, method = "xlogit") %>%
+  select(-variable) %>%
+  rename("Symptom" = value) %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
@@ -1023,13 +1029,14 @@ Symptoms reported among those who were sick, stratified by gender
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by sex!!
-  tabulate_binary_survey(SYMPTOMS, strata = sex, keep = TRUE) %>%
-  mutate(variable = SYMPTOMS_LABELS) %>% # correct symptom names in output table 
-  select(-value) %>%                     # drop column which tells you which row values were kept 
-  rename("Symptom" = variable) %>%
+  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE,
+                  strata = sex, pretty = TRUE, method = "xlogit") %>%
+  select(-variable) %>%
+  rename("Symptom" = value) %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
   kable()
+
 ```
 
 

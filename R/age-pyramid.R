@@ -78,7 +78,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                              vertical_lines = FALSE, horizontal_lines = TRUE) {
   is_df <- is.data.frame(data)
   is_svy <- inherits(data, "tbl_svy")
-  impt_columns <- (is_df || is_svy) & c(age_group, split_by, stack_by) %in% colnames(data)
+  impt_columns <- (is_df || is_svy) & all(c(age_group, split_by, stack_by) %in% colnames(data))
   if (!impt_columns) {
     if (is_df || is_svy) {
       sprintf("The columns %s, %s, and %s were not found in %s",

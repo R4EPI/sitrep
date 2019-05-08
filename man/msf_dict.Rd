@@ -9,7 +9,7 @@
 \title{MSF data dictionaries and dummy datasets}
 \usage{
 msf_dict(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
-  compact = TRUE)
+  compact = TRUE, long = TRUE)
 
 msf_dict_rename_helper(disease, varnames = "data_element_shortname",
   copy_to_clipboard = TRUE)
@@ -19,7 +19,8 @@ gen_data(dictionary, varnames = "data_element_shortname",
 
 switch_vals(df, disease)
 
-msf_dict_survey(disease, name = "MSF-survey-dict.xlsx", tibble = TRUE)
+msf_dict_survey(disease, name = "MSF-survey-dict.xlsx", tibble = TRUE,
+  compact = FALSE)
 }
 \arguments{
 \item{disease}{Specify which disease you would like to use.
@@ -29,9 +30,14 @@ Currently supports "Cholera", "Measles" and "Meningitis".}
 
 \item{tibble}{Return data dictionary as a tidyverse tibble (default is TRUE)}
 
-\item{compact}{If TRUE, returns a neat data dictionary in single data frame.
-If FALSE, returns a list with two data frames, one with variables and the
-other with content options.}
+\item{compact}{if \code{TRUE} (default), then a nested data frame is returned
+where each row represents a single variable and a nested data frame column
+called "options", which can be expanded with \code{\link[tidyr:unnest]{tidyr::unnest()}}. This only
+works if \code{long = TRUE}.}
+
+\item{long}{If TRUE (default), the returned data dictionary is in long format with
+each option getting one row. If \code{FALSE}, then two data frames are returned,
+one with variables and the other with content options.}
 
 \item{varnames}{Specify name of column that contains varnames. Currently
 default set to "Item".  (this can probably be deleted once dictionaries
