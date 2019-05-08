@@ -980,7 +980,6 @@ ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
 ar %>%
   merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
   rename("Cases (n)" = cases, 
-         "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 100,000)" = ar, 
          "95%CI" = ci) %>% 
