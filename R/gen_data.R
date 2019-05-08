@@ -2,9 +2,7 @@
 #'
 #' These function reads in MSF data dictionaries and produces randomised
 #' datasets based on values defined in the dictionaries.  The randomised
-#' dataset produced should mimic an excel export from DHIS2.  A third function
-#' (switch_vals) is used to recode variables defined in the dictionaries from
-#' coded to named form (e.g. 0/1 to No/Yes).
+#' dataset produced should mimic an excel export from DHIS2. 
 #'
 #' @param disease Specify which disease you would like to use.
 #'   Currently supports "Cholera", "Measles" and "Meningitis".
@@ -27,8 +25,6 @@
 #'   called "options", which can be expanded with [tidyr::unnest()]. This only
 #'   works if `long = TRUE`.
 #'
-#' @param df A dataframe (e.g. your linelist) which is passed to switch_vals function.
-#' 
 #' @param long If TRUE (default), the returned data dictionary is in long format with 
 #'   each option getting one row. If `FALSE`, then two data frames are returned,
 #'   one with variables and the other with content options. 
@@ -42,7 +38,41 @@
 #' @importFrom tibble as_tibble
 #' @importFrom stats aggregate runif
 #' @importFrom utils read.csv
+#' @seealso [linelist::clean_variable_spelling()]
 #' @export
+#' @examples
+#'
+#' if (require('dplyr') & require('linelist')) { withAutoprint({
+#' # You will often want to use MSF dictionaries to translate codes to human-
+#' # readable variables. Here, we generate a data set of 20 cases:
+#' dat <- gen_data(dictionary = "Cholera", varnames = "data_element_shortname", 
+#'                 numcases = 20)
+#' print(dat)
+#' 
+#' # We want the expanded dictionary, so we will select `compact = FALSE`
+#' dict <- msf_dict(disease = "Cholera", long = TRUE, compact = FALSE, tibble = TRUE)
+#' print(dict)
+#'
+#' # We can use linelist's clean_variable_spelling to translate the codes. First,
+#' # we want to reorder the columns of the dictionary like so:
+#' #
+#' #  - 1st column: option codes
+#' #  - 2nd column: translations
+#' #  - 3rd column: data column name
+#' #  - 4th column: order of options
+#' # 
+#' # we also want to make sure to filter out any columns that are blank for 
+#' # the option codes, because this means that they don't have a fixed number of
+#' # options
+#' dict <- dict %>%
+#'   select(option_code, option_name, data_element_shortname, option_order_in_set) %>%
+#'   filter(!is.na(option_code))
+#' print(dict)
+#'
+#' # Now we can use linelist to filter the data:
+#' dat_clean <- clean_variable_spelling(dat, dict)
+#' print(dat_clean)
+#' })}
 
 
 # function to pull outbreak data dicationaries together
@@ -549,35 +579,35 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
 
 
-# function to switch from coded to named values (based on data dictionaries)
-#' @export
-#' @rdname msf_dict
-switch_vals <- function(df, disease) {
-  # read in appropriate dictionary as a list
-  dat_dict <- msf_dict(disease, compact = FALSE)
+## function to switch from coded to named values (based on data dictionaries)
+## @export
+## @rdname msf_dict
+#switch_vals <- function(df, disease) {
+#  # read in appropriate dictionary as a list
+#  dat_dict <- msf_dict(disease, compact = FALSE)
 
-  # returns the row number which dataset names match to dictionary names
-  matchers <- match(names(df), dat_dict$dictionary$data_element_shortname, nomatch = 0)
-  # returns lookup IDs based on
-  ids <- dat_dict$dictionary$used_optionset_uid[matchers]
+#  # returns the row number which dataset names match to dictionary names
+#  matchers <- match(names(df), dat_dict$dictionary$data_element_shortname, nomatch = 0)
+#  # returns lookup IDs based on
+#  ids <- dat_dict$dictionary$used_optionset_uid[matchers]
 
 
-  for (i in matchers[!is.na(ids)]) {
+#  for (i in matchers[!is.na(ids)]) {
 
-    # returns the name of variable currently being looped
-    var <- dat_dict$dictionary$data_element_shortname[i]
+#    # returns the name of variable currently being looped
+#    var <- dat_dict$dictionary$data_element_shortname[i]
 
-    # returns the rows in options which match to variable lookups
-    subsetter <- which(dat_dict$options$optionset_uid %in%
-                         dat_dict$dictionary$used_optionset_uid[i])
+#    # returns the rows in options which match to variable lookups
+#    subsetter <- which(dat_dict$options$optionset_uid %in%
+#                         dat_dict$dictionary$used_optionset_uid[i])
 
-    # changes the values from backend(code) to front end (names)
-    df[[var]] <- plyr::mapvalues(df[[var]],
-                                from = dat_dict$options$option_code[subsetter],
-                                to = dat_dict$options$option_name[subsetter])
-  }
-  df
-}
+#    # changes the values from backend(code) to front end (names)
+#    df[[var]] <- plyr::mapvalues(df[[var]],
+#                                from = dat_dict$options$option_code[subsetter],
+#                                to = dat_dict$options$option_name[subsetter])
+#  }
+#  df
+#}
 
 
 

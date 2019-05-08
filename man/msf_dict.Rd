@@ -4,7 +4,6 @@
 \alias{msf_dict}
 \alias{msf_dict_rename_helper}
 \alias{gen_data}
-\alias{switch_vals}
 \alias{msf_dict_survey}
 \title{MSF data dictionaries and dummy datasets}
 \usage{
@@ -16,8 +15,6 @@ msf_dict_rename_helper(disease, varnames = "data_element_shortname",
 
 gen_data(dictionary, varnames = "data_element_shortname",
   numcases = 300)
-
-switch_vals(df, disease)
 
 msf_dict_survey(disease, name = "MSF-survey-dict.xlsx", tibble = TRUE,
   compact = FALSE)
@@ -51,13 +48,46 @@ rename template will be printed to the user's console.}
 Currently supports "Cholera", "Measles", "Meningitis", "AJS" and "Mortality".}
 
 \item{numcases}{For fake data, specify the number of cases you want (default is 300}
-
-\item{df}{A dataframe (e.g. your linelist) which is passed to switch_vals function.}
 }
 \description{
 These function reads in MSF data dictionaries and produces randomised
 datasets based on values defined in the dictionaries.  The randomised
-dataset produced should mimic an excel export from DHIS2.  A third function
-(switch_vals) is used to recode variables defined in the dictionaries from
-coded to named form (e.g. 0/1 to No/Yes).
+dataset produced should mimic an excel export from DHIS2.
+}
+\examples{
+
+if (require('dplyr') & require('linelist')) { withAutoprint({
+# You will often want to use MSF dictionaries to translate codes to human-
+# readable variables. Here, we generate a data set of 20 cases:
+dat <- gen_data(dictionary = "Cholera", varnames = "data_element_shortname", 
+                numcases = 20)
+print(dat)
+
+# We want the expanded dictionary, so we will select `compact = FALSE`
+dict <- msf_dict(disease = "Cholera", long = TRUE, compact = FALSE, tibble = TRUE)
+print(dict)
+
+# We can use linelist's clean_variable_spelling to translate the codes. First,
+# we want to reorder the columns of the dictionary like so:
+#
+#  - 1st column: option codes
+#  - 2nd column: translations
+#  - 3rd column: data column name
+#  - 4th column: order of options
+# 
+# we also want to make sure to filter out any columns that are blank for 
+# the option codes, because this means that they don't have a fixed number of
+# options
+dict <- dict \%>\%
+  select(option_code, option_name, data_element_shortname, option_order_in_set) \%>\%
+  filter(!is.na(option_code))
+print(dict)
+
+# Now we can use linelist to filter the data:
+dat_clean <- clean_variable_spelling(dat, dict)
+print(dat_clean)
+})}
+}
+\seealso{
+\code{\link[linelist:clean_variable_spelling]{linelist::clean_variable_spelling()}}
 }
