@@ -8,7 +8,7 @@ template_data_frame_categories <- function(dat_dict, numcases, varnames, survey 
   colnames(dis_output) <- dat_dict[[varnames]]
 
   categories <- tidyr::unnest(dat_dict)
-  categories <- dplyr::filter(categories, !is.na(option_name))
+  categories <- dplyr::filter(categories, !is.na(!! quote(option_name)))
 
   # take samples for vars with defined options (non empties)
   for (i in unique(categories[[varnames]])) {

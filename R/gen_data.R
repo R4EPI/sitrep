@@ -22,11 +22,16 @@
 #'
 #' @param tibble Return data dictionary as a tidyverse tibble (default is TRUE)
 #'
-#' @param compact If TRUE, returns a neat data dictionary in single data frame.
-#'   If FALSE, returns a list with two data frames, one with variables and the
-#'   other with content options.
+#' @param compact if `TRUE` (default), then a nested data frame is returned 
+#'   where each row represents a single variable and a nested data frame column
+#'   called "options", which can be expanded with [tidyr::unnest()]. This only
+#'   works if `long = TRUE`.
 #'
 #' @param df A dataframe (e.g. your linelist) which is passed to switch_vals function.
+#' 
+#' @param long If TRUE (default), the returned data dictionary is in long format with 
+#'   each option getting one row. If `FALSE`, then two data frames are returned,
+#'   one with variables and the other with content options. 
 #'
 #' @param copy_to_clipboard if `TRUE` (default), the rename template will be
 #'   copied to the user's clipboard with [clipr::write_clip()]. If `FALSE`, the

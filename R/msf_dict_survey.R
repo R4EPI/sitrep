@@ -23,7 +23,7 @@ msf_dict_survey <- function(disease, name = "MSF-survey-dict.xlsx",
   # fill NA values with previous non-NA value, replace "." in codes and names
   dat_dict <- tidyr::fill(dat_dict, colnames(dat_dict), .direction = "down")
   dat_dict <- dplyr::rename_at(dat_dict,
-                               dplyr::vars(starts_with("choice_")),
+                               dplyr::vars(dplyr::starts_with("choice_")),
                                .funs = ~gsub("choice", "option", .)
                               ) 
 
