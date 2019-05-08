@@ -763,13 +763,9 @@ Cases by age group and definition
 # get counts and props of age groups by case definition 
 # include column and row totals 
 # descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-#   rename("Age group" = age_category, 
-#          "Confirmed cases (n)" = Confirmed_n, 
-#          "%" = Confirmed_prop, 
-#          "Probable cases (n)" = Probable_n, 
-#          "%" = Probable_prop,
-#          "Suspected cases (n)" = Suspected_n, 
-#          "%" = Suspected_prop) %>% 
+#   rename("Age group" = age_category) %>%
+#   rename_redundant(prop = "%") %>%
+#   augment_redundant("_n$" = " cases (n)") %>%
 #   kable(digits = 2)
 ```
 
@@ -780,13 +776,10 @@ Cases by age group and sex
 
 ```{r describe_by_age_group_and_sex}
 descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group" = age_category, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop,
-         "Missing (n)" = NA_n, 
-         "%" = NA_prop) %>% 
+  rename("Age group" = age_category,
+         "Missing (n)" = NA_n) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 
@@ -795,13 +788,10 @@ Alternatively if you would like proportions to be of the total population, use t
 ```{r total_props_agegroup_sex}
 descriptive(linelist_cleaned, "age_category", "sex", 
             coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group" = age_category, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop,
-         "Missing (n)" = NA_n, 
-         "%" = NA_prop) %>% 
+  rename("Age group" = age_category,
+         "Missing (n)" = NA_n) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 
@@ -866,13 +856,8 @@ multi_descriptive(linelist_cleaned, SYMPTOMS) %>%
   # re-order columns (drop total_prop too)
   select(symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
   # rename accordingly
-  rename(
-    "Yes (n)" = Yes_n,
-    "%" = Yes_prop,
-    "No (n)" = No_n,
-    "%" = No_prop,
-    "Total (N)" = Total_n
-  ) %>% 
+  rename_redundant("prop" = "%") %>%
+  augment_redundant("_n$" = " (n)") %>%
   kable(digits = 2)
 
 ```
@@ -890,7 +875,7 @@ descriptive(linelist_cleaned,
   kable(digits = 2)
 ```
 
-`r fmt_count(linelist_cleaned, previously_vaccinated == "Yes - vaccination card/ink" | previously_vaccinated == "Yes - verbal")` reported previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unsure")` were unsure.
+`r fmt_count(linelist_cleaned, grepl("Yes", previously_vaccinated))` reported previous vaccination. `r fmt_count(linelist_cleaned, previously_vaccinated == "No")` were unvaccinated and `r fmt_count(linelist_cleaned, previously_vaccinated == "Unsure")` were unsure.
 
 #### Case fatality ratio 
 
@@ -1116,6 +1101,7 @@ epicurve_theme <- theme(
   panel.grid.major.x = element_line(color = "grey60", linetype = 3),
   panel.grid.major.y = element_line(color = "grey60", linetype = 3)
 )
+# This sets the labels in ggplot for the epicurves
 epicurve_labels <- labs(x = "Calendar week", 
                         y = "Cases (n)", 
                         title = "Cases by week of onset",
@@ -1330,11 +1316,8 @@ We could then also look at admissions and exits among inpatients by epiweek for 
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Week" = epiweek, 
-         "Inpatient cases (n)" = Inpatient_n, 
-         "%" = Inpatient_prop, 
-         "Outpatient cases (n)" = Outpatient_n, 
-         "%" = Outpatient_prop) %>% 
+  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
 
@@ -1346,17 +1329,9 @@ linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>% 
 descriptive("epiweek", "exit_status2", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Week" = "epiweek", 
-         "Died (n)" = "Died_n", 
-         "%" = "Died_prop", 
-         "Discharged (n)" = "Discharged_n", 
-         "%" = "Discharged_prop", 
-         "Left (n)" = "Left_n", 
-         "%" = "Left_prop", 
-         "Transferred (n)" = "Transferred_n", 
-         "%" = "Transferred_prop", 
-         "Total" = "Total"
-         ) %>% 
+  rename("Week" = "epiweek") %>%
+  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
 
@@ -1380,13 +1355,9 @@ To get a basic descriptive table of cases by region and facility, as well as by 
 descriptive(linelist_cleaned, "patient_origin", 
             "patient_facility_type",
             coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin", 
-         "Inpatient (n)" = "Inpatient_n", 
-         "%" = "Inpatient_prop", 
-         "Outpatient (n)" = "Outpatient_n", 
-         "%" = "Outpatient_prop",
-         "Total" = "Total"
-         ) %>% 
+  rename("Region" = "patient_origin") %>%
+  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
 
@@ -1401,17 +1372,9 @@ descriptive(filter(linelist_cleaned,
                    patient_facility_type == "Inpatient"),
             "patient_origin", "exit_status2",
             coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin", 
-         "Died (n)" = "Died_n", 
-         "%" = "Died_prop", 
-         "Discharged (n)" = "Discharged_n", 
-         "%" = "Discharged_prop", 
-         "Left (n)" = "Left_n", 
-         "%" = "Left_prop", 
-         "Transferred (n)" = "Transferred_n", 
-         "%" = "Transferred_prop", 
-         "Total" = "Total"
-         ) %>% 
+  rename("Region" = "patient_origin") %>%
+  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
 
