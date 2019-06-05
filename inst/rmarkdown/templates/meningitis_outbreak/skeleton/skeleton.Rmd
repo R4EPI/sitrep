@@ -790,8 +790,7 @@ Cases by age group and sex
 
 ```{r describe_by_age_group_and_sex}
 descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group" = age_category,
-         "Missing (n)" = NA_n) %>%
+  rename("Age group" = age_category) %>%
   rename_redundant(prop = "%") %>%
   augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
@@ -802,8 +801,7 @@ Alternatively if you would like proportions to be of the total population, use t
 ```{r total_props_agegroup_sex}
 descriptive(linelist_cleaned, "age_category", "sex", 
             coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group" = age_category,
-         "Missing (n)" = NA_n) %>%
+  rename("Age group" = age_category) %>%
   rename_redundant(prop = "%") %>%
   augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)

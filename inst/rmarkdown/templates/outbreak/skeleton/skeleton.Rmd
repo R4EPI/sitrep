@@ -297,13 +297,9 @@ Cases by age group and definition
 # get counts and props of age groups by case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group (years)" = age_group, 
-         "Confirmed cases (n)" = Confirmed_n, 
-         "%" = Confirmed_prop, 
-         "Probable cases (n)" = Probable_n, 
-         "%" = Probable_prop,
-         "Suspected cases (n)" = Suspected_n, 
-         "%" = Suspected_prop) %>% 
+  rename("Age group (years)" = age_group) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 
@@ -314,13 +310,9 @@ Cases by age group and sex
 
 ```{r describe_by_age_group_and_sex}
 descriptive(linelist_cleaned, "age_group", "sex") %>% 
-  rename("Age group (years)" = age_group, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop,
-         "Missing (n)" = NA_n, 
-         "%" = NA_prop) %>% 
+  rename("Age group (years)" = age_group) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 
@@ -332,12 +324,18 @@ descriptive(linelist_cleaned, "age_group", "sex") %>%
 # for example to only have confirmed cases 
 filter(linelist_cleaned, case_def == "Confirmed") %>%
   descriptive("age_group", "sex") %>% 
+  rename("Age group (years)" = age_group) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 
 
 # alternatively you could show a single age group 
 filter(linelist_cleaned, age_group == "10-29") %>%
   descriptive("age_group", "sex") %>% 
+  rename("Age group (years)" = age_group) %>%
+  rename_redundant(prop = "%") %>%
+  augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
 ```
 

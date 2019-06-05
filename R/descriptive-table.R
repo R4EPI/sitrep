@@ -3,22 +3,35 @@
 #' Option to add row and column totals
 #' 
 #' @param df A dataframe (e.g. your linelist)
+#'
 #' @param counter A name of the variable (in quotation marks) that you would
 #'   like to have as rows.
+#'
 #' @param grouper A name of the variable (in quotation marks) that you would
 #'   like to have as columns.
+#'
 #' @param multiplier What you would like to have your proportions as (default
 #'   is per 100).
+#'
 #' @param digits The number of decimal places you would like in your
 #'   proportions (default is 1).
+#'
 #' @param proptotal A TRUE/FALSE variable specifying whether you would
 #'   proportions to be of total cases.The default is FALSE and returns
 #'   proportions for each column.
+#'
 #' @param coltotals Add column totals on the end
+#'
 #' @param rowtotals Add row totals (only sums counts)
+#'
 #' @param single_row if `TRUE` and `grouper = NA`, then the output is flattened
 #'   to a single row so that variables can be concatenated into a data frame.
 #'   Defaults to `FALSE`.
+#'
+#' @param explicit_missing if `TRUE`, missing values will be marked as
+#' `Missing` and tabulated. Defaults to `FALSE`, where missing values are
+#' excluded from the computation
+#'
 #' @details The `descriptive()` function returns a single table with counts and
 #'   proportions of a categorical variable (`counter`). Adding a grouper adds
 #'   more columns, stratifying "n" and "prop", the option `coltotals = TRUE`
@@ -38,13 +51,22 @@
 #' @export
 descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
                         proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE,
-                        single_row = FALSE) {
+                        single_row = FALSE, explicit_missing = TRUE) {
 
   # Using rlang::sym() allows us to use quoted arguments
   # If we wanted to go full NSE, we would use rlang::enquo() instead
   sym_count <- rlang::sym(counter)
+  
+  if (explicit_missing) {
+    df[[counter]] <- forcats::fct_explicit_na(df[[counter]], "Missing")
+  } else {
+    nas <- is.na(df[[counter]])
+    warning(sprintf("Removing %d missing values", sum(nas)))
+    df <- df[!nas, , drop = FALSE]
+  }
   # if given two variables then group by the "grouper" var
   if (!is.na(grouper)) {
+    df[[grouper]] <- forcats::fct_explicit_na(df[[grouper]], "Missing")
     sym_group <- rlang::sym(grouper)
     tmp_var <- sprintf("hey%s", as.character(Sys.time()))
     if (is.factor(df[[counter]])) {
@@ -58,12 +80,12 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
 
     if (proptotal) {
       count_data <- dplyr::mutate(count_data,
-                                  prop = round(.data$n / nrow(df) * multiplier,
-                                               digits = digits))
+                                  prop = .data$n / nrow(df) * multiplier,
+                                  )
     } else {
       count_data <- dplyr::mutate(count_data,
-                                prop = round(.data$n / sum(.data$n) * multiplier,
-                                             digits = digits))
+                                  prop = .data$n / sum(.data$n) * multiplier,
+                                  )
     }
 
     # change to wide format, to have "grouper" var levels as columns
@@ -73,15 +95,15 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
 
   } else {
     # get counts and props for just a single variable
-    count_data <- dplyr::count(df, !!sym_count)
+    count_data <- dplyr::count(df, !! sym_count)
     if (proptotal) {
       count_data <- dplyr::mutate(count_data,
-                                  prop = round(.data$n / nrow(df) * multiplier,
-                                               digits = digits))
+                                  prop = .data$n / nrow(df) * multiplier,
+                                  )
     } else {
       count_data <- dplyr::mutate(count_data,
-                                  prop = round(.data$n / sum(.data$n) * multiplier,
-                                               digits = digits))
+                                  prop = .data$n / sum(.data$n) * multiplier,
+                                  )
     }
   }
   # fill in the counting data that didn't make it
@@ -129,12 +151,15 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
 #' @param ... columns to pass to descriptive
 #' @param .id the name of the column identifying the aggregates
 #' @export
-multi_descriptive <- function(df, ..., multiplier = 100, digits = 1, proptotal = FALSE, coltotals = TRUE, .id = "symptom") { 
+multi_descriptive <- function(df, ..., multiplier = 100, digits = 1, proptotal = FALSE, coltotals = TRUE, .id = "symptom", explicit_missing = TRUE) { 
   
   the_vars <- tidyselect::vars_select(colnames(df), ...)
   res <- lapply(the_vars, function(i) {
+    suppressWarnings({
     descriptive(df, i, multiplier = multiplier, digits = digits, 
-                proptotal = proptotal, coltotals = coltotals, single_row = TRUE)
+                proptotal = proptotal, coltotals = coltotals, single_row = TRUE,
+                explicit_missing = explicit_missing)
+    })
   })
   bind_rows(res, .id = .id)
 }

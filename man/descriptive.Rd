@@ -7,10 +7,11 @@
 \usage{
 descriptive(df, counter, grouper = NA, multiplier = 100, digits = 1,
   proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE,
-  single_row = FALSE)
+  single_row = FALSE, explicit_missing = TRUE)
 
 multi_descriptive(df, ..., multiplier = 100, digits = 1,
-  proptotal = FALSE, coltotals = TRUE, .id = "symptom")
+  proptotal = FALSE, coltotals = TRUE, .id = "symptom",
+  explicit_missing = TRUE)
 }
 \arguments{
 \item{df}{A dataframe (e.g. your linelist)}
@@ -38,6 +39,10 @@ proportions for each column.}
 \item{single_row}{if \code{TRUE} and \code{grouper = NA}, then the output is flattened
 to a single row so that variables can be concatenated into a data frame.
 Defaults to \code{FALSE}.}
+
+\item{explicit_missing}{if \code{TRUE}, missing values will be marked as
+\code{(Missing)} and tabulated. Defaults to \code{FALSE}, where missing values are
+excluded from the computation}
 
 \item{...}{columns to pass to descriptive}
 
