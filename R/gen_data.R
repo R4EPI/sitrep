@@ -313,29 +313,42 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     # Fix DATES
     # exit dates before date of entry
     # just add 20 to admission.... (was easiest...)
-    dis_output$date_of_exit[dis_output$date_of_exit <=
-                              dis_output$date_of_consultation_admission] <-
-      dis_output$date_of_consultation_admission[dis_output$date_of_exit <=
-                                                  dis_output$date_of_consultation_admission] + 20
+    dis_output <- enforce_timing(dis_output, 
+                                 first  = "date_of_consultation_admission", 
+                                 second = "date_of_exit", 
+                                 20)
+
+    dis_output <- enforce_timing(dis_output, 
+                                 first  = "date_of_admission", 
+                                 second = "date_of_exit", 
+                                 20)
     # lab sample dates before admission
     # add 2 to admission....
-    dis_output$date_lab_sample_taken[dis_output$date_lab_sample_taken <=
-                                       dis_output$date_of_consultation_admission] <-
-      dis_output$date_of_consultation_admission[dis_output$date_of_exit <=
-                                                  dis_output$date_of_consultation_admission] + 2
-
+    dis_output <- enforce_timing(dis_output,
+                                 first  = "date_of_consultation_admission",
+                                 second = "date_lab_sample_taken",
+                                 2)
     # vaccination dates after admission
     # minus 20 to admission...
-    dis_output$date_of_last_vaccination[dis_output$date_of_exit >
-                                          dis_output$date_of_consultation_admission] <-
-      dis_output$date_of_consultation_admission[dis_output$date_of_exit >
-                                                  dis_output$date_of_consultation_admission] - 20
+    dis_output <- enforce_timing(dis_output,
+                                 first  = "date_of_consultation_admission",
+                                 second = "date_of_last_vaccination",
+                                 20)
+
+#     dis_output$date_of_last_vaccination[dis_output$date_of_exit >
+#                                           dis_output$date_of_consultation_admission] <-
+#       dis_output$date_of_consultation_admission[dis_output$date_of_exit >
+#                                                   dis_output$date_of_consultation_admission] - 20
     # symptom onset after admission
     # minus 20 to admission...
-    dis_output$date_of_onset[dis_output$date_of_onset >
-                               dis_output$date_of_consultation_admission] <-
-      dis_output$date_of_consultation_admission[dis_output$date_of_onset >
-                                                  dis_output$date_of_consultation_admission] - 20
+    dis_output <- enforce_timing(dis_output,
+                                 first  = "date_of_consultation_admission",
+                                 second = "date_of_onset",
+                                 20)
+    # dis_output$date_of_onset[dis_output$date_of_onset >
+    #                            dis_output$date_of_consultation_admission] <-
+    #   dis_output$date_of_consultation_admission[dis_output$date_of_onset >
+    #                                               dis_output$date_of_consultation_admission] - 20
 
 
     # Patient identifiers
@@ -347,8 +360,8 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
     # patient origin (categorical from a dropdown)
     dis_output$patient_origin <- sample(c("Village A", "Village B",
-                                                    "Village C", "Village D"),
-                                                  numcases, replace = TRUE)
+                                          "Village C", "Village D"),
+                                        numcases, replace = TRUE)
 
     # treatment location (categorical from a dropdown)
     dis_output$treatment_location <- sample(c("Ward A", "Ward B",
@@ -410,13 +423,12 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
       dictionary == "AJS") {
     # fix pregnancy stuff
     dis_output$pregnant[dis_output$sex != "F"] <- "NA"
-    PREGNANT_FEMALE <- which(dis_output$sex != "F" |
-                               dis_output$pregnant != "Y")
+    PREGNANT_FEMALE <- dis_output$sex != "F" | dis_output$pregnant != "Y"
 
     dis_output$foetus_alive_at_admission[PREGNANT_FEMALE]  <- NA
     dis_output$trimester[PREGNANT_FEMALE]                  <- NA
     dis_output$delivery_event[PREGNANT_FEMALE]             <- "NA"
-    dis_output$pregnancy_outcome_at_exit[PREGNANT_FEMALE]   <- NA
+    dis_output$pregnancy_outcome_at_exit[PREGNANT_FEMALE]  <- NA
     dis_output$pregnancy_outcome_at_exit[dis_output$delivery_event != "1"] <- NA
   }
 
@@ -441,17 +453,22 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   if (dictionary == "Meningitis") {
     # T1 lab sample dates before admission
     # add 2 to admission....
-    dis_output$date_ti_sample_sent[dis_output$date_ti_sample_sent <=
-                                       dis_output$date_of_consultation_admission] <-
-      dis_output$date_of_consultation_admission[dis_output$date_ti_sample_sent <=
-                                                  dis_output$date_of_consultation_admission] + 2
+
+    dis_output <- enforce_timing(dis_output,
+                                 first  = "date_of_consultation_admission",
+                                 second = "date_ti_sample_sent",
+                                 2)
+    # dis_output$date_ti_sample_sent[dis_output$date_ti_sample_sent <=
+    #                                    dis_output$date_of_consultation_admission] <-
+    #   dis_output$date_of_consultation_admission[dis_output$date_ti_sample_sent <=
+    #                                               dis_output$date_of_consultation_admission] + 2
 
     # fix pregnancy delivery
     dis_output$delivery_event[dis_output$sex != "F"] <- "NA"
 
     # fix vaccine stuff among not vaccinated
     NOTVACC <- which(!dis_output$vaccinated_meningitis_routine %in% c("C", "V") &
-                       !dis_output$vaccinated_meningitis_mvc %in% c("C", "V"))
+                     !dis_output$vaccinated_meningitis_mvc %in% c("C", "V"))
 
     dis_output$name_meningitis_vaccine[NOTVACC] <- NA
     dis_output$date_of_last_vaccination[NOTVACC] <- NA
@@ -480,20 +497,26 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
                        "q145_q43_died_country")] <- NA
     # pregnancy related cause of death n.a. for too old/young and for males
     no_pregnancy <- dis_output$q138_q36_died_cause == "Pregnancy-related" &
-      (dis_output$q4_q6_sex == "Male" | dis_output$q155_q5_age_year >= 50 |
-         dis_output$q155_q5_age_year < 12)
+                      (dis_output$q4_q6_sex == "Male"    | 
+                       dis_output$q155_q5_age_year >= 50 |
+                       dis_output$q155_q5_age_year < 12
+                      )
+
     no_pregnancy[is.na(no_pregnancy)] <- FALSE # replace NAs
     dis_output[no_pregnancy, "q138_q36_died_cause"] <- "Unknown"
 
     # fix arrival/leave dates
     dis_output$q41_q25_hh_arrive_date <-
-      pmin(dis_output$q41_q25_hh_arrive_date, dis_output$q45_q29_hh_leave_date, dis_output$q88_q33_born_date, na.rm = TRUE)
+      pmin(dis_output$q41_q25_hh_arrive_date, 
+           dis_output$q45_q29_hh_leave_date, 
+           dis_output$q88_q33_born_date, na.rm = TRUE)
 
     # leave date
     chn_date <- dis_output$q45_q29_hh_leave_date <= dis_output$q41_q25_hh_arrive_date
     chn_date2 <- dis_output$q45_q29_hh_leave_date < dis_output$q88_q33_born_date
     chn_date[is.na(chn_date)] <- FALSE
     chn_date2[is.na(chn_date2)] <- FALSE
+
     dis_output$q45_q29_hh_leave_date[chn_date] <- dis_output$q41_q25_hh_arrive_date[chn_date] + sample(5:30, sum(chn_date), replace = TRUE)
     dis_output$q45_q29_hh_leave_date[chn_date2] <- dis_output$q88_q33_born_date[chn_date2] + sample(5:30, sum(chn_date2), replace = TRUE)
 
@@ -575,39 +598,6 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   dplyr::as_tibble(dis_output)
 
 }
-
-
-
-
-## function to switch from coded to named values (based on data dictionaries)
-## @export
-## @rdname msf_dict
-#switch_vals <- function(df, disease) {
-#  # read in appropriate dictionary as a list
-#  dat_dict <- msf_dict(disease, compact = FALSE)
-
-#  # returns the row number which dataset names match to dictionary names
-#  matchers <- match(names(df), dat_dict$dictionary$data_element_shortname, nomatch = 0)
-#  # returns lookup IDs based on
-#  ids <- dat_dict$dictionary$used_optionset_uid[matchers]
-
-
-#  for (i in matchers[!is.na(ids)]) {
-
-#    # returns the name of variable currently being looped
-#    var <- dat_dict$dictionary$data_element_shortname[i]
-
-#    # returns the rows in options which match to variable lookups
-#    subsetter <- which(dat_dict$options$optionset_uid %in%
-#                         dat_dict$dictionary$used_optionset_uid[i])
-
-#    # changes the values from backend(code) to front end (names)
-#    df[[var]] <- plyr::mapvalues(df[[var]],
-#                                from = dat_dict$options$option_code[subsetter],
-#                                to = dat_dict$options$option_name[subsetter])
-#  }
-#  df
-#}
 
 
 
