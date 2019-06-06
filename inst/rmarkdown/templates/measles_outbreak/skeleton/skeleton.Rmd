@@ -1187,7 +1187,7 @@ Alternatively, you could stratify by sex among a subset of only inpatients.
 
 ```{r incidence_by_sex_facility, message = FALSE}
 
-inc_week_7_sex_fac <- inelist_cleaned %>%
+inc_week_7_sex_fac <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
   with(incidence(date_of_onset, interval = "Monday week", groups = sex))
 
