@@ -9,6 +9,10 @@
 #'   Defaults to `FALSE`
 #' @param mustwork if `TRUE`, then the templates must work for the function to
 #'   succeed. Defaults to `FALSE`, which will simply print the errors. 
+#' @param output_format a character defining the output formats to use for the
+#'   template files. Defaults to the output_format defined in the templates
+#'   (which is `word_document`), but can be modified to `html_document` for
+#'   cross-platform cromulence checking.
 #' 
 #' @return the path where the templates were built.
 #' @export

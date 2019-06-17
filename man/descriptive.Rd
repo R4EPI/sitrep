@@ -41,7 +41,7 @@ to a single row so that variables can be concatenated into a data frame.
 Defaults to \code{FALSE}.}
 
 \item{explicit_missing}{if \code{TRUE}, missing values will be marked as
-\code{(Missing)} and tabulated. Defaults to \code{FALSE}, where missing values are
+\code{Missing} and tabulated. Defaults to \code{FALSE}, where missing values are
 excluded from the computation}
 
 \item{...}{columns to pass to descriptive}
