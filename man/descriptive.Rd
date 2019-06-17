@@ -64,3 +64,34 @@ columns represent counts and proportions of the values within those
 variables. This function assumes that all of the variables have the same
 values (e.g. Yes/No values) and atttempts no correction.
 }
+\examples{
+have_packages <- require("dplyr") && require("linelist")
+if (have_packages) { withAutoprint({
+
+# Simulating linelist data
+
+linelist     <- gen_data("Measles")
+measles_dict <- msf_dict("Measles", compact = FALSE) \%>\%
+  select(option_code, option_name, everything())
+
+# Cleaning linelist data
+linelist_clean <- clean_variable_spelling(
+  x = linelist,
+  wordlists = filter(measles_dict, !is.na(option_code)),
+  spelling_vars = "data_element_shortname",
+  sort_by = "option_order_in_set"
+)
+
+# get a descriptive table by sex
+descriptive(linelist_clean, "sex")
+
+# describe prenancy statistics, but remove missing data from the tally
+descriptive(linelist_clean, "trimester", explicit_missing = FALSE)
+
+# describe prenancy statistics, stratifying by vitamin A perscription
+descriptive(linelist_clean, "trimester", "prescribed_vitamin_a", explicit_missing = FALSE)
+
+
+}) }
+
+}
