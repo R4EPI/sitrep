@@ -85,7 +85,8 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
 
 
   # sym_count <- rlang::sym(counter)
-  counter <- tidyselect::vars_select(colnames(df), counter)
+  counter <- tidyselect::vars_select(colnames(df), !!enquo(counter))
+  grouper <- tidyselect::vars_select(colnames(df), !!enquo(grouper))
   # grouper <- tidyselect::vars_select(colnames(df), grouper)
   sym_count <- rlang::sym(counter)
 
@@ -97,10 +98,19 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
     warning(sprintf("Removing %d missing values", sum(nas)))
     df <- df[!nas, , drop = FALSE]
   }
-  # if given two variables then group by the "grouper" var
-  if (!is.na(grouper)) {
-    df[[grouper]] <- forcats::fct_explicit_na(df[[grouper]], "Missing")
+
+  if (length(grouper) == 1) {
+
+    # Use a grouper variable for the columns.
+    #
+    # This grouper var will always have explicit missing.
+    
+
     sym_group <- rlang::sym(grouper)
+    df[[grouper]] <- forcats::fct_explicit_na(df[[grouper]], "Missing")
+
+    # create temporary variable to account for zero count 
+    # This was added in 09b9c240b9d9853f89b50b26a7b37aa31dded083
     tmp_var <- sprintf("hey%s", as.character(Sys.time()))
     if (is.factor(df[[counter]])) {
       levels(df[[counter]]) <- c(levels(df[[counter]]), tmp_var)
@@ -142,7 +152,7 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
   # fill in the counting data that didn't make it
   count_data <- tidyr::complete(count_data, !!sym_count)
 
-  if (!is.na(grouper)) {
+  if (length(grouper) == 1) {
     # filter out the dummy variable
     count_data <- dplyr::filter(count_data, !!sym_count != tmp_var)
   }
@@ -165,7 +175,7 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
       mutate(count_data,
              Total = rowSums(count_data[, grep("(_n$|^n$)", colnames(count_data))], na.rm = TRUE))
   }
-  if (!is.na(grouper) && is.factor(count_data[[counter]])) {
+  if (length(grouper) == 1 && is.factor(count_data[[counter]])) {
     l <- levels(count_data[[counter]])
     count_data[[counter]] <- factor(count_data[[counter]], levels = l[l != tmp_var])
   }
