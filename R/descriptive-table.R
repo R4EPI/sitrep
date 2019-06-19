@@ -61,10 +61,10 @@
 #'
 #' # Cleaning linelist data
 #' linelist_clean <- clean_variable_spelling(
-#'   x = linelist,
-#'   wordlists = filter(measles_dict, !is.na(option_code)),
+#'   x             = linelist,
+#'   wordlists     = filter(measles_dict, !is.na(option_code)),
 #'   spelling_vars = "data_element_shortname",
-#'   sort_by = "option_order_in_set"
+#'   sort_by       = "option_order_in_set"
 #' )
 #' 
 #' # get a descriptive table by sex
@@ -132,6 +132,11 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
     # change to wide format, to have "grouper" var levels as columns
     count_data <- tidyr::gather(count_data, key = "variable", value = "value", c(.data$n, .data$prop))
     count_data <- tidyr::unite(count_data, "temp", !!sym_group, .data$variable, sep = "_")
+    if (is.factor(df[[grouper]])) {
+      lvls <- rep(levels(df[[grouper]]), each = 2)
+      lvls <- paste0(lvls, c("_n", "_prop"))
+      count_data$temp <- factor(count_data$temp, levels = lvls)
+    }
     count_data <- tidyr::spread(count_data, .data$temp, .data$value)
 
   } else {
