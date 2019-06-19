@@ -16,9 +16,6 @@ phome_eye   <- descriptive(humans, homeworld, eye_color, proptotal = TRUE)
 
 test_that("warnings are generated for missing data", {
   
-  expect_warning({
-  phome_eye_m <- descriptive(humans, homeworld, eye_color, proptotal = TRUE, explicit_missing = FALSE)
-  }, "Removing 5 missing values")
 })
 
 
@@ -71,6 +68,9 @@ test_that("descriptive can take a grouping factor", {
 
   skip_on_cran()
   expect_is(home_eye, "tbl_df")
+  expect_warning({
+    phome_eye_m <- descriptive(humans, homeworld, eye_color, proptotal = TRUE, explicit_missing = FALSE)
+  }, "Removing 5 missing values")
 
   expect_identical(as.character(home_eye$homeworld[nrow(home_eye)]), "Missing")
 
