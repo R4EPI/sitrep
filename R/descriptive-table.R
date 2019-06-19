@@ -79,15 +79,13 @@
 #'
 #' }) }
 #' 
-descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
+descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 1,
                         proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE,
                         single_row = FALSE, explicit_missing = TRUE) {
 
 
-  # sym_count <- rlang::sym(counter)
   counter <- tidyselect::vars_select(colnames(df), !!enquo(counter))
   grouper <- tidyselect::vars_select(colnames(df), !!enquo(grouper))
-  # grouper <- tidyselect::vars_select(colnames(df), grouper)
   sym_count <- rlang::sym(counter)
 
   
