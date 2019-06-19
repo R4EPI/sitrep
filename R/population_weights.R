@@ -11,7 +11,6 @@
 #'   "weight_ID"
 #' @author Zhian N. Kamvar Alex Spina
 #' @export
-#' @examples
 add_weights <- function(x, p, ..., population = population, weight = weight, weight_ID = weight_ID) {
 
   .dots      <- rlang::enquos(...)

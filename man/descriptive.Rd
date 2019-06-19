@@ -5,12 +5,13 @@
 \alias{multi_descriptive}
 \title{Produces counts with respective proportions from specified variables in a dataframe.}
 \usage{
-descriptive(df, counter, grouper = NA, multiplier = 100, digits = 1,
-  proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE,
-  single_row = FALSE)
+descriptive(df, counter, grouper = NULL, multiplier = 100,
+  digits = 1, proptotal = FALSE, coltotals = FALSE,
+  rowtotals = FALSE, single_row = FALSE, explicit_missing = TRUE)
 
 multi_descriptive(df, ..., multiplier = 100, digits = 1,
-  proptotal = FALSE, coltotals = TRUE, .id = "symptom")
+  proptotal = FALSE, coltotals = TRUE, .id = "symptom",
+  explicit_missing = TRUE)
 }
 \arguments{
 \item{df}{A dataframe (e.g. your linelist)}
@@ -39,6 +40,10 @@ proportions for each column.}
 to a single row so that variables can be concatenated into a data frame.
 Defaults to \code{FALSE}.}
 
+\item{explicit_missing}{if \code{TRUE}, missing values will be marked as
+\code{Missing} and tabulated. Defaults to \code{FALSE}, where missing values are
+excluded from the computation}
+
 \item{...}{columns to pass to descriptive}
 
 \item{.id}{the name of the column identifying the aggregates}
@@ -58,4 +63,35 @@ variables into a single table where each row represents a variable and the
 columns represent counts and proportions of the values within those
 variables. This function assumes that all of the variables have the same
 values (e.g. Yes/No values) and atttempts no correction.
+}
+\examples{
+have_packages <- require("dplyr") && require("linelist")
+if (have_packages) { withAutoprint({
+
+# Simulating linelist data
+
+linelist     <- gen_data("Measles")
+measles_dict <- msf_dict("Measles", compact = FALSE) \%>\%
+  select(option_code, option_name, everything())
+
+# Cleaning linelist data
+linelist_clean <- clean_variable_spelling(
+  x = linelist,
+  wordlists = filter(measles_dict, !is.na(option_code)),
+  spelling_vars = "data_element_shortname",
+  sort_by = "option_order_in_set"
+)
+
+# get a descriptive table by sex
+descriptive(linelist_clean, "sex")
+
+# describe prenancy statistics, but remove missing data from the tally
+descriptive(linelist_clean, "trimester", explicit_missing = FALSE)
+
+# describe prenancy statistics, stratifying by vitamin A perscription
+descriptive(linelist_clean, "trimester", "prescribed_vitamin_a", explicit_missing = FALSE)
+
+
+}) }
+
 }

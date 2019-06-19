@@ -35,6 +35,19 @@ template_data_frame_categories <- function(dat_dict, numcases, varnames, survey 
 }
 
 
+# Enforces timing between two columns in a data frame.
+#
+# The data in the first column must come before the second column. If the timing
+# isn't correct, then force the timing to be correct by making the second column
+# bigger than the first by `add`.
+enforce_timing <- function(x, first, second, add = 2) {
+
+  mistakes              <- x[[second]] <= x[[first]]
+  x[[second]][mistakes] <- x[[first]][mistakes] + add
+  x 
+
+}
+
 # sample of a single value and NA
 sample_single <- function(x, size, prob = 0.1) {
   sample(c(x, NA), size = size, prob = c(prob, 1 - prob), replace = TRUE)

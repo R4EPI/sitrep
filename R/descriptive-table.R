@@ -3,22 +3,35 @@
 #' Option to add row and column totals
 #' 
 #' @param df A dataframe (e.g. your linelist)
+#'
 #' @param counter A name of the variable (in quotation marks) that you would
 #'   like to have as rows.
+#'
 #' @param grouper A name of the variable (in quotation marks) that you would
 #'   like to have as columns.
+#'
 #' @param multiplier What you would like to have your proportions as (default
 #'   is per 100).
+#'
 #' @param digits The number of decimal places you would like in your
 #'   proportions (default is 1).
+#'
 #' @param proptotal A TRUE/FALSE variable specifying whether you would
 #'   proportions to be of total cases.The default is FALSE and returns
 #'   proportions for each column.
+#'
 #' @param coltotals Add column totals on the end
+#'
 #' @param rowtotals Add row totals (only sums counts)
+#'
 #' @param single_row if `TRUE` and `grouper = NA`, then the output is flattened
 #'   to a single row so that variables can be concatenated into a data frame.
 #'   Defaults to `FALSE`.
+#'
+#' @param explicit_missing if `TRUE`, missing values will be marked as
+#' `Missing` and tabulated. Defaults to `FALSE`, where missing values are
+#' excluded from the computation
+#'
 #' @details The `descriptive()` function returns a single table with counts and
 #'   proportions of a categorical variable (`counter`). Adding a grouper adds
 #'   more columns, stratifying "n" and "prop", the option `coltotals = TRUE`
@@ -36,16 +49,66 @@
 #' @importFrom rlang sym "!!" ".data" ":="
 #' @importFrom stats setNames
 #' @export
-descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
+#' @examples 
+#' have_packages <- require("dplyr") && require("linelist")
+#' if (have_packages) { withAutoprint({
+#' 
+#' # Simulating linelist data
+#'
+#' linelist     <- gen_data("Measles")
+#' measles_dict <- msf_dict("Measles", compact = FALSE) %>%
+#'   select(option_code, option_name, everything())
+#'
+#' # Cleaning linelist data
+#' linelist_clean <- clean_variable_spelling(
+#'   x             = linelist,
+#'   wordlists     = filter(measles_dict, !is.na(option_code)),
+#'   spelling_vars = "data_element_shortname",
+#'   sort_by       = "option_order_in_set"
+#' )
+#' 
+#' # get a descriptive table by sex
+#' descriptive(linelist_clean, "sex")
+#' 
+#' # describe prenancy statistics, but remove missing data from the tally
+#' descriptive(linelist_clean, "trimester", explicit_missing = FALSE)
+#' 
+#' # describe prenancy statistics, stratifying by vitamin A perscription
+#' descriptive(linelist_clean, "trimester", "prescribed_vitamin_a", explicit_missing = FALSE)
+#' 
+#'
+#' }) }
+#' 
+descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 1,
                         proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE,
-                        single_row = FALSE) {
+                        single_row = FALSE, explicit_missing = TRUE) {
 
-  # Using rlang::sym() allows us to use quoted arguments
-  # If we wanted to go full NSE, we would use rlang::enquo() instead
+
+  counter <- tidyselect::vars_select(colnames(df), !!enquo(counter))
+  grouper <- tidyselect::vars_select(colnames(df), !!enquo(grouper))
   sym_count <- rlang::sym(counter)
-  # if given two variables then group by the "grouper" var
-  if (!is.na(grouper)) {
+
+  
+  if (explicit_missing) {
+    df[[counter]] <- forcats::fct_explicit_na(df[[counter]], "Missing")
+  } else {
+    nas <- is.na(df[[counter]])
+    warning(sprintf("Removing %d missing values", sum(nas)))
+    df <- df[!nas, , drop = FALSE]
+  }
+
+  if (length(grouper) == 1) {
+
+    # Use a grouper variable for the columns.
+    #
+    # This grouper var will always have explicit missing.
+    
+
     sym_group <- rlang::sym(grouper)
+    df[[grouper]] <- forcats::fct_explicit_na(df[[grouper]], "Missing")
+
+    # create temporary variable to account for zero count 
+    # This was added in 09b9c240b9d9853f89b50b26a7b37aa31dded083
     tmp_var <- sprintf("hey%s", as.character(Sys.time()))
     if (is.factor(df[[counter]])) {
       levels(df[[counter]]) <- c(levels(df[[counter]]), tmp_var)
@@ -58,36 +121,41 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
 
     if (proptotal) {
       count_data <- dplyr::mutate(count_data,
-                                  prop = round(.data$n / nrow(df) * multiplier,
-                                               digits = digits))
+                                  prop = .data$n / nrow(df) * multiplier,
+                                  )
     } else {
       count_data <- dplyr::mutate(count_data,
-                                prop = round(.data$n / sum(.data$n) * multiplier,
-                                             digits = digits))
+                                  prop = .data$n / sum(.data$n) * multiplier,
+                                  )
     }
 
     # change to wide format, to have "grouper" var levels as columns
     count_data <- tidyr::gather(count_data, key = "variable", value = "value", c(.data$n, .data$prop))
     count_data <- tidyr::unite(count_data, "temp", !!sym_group, .data$variable, sep = "_")
+    if (is.factor(df[[grouper]])) {
+      lvls <- rep(levels(df[[grouper]]), each = 2)
+      lvls <- paste0(lvls, c("_n", "_prop"))
+      count_data$temp <- factor(count_data$temp, levels = lvls)
+    }
     count_data <- tidyr::spread(count_data, .data$temp, .data$value)
 
   } else {
     # get counts and props for just a single variable
-    count_data <- dplyr::count(df, !!sym_count)
+    count_data <- dplyr::count(df, !! sym_count)
     if (proptotal) {
       count_data <- dplyr::mutate(count_data,
-                                  prop = round(.data$n / nrow(df) * multiplier,
-                                               digits = digits))
+                                  prop = .data$n / nrow(df) * multiplier,
+                                  )
     } else {
       count_data <- dplyr::mutate(count_data,
-                                  prop = round(.data$n / sum(.data$n) * multiplier,
-                                               digits = digits))
+                                  prop = .data$n / sum(.data$n) * multiplier,
+                                  )
     }
   }
   # fill in the counting data that didn't make it
   count_data <- tidyr::complete(count_data, !!sym_count)
 
-  if (!is.na(grouper)) {
+  if (length(grouper) == 1) {
     # filter out the dummy variable
     count_data <- dplyr::filter(count_data, !!sym_count != tmp_var)
   }
@@ -110,7 +178,7 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
       mutate(count_data,
              Total = rowSums(count_data[, grep("(_n$|^n$)", colnames(count_data))], na.rm = TRUE))
   }
-  if (!is.na(grouper) && is.factor(count_data[[counter]])) {
+  if (length(grouper) == 1 && is.factor(count_data[[counter]])) {
     l <- levels(count_data[[counter]])
     count_data[[counter]] <- factor(count_data[[counter]], levels = l[l != tmp_var])
   }
@@ -129,12 +197,15 @@ descriptive <- function(df, counter, grouper = NA, multiplier = 100, digits = 1,
 #' @param ... columns to pass to descriptive
 #' @param .id the name of the column identifying the aggregates
 #' @export
-multi_descriptive <- function(df, ..., multiplier = 100, digits = 1, proptotal = FALSE, coltotals = TRUE, .id = "symptom") { 
+multi_descriptive <- function(df, ..., multiplier = 100, digits = 1, proptotal = FALSE, coltotals = TRUE, .id = "symptom", explicit_missing = TRUE) { 
   
   the_vars <- tidyselect::vars_select(colnames(df), ...)
   res <- lapply(the_vars, function(i) {
+    suppressWarnings({
     descriptive(df, i, multiplier = multiplier, digits = digits, 
-                proptotal = proptotal, coltotals = coltotals, single_row = TRUE)
+                proptotal = proptotal, coltotals = coltotals, single_row = TRUE,
+                explicit_missing = explicit_missing)
+    })
   })
   bind_rows(res, .id = .id)
 }

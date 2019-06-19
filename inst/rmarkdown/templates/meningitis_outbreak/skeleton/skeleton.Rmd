@@ -790,8 +790,7 @@ Cases by age group and sex
 
 ```{r describe_by_age_group_and_sex}
 descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group" = age_category,
-         "Missing (n)" = NA_n) %>%
+  rename("Age group" = age_category) %>%
   rename_redundant(prop = "%") %>%
   augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
@@ -802,8 +801,7 @@ Alternatively if you would like proportions to be of the total population, use t
 ```{r total_props_agegroup_sex}
 descriptive(linelist_cleaned, "age_category", "sex", 
             coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group" = age_category,
-         "Missing (n)" = NA_n) %>%
+  rename("Age group" = age_category) %>%
   rename_redundant(prop = "%") %>%
   augment_redundant("_n$" = " cases (n)") %>%
   kable(digits = 2)
@@ -1220,7 +1218,7 @@ Alternatively, you could stratify by sex among a subset of only inpatients.
 
 ```{r incidence_by_sex_facility, message = FALSE}
 
-inc_week_7_sex_fac <- inelist_cleaned %>%
+inc_week_7_sex_fac <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
   with(incidence(date_of_onset, interval = "Monday week", groups = sex))
 
