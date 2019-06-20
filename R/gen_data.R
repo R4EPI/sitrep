@@ -394,6 +394,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
       dis_output[U2_YEARS, age_year_var] <- NA_integer_
     }
 
+    U2_MONTHS <- integer(0)
     if (!is.na(age_month_var)) {
       # age_month
       if (length(U2_YEARS) > 0) {
