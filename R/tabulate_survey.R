@@ -15,6 +15,9 @@
 #'   interval. Defaults to "logit"
 #' @param deff a logical indicating if the design effect should be reported.
 #'   Defaults to "TRUE"
+#' @param proptotal if `TRUE` and `strata` is not `NULL`, then the totals of the
+#'   rows will be reported as proportions of the total data set, otherwise, they
+#'   will be proportions within the stratum (default).
 #' @param coltotals if `TRUE` a new row with totals for each "n" column is
 #'   created.
 #' @param rowtotals if `TRUE` and `strata` is defined, then an extra "Total"
@@ -55,12 +58,12 @@
 #'
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
-tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE, rowtotals = FALSE, coltotals = FALSE) {
+#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE, proptotal = FALSE)
+tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE, proptotal = FALSE, rowtotals = FALSE, coltotals = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
 
-  cod <- rlang::enquo(var)
-  st  <- rlang::enquo(strata)
+  cod         <- rlang::enquo(var)
+  st          <- rlang::enquo(strata)
   null_strata <- is.null(rlang::get_expr(st))
 
   x <- srvyr::select(x, !! cod, !!st)
@@ -81,16 +84,16 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
 
   # Calculating the survey total will also give us zero counts
   y <- srvyr::summarise(x,
-                        n = survey_total(vartype = "se", na.rm = TRUE),
-                        mean = survey_mean(na.rm = TRUE, deff = deff))
+                        n    = survey_total(vartype = "se", na.rm = TRUE),
+                        mean = survey_mean(na.rm    = TRUE, deff  = deff))
 
   # We can then set up the proportion calculations. Because of issues with using
   # srvyr::survey_mean() on several variables, we have to roll our own.
   y$proportion       <- NA_real_
   y$proportion_lower <- NA_real_
   y$proportion_upper <- NA_real_
-  y$mean <- NULL
-  y$mean_se <- NULL
+  y$mean             <- NULL
+  y$mean_se          <- NULL
   if (deff) {
     names(y)[names(y) == "mean_deff"] <- "deff"
     y$deff <- round(y$deff, digits)
@@ -112,15 +115,27 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
     if (null_strata) {
       val <- y[[1]] == i
     } else {
-      val <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
+      val         <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
+      this_strata <- strsplit(i, sprintf(" %s ", tim))[[1]]
     }
     if (y$n[val] > 0) {
       # The peanutbutter and paperclips way of getting a proportion:
       # set a column to contain only the value you desire
-      x   <- srvyr::mutate(x, this = i)
+      z   <- srvyr::mutate(x, this = i)
+
+      if (!null_strata && !proptotal) {
+        # If the user does not want the proportions to be reflective of the
+        # total data set, then we need to filter everything out but the current
+        # stratum.
+        
+        # ungrouping here is necessary or else the counts won't be reported
+        # accurately
+        z <- srvyr::ungroup(z)
+        z <- srvyr::filter(z, !! st == this_strata)
+      }
       # get the proportion of your target variable that matches the new column
       # et voila!
-      tmp <- survey::svyciprop(~I(dummy == this), x, method = method)
+      tmp <- survey::svyciprop(~I(dummy == this), z, method = method)
       ci  <- attr(tmp, "ci")
       y$proportion[val]       <- tmp[[1]]
       y$proportion_lower[val] <- ci[[1]]
@@ -223,7 +238,7 @@ widen_tabulation <- function(y, cod, st) {
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
 #'
-tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE) {
+tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -243,7 +258,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = 
     i        <- rlang::ensym(i)
     res[[i]] <- tabulate_survey(x,
                                 var    = !! i,
-                                strata = !! strt,
+                                strata = NULL, # keeping strata to NULL for now
                                 pretty = pretty,
                                 digits = digits,
                                 method = method,
