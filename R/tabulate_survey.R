@@ -246,8 +246,6 @@ tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty =
   }
 
   vars <- tidyselect::vars_select(colnames(x), ...)
-  strt <- rlang::enquo(strata)
-  null_strata <- is.null(rlang::get_expr(strt))
 
   # Create list for results to go into that will eventually be bound together
   res <- vector(mode = "list", length = length(vars))
@@ -258,7 +256,7 @@ tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty =
     i        <- rlang::ensym(i)
     res[[i]] <- tabulate_survey(x,
                                 var    = !! i,
-                                strata = NULL, # keeping strata to NULL for now
+                                strata = NULL,
                                 pretty = pretty,
                                 digits = digits,
                                 method = method,
