@@ -8,7 +8,7 @@ Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
 Imports: 
     anthro,
-    aweek,
+    aweek (>= 1.0.0),
     binom,
     broom,
     cowplot,
@@ -43,10 +43,10 @@ Imports:
     tidyr
 Suggests:
     testthat (>= 2.1.0),
-    sessioninfo
+    sessioninfo,
+    covr
 Remotes:
-  reconhub/linelist,
-  reconhub/aweek@release
+  reconhub/linelist
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
