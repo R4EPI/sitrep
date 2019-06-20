@@ -58,7 +58,7 @@
 #'
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE, proptotal = FALSE)
+#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE, proptotal = FALSE, rowtotals = FALSE, coltotals = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
 

@@ -93,7 +93,7 @@ apistrat \%>\%
 
 apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
-  tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE, proptotal = FALSE)
+  tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
 }
 \seealso{
 \code{\link[=rename_redundant]{rename_redundant()}}, \code{\link[=augment_redundant]{augment_redundant()}}
