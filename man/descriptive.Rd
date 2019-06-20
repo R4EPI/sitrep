@@ -76,10 +76,10 @@ measles_dict <- msf_dict("Measles", compact = FALSE) \%>\%
 
 # Cleaning linelist data
 linelist_clean <- clean_variable_spelling(
-  x = linelist,
-  wordlists = filter(measles_dict, !is.na(option_code)),
+  x             = linelist,
+  wordlists     = filter(measles_dict, !is.na(option_code)),
   spelling_vars = "data_element_shortname",
-  sort_by = "option_order_in_set"
+  sort_by       = "option_order_in_set"
 )
 
 # get a descriptive table by sex

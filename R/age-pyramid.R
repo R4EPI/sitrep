@@ -34,36 +34,36 @@
 #' dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
 #'
 #' # Create the age pyramid, stratifying by sex
-#' print(ap   <- plot_age_pyramid(dat, age_group = "AGE"))
+#' print(ap   <- plot_age_pyramid(dat, age_group = AGE))
 #'
 #' # Remove NA categories with na.rm = TRUE
 #' dat2 <- dat
 #' dat2[1, 1] <- NA
 #' dat2[2, 2] <- NA
 #' dat2[3, 3] <- NA
-#' print(ap   <- plot_age_pyramid(dat2, age_group = "AGE"))
-#' print(ap   <- plot_age_pyramid(dat2, age_group = "AGE", na.rm = TRUE))
+#' print(ap   <- plot_age_pyramid(dat2, age_group = AGE))
+#' print(ap   <- plot_age_pyramid(dat2, age_group = AGE, na.rm = TRUE))
 #'
 #' # Stratify by case definition and customize with ggplot2
-#' ap   <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill") +
+#' ap   <- plot_age_pyramid(dat, age_group = AGE, split_by = ill) +
 #'   theme_bw(base_size = 16) +
 #'   labs(title = "Age groups by case definition")
 #' print(ap)
 #'
 #' # Stratify by multiple factors
 #' ap <- plot_age_pyramid(dat,
-#'                        age_group = "AGE",
-#'                        split_by = "sex",
-#'                        stack_by = "ill",
+#'                        age_group = AGE,
+#'                        split_by = sex,
+#'                        stack_by = ill,
 #'                        vertical_lines = TRUE) +
 #'   labs(title = "Age groups by case definition and sex")
 #' print(ap)
 #' 
 #' # Display proportions
 #' ap <- plot_age_pyramid(dat,
-#'                        age_group = "AGE",
-#'                        split_by = "sex",
-#'                        stack_by = "ill",
+#'                        age_group = AGE,
+#'                        split_by = sex,
+#'                        stack_by = ill,
 #'                        proportional = TRUE,
 #'                        vertical_lines = TRUE) +
 #'   labs(title = "Age groups by case definition and sex")
@@ -72,22 +72,22 @@
 #' # empty group levels will still be displayed
 #' dat3 <- dat2
 #' dat3[dat$AGE == "[0,5)", "sex"] <- NA
-#' plot_age_pyramid(dat3, age_group = "AGE") 
+#' plot_age_pyramid(dat3, age_group = AGE) 
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                              stack_by = split_by, proportional = FALSE, na.rm = FALSE,
                              vertical_lines = FALSE, horizontal_lines = TRUE) {
-  is_df <- is.data.frame(data)
-  is_svy <- inherits(data, "tbl_svy")
-  impt_columns <- (is_df || is_svy) & all(c(age_group, split_by, stack_by) %in% colnames(data))
-  if (!impt_columns) {
-    if (is_df || is_svy) {
-      sprintf("The columns %s, %s, and %s were not found in %s",
-              age_group, split_by, stack_by, deparse(substitute(data)))
-    } else { 
-      sprintf("%s must be a data frame or %s object",
-              deparse(substitute(data)))
-    }
+  
+  is_df     <- is.data.frame(data)
+  is_svy    <- inherits(data, "tbl_svy")
+  age_group <- tidyselect::vars_select(colnames(data), !! enquo(age_group))
+  split_by  <- tidyselect::vars_select(colnames(data), !! enquo(split_by))
+  stack_by  <- tidyselect::vars_select(colnames(data), !! enquo(stack_by))
+
+  if (!is_df && !is_svy) {
+    msg <- sprintf("%s must be a data frame or  object", deparse(substitute(data)))
+    stop(msg)
   }
+
   ag <- rlang::sym(age_group)
   sb <- rlang::sym(split_by)
   st <- rlang::sym(stack_by)
