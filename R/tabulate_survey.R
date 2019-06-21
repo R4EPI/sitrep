@@ -339,8 +339,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
 
     # The ouptut columns will have the value as whatever i was, so we should
     # rename this to "value" to make it consistent
-    names(res[[i]])[if (wide) 1 else 2] <- "value"
-
+    names(res[[i]])[names(res[[i]]) == i] <- "value"
   }
   # Combine the results into one table
   suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))
