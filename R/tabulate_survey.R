@@ -90,7 +90,24 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   # heavily on the srvyr package for this but ran into problems: 
   # https://github.com/gergness/srvyr/issues/49
   #
-  # This takes in either character or bare variable names and 
+  # This takes in either character or bare variable names and will return a
+  # table similar to that of `descriptive()` with the exception that it also
+  # will have confidence intervals and design effects. 
+  #
+  # This will first tabulate the survey total using `srvyr::survey_total()` and
+  # grab the design effect with `srvyr::survey_mean()`. 
+  #
+  # Unfortunately, because of the issue above and various other things with
+  # srvyr::survey_mean(), it wasn't possible to get proportions for each strata,
+  # so we had to roll our own. (See below for more details).
+  #
+  # After the tabulations are done, the counts are rounded, and the SE columns
+  # are removed, the confidence intervals and mean estimates are collapsed into
+  # a single column using `prettify_tabulation()`
+  #
+  # The results are in long data naturally, but if the user requests wide data
+  # (which is the default), then the strata are spread out into columns using
+  # the widen_tabulation function 
 
   cod  <- rlang::enquo(var)
   st   <- rlang::enquo(strata)
@@ -186,25 +203,25 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
       tot <- data.frame(n = sum(y$n, na.rm = TRUE))
     } else {
       # group by stratifier
-      y <- dplyr::group_by(y, !! st)
+      y   <- dplyr::group_by(y, !! st)
       # tally up the Ns
       tot <- dplyr::tally(y, !! rlang::sym("n"))
       # bind to the long data frame
-      y <- dplyr::ungroup(y)
+      y   <- dplyr::ungroup(y)
     }
     suppressMessages(y <- dplyr::bind_rows(y, tot))
+
     # replace any NAs in the cause of death with "Total"
     y <- dplyr::mutate(y, !! cod := forcats::fct_explicit_na(!! cod, "Total"))  
-    
   }
 
   if (rowtotals && !null_strata) {
     # group by cause of death
-    y <- dplyr::group_by(y, !! cod)
+    y   <- dplyr::group_by(y, !! cod)
     # tally up the Ns
     tot <- dplyr::tally(y, !! rlang::sym("n"))
     # bind to the long data frame
-    y <- dplyr::ungroup(y)
+    y   <- dplyr::ungroup(y)
     suppressMessages(y <- dplyr::bind_rows(y, tot))
     # replace any NAs in the stratifier with "Total"
     y <- dplyr::mutate(y, !! st := forcats::fct_explicit_na(!! st, "Total"))
@@ -243,25 +260,44 @@ prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
 
 }
 
+
+#' Convert the table to wide format consistently
+#'
+#' @param y a data frame
+#' @param cod variable of interest
+#' @param st stratifying variable
+#' @noRd
 widen_tabulation <- function(y, cod, st) {
 
   cod <- rlang::enquo(cod)
   st  <- rlang::enquo(st)
 
-  # Only select the necessary columns. n, deff, and prop are all numeric columns
-  # that need to be gathered
+  #  1 Only select the necessary columns. n, deff, and prop are all numeric
+  #    columns that need to be gathered
+  #
+  #  2 Gather "n", "deff", and "prop" into a single column
+  #
+  #  3 Make sure that everything is arranged in the correct order
+  #
+  #  4 Combine the stratifier and the n/prop signifier
+  #
+  #  5 Make sure the factors are in the correct order
+  #
+  #  6 Spread out the combined stratifier and signifier to columns
   y <- dplyr::select(y, !! cod, !! st, "n",
                      # deff, ci, and prop are all columns that _might_ exist
-                     dplyr::matches("prop"), dplyr::starts_with("ci"), dplyr::starts_with("deff"))
-  # gather "n", "deff", and "prop" into a single column
+                     dplyr::matches("prop"), 
+                     dplyr::starts_with("ci"), 
+                     dplyr::starts_with("deff"))
+
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
-  # make sure that everything is arranged in the correct order
+  
   y <- dplyr::arrange(y, !! cod, !! st)
-  # combine the stratifier and the n/prop signifier
+
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
-  # Make sure the factors are in the correct order
+
   y$tmp <- forcats::fct_inorder(y$tmp)
-  # Spread out the combined stratifier and signifier to columns
+
   y <- tidyr::spread(y, "tmp", "value")
 
 }
