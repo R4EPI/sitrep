@@ -1,33 +1,46 @@
 #' Tabulate survey design objects by a categorical and another stratifying variable
 #'
 #' @param x a survey design object
+#'
 #' @param var the bare name of a categorical variable
+#'
 #' @param strata a variable to stratify the results by
+#'
 #' @param pretty if `TRUE`, default, the proportion and CI are merged
+#'
 #' @param wide if `TRUE` (default) and strata is defined, then the results are
 #'   presented in a wide table with each stratification counts and estimates in
 #'   separate columns. If `FALSE`, then the data will be presented in a long
 #'   format where the counts and estimates are presented in single columns. This
 #'   has no effect if strata is not defined.
+#'
 #' @param digits if `pretty = FALSE`, this indicates the number of digits used
 #'   for proportion and CI
+#'
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
+#'
 #' @param deff a logical indicating if the design effect should be reported.
 #'   Defaults to "TRUE"
+#'
 #' @param proptotal if `TRUE` and `strata` is not `NULL`, then the totals of the
 #'   rows will be reported as proportions of the total data set, otherwise, they
 #'   will be proportions within the stratum (default).
+#'
 #' @param coltotals if `TRUE` a new row with totals for each "n" column is
 #'   created.
+#'
 #' @param rowtotals if `TRUE` and `strata` is defined, then an extra "Total"
 #'   column will be added tabulating all of the rows across strata.
+#'
 #' @return a long or wide tibble with tabulations n, ci, and deff
+#'
 #' @export
+#'
 #' @seealso [rename_redundant()], [augment_redundant()]
+#'
 #' @importFrom srvyr survey_total survey_mean
-#' @note The proportions presented here represent the proportions of the total
-#'   population, not for the stratified samples
+#'
 #' @examples
 #' library(srvyr)
 #' library(survey)
@@ -50,21 +63,42 @@
 #' # long data
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_survey(stype, awards, wide = FALSE)
+#'   tabulate_survey(stype, strata = awards, wide = FALSE)
 #'
+#' # tabulate binary variables
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"))
+#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"))
 #'
+#' # stratify the binary variables
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
-tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE, proptotal = FALSE, rowtotals = FALSE, coltotals = FALSE) {
+#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, strata = stype, keep = c("Yes"))
+#'
+#' # invert the tabulation
+#' apistrat %>%
+#'   as_survey_design(strata = stype, weights = pw) %>%
+#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
+tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
+                            digits = 1, method = "logit", deff = FALSE,
+                            proptotal = FALSE, rowtotals = FALSE, 
+                            coltotals = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
 
-  cod         <- rlang::enquo(var)
-  st          <- rlang::enquo(strata)
-  null_strata <- is.null(rlang::get_expr(st))
+  # The idea behind this function is the fact that it can get complicated
+  # to tabulate survey data with groupings. We originally wanted to lean
+  # heavily on the srvyr package for this but ran into problems: 
+  # https://github.com/gergness/srvyr/issues/49
+  #
+  # This takes in either character or bare variable names and 
+
+  cod  <- rlang::enquo(var)
+  st   <- rlang::enquo(strata)
+  vars <- tidyselect::vars_select(colnames(x), !! cod, !! st)
+  cod  <- rlang::sym(vars[1])
+
+  null_strata <- is.na(vars[2])
+  st          <- if (null_strata) st else rlang::sym(vars[2])
 
   x <- srvyr::select(x, !! cod, !!st)
 
@@ -238,7 +272,10 @@ widen_tabulation <- function(y, cod, st) {
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
 #'
-tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE) {
+tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
+                                   keep = NULL, invert = FALSE, pretty = TRUE,
+                                   wide = TRUE, digits = 1, method = "logit",
+                                   deff = FALSE) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -255,13 +292,14 @@ tabulate_binary_survey <- function(x, ..., keep = NULL, invert = FALSE, pretty =
   for (i in names(res)) {
     i        <- rlang::ensym(i)
     res[[i]] <- tabulate_survey(x,
-                                var    = !! i,
-                                strata = NULL,
-                                pretty = pretty,
-                                digits = digits,
-                                method = method,
-                                wide   = wide,
-                                deff   = deff)
+                                var       = !! i,
+                                strata    = !! enquo(strata),
+                                proptotal = proptotal,
+                                pretty    = pretty,
+                                digits    = digits,
+                                method    = method,
+                                wide      = wide,
+                                deff      = deff)
 
     # The ouptut columns will have the value as whatever i was, so we should
     # rename this to "value" to make it consistent
