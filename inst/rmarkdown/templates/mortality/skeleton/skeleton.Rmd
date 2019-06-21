@@ -62,7 +62,7 @@ required_packages <- c("knitr",       # create output docs
 for (pkg in required_packages) {
   # install packages if not already present
   if (!pkg %in% rownames(installed.packages())) {
-    install.packages(pkg)
+    install.packages(pkg, repos = "https://cloud.r-project.org/")
   }
   
   # load packages to this current session 

@@ -5,3 +5,4 @@
 ^\.Rproj\.user$
 ^README\.Rmd$
 ^examples
+^codecov\.yml$

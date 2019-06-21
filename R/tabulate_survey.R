@@ -1,30 +1,46 @@
 #' Tabulate survey design objects by a categorical and another stratifying variable
 #'
 #' @param x a survey design object
+#'
 #' @param var the bare name of a categorical variable
+#'
 #' @param strata a variable to stratify the results by
+#'
 #' @param pretty if `TRUE`, default, the proportion and CI are merged
+#'
 #' @param wide if `TRUE` (default) and strata is defined, then the results are
 #'   presented in a wide table with each stratification counts and estimates in
 #'   separate columns. If `FALSE`, then the data will be presented in a long
 #'   format where the counts and estimates are presented in single columns. This
 #'   has no effect if strata is not defined.
+#'
 #' @param digits if `pretty = FALSE`, this indicates the number of digits used
 #'   for proportion and CI
+#'
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
+#'
 #' @param deff a logical indicating if the design effect should be reported.
 #'   Defaults to "TRUE"
+#'
+#' @param proptotal if `TRUE` and `strata` is not `NULL`, then the totals of the
+#'   rows will be reported as proportions of the total data set, otherwise, they
+#'   will be proportions within the stratum (default).
+#'
 #' @param coltotals if `TRUE` a new row with totals for each "n" column is
 #'   created.
+#'
 #' @param rowtotals if `TRUE` and `strata` is defined, then an extra "Total"
 #'   column will be added tabulating all of the rows across strata.
+#'
 #' @return a long or wide tibble with tabulations n, ci, and deff
+#'
 #' @export
+#'
 #' @seealso [rename_redundant()], [augment_redundant()]
+#'
 #' @importFrom srvyr survey_total survey_mean
-#' @note The proportions presented here represent the proportions of the total
-#'   population, not for the stratified samples
+#'
 #' @examples
 #' library(srvyr)
 #' library(survey)
@@ -47,21 +63,59 @@
 #' # long data
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_survey(stype, awards, wide = FALSE)
+#'   tabulate_survey(stype, strata = awards, wide = FALSE)
 #'
+#' # tabulate binary variables
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"))
+#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"))
 #'
+#' # stratify the binary variables
 #' apistrat %>%
 #'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
-tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE, rowtotals = FALSE, coltotals = FALSE) {
+#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, strata = stype, keep = c("Yes"))
+#'
+#' # invert the tabulation
+#' apistrat %>%
+#'   as_survey_design(strata = stype, weights = pw) %>%
+#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
+tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
+                            digits = 1, method = "logit", deff = FALSE,
+                            proptotal = FALSE, rowtotals = FALSE, 
+                            coltotals = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
 
-  cod <- rlang::enquo(var)
-  st  <- rlang::enquo(strata)
-  null_strata <- is.null(rlang::get_expr(st))
+  # The idea behind this function is the fact that it can get complicated
+  # to tabulate survey data with groupings. We originally wanted to lean
+  # heavily on the srvyr package for this but ran into problems: 
+  # https://github.com/gergness/srvyr/issues/49
+  #
+  # This takes in either character or bare variable names and will return a
+  # table similar to that of `descriptive()` with the exception that it also
+  # will have confidence intervals and design effects. 
+  #
+  # This will first tabulate the survey total using `srvyr::survey_total()` and
+  # grab the design effect with `srvyr::survey_mean()`. 
+  #
+  # Unfortunately, because of the issue above and various other things with
+  # srvyr::survey_mean(), it wasn't possible to get proportions for each strata,
+  # so we had to roll our own. (See below for more details).
+  #
+  # After the tabulations are done, the counts are rounded, and the SE columns
+  # are removed, the confidence intervals and mean estimates are collapsed into
+  # a single column using `prettify_tabulation()`
+  #
+  # The results are in long data naturally, but if the user requests wide data
+  # (which is the default), then the strata are spread out into columns using
+  # the widen_tabulation function 
+
+  cod  <- rlang::enquo(var)
+  st   <- rlang::enquo(strata)
+  vars <- tidyselect::vars_select(colnames(x), !! cod, !! st)
+  cod  <- rlang::sym(vars[1])
+
+  null_strata <- is.na(vars[2])
+  st          <- if (null_strata) st else rlang::sym(vars[2])
 
   x <- srvyr::select(x, !! cod, !!st)
 
@@ -81,16 +135,16 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
 
   # Calculating the survey total will also give us zero counts
   y <- srvyr::summarise(x,
-                        n = survey_total(vartype = "se", na.rm = TRUE),
-                        mean = survey_mean(na.rm = TRUE, deff = deff))
+                        n    = survey_total(vartype = "se", na.rm = TRUE),
+                        mean = survey_mean(na.rm    = TRUE, deff  = deff))
 
   # We can then set up the proportion calculations. Because of issues with using
   # srvyr::survey_mean() on several variables, we have to roll our own.
   y$proportion       <- NA_real_
   y$proportion_lower <- NA_real_
   y$proportion_upper <- NA_real_
-  y$mean <- NULL
-  y$mean_se <- NULL
+  y$mean             <- NULL
+  y$mean_se          <- NULL
   if (deff) {
     names(y)[names(y) == "mean_deff"] <- "deff"
     y$deff <- round(y$deff, digits)
@@ -112,15 +166,27 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
     if (null_strata) {
       val <- y[[1]] == i
     } else {
-      val <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
+      val         <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
+      this_strata <- strsplit(i, sprintf(" %s ", tim))[[1]]
     }
     if (y$n[val] > 0) {
       # The peanutbutter and paperclips way of getting a proportion:
       # set a column to contain only the value you desire
-      x   <- srvyr::mutate(x, this = i)
+      z   <- srvyr::mutate(x, this = i)
+
+      if (!null_strata && !proptotal) {
+        # If the user does not want the proportions to be reflective of the
+        # total data set, then we need to filter everything out but the current
+        # stratum.
+        
+        # ungrouping here is necessary or else the counts won't be reported
+        # accurately
+        z <- srvyr::ungroup(z)
+        z <- srvyr::filter(z, !! st == this_strata)
+      }
       # get the proportion of your target variable that matches the new column
       # et voila!
-      tmp <- survey::svyciprop(~I(dummy == this), x, method = method)
+      tmp <- survey::svyciprop(~I(dummy == this), z, method = method)
       ci  <- attr(tmp, "ci")
       y$proportion[val]       <- tmp[[1]]
       y$proportion_lower[val] <- ci[[1]]
@@ -137,25 +203,25 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE, d
       tot <- data.frame(n = sum(y$n, na.rm = TRUE))
     } else {
       # group by stratifier
-      y <- dplyr::group_by(y, !! st)
+      y   <- dplyr::group_by(y, !! st)
       # tally up the Ns
       tot <- dplyr::tally(y, !! rlang::sym("n"))
       # bind to the long data frame
-      y <- dplyr::ungroup(y)
+      y   <- dplyr::ungroup(y)
     }
     suppressMessages(y <- dplyr::bind_rows(y, tot))
+
     # replace any NAs in the cause of death with "Total"
     y <- dplyr::mutate(y, !! cod := forcats::fct_explicit_na(!! cod, "Total"))  
-    
   }
 
   if (rowtotals && !null_strata) {
     # group by cause of death
-    y <- dplyr::group_by(y, !! cod)
+    y   <- dplyr::group_by(y, !! cod)
     # tally up the Ns
     tot <- dplyr::tally(y, !! rlang::sym("n"))
     # bind to the long data frame
-    y <- dplyr::ungroup(y)
+    y   <- dplyr::ungroup(y)
     suppressMessages(y <- dplyr::bind_rows(y, tot))
     # replace any NAs in the stratifier with "Total"
     y <- dplyr::mutate(y, !! st := forcats::fct_explicit_na(!! st, "Total"))
@@ -194,25 +260,44 @@ prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
 
 }
 
+
+#' Convert the table to wide format consistently
+#'
+#' @param y a data frame
+#' @param cod variable of interest
+#' @param st stratifying variable
+#' @noRd
 widen_tabulation <- function(y, cod, st) {
 
   cod <- rlang::enquo(cod)
   st  <- rlang::enquo(st)
 
-  # Only select the necessary columns. n, deff, and prop are all numeric columns
-  # that need to be gathered
+  #  1 Only select the necessary columns. n, deff, and prop are all numeric
+  #    columns that need to be gathered
+  #
+  #  2 Gather "n", "deff", and "prop" into a single column
+  #
+  #  3 Make sure that everything is arranged in the correct order
+  #
+  #  4 Combine the stratifier and the n/prop signifier
+  #
+  #  5 Make sure the factors are in the correct order
+  #
+  #  6 Spread out the combined stratifier and signifier to columns
   y <- dplyr::select(y, !! cod, !! st, "n",
                      # deff, ci, and prop are all columns that _might_ exist
-                     dplyr::matches("prop"), dplyr::starts_with("ci"), dplyr::starts_with("deff"))
-  # gather "n", "deff", and "prop" into a single column
+                     dplyr::matches("prop"), 
+                     dplyr::starts_with("ci"), 
+                     dplyr::starts_with("deff"))
+
   y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
-  # make sure that everything is arranged in the correct order
+  
   y <- dplyr::arrange(y, !! cod, !! st)
-  # combine the stratifier and the n/prop signifier
+
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
-  # Make sure the factors are in the correct order
+
   y$tmp <- forcats::fct_inorder(y$tmp)
-  # Spread out the combined stratifier and signifier to columns
+
   y <- tidyr::spread(y, "tmp", "value")
 
 }
@@ -223,7 +308,10 @@ widen_tabulation <- function(y, cod, st) {
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
 #'
-tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1, method = "logit", deff = FALSE) {
+tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
+                                   keep = NULL, invert = FALSE, pretty = TRUE,
+                                   wide = TRUE, digits = 1, method = "logit",
+                                   deff = FALSE) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -231,8 +319,6 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = 
   }
 
   vars <- tidyselect::vars_select(colnames(x), ...)
-  strt <- rlang::enquo(strata)
-  null_strata <- is.null(rlang::get_expr(strt))
 
   # Create list for results to go into that will eventually be bound together
   res <- vector(mode = "list", length = length(vars))
@@ -242,18 +328,18 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, keep = NULL, invert = 
   for (i in names(res)) {
     i        <- rlang::ensym(i)
     res[[i]] <- tabulate_survey(x,
-                                var    = !! i,
-                                strata = !! strt,
-                                pretty = pretty,
-                                digits = digits,
-                                method = method,
-                                wide   = wide,
-                                deff   = deff)
+                                var       = !! i,
+                                strata    = !! enquo(strata),
+                                proptotal = proptotal,
+                                pretty    = pretty,
+                                digits    = digits,
+                                method    = method,
+                                wide      = wide,
+                                deff      = deff)
 
     # The ouptut columns will have the value as whatever i was, so we should
     # rename this to "value" to make it consistent
-    names(res[[i]])[if (wide) 1 else 2] <- "value"
-
+    names(res[[i]])[names(res[[i]]) == i] <- "value"
   }
   # Combine the results into one table
   suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))

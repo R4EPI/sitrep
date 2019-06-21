@@ -6,12 +6,12 @@
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
 tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", deff = FALSE, rowtotals = FALSE,
-  coltotals = FALSE)
+  digits = 1, method = "logit", deff = FALSE, proptotal = FALSE,
+  rowtotals = FALSE, coltotals = FALSE)
 
-tabulate_binary_survey(x, ..., strata = NULL, keep = NULL,
-  invert = FALSE, pretty = TRUE, wide = TRUE, digits = 1,
-  method = "logit", deff = FALSE)
+tabulate_binary_survey(x, ..., strata = NULL, proptotal = FALSE,
+  keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE,
+  digits = 1, method = "logit", deff = FALSE)
 }
 \arguments{
 \item{x}{a survey design object}
@@ -37,6 +37,10 @@ interval. Defaults to "logit"}
 \item{deff}{a logical indicating if the design effect should be reported.
 Defaults to "TRUE"}
 
+\item{proptotal}{if \code{TRUE} and \code{strata} is not \code{NULL}, then the totals of the
+rows will be reported as proportions of the total data set, otherwise, they
+will be proportions within the stratum (default).}
+
 \item{rowtotals}{if \code{TRUE} and \code{strata} is defined, then an extra "Total"
 column will be added tabulating all of the rows across strata.}
 
@@ -54,10 +58,6 @@ a long or wide tibble with tabulations n, ci, and deff
 }
 \description{
 Tabulate survey design objects by a categorical and another stratifying variable
-}
-\note{
-The proportions presented here represent the proportions of the total
-population, not for the stratified samples
 }
 \examples{
 library(srvyr)
@@ -81,15 +81,22 @@ s \%>\%
 # long data
 apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
-  tabulate_survey(stype, awards, wide = FALSE)
+  tabulate_survey(stype, strata = awards, wide = FALSE)
 
+# tabulate binary variables
 apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
-  tabulate_binary_survey(stype, awards, keep = c("Yes", "E"))
+  tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"))
 
+# stratify the binary variables
 apistrat \%>\%
   as_survey_design(strata = stype, weights = pw) \%>\%
-  tabulate_binary_survey(stype, awards, keep = c("Yes", "E"), invert = TRUE)
+  tabulate_binary_survey(yr.rnd, sch.wide, awards, strata = stype, keep = c("Yes"))
+
+# invert the tabulation
+apistrat \%>\%
+  as_survey_design(strata = stype, weights = pw) \%>\%
+  tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 }
 \seealso{
 \code{\link[=rename_redundant]{rename_redundant()}}, \code{\link[=augment_redundant]{augment_redundant()}}
