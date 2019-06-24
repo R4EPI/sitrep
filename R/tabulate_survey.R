@@ -128,7 +128,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     # if there is a strata, create a unique, parseable dummy var by inserting
     # the timestamp in between the vars
     tim <- as.character(Sys.time())
-    x <- srvyr::group_by(x, !!st, !! cod)
+    x <- srvyr::group_by(x, !! cod, !!st)
     x <- srvyr::mutate(x, dummy = sprintf("%s %s %s", !! st, tim, !! cod))
   }
 
@@ -158,21 +158,21 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   # p <- as.character(unique(dplyr::pull(tx, !!quote(dummy))))
   # p <- p[!is.na(p)]
 
-  xx <- srvyr::ungroup(x)
-  v  <- as.character(y[[1]])
-  g  <- as.character(y[[2]])
   join_by <- if (null_strata) names(y)[[1]] else names(y)[1:2]
+  xx      <- srvyr::ungroup(x)
+  ycod    <- dplyr::pull(y, !! cod)
   if (!null_strata && proptotal) {
+
     ssurv <- function(xx, .x, .y, cod, st) {
       # browser()
       st  <- rlang::enquo(st)
       cod <- rlang::enquo(cod)
       res <- srvyr::summarise(xx, 
-                       proportion = srvyr::survey_mean(!! st == .x & !! cod == .y,
+                       proportion = srvyr::survey_mean(!! cod == .x & !! st == .y,
                                                        proportion = TRUE,
                                                        vartype = "ci"))
-      res <- dplyr::bind_cols(!! cod := .y, res)
-      dplyr::bind_cols(!! st := .x, res)
+      res <- dplyr::bind_cols(!! cod := .x, res)
+      dplyr::bind_cols(!! st := .y, res)
     }
   } else {
     ssurv <- function(xx, .x, cod) {
@@ -187,16 +187,26 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   }
 
   if (!null_strata) {
+    yst <- dplyr::pull(y, !!  st)
     if (proptotal) {
-      props <- purrr::map2_dfr(v, g,  ~ssurv(xx, .x, .y, !! cod, !! st))
+      props <- purrr::map2_dfr(ycod, yst, ~ssurv(xx, .x, .y, !! cod, !! st))
     } else {
-      props <- purrr::map_dfr(unique(g), ~ssurv(srvyr::group_by(xx, !! st, .drop = FALSE), .x, !! cod))
+      xx    <- srvyr::group_by(xx, !! st, .drop = FALSE)
+      g     <- unique(ycod)
+      props <- purrr::map_dfr(g, ~ssurv(xx, .x, !! cod))
     }
+    codl  <- levels(ycod)
+     stl  <- levels(yst)
+
+    props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
+    props <- dplyr::mutate(props, !!  st := factor(!!  st, levels =  stl))
 
   } else {
     xx    <- srvyr::ungroup(x)
     v     <- as.character(y[[1]])
-    props <- purrr::map_dfr(v, ~ssurv(xx, .x, !! cod))
+    props <- purrr::map_dfr(ycod, ~ssurv(xx, .x, !! cod))
+    codl  <- levels(dplyr::pull(y, !! cod))
+    props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
   }
 
   y <- left_join(y, props, by = join_by)
