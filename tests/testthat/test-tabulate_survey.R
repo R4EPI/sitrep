@@ -5,16 +5,16 @@ s <- srvyr::as_survey_design(apistrat, strata = stype, weights = pw)
 
 # with out proptotal
 sa_crd_p  <- tabulate_survey(s,
-                             stype, 
                              awards,
+                             stype, 
                              coltotals = TRUE,
                              rowtotals = TRUE,
                              deff      = TRUE)
 
 # with proptotal
 sa_pcrd_p <- tabulate_survey(s,
-                             stype, 
                              awards,
+                             stype, 
                              proptotal = TRUE,
                              coltotals = TRUE,
                              rowtotals = TRUE,
@@ -24,22 +24,22 @@ test_that("tabulations return pretty results by default", {
   expect_is(sa_crd_p, "tbl_df")
   expect_is(sa_pcrd_p, "tbl_df")
 
-  expect_named(sa_crd_p, c('stype', 'No n', 'No ci', 'No deff', 
-                           'Yes n', 'Yes ci', 'Yes deff', 'Total n'))
+  expect_named(sa_crd_p, c("awards", "E n", "E ci", "E deff", "H n", "H ci", 
+                           "H deff", "M n", "M ci", "M deff", "Total n"))
   
-  expect_named(sa_pcrd_p, c('stype', 'No n', 'No ci', 'No deff', 
-                            'Yes n', 'Yes ci', 'Yes deff', 'Total n'))
+  expect_named(sa_pcrd_p, c("awards", "E n", "E ci", "E deff", "H n", "H ci", 
+                           "H deff", "M n", "M ci", "M deff", "Total n"))
 
-  expect_is(sa_crd_p$'No ci' , "character")
-  expect_is(sa_crd_p$'No n'  , "character")
+  expect_is(sa_crd_p$'E ci' , "character")
+  expect_is(sa_crd_p$'E n'  , "character")
 
-  expect_is(sa_pcrd_p$'No ci', "character")
-  expect_is(sa_pcrd_p$'No n' , "character")
+  expect_is(sa_pcrd_p$'E ci', "character")
+  expect_is(sa_pcrd_p$'E n' , "character")
 })
 
 no_proptot <- tabulate_survey(s,
-                              stype,
                               awards,
+                              stype,
                               proptotal = FALSE,
                               coltotals = FALSE,
                               rowtotals = FALSE,
@@ -48,8 +48,8 @@ no_proptot <- tabulate_survey(s,
                               deff      = TRUE)
 
 proptot <- tabulate_survey(s,
-                           stype,
                            awards,
+                           stype,
                            proptotal = TRUE,
                            coltotals = FALSE,
                            rowtotals = FALSE,
@@ -59,10 +59,10 @@ proptot <- tabulate_survey(s,
 
 test_that("Proportions are correct", {
 
-  expect_named(proptot, c('awards', 'stype', 'n', 'deff', 'proportion', 'proportion_lower', 'proportion_upper'))
-  expect_named(no_proptot, c('awards', 'stype', 'n', 'deff', 'proportion', 'proportion_lower', 'proportion_upper'))
+  expect_named(proptot, c('awards', 'stype', 'n', 'deff', 'proportion', 'proportion_low', 'proportion_upp'))
+  expect_named(no_proptot, c('awards', 'stype', 'n', 'deff', 'proportion', 'proportion_low', 'proportion_upp'))
   expect_equal(sum(proptot$proportion)   , 1)
-  expect_equal(sum(no_proptot$proportion), 2)
+  expect_equal(sum(no_proptot$proportion), 3)
 
 })
 

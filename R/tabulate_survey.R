@@ -122,14 +122,12 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   # combination of var and strata so that we can get the right proportions from
   # the survey package in a loop below
   if (null_strata) {
-    x <- srvyr::group_by(x, !! cod)
-    x <- srvyr::mutate(x, dummy = !! cod)
+    x <- srvyr::group_by(x, !! cod, .drop = FALSE)
   } else {
     # if there is a strata, create a unique, parseable dummy var by inserting
     # the timestamp in between the vars
     tim <- as.character(Sys.time())
-    x <- srvyr::group_by(x, !! cod, !!st)
-    x <- srvyr::mutate(x, dummy = sprintf("%s %s %s", !! st, tim, !! cod))
+    x <- srvyr::group_by(x, !! cod, !!st, .drop = FALSE)
   }
 
   # Calculating the survey total will also give us zero counts
@@ -137,127 +135,104 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
                         n    = survey_total(vartype = "se", na.rm = TRUE),
                         mean = survey_mean(na.rm    = TRUE, deff  = deff))
 
-  # We can then set up the proportion calculations. Because of issues with using
-  # srvyr::survey_mean() on several variables, we have to roll our own.
-  #   y$proportion       <- NA_real_
-  #   y$proportion_lower <- NA_real_
-  #   y$proportion_upper <- NA_real_
+  # Removing the mean values here because we are going to calculate them later
   y$mean             <- NULL
   y$mean_se          <- NULL
   if (deff) {
     names(y)[names(y) == "mean_deff"] <- "deff"
-    y$deff <- round(y$deff, digits)
     y$deff[!is.finite(y$deff)] <- NA
   }
 
 
-  # # Here we pull out the relevant values for the proportions
-  # # first, filter out any rows with missing values
-  # tx <- dplyr::filter(srvyr::as_tibble(x), !is.na(!! cod))
-  # # Then pull out the unique dummy variable names
-  # p <- as.character(unique(dplyr::pull(tx, !!quote(dummy))))
-  # p <- p[!is.na(p)]
 
-  join_by <- if (null_strata) names(y)[[1]] else names(y)[1:2]
+  # By this time, we already have a summary table with counts and deff. 
+  # This will contain one or two columns in the front either being the counting
+  # variable (cod) and *maybe* the stratifying variable (st) if it exists. 
+  #
+  # Because survey_mean does not calculate CI for factors using the svypropci, 
+  # this gives negative confidence intervals for low values. The way we solve
+  # it is to loop through all the values of the counter and use a logical test
+  # for each one and then bind all the rows together. 
+  #
+  # If the user wants proportions relative to the total population (as opposed
+  # to proportions relative to the strata, then we will take survey mean of
+  # both of the stratifier and the counter variable, otherwise, we group by the
+  # stratifier (if the user specified) and then count by the counter.
+  #
+  # Once we have this data frame, we will join it with the original result and
+  # then make it pretty and/or wide.
+  # make sure the survey is ungrouped
   xx      <- srvyr::ungroup(x)
+  # get the column with all the values of the counter
   ycod    <- dplyr::pull(y, !! cod)
   if (!null_strata && proptotal) {
-
-    ssurv <- function(xx, .x, .y, cod, st) {
-      # browser()
+    # Calculate the survey proportion for both the stratifier and counter
+    # @param xx a tbl_svy object
+    # @param .x a single character value matching those found in the cod column
+    # @param .y a single character value matching those found in the st column
+    # @param cod a symbol specifying the column for the counter
+    # @param st a symbol specifying the column for the stratifier
+    # @return a data frame with five columns, the stratifier, the counter, 
+    # proportion, lower, and upper.
+    sprop <- function(xx, .x, .y, cod, st) {
       st  <- rlang::enquo(st)
       cod <- rlang::enquo(cod)
       res <- srvyr::summarise(xx, 
-                       proportion = srvyr::survey_mean(!! cod == .x & !! st == .y,
-                                                       proportion = TRUE,
-                                                       vartype = "ci"))
+                              proportion = srvyr::survey_mean(!! cod == .x & !! st == .y,
+                                                              proportion = TRUE,
+                                                              vartype = "ci"))
       res <- dplyr::bind_cols(!! cod := .x, res)
       dplyr::bind_cols(!! st := .y, res)
     }
   } else {
-    ssurv <- function(xx, .x, cod) {
-      # browser()
+    sprop <- function(xx, .x, cod) {
       cod <- rlang::enquo(cod)
       res <- srvyr::summarise(xx, 
-                       proportion = srvyr::survey_mean(!! cod == .x,
-                                                       proportion = TRUE,
-                                                       vartype = "ci"))
+                              proportion = srvyr::survey_mean(!! cod == .x,
+                                                              proportion = TRUE,
+                                                              vartype = "ci"))
       dplyr::bind_cols(!! cod := rep(.x, nrow(res)), res)
     }
   }
 
   if (!null_strata) {
+    # get the column with all the unique values of the stratifier
     yst <- dplyr::pull(y, !!  st)
     if (proptotal) {
-      props <- purrr::map2_dfr(ycod, yst, ~ssurv(xx, .x, .y, !! cod, !! st))
+      # map both the counter and stratifier to sprop
+      props <- purrr::map2_dfr(ycod, yst, ~sprop(xx, .x, .y, !! cod, !! st))
     } else {
+      # group by the stratifier and then map the counter
       xx    <- srvyr::group_by(xx, !! st, .drop = FALSE)
       g     <- unique(ycod)
-      props <- purrr::map_dfr(g, ~ssurv(xx, .x, !! cod))
+      props <- purrr::map_dfr(g, ~sprop(xx, .x, !! cod))
     }
+    # Make sure that the resulting columns are factors
     codl  <- levels(ycod)
      stl  <- levels(yst)
-
     props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
     props <- dplyr::mutate(props, !!  st := factor(!!  st, levels =  stl))
 
   } else {
+    # no stratifier, just map the counter to sprop and make sure it's a factor
     xx    <- srvyr::ungroup(x)
     v     <- as.character(y[[1]])
-    props <- purrr::map_dfr(ycod, ~ssurv(xx, .x, !! cod))
+    props <- purrr::map_dfr(ycod, ~sprop(xx, .x, !! cod))
     codl  <- levels(dplyr::pull(y, !! cod))
     props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
   }
 
-  y <- left_join(y, props, by = join_by)
-
-
-  # return(res)
-  # # loop over the values and caclucate CI proportion as needed. If they aren't
-  # # present, then the proportion remains NA.
-  # for (i in p) {
-  #   # Find the row that i corresponds to. It differs if there are strata or not
-  #   if (null_strata) {
-  #     val <- y[[1]] == i
-  #   } else {
-  #     val         <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
-  #     this_strata <- strsplit(i, sprintf(" %s ", tim))[[1]]
-  #   }
-  #   if (y$n[val] > 0) {
-  #     # The peanutbutter and paperclips way of getting a proportion:
-  #     # set a column to contain only the value you desire
-  #     z   <- srvyr::mutate(x, this = i)
-
-  #     if (!null_strata && !proptotal) {
-  #       # If the user does not want the proportions to be reflective of the
-  #       # total data set, then we need to filter everything out but the current
-  #       # stratum.
-        
-  #       # ungrouping here is necessary or else the counts won't be reported
-  #       # accurately
-  #       z <- srvyr::ungroup(z)
-  #       z <- srvyr::filter(z, !! st == this_strata)
-  #     }
-  #     # get the proportion of your target variable that matches the new column
-  #     # et voila!
-  #     tmp <- survey::svyciprop(~I(dummy == this), z, method = method)
-  #     ci  <- attr(tmp, "ci")
-  #     y$proportion[val]       <- tmp[[1]]
-  #     y$proportion_lower[val] <- ci[[1]]
-  #     y$proportion_upper[val] <- ci[[2]]
-  #   }
-  # }
-
-
-  y$n <- round(y$n)
-  y   <- y[!colnames(y) %in% "n_se"]
+  # Join the data together
+  y       <- y[!colnames(y) %in% "n_se"]
+  join_by <- if (null_strata) names(y)[[1]] else names(y)[1:2]
+  y       <- left_join(y, props, by = join_by)
 
   if (coltotals) {
     if (null_strata) {
       tot <- data.frame(n = sum(y$n, na.rm = TRUE))
     } else {
       # group by stratifier
-      y   <- dplyr::group_by(y, !! st)
+      y   <- dplyr::group_by(y, !! st, .drop = FALSE)
       # tally up the Ns
       tot <- dplyr::tally(y, !! rlang::sym("n"))
       # bind to the long data frame
@@ -271,7 +246,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
   if (rowtotals && !null_strata) {
     # group by cause of death
-    y   <- dplyr::group_by(y, !! cod)
+    y   <- dplyr::group_by(y, !! cod, .drop = FALSE)
     # tally up the Ns
     tot <- dplyr::tally(y, !! rlang::sym("n"))
     # bind to the long data frame
