@@ -225,7 +225,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   # Join the data together
   y       <- y[!colnames(y) %in% "n_se"]
   join_by <- if (null_strata) names(y)[[1]] else names(y)[1:2]
-  y       <- left_join(y, props, by = join_by)
+  y       <- dplyr::left_join(y, props, by = join_by)
 
   if (coltotals) {
     if (null_strata) {
@@ -280,6 +280,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 #' @noRd
 prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
 
+
   y <- unite_ci(y, "ci", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
 
   # convert any NA% proportions to just NA
@@ -328,6 +329,8 @@ widen_tabulation <- function(y, cod, st) {
   y$tmp <- forcats::fct_inorder(y$tmp)
 
   y <- tidyr::spread(y, "tmp", "value")
+
+  y <- dplyr::mutate_at(y, .vars = dplyr::vars(dplyr::ends_with(" n")), .funs = ~as.numeric(.))
 
 }
 
