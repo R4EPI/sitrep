@@ -47,9 +47,12 @@
 #' data(api)
 #'
 #' # stratified sample
-#' s <- apistrat %>%
-#'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_survey(stype, awards, coltotals = TRUE, rowtotals = TRUE, deff = TRUE)
+#' surv <- apistrat %>%
+#'   mutate(yrstuff = sprintf("%s_something_%s", yr.rnd, stype)) %>%
+#'   as_survey_design(strata = stype, weights = pw)
+#'
+#' s <- surv %>%
+#'   tabulate_survey(awards, stype, coltotals = TRUE, rowtotals = TRUE, deff = TRUE)
 #' s
 #'
 #' # making things pretty
@@ -61,23 +64,19 @@
 #'                    "deff" = "Design Effect")
 #'
 #' # long data
-#' apistrat %>%
-#'   as_survey_design(strata = stype, weights = pw) %>%
-#'   tabulate_survey(stype, strata = awards, wide = FALSE)
+#' surv %>%
+#'   tabulate_survey(awards, strata = stype, wide = FALSE)
 #'
 #' # tabulate binary variables
-#' apistrat %>%
-#'   as_survey_design(strata = stype, weights = pw) %>%
+#' surv %>%
 #'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"))
 #'
 #' # stratify the binary variables
-#' apistrat %>%
-#'   as_survey_design(strata = stype, weights = pw) %>%
+#' surv %>%
 #'   tabulate_binary_survey(yr.rnd, sch.wide, awards, strata = stype, keep = c("Yes"))
 #'
 #' # invert the tabulation
-#' apistrat %>%
-#'   as_survey_design(strata = stype, weights = pw) %>%
+#' surv %>%
 #'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
                             digits = 1, method = "logit", deff = FALSE,
@@ -140,9 +139,9 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
   # We can then set up the proportion calculations. Because of issues with using
   # srvyr::survey_mean() on several variables, we have to roll our own.
-  y$proportion       <- NA_real_
-  y$proportion_lower <- NA_real_
-  y$proportion_upper <- NA_real_
+  #   y$proportion       <- NA_real_
+  #   y$proportion_lower <- NA_real_
+  #   y$proportion_upper <- NA_real_
   y$mean             <- NULL
   y$mean_se          <- NULL
   if (deff) {
@@ -152,47 +151,92 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   }
 
 
-  # Here we pull out the relevant values for the proportions
-  # first, filter out any rows with missing values
-  tx <- dplyr::filter(srvyr::as_tibble(x), !is.na(!! cod))
-  # Then pull out the unique dummy variable names
-  p <- as.character(unique(dplyr::pull(tx, !!quote(dummy))))
-  p <- p[!is.na(p)]
+  # # Here we pull out the relevant values for the proportions
+  # # first, filter out any rows with missing values
+  # tx <- dplyr::filter(srvyr::as_tibble(x), !is.na(!! cod))
+  # # Then pull out the unique dummy variable names
+  # p <- as.character(unique(dplyr::pull(tx, !!quote(dummy))))
+  # p <- p[!is.na(p)]
 
-  # loop over the values and caclucate CI proportion as needed. If they aren't
-  # present, then the proportion remains NA.
-  for (i in p) {
-    # Find the row that i corresponds to. It differs if there are strata or not
-    if (null_strata) {
-      val <- y[[1]] == i
-    } else {
-      val         <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
-      this_strata <- strsplit(i, sprintf(" %s ", tim))[[1]]
+  xx <- srvyr::ungroup(x)
+  v  <- as.character(y[[1]])
+  g  <- as.character(y[[2]])
+  join_by <- if (null_strata) names(y)[[1]] else names(y)[1:2]
+  if (!null_strata && proptotal) {
+    ssurv <- function(xx, .x, .y, cod, st) {
+      # browser()
+      st  <- rlang::enquo(st)
+      cod <- rlang::enquo(cod)
+      res <- srvyr::summarise(xx, 
+                       proportion = srvyr::survey_mean(!! st == .x & !! cod == .y,
+                                                       proportion = TRUE,
+                                                       vartype = "ci"))
+      res <- dplyr::bind_cols(!! cod := .y, res)
+      dplyr::bind_cols(!! st := .x, res)
     }
-    if (y$n[val] > 0) {
-      # The peanutbutter and paperclips way of getting a proportion:
-      # set a column to contain only the value you desire
-      z   <- srvyr::mutate(x, this = i)
-
-      if (!null_strata && !proptotal) {
-        # If the user does not want the proportions to be reflective of the
-        # total data set, then we need to filter everything out but the current
-        # stratum.
-        
-        # ungrouping here is necessary or else the counts won't be reported
-        # accurately
-        z <- srvyr::ungroup(z)
-        z <- srvyr::filter(z, !! st == this_strata)
-      }
-      # get the proportion of your target variable that matches the new column
-      # et voila!
-      tmp <- survey::svyciprop(~I(dummy == this), z, method = method)
-      ci  <- attr(tmp, "ci")
-      y$proportion[val]       <- tmp[[1]]
-      y$proportion_lower[val] <- ci[[1]]
-      y$proportion_upper[val] <- ci[[2]]
+  } else {
+    ssurv <- function(xx, .x, cod) {
+      # browser()
+      cod <- rlang::enquo(cod)
+      res <- srvyr::summarise(xx, 
+                       proportion = srvyr::survey_mean(!! cod == .x,
+                                                       proportion = TRUE,
+                                                       vartype = "ci"))
+      dplyr::bind_cols(!! cod := rep(.x, nrow(res)), res)
     }
   }
+
+  if (!null_strata) {
+    if (proptotal) {
+      props <- purrr::map2_dfr(v, g,  ~ssurv(xx, .x, .y, !! cod, !! st))
+    } else {
+      props <- purrr::map_dfr(unique(g), ~ssurv(srvyr::group_by(xx, !! st, .drop = FALSE), .x, !! cod))
+    }
+
+  } else {
+    xx    <- srvyr::ungroup(x)
+    v     <- as.character(y[[1]])
+    props <- purrr::map_dfr(v, ~ssurv(xx, .x, !! cod))
+  }
+
+  y <- left_join(y, props, by = join_by)
+
+
+  # return(res)
+  # # loop over the values and caclucate CI proportion as needed. If they aren't
+  # # present, then the proportion remains NA.
+  # for (i in p) {
+  #   # Find the row that i corresponds to. It differs if there are strata or not
+  #   if (null_strata) {
+  #     val <- y[[1]] == i
+  #   } else {
+  #     val         <- sprintf("%s %s %s", y[[1]], tim, y[[2]]) == i
+  #     this_strata <- strsplit(i, sprintf(" %s ", tim))[[1]]
+  #   }
+  #   if (y$n[val] > 0) {
+  #     # The peanutbutter and paperclips way of getting a proportion:
+  #     # set a column to contain only the value you desire
+  #     z   <- srvyr::mutate(x, this = i)
+
+  #     if (!null_strata && !proptotal) {
+  #       # If the user does not want the proportions to be reflective of the
+  #       # total data set, then we need to filter everything out but the current
+  #       # stratum.
+        
+  #       # ungrouping here is necessary or else the counts won't be reported
+  #       # accurately
+  #       z <- srvyr::ungroup(z)
+  #       z <- srvyr::filter(z, !! st == this_strata)
+  #     }
+  #     # get the proportion of your target variable that matches the new column
+  #     # et voila!
+  #     tmp <- survey::svyciprop(~I(dummy == this), z, method = method)
+  #     ci  <- attr(tmp, "ci")
+  #     y$proportion[val]       <- tmp[[1]]
+  #     y$proportion_lower[val] <- ci[[1]]
+  #     y$proportion_upper[val] <- ci[[2]]
+  #   }
+  # }
 
 
   y$n <- round(y$n)
