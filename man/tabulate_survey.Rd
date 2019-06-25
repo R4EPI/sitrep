@@ -65,9 +65,11 @@ library(survey)
 data(api)
 
 # stratified sample
-s <- apistrat \%>\%
-  as_survey_design(strata = stype, weights = pw) \%>\%
-  tabulate_survey(stype, awards, coltotals = TRUE, rowtotals = TRUE, deff = TRUE)
+surv <- apistrat \%>\%
+  as_survey_design(strata = stype, weights = pw)
+
+s <- surv \%>\%
+  tabulate_survey(awards, stype, coltotals = TRUE, rowtotals = TRUE, deff = TRUE)
 s
 
 # making things pretty
@@ -79,23 +81,19 @@ s \%>\%
                    "deff" = "Design Effect")
 
 # long data
-apistrat \%>\%
-  as_survey_design(strata = stype, weights = pw) \%>\%
-  tabulate_survey(stype, strata = awards, wide = FALSE)
+surv \%>\%
+  tabulate_survey(awards, strata = stype, wide = FALSE)
 
 # tabulate binary variables
-apistrat \%>\%
-  as_survey_design(strata = stype, weights = pw) \%>\%
+surv \%>\%
   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"))
 
 # stratify the binary variables
-apistrat \%>\%
-  as_survey_design(strata = stype, weights = pw) \%>\%
+surv \%>\%
   tabulate_binary_survey(yr.rnd, sch.wide, awards, strata = stype, keep = c("Yes"))
 
 # invert the tabulation
-apistrat \%>\%
-  as_survey_design(strata = stype, weights = pw) \%>\%
+surv \%>\%
   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 }
 \seealso{

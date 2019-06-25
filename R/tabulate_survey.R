@@ -48,7 +48,6 @@
 #'
 #' # stratified sample
 #' surv <- apistrat %>%
-#'   mutate(yrstuff = sprintf("%s_something_%s", yr.rnd, stype)) %>%
 #'   as_survey_design(strata = stype, weights = pw)
 #'
 #' s <- surv %>%
