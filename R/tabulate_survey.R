@@ -114,7 +114,19 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   cod  <- rlang::sym(vars[1])
 
   null_strata <- is.na(vars[2])
-  st          <- if (null_strata) st else rlang::sym(vars[2])
+  if (null_strata) {
+    st <- st 
+  } else {
+    if (vars[2] != names(surv$strata)[1]) {
+      msg <- paste("The stratification present in the survey object (%s) does",
+                   "not match the user-specified stratification (%s). If you",
+                   "want to assess the survey tabulation stratifying by '%s',",
+                   "re-specify the survey object with this",
+                   "strata and the appropriate weights.")
+      stop(sprintf(msg, names(surv$strata)[1], vars[2], vars[2]))
+    }
+    st <- rlang::sym(vars[2])
+  }
 
   x <- srvyr::select(x, !! cod, !!st)
 
@@ -256,13 +268,13 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     y <- dplyr::mutate(y, !! st := forcats::fct_explicit_na(!! st, "Total"))
   }
 
-  if (pretty) {
-    y <- prettify_tabulation(y, digits, null_strata, !! cod, !! st)
-  }
 
   if (wide && !null_strata) {
-    y <- widen_tabulation(y, !! cod, !! st)
+    y <- widen_tabulation(y, !! cod, !! st, pretty = pretty, digits = digits)
+  } else if (pretty) {
+    y <- prettify_tabulation(y, digits = digits)
   }
+
   y$"Total deff" <- NULL
   y$"Total ci"   <- NULL
 
@@ -278,13 +290,14 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 #' @param cod variable of interest
 #' @param st stratifying variable
 #' @noRd
-prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
+prettify_tabulation <- function(y, digits = 1, ci_prefix = "") {
 
 
-  y <- unite_ci(y, "ci", dplyr::starts_with("proportion"), percent = TRUE, digits = digits)
+  ci <- trimws(sprintf("%s ci", ci_prefix))
+  y <- unite_ci(y, ci, dplyr::contains("proportion"), percent = TRUE, digits = digits)
 
   # convert any NA% proportions to just NA
-  y$ci <- dplyr::if_else(grepl("NA%", y$ci), NA_character_, y$ci)
+  y[[ci]] <- dplyr::if_else(grepl("NA%", y[[ci]]), NA_character_, y[[ci]])
 
   return(y)
 
@@ -297,10 +310,13 @@ prettify_tabulation <- function(y, digits = 1, null_strata, cod, st) {
 #' @param cod variable of interest
 #' @param st stratifying variable
 #' @noRd
-widen_tabulation <- function(y, cod, st) {
+widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
 
   cod <- rlang::enquo(cod)
   st  <- rlang::enquo(st)
+
+  # getting all the labels for the stratifier
+  l   <- levels(dplyr::pull(y, !! st))
 
   #  1 Only select the necessary columns. n, deff, and prop are all numeric
   #    columns that need to be gathered
@@ -314,23 +330,36 @@ widen_tabulation <- function(y, cod, st) {
   #  5 Make sure the factors are in the correct order
   #
   #  6 Spread out the combined stratifier and signifier to columns
+  #  
+  #  7 Run through the stratified columns with map, and make them pretty
   y <- dplyr::select(y, !! cod, !! st, "n",
                      # deff, ci, and prop are all columns that _might_ exist
                      dplyr::matches("prop"), 
                      dplyr::starts_with("ci"), 
                      dplyr::starts_with("deff"))
 
-  y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
+  y     <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
   
-  y <- dplyr::arrange(y, !! cod, !! st)
+  y     <- dplyr::arrange(y, !! cod, !! st)
 
-  y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
+  y     <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
 
   y$tmp <- forcats::fct_inorder(y$tmp)
 
-  y <- tidyr::spread(y, "tmp", "value")
+  y     <- tidyr::spread(y, "tmp", "value")
 
-  y <- dplyr::mutate_at(y, .vars = dplyr::vars(dplyr::ends_with(" n")), .funs = ~as.numeric(.))
+  if (pretty) {
+    # map through all the levels of l and pull out the matching columns
+    tmp <- purrr::map(l, ~dplyr::select(y, dplyr::starts_with(paste0(., " "))))
+    # pretty up those columns and bind them all together
+    tmp <- purrr::map2_dfc(tmp, l, ~prettify_tabulation(.x, digits = digits, ci_prefix = .y))
+
+    # names(tmp)[grepl("ci\\d*", names(tmp))] <- sprintf("%s ci", l)
+    # glue the result to the first column of the data
+    y   <- dplyr::bind_cols(y[1], tmp)
+  }
+  
+  return(y)
 
 }
 
