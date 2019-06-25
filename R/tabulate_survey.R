@@ -185,7 +185,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     # @param st a symbol specifying the column for the stratifier
     # @return a data frame with five columns, the stratifier, the counter, 
     # proportion, lower, and upper.
-    sprop <- function(xx, .x, .y, cod, st) {
+    s_prop_strat <- function(xx, .x, .y, cod, st) {
       st  <- rlang::enquo(st)
       cod <- rlang::enquo(cod)
       res <- srvyr::summarise(xx, 
@@ -196,7 +196,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
       dplyr::bind_cols(!! st := .y, res)
     }
   } else {
-    sprop <- function(xx, .x, cod) {
+    s_prop <- function(xx, .x, cod) {
       cod <- rlang::enquo(cod)
       res <- srvyr::summarise(xx, 
                               proportion = srvyr::survey_mean(!! cod == .x,
@@ -211,12 +211,12 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     yst <- dplyr::pull(y, !!  st)
     if (proptotal) {
       # map both the counter and stratifier to sprop
-      props <- purrr::map2_dfr(ycod, yst, ~sprop(xx, .x, .y, !! cod, !! st))
+      props <- purrr::map2_dfr(ycod, yst, ~s_prop_strat(xx, .x, .y, !! cod, !! st))
     } else {
       # group by the stratifier and then map the counter
       xx    <- srvyr::group_by(xx, !! st, .drop = FALSE)
       g     <- unique(ycod)
-      props <- purrr::map_dfr(g, ~sprop(xx, .x, !! cod))
+      props <- purrr::map_dfr(g, ~s_prop(xx, .x, !! cod))
     }
     # Make sure that the resulting columns are factors
     codl  <- levels(ycod)
@@ -228,7 +228,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     # no stratifier, just map the counter to sprop and make sure it's a factor
     xx    <- srvyr::ungroup(x)
     v     <- as.character(y[[1]])
-    props <- purrr::map_dfr(ycod, ~sprop(xx, .x, !! cod))
+    props <- purrr::map_dfr(ycod, ~s_prop(xx, .x, !! cod))
     codl  <- levels(dplyr::pull(y, !! cod))
     props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
   }
