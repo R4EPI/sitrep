@@ -116,7 +116,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   if (null_strata) {
     st <- st 
   } else {
-    if (vars[2] != names(x$strata)[1]) {
+    if (x$has.strata && vars[2] != names(x$strata)[1]) {
       msg <- paste("The stratification present in the survey object (%s) does",
                    "not match the user-specified stratification (%s). If you",
                    "want to assess the survey tabulation stratifying by '%s',",
