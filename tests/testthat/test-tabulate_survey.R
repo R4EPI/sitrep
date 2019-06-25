@@ -1,7 +1,29 @@
+# Setup data -------------------------------------------------------------------
+
 data('api', package = 'survey')
 
+
+# Expected values for yr.rnd stratified by stype from Alex Spina. 
+# 
+# This shows the manual calculation to make sure things are running
+# smoothly
+`%<%` <- dplyr::`%>%`
+
+counts <- apistrat %>%
+  dplyr::group_by(stype) %>%                       # stratify data
+  dplyr::mutate(denom = sum(pw)) %>%               # create column for denominator
+  dplyr::group_by(stype, yr.rnd) %>%               # create the stratification by var of interest
+  dplyr::summarise(counts = sum(pw, na.rm = TRUE), # create weighted count
+                   denom  = unique(denom)) %>%     # isolate denominator
+  dplyr::mutate(wgtprop = counts/denom) %>%        # calculate stratified props for factor levels
+  dplyr::arrange(yr.rnd, stype)
+
+
+# Default workflow
 s <- srvyr::as_survey_design(apistrat, strata = stype, weights = pw)
 
+# with the above example
+yr_rnd <- tabulate_survey(s, yr.rnd, stype, wide = FALSE, pretty = FALSE)
 
 # with out proptotal
 sa_crd_p  <- tabulate_survey(s,
@@ -20,6 +42,31 @@ sa_pcrd_p <- tabulate_survey(s,
                              rowtotals = TRUE,
                              deff      = TRUE)
 
+
+
+
+# Testing ----------------------------------------------------------------------
+
+test_that("manual calculation matches ours", {
+
+  expect_equal(yr_rnd$proportion, counts$wgtprop)
+  expect_equal(yr_rnd$n,          counts$counts)
+
+})
+
+
+test_that("tabulate_survey will throw an error if the stratification is not correct", {
+  
+  msg <- paste("The stratification present in the survey object \\(%s\\) does",
+               "not match the user-specified stratification \\(%s\\). If you",
+               "want to assess the survey tabulation stratifying by '%s',",
+               "re-specify the survey object with this",
+               "strata and the appropriate weights.")
+  expected <- sprintf(msg, "stype", "awards", "awards")
+  expect_error(tabulate_survey(s, stype, awards), expected)
+  
+})
+
 test_that("tabulations return pretty results by default", {
   expect_is(sa_crd_p, "tbl_df")
   expect_is(sa_pcrd_p, "tbl_df")
@@ -31,10 +78,10 @@ test_that("tabulations return pretty results by default", {
                            "H deff", "M n", "M ci", "M deff", "Total n"))
 
   expect_is(sa_crd_p$'E ci' , "character")
-  expect_is(sa_crd_p$'E n'  , "character")
+  expect_is(sa_crd_p$'E n'  , "numeric")
 
   expect_is(sa_pcrd_p$'E ci', "character")
-  expect_is(sa_pcrd_p$'E n' , "character")
+  expect_is(sa_pcrd_p$'E n' , "numeric")
 })
 
 no_proptot <- tabulate_survey(s,
