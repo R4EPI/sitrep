@@ -123,11 +123,11 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 # password protected excels is in the read_data_generic code chunk)
 
 ## read in household data sheet
-# study_data_hh <- rio::import("mortality_survey.xlsx", 
+# study_data_hh <- rio::import("vaccination_survey.xlsx", 
 #                               which = "Level 0 Named", na = ".")
 
 ## read in individual level data sheet
-# study_data_indiv <- rio::import("mortality_survey.xlsx", 
+# study_data_indiv <- rio::import("vaccination_survey.xlsx", 
 #                               which = "Level 1 Named", na = ".")
 
 ## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
