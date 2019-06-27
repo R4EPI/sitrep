@@ -94,7 +94,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   } else {
     nas <- is.na(df[[counter]])
     warning(sprintf("Removing %d missing values", sum(nas)))
-    df <- df[!nas, , drop = FALSE]
+    df  <- df[!nas, , drop = FALSE]
   }
 
   if (length(grouper) == 1) {
@@ -102,22 +102,13 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
     # Use a grouper variable for the columns.
     #
     # This grouper var will always have explicit missing.
-    
 
-    sym_group <- rlang::sym(grouper)
+    sym_group     <- rlang::sym(grouper)
     df[[grouper]] <- forcats::fct_explicit_na(df[[grouper]], "Missing")
 
-    # create temporary variable to account for zero count 
-    # This was added in 09b9c240b9d9853f89b50b26a7b37aa31dded083
-    tmp_var <- sprintf("hey%s", as.character(Sys.time()))
-    if (is.factor(df[[counter]])) {
-      levels(df[[counter]]) <- c(levels(df[[counter]]), tmp_var)
-    }
-    the_list <- setNames(list(tmp_var), counter)
     # produce count table with props column-wise (seperate for each "grouper" level)
-    count_data <- tidyr::complete(df, !!sym_group, fill = the_list)
-    count_data <- dplyr::group_by(count_data, !!sym_group)
-    count_data <- dplyr::count(count_data, !!sym_count)
+    count_data <- dplyr::group_by(df, !!sym_group, .drop = FALSE)
+    count_data <- dplyr::count(count_data, !!sym_count, .drop = FALSE)
 
     if (proptotal) {
       count_data <- dplyr::mutate(count_data,
@@ -132,16 +123,19 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
     # change to wide format, to have "grouper" var levels as columns
     count_data <- tidyr::gather(count_data, key = "variable", value = "value", c(.data$n, .data$prop))
     count_data <- tidyr::unite(count_data, "temp", !!sym_group, .data$variable, sep = "_")
+
     if (is.factor(df[[grouper]])) {
       lvls <- rep(levels(df[[grouper]]), each = 2)
       lvls <- paste0(lvls, c("_n", "_prop"))
       count_data$temp <- factor(count_data$temp, levels = lvls)
     }
+
     count_data <- tidyr::spread(count_data, .data$temp, .data$value)
 
   } else {
     # get counts and props for just a single variable
-    count_data <- dplyr::count(df, !! sym_count)
+    count_data <- dplyr::count(df, !! sym_count, .drop = FALSE)
+
     if (proptotal) {
       count_data <- dplyr::mutate(count_data,
                                   prop = .data$n / nrow(df) * multiplier,
@@ -153,13 +147,8 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
     }
   }
   # fill in the counting data that didn't make it
-  count_data <- tidyr::complete(count_data, !!sym_count)
+  count_data     <- tidyr::complete(count_data, !!sym_count)
 
-  if (length(grouper) == 1) {
-    # filter out the dummy variable
-    count_data <- dplyr::filter(count_data, !!sym_count != tmp_var)
-  }
-  # if there are NA counts, then change these to zero (except) in first col (which contains )
   count_data[-1] <- lapply(count_data[-1], function(i) replace(i, is.na(i), 0))
 
   if (coltotals == TRUE) {
@@ -177,10 +166,6 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
       # add columns which have "_n" in the name
       mutate(count_data,
              Total = rowSums(count_data[, grep("(_n$|^n$)", colnames(count_data))], na.rm = TRUE))
-  }
-  if (length(grouper) == 1 && is.factor(count_data[[counter]])) {
-    l <- levels(count_data[[counter]])
-    count_data[[counter]] <- factor(count_data[[counter]], levels = l[l != tmp_var])
   }
 
   if (single_row){
