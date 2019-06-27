@@ -13,14 +13,6 @@ phair_table <- descriptive(humans, hair_color, proptotal = TRUE)
 phome_eye   <- descriptive(humans, homeworld, eye_color, proptotal = TRUE)
 
 
-
-test_that("warnings are generated for missing data", {
-  
-})
-
-
-
-
 test_that("descriptive returns a table of counts and proportions that sum to 100", {
 
   skip_on_cran()
