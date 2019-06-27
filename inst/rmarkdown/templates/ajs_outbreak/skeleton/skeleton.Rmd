@@ -620,7 +620,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 
 # Force missing values to be explicit
-linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
+# linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
 
 
 # change the order of levels in a single categorical variable 
