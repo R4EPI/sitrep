@@ -25,7 +25,8 @@ check_sitrep_templates <- function(templates = available_sitrep_templates(),
                                    quiet = FALSE, 
                                    progress = FALSE, 
                                    mustwork = FALSE,
-                                   output_format = NULL) {
+                                   output_format = NULL,
+                                   clean = TRUE) {
 
   stopifnot(is.character(templates), length(templates) > 0)
 
@@ -33,7 +34,7 @@ check_sitrep_templates <- function(templates = available_sitrep_templates(),
   names(res) <- templates
   for (i in templates) {
     if (!quiet) message(sprintf("Building %s", i))
-    res[[i]] <- build_sitrep_template(i, path, progress, output_format)
+    res[[i]] <- build_sitrep_template(i, path, progress, output_format, clean = clean)
   }
   if (mustwork && any(errs <- vapply(res, inherits, logical(1), "error"))) {
     errs <- paste(names(res)[errs], collapse = ", ")
@@ -77,9 +78,12 @@ available_sitrep_templates <- function(categorise = FALSE, ...) {
 }
 
 # Draft and build a sitrep template (internal)
-build_sitrep_template <- function(template, path, progress = FALSE, output_format = NULL) {
+build_sitrep_template <- function(template, path, progress = FALSE, output_format = NULL, clean = TRUE) {
 
   path_to_template <- file.path(path, sprintf("%s.Rmd", basename(template)))
+  if (clean) {
+    file.remove(file.path(path, basename(path_to_template)))
+  }
   res <- tryCatch({
     rmarkdown::draft(path_to_template,
                      template = template,

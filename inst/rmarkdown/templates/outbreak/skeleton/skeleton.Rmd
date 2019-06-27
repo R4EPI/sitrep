@@ -49,7 +49,7 @@ library(ggplot2) # for plotting diagrams
 # epi packages
 library(sitrep) # for msf field epi functions
 library(incidence) # for epicurves
-library(ISOweek) # for creating epiweeks
+library(aweek) # for creating epiweeks
 library(epitools) # for creating 2by2 tables
 
 #set default text size to 16 for plots

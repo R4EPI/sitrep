@@ -606,18 +606,15 @@ linelist_cleaned <- linelist_cleaned %>%
 ## ideally this variable would fit your shapefile and population data! 
 ## If you have many regions - consider group by an overarching unit (e.g. province)
 # linelist_cleaned <- linelist_cleaned %>%
-#   mutate(patient_origin_free_text = recode(patient_origin_free_text,
-#     # List all incorrect mis-spellings here ("old" = "new")
-#     "Valliages DD" = "Village D"
+#   mutate(patient_origin_free_text = fct_recode(patient_origin_free_text,
+#     # List all incorrect mis-spellings here ("new" = "old")
+#     "Village D" = "Valliages DD",
+#     "Village D" = "Villiage D"
 #   ))
 
 
-# Change the level labels of a categorical variable
-# similarly to recode, here we use ("old" = "new")
-linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex, 
-                                      "Male" = "Male", 
-                                      "Female" = "Female", 
-                                      "Unknown/unspecified" = NA_character_)
+# Force missing values to be explicit
+linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
 
 
 # change the order of levels in a single categorical variable 
