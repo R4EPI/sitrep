@@ -4,7 +4,7 @@
 #' @param age_group the name of a column in the data frame that defines the age
 #'   group categories. Defaults to "age_group"
 #' @param split_by the name of a column in the data frame that defines the
-#'   the bivariate column. Defaults to "sex"
+#'   the bivariate column. Defaults to "sex". See NOTE
 #' @param stack_by the name of the column in the data frame to use for shading
 #'   the bars
 #' @param proportional If `TRUE`, bars will represent proportions of cases out
@@ -18,8 +18,10 @@
 #' @param horizontal_lines If `TRUE` (default), horizontal dashed lines will
 #'   appear behind the bars of the pyramid
 #'
-#' @note if `split_by` and `stack_by` are not the same, The values of `spit_by`
-#'   will show up as labels at the top of the pyramid.
+#' @note If the `split_by` variable is bivariate (e.g. an indicator for pregnancy),
+#'   then the result will show up as a pyramid, otherwise, it will be presented
+#'   as a facetted barplot where the values of `spit_by` will show up as labels
+#'   at top of each facet.
 #' @import ggplot2
 #' @importFrom scales percent
 #' @export
@@ -30,11 +32,20 @@
 #' ages <- cut(sample(80, 150, replace = TRUE),
 #'             breaks = c(0, 5, 10, 30, 90), right = FALSE)
 #' sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
+#' gender <- sex
+#' gender[sample(5)] <- "NB"
 #' ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
-#' dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
+#' dat  <- data.frame(AGE              = ages,
+#'                    sex              = sex,
+#'                    gender           = gender,
+#'                    ill              = ill,
+#'                    stringsAsFactors = FALSE)
 #'
 #' # Create the age pyramid, stratifying by sex
 #' print(ap   <- plot_age_pyramid(dat, age_group = AGE))
+#' 
+#' # Create the age pyramid, stratifying by gender, which can include non-binary
+#' print(apg  <- plot_age_pyramid(dat, age_group = AGE, split_by = gender))
 #'
 #' # Remove NA categories with na.rm = TRUE
 #' dat2 <- dat
@@ -75,7 +86,8 @@
 #' plot_age_pyramid(dat3, age_group = AGE) 
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                              stack_by = split_by, proportional = FALSE, na.rm = FALSE,
-                             vertical_lines = FALSE, horizontal_lines = TRUE) {
+                             vertical_lines = FALSE, horizontal_lines = TRUE,
+                             pyramid = TRUE) {
   
   is_df     <- is.data.frame(data)
   is_svy    <- inherits(data, "tbl_svy")
@@ -122,25 +134,32 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   sex_levels    <- unique(plot_data[[split_by]])
   sex_levels    <- sex_levels[!is.na(sex_levels)]
   stk_levels    <- unique(plot_data[[stack_by]])
+  the_breaks    <- seq(0, max_n, step_size)
+  the_breaks    <- c(-rev(the_breaks[-1]), the_breaks)
 
-  stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
+  stopifnot(length(sex_levels) >= 1L)#, length(sex_levels) <= 2L)
 
-  plot_data[["n"]] <- ifelse(plot_data[[split_by]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
-  the_breaks       <- seq(0, max_n, step_size)
-  the_breaks       <- c(-rev(the_breaks[-1]), the_breaks)
+  sex_measured_binary <- pyramid && length(sex_levels) == 2L
+  if (sex_measured_binary) {
+    plot_data[["n"]] <- ifelse(plot_data[[split_by]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
+  } 
+
 
   pyramid <- ggplot(plot_data) +
     aes(x = !!ag, y = !!quote(n), group = !!sb, fill = !!st) +
     geom_bar(stat = "identity") +
     coord_flip() +
-    scale_fill_manual(values = incidence::incidence_pal1(length(stk_levels))) +
-    scale_y_continuous(limits = c(-max_n, max_n),
+    scale_fill_manual(values  = incidence::incidence_pal1(length(stk_levels))) +
+    scale_y_continuous(limits = if (sex_measured_binary) c(-max_n, max_n) else c(0, max_n),
                        breaks = the_breaks,
                        labels = lab_fun) +
     theme_classic() +
     theme(axis.line.y.left = element_blank()) +
     labs(y = y_lab)
 
+  if (!sex_measured_binary) {
+    pyramid <- pyramid + facet_wrap(split_by)
+  }
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
       geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dotted", colour = "grey")
@@ -152,7 +171,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   pyramid <- pyramid +
     geom_hline(yintercept = 0) # add vertical line
 
-  if (stack_by != split_by) {
+  if (sex_measured_binary && stack_by != split_by) {
     pyramid <- pyramid +
       annotate(geom = "label",
                x = max_age_group,
@@ -211,12 +230,9 @@ count_age_categories <- function(data, age_group, split_by, stack_by, proportion
                                   n = srvyr::survey_total(vartype = "ci", level = 0.95))
 
   }
-  # Make sure that all the levels are counted:
-  if (identical(split_by, stack_by)) {
-    plot_data <- tidyr::complete(plot_data, !! sb, fill = list(n = 0L))
-  } else {
-    plot_data <- tidyr::complete(plot_data, !! sb, !! st, fill = list(n = 0L))
-  }
+  # Remove any missing values
+  to_delete <- is.na(plot_data[[split_by]]) & is.na(plot_data[[stack_by]]) && plot_data[["n"]] == 0
+  plot_data <- plot_data[!to_delete, , drop = FALSE]
 
   if (proportional) {
     plot_data$n <- plot_data$n / sum(plot_data$n, na.rm = TRUE)

@@ -4,10 +4,13 @@ set.seed(2018-01-15)
 ages <- cut(sample(80, 150, replace = TRUE),
            breaks = c(0, 5, 10, 30, 50, 80, 100), right = FALSE)
 sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
+gender <- sex
+gender[sample(5)] <- "NB"
 ill  <- sample(0:1, 150, replace = TRUE)
-dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
+dat  <- data.frame(AGE = ages, sex = sex, gender = gender, ill = ill, stringsAsFactors = FALSE)
 ap1  <- plot_age_pyramid(dat, age_group = "AGE")
 ap2  <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill")
+apg  <- plot_age_pyramid(dat, age_group = "AGE", split_by = gender)
 
 test_that("age pyramid returns a ggplot2 object", {
   expect_is(ap1, "ggplot")
@@ -21,6 +24,13 @@ test_that("choosing a column that doesn't exist results in an error", {
 test_that("plot by sex default works", {
   expect_true("sex" %in% colnames(ap1$data))
   expect_equal(unique(ap1$data$sex), c("Female", "Male"))
+})
+
+test_that("plot by gender works", {
+  
+  expect_true("gender" %in% colnames(apg$data))
+  expect_equal(unique(apg$data$gender), c("Female", "Male", "NB"))
+
 })
 
 test_that("plot by sex default works", {
