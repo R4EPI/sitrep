@@ -249,7 +249,7 @@ count_age_categories <- function(data, age_group, split_by, stack_by, proportion
 
   }
   # Remove any missing values
-  to_delete <- is.na(plot_data[[split_by]]) & is.na(plot_data[[stack_by]]) && plot_data[["n"]] == 0
+  to_delete <- is.na(plot_data[[split_by]]) & is.na(plot_data[[stack_by]]) & plot_data[["n"]] == 0
   plot_data <- plot_data[!to_delete, , drop = FALSE]
 
   if (proportional) {
