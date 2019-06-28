@@ -89,7 +89,16 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   grouper   <- tidyselect::vars_select(colnames(df), !!enquo(grouper))
   sym_count <- rlang::sym(counter)
 
+  # Check if counter is an integer and force factor ----------------------------
+
+  if (is.numeric(df[[counter]])) {
+    message("converting numeric variable to factor")
+    df[[counter]] <- cut(df[[counter]], breaks = pretty(range(df[[counter]], na.rm = TRUE)))
+  }
   
+  if (is.logical(df[[counter]])) {
+    df[[counter]] <- factor(df[[counter]], levels = c("TRUE", "FALSE"))
+  }
   # Filter missing data --------------------------------------------------------
 
   if (explicit_missing) {
