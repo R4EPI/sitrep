@@ -88,74 +88,46 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     stop(msg)
   }
 
-  ag <- rlang::sym(age_group)
-  sb <- rlang::sym(split_by)
-  st <- rlang::sym(stack_by)
-  if (is_df) {
-    if (!is.character(data[[split_by]]) || !is.factor(data[[split_by]])) {
-      data[[split_by]] <- as.character(data[[split_by]])
-    }
-    if (!is.character(data[[stack_by]]) || !is.factor(data[[stack_by]])) {
-      data[[stack_by]] <- as.character(data[[stack_by]])
-    }
-    if (anyNA(data[[split_by]]) || anyNA(data[[stack_by]])) {
-      nas <- is.na(data[[split_by]]) | is.na(data[[stack_by]])
-      warning(sprintf("removing %d observations with missing values between the %s and %s columns.",
-                      sum(nas), split_by, stack_by))
-      data <- data[!nas, , drop = FALSE]
-    }
-    if (na.rm) {
-      nas <- is.na(data[[age_group]])
-      warning(sprintf("removing %d observations with missing values from the %s column.",
-                      sum(nas), age_group))
-      data <- data[!nas, , drop = FALSE]
-    } else {
-      data[[age_group]] <- forcats::fct_explicit_na(data[[age_group]])
-    }
-    plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
-    plot_data <- dplyr::group_by(plot_data, !!ag, !!sb, !!st)
-    plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
-    plot_data <- dplyr::ungroup(plot_data)
-  } else {
-    plot_data <- srvyr::group_by(data, !!ag, !!sb, !!st)
-    plot_data <- srvyr::summarise(plot_data,
-                                  n = srvyr::survey_total(vartype = "ci", level = 0.95))
-
-  }
-  if (proportional) {
-    plot_data$n <- plot_data$n / sum(plot_data$n, na.rm = TRUE)
-  }
+  ag        <- rlang::sym(age_group)
+  sb        <- rlang::sym(split_by)
+  st        <- rlang::sym(stack_by)
+  plot_data <- count_age_categories(data,
+                                    age_group, 
+                                    split_by, 
+                                    stack_by, 
+                                    proportional, 
+                                    na.rm)
   # find the maximum x axis position
-  max_n <- dplyr::group_by(plot_data, !!ag, !!sb)
+  max_n <- dplyr::group_by(plot_data, !!ag, !!sb, .drop = FALSE)
   max_n <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
   max_n <- max(max_n[["n"]])
   # make sure the x axis is a multiple of ten
   if (proportional) {
-    max_n <- ceiling(max_n * 100)
-    max_n <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
+    max_n     <- ceiling(max_n * 100)
+    max_n     <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
     step_size <- if (max_n > 25) 0.1 else if (max_n > 15) 0.05 else 0.01
-    max_n <- max_n / 100
-    lab_fun <- function(i) scales::percent(abs(i))
-    y_lab <- "proportion"
+    max_n     <- max_n / 100
+    lab_fun   <- function(i) scales::percent(abs(i))
+    y_lab     <- "proportion"
   } else {
-    max_n <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
+    max_n     <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
     step_size <- ceiling(max_n / 5)
-    lab_fun <- abs
-    y_lab <- "counts"
+    lab_fun   <- abs
+    y_lab     <- "counts"
   }
   stopifnot(is.finite(max_n), max_n > 0)
 
-  age_levels <- levels(plot_data[[age_group]])
+  age_levels    <- levels(plot_data[[age_group]])
   max_age_group <- age_levels[length(age_levels)]
-  sex_levels <- unique(plot_data[[split_by]])
-  sex_levels <- sex_levels[!is.na(sex_levels)]
-  stk_levels <- unique(plot_data[[stack_by]])
+  sex_levels    <- unique(plot_data[[split_by]])
+  sex_levels    <- sex_levels[!is.na(sex_levels)]
+  stk_levels    <- unique(plot_data[[stack_by]])
 
   stopifnot(length(sex_levels) >= 1L, length(sex_levels) <= 2L)
 
   plot_data[["n"]] <- ifelse(plot_data[[split_by]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
-  the_breaks <- seq(0, max_n, step_size)
-  the_breaks <- c(-rev(the_breaks[-1]), the_breaks)
+  the_breaks       <- seq(0, max_n, step_size)
+  the_breaks       <- c(-rev(the_breaks[-1]), the_breaks)
 
   pyramid <- ggplot(plot_data) +
     aes(x = !!ag, y = !!quote(n), group = !!sb, fill = !!st) +
@@ -196,4 +168,60 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                label = sex_levels[[2]])
   }
   pyramid
+}
+
+
+# This will count the age categories for us. I've pulled it out of the plot-age
+count_age_categories <- function(data, age_group, split_by, stack_by, proportional, na.rm) {
+
+  ag <- rlang::sym(age_group)
+  sb <- rlang::sym(split_by)
+  st <- rlang::sym(stack_by)
+
+  if (is.data.frame(data)) {
+    sbv <- data[[split_by]]
+    stv <- data[[stack_by]]
+    if (!is.character(sbv) || !is.factor(sbv)) {
+      data[[split_by]] <- as.character(sbv)
+    }
+    if (!is.character(stv) || !is.factor(stv)) {
+      data[[stack_by]] <- as.character(stv)
+    }
+    if (anyNA(sbv) || anyNA(stv)) {
+      nas <- is.na(sbv) | is.na(stv)
+      warning(sprintf("removing %d observations with missing values between the %s and %s columns.",
+                      sum(nas), split_by, stack_by))
+      data <- data[!nas, , drop = FALSE]
+    }
+    if (na.rm) {
+      nas <- is.na(data[[age_group]])
+      warning(sprintf("removing %d observations with missing values from the %s column.",
+                      sum(nas), age_group))
+      data <- data[!nas, , drop = FALSE]
+    } else {
+      data[[age_group]] <- forcats::fct_explicit_na(data[[age_group]])
+    }
+    # plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
+    plot_data <- dplyr::group_by(data, !!ag, !!sb, !!st, .drop = FALSE)
+    plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
+    plot_data <- dplyr::ungroup(plot_data)
+  } else {
+    plot_data <- srvyr::group_by(data, !!ag, !!sb, !!st, .drop = FALSE)
+    plot_data <- srvyr::summarise(plot_data,
+                                  n = srvyr::survey_total(vartype = "ci", level = 0.95))
+
+  }
+  # Make sure that all the levels are counted:
+  if (identical(split_by, stack_by)) {
+    plot_data <- tidyr::complete(plot_data, !! sb, fill = list(n = 0L))
+  } else {
+    plot_data <- tidyr::complete(plot_data, !! sb, !! st, fill = list(n = 0L))
+  }
+
+  if (proportional) {
+    plot_data$n <- plot_data$n / sum(plot_data$n, na.rm = TRUE)
+  }
+
+  plot_data
+
 }
