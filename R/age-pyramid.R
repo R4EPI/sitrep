@@ -171,6 +171,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     scale_y_continuous(limits = if (sex_measured_binary) c(-max_n, max_n) else c(0, max_n),
                        breaks = the_breaks,
                        labels = lab_fun) +
+    scale_x_discrete(drop = FALSE) + 
     theme_classic() +
     theme(axis.line.y.left = element_blank()) +
     labs(y = y_lab)

@@ -12,6 +12,21 @@ ap1  <- plot_age_pyramid(dat, age_group = "AGE")
 ap2  <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill")
 apg  <- plot_age_pyramid(dat, age_group = "AGE", split_by = gender)
 apnp <- plot_age_pyramid(dat, age_group = AGE, pyramid = FALSE)
+# missing data
+datd <- dat[dat$AGE != levels(dat$AGE)[2], , drop = FALSE]
+ap3  <- plot_age_pyramid(datd, age_group = "AGE")
+
+test_that("plots appear the same", {
+           
+  skip_if_not_installed("vdiffr")
+  vdiffr::expect_doppelganger("default age pyramid", ap1)
+  vdiffr::expect_doppelganger("ill age pyramid"    , ap2)
+  vdiffr::expect_doppelganger("missing age pyramid", ap3)
+  vdiffr::expect_doppelganger("gender age pyramid" , apg)
+  vdiffr::expect_doppelganger("default no pyramid" , apnp)
+
+})
+
 
 test_that("age pyramid returns a ggplot2 object", {
   expect_is(ap1, "ggplot")
@@ -58,12 +73,10 @@ test_that("plot by ill works", {
 })
 
 test_that("missing levels are still plotted", {
-  datd <- dat[dat$AGE != levels(dat$AGE)[2], , drop = FALSE]
-  ap3 <- plot_age_pyramid(datd, age_group = "AGE")
   # Complete data has both groups
   expect_equal(sum(ap1$data$AGE == levels(dat$AGE)[2]), 2)
   # Incomplete data has groups replaced with NA
-  expect_equal(sum(ap3$data$AGE == levels(dat$AGE)[2]), 1)
+  expect_equal(sum(ap3$data$AGE == levels(dat$AGE)[2]), 0)
 })
 
 test_that("missing split data are removed before plotting", {

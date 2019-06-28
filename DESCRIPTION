@@ -44,6 +44,7 @@ Imports:
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
+    vdiffr,
     covr
 Remotes:
   reconhub/linelist
