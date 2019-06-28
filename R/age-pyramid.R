@@ -116,30 +116,37 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                                     proportional, 
                                     na.rm)
 
-  # 
+  # gathering the levels for each of the elements ------------------------------ 
   age_levels    <- levels(plot_data[[age_group]])
   max_age_group <- age_levels[length(age_levels)]
 
-  split_levels    <- unique(plot_data[[split_by]])
-  split_levels    <- split_levels[!is.na(split_levels)]
+  # Splitting levels without missing data
+  split_levels  <- unique(plot_data[[split_by]])
+  split_levels  <- split_levels[!is.na(split_levels)]
 
+  # Stacking levels assuming there is no missing data
   stk_levels    <- unique(plot_data[[stack_by]])
 
   stopifnot(length(split_levels) >= 1L)
+
+  # Switch between pyramid and non-pyramid shape -------------------------------
+  # This will only result in a pyramid if the user specifies so AND the split
+  # levels is binary.
   split_measured_binary <- pyramid && length(split_levels) == 2L
 
   if (split_measured_binary) {
-  # find the maximum x axis position
+    # find the maximum x axis position
     max_n <- dplyr::group_by(plot_data, !!ag, !!sb, .drop = FALSE)
     max_n <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
     max_n <- max(max_n[["n"]])
   } else {
+    # Create maxdata (used below to create background data)
     maxdata <- dplyr::group_by(plot_data, !! ag, .drop = FALSE)
     maxdata <- dplyr::tally(maxdata, wt = !! quote(n))
     max_n   <- max(maxdata$n, na.rm = TRUE)
   }
 
-  # make sure the x axis is a multiple of ten
+  # make sure the x axis is a multiple of ten. This took a lot of fiddling
   if (proportional) {
     max_n     <- ceiling(max_n * 100)
     max_n     <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
@@ -154,9 +161,11 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     y_lab     <- "counts"
   }
 
-  the_breaks    <- seq(0, max_n, step_size)
-  the_breaks    <- c(-rev(the_breaks[-1]), the_breaks)
   stopifnot(is.finite(max_n), max_n > 0)
+
+  # Make sure the breaks are correct for the plot size
+  the_breaks <- seq(0, max_n, step_size)
+  the_breaks <- if (split_measured_binary) c(-rev(the_breaks[-1]), the_breaks) else the_breaks
 
 
   if (split_measured_binary) {
@@ -166,12 +175,16 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     plot_data[["n"]] <- ifelse(plot_data[[split_by]] == split_levels[[1L]], -1L, 1L) * plot_data[["n"]]
   }
 
-  pyramid <- ggplot(plot_data) +
-    aes(x = !!ag, y = !!quote(n)) 
+  # Create base plot -----------------------------------------------------------
+  pyramid <- ggplot(plot_data, aes(x = !!ag, y = !!quote(n)))
 
   if (!split_measured_binary) {
-    pyramid <- pyramid + geom_col(color = "grey20", fill = "grey80", alpha = 0.5, data = maxdata)
+    # add the background layer if the split is not binary
+    pyramid <- pyramid + 
+      geom_col(color = "grey20", fill = "grey80", alpha = 0.5, data = maxdata)
   }
+
+  # Add bars, scales, and themes -----------------------------------------------
   pyramid <- pyramid + 
     geom_col(aes(group = !!sb, fill = !!st), color = "grey20") +
     coord_flip() +
@@ -179,12 +192,13 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     scale_y_continuous(limits = if (split_measured_binary) c(-max_n, max_n) else c(0, max_n),
                        breaks = the_breaks,
                        labels = lab_fun) +
-    scale_x_discrete(drop = FALSE) + 
+    scale_x_discrete(drop = FALSE) + # note: drop = FALSE important to avoid missing age groups
     theme_classic() +
     theme(axis.line.y.left = element_blank()) +
     labs(y = y_lab)
 
   if (!split_measured_binary) {
+    # Wrap the categories if the split is not binary
     pyramid <- pyramid + facet_wrap(split_by)
   }
   if (vertical_lines == TRUE) {
@@ -195,20 +209,23 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   if (horizontal_lines == TRUE) {
     pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
   }
+
   pyramid <- pyramid +
     geom_hline(yintercept = 0) # add vertical line
 
   if (split_measured_binary && stack_by != split_by) {
+    # If the split is binary and we have both stacked and split data, then we
+    # need to label the groups. We do so by adding a label annotation
     pyramid <- pyramid +
-      annotate(geom = "label",
-               x = max_age_group,
-               y = -step_size,
+      annotate(geom  = "label",
+               x     = max_age_group,
+               y     = -step_size,
                vjust = 0.5,
                hjust = 1,
                label = split_levels[[1]]) +
-      annotate(geom = "label",
-               x = max_age_group,
-               y = step_size,
+      annotate(geom  = "label",
+               x     = max_age_group,
+               y     = step_size,
                vjust = 0.5,
                hjust = 0,
                label = split_levels[[2]])
