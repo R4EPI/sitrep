@@ -108,6 +108,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   ag        <- rlang::sym(age_group)
   sb        <- rlang::sym(split_by)
   st        <- rlang::sym(stack_by)
+  # Count the plot data --------------------------------------------------------
   plot_data <- count_age_categories(data,
                                     age_group, 
                                     split_by, 
@@ -115,15 +116,19 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                                     proportional, 
                                     na.rm)
 
+  # 
   age_levels    <- levels(plot_data[[age_group]])
   max_age_group <- age_levels[length(age_levels)]
-  sex_levels    <- unique(plot_data[[split_by]])
-  sex_levels    <- sex_levels[!is.na(sex_levels)]
-  stk_levels    <- unique(plot_data[[stack_by]])
-  stopifnot(length(sex_levels) >= 1L)#, length(sex_levels) <= 2L)
-  sex_measured_binary <- pyramid && length(sex_levels) == 2L
 
-  if (sex_measured_binary) {
+  split_levels    <- unique(plot_data[[split_by]])
+  split_levels    <- split_levels[!is.na(split_levels)]
+
+  stk_levels    <- unique(plot_data[[stack_by]])
+
+  stopifnot(length(split_levels) >= 1L)
+  split_measured_binary <- pyramid && length(split_levels) == 2L
+
+  if (split_measured_binary) {
   # find the maximum x axis position
     max_n <- dplyr::group_by(plot_data, !!ag, !!sb, .drop = FALSE)
     max_n <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
@@ -154,21 +159,24 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   stopifnot(is.finite(max_n), max_n > 0)
 
 
-  if (sex_measured_binary) {
-    plot_data[["n"]] <- ifelse(plot_data[[split_by]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
+  if (split_measured_binary) {
+    # If the user has a binary level and wants to plot the data in a pyramid,
+    # then we need to make the counts for the primary level negative so that
+    # they appear to go to the left on the plot.
+    plot_data[["n"]] <- ifelse(plot_data[[split_by]] == split_levels[[1L]], -1L, 1L) * plot_data[["n"]]
   }
 
   pyramid <- ggplot(plot_data) +
     aes(x = !!ag, y = !!quote(n)) 
 
-  if (!sex_measured_binary) {
+  if (!split_measured_binary) {
     pyramid <- pyramid + geom_col(color = "grey20", fill = "grey80", alpha = 0.5, data = maxdata)
   }
   pyramid <- pyramid + 
     geom_col(aes(group = !!sb, fill = !!st), color = "grey20") +
     coord_flip() +
     scale_fill_manual(values  = incidence::incidence_pal1(length(stk_levels))) +
-    scale_y_continuous(limits = if (sex_measured_binary) c(-max_n, max_n) else c(0, max_n),
+    scale_y_continuous(limits = if (split_measured_binary) c(-max_n, max_n) else c(0, max_n),
                        breaks = the_breaks,
                        labels = lab_fun) +
     scale_x_discrete(drop = FALSE) + 
@@ -176,7 +184,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     theme(axis.line.y.left = element_blank()) +
     labs(y = y_lab)
 
-  if (!sex_measured_binary) {
+  if (!split_measured_binary) {
     pyramid <- pyramid + facet_wrap(split_by)
   }
   if (vertical_lines == TRUE) {
@@ -190,20 +198,20 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   pyramid <- pyramid +
     geom_hline(yintercept = 0) # add vertical line
 
-  if (sex_measured_binary && stack_by != split_by) {
+  if (split_measured_binary && stack_by != split_by) {
     pyramid <- pyramid +
       annotate(geom = "label",
                x = max_age_group,
                y = -step_size,
                vjust = 0.5,
                hjust = 1,
-               label = sex_levels[[1]]) +
+               label = split_levels[[1]]) +
       annotate(geom = "label",
                x = max_age_group,
                y = step_size,
                vjust = 0.5,
                hjust = 0,
-               label = sex_levels[[2]])
+               label = split_levels[[2]])
   }
   pyramid
 }
