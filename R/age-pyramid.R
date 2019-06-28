@@ -17,6 +17,9 @@
 #' to turn on write `TRUE`.
 #' @param horizontal_lines If `TRUE` (default), horizontal dashed lines will
 #'   appear behind the bars of the pyramid
+#' @param pyramid if `TRUE`, then binary `split_by` variables will result in 
+#'   a population pyramid (non-binary variables cannot form a pyramid). If 
+#'   `FALSE`, a pyramid will not form.
 #'
 #' @note If the `split_by` variable is bivariate (e.g. an indicator for pregnancy),
 #'   then the result will show up as a pyramid, otherwise, it will be presented

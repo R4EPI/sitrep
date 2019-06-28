@@ -11,10 +11,20 @@ dat  <- data.frame(AGE = ages, sex = sex, gender = gender, ill = ill, stringsAsF
 ap1  <- plot_age_pyramid(dat, age_group = "AGE")
 ap2  <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill")
 apg  <- plot_age_pyramid(dat, age_group = "AGE", split_by = gender)
+apnp <- plot_age_pyramid(dat, age_group = AGE, pyramid = FALSE)
 
 test_that("age pyramid returns a ggplot2 object", {
   expect_is(ap1, "ggplot")
   expect_is(ap2, "ggplot")
+})
+
+test_that("toggling pyramid will turn off the pyramid", {
+
+  expect_identical(names(ap1$data), names(apnp$data))
+  # the absolute values of pyramid data are equal to the values of non-pyramid data
+  expect_identical(abs(ap1$data$n), apnp$data$n)
+  expect_failure(expect_equal(ap1$data$n, apnp$data$n))
+
 })
 
 test_that("choosing a column that doesn't exist results in an error", {

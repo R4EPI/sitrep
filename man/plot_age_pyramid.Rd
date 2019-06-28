@@ -6,7 +6,7 @@
 \usage{
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
   stack_by = split_by, proportional = FALSE, na.rm = FALSE,
-  vertical_lines = FALSE, horizontal_lines = TRUE)
+  vertical_lines = FALSE, horizontal_lines = TRUE, pyramid = TRUE)
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}
@@ -15,7 +15,7 @@ plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
 group categories. Defaults to "age_group"}
 
 \item{split_by}{the name of a column in the data frame that defines the
-the bivariate column. Defaults to "sex"}
+the bivariate column. Defaults to "sex". See NOTE}
 
 \item{stack_by}{the name of the column in the data frame to use for shading
 the bars}
@@ -33,13 +33,19 @@ to turn on write \code{TRUE}.}
 
 \item{horizontal_lines}{If \code{TRUE} (default), horizontal dashed lines will
 appear behind the bars of the pyramid}
+
+\item{pyramid}{if \code{TRUE}, then binary \code{split_by} variables will result in
+a population pyramid (non-binary variables cannot form a pyramid). If
+\code{FALSE}, a pyramid will not form.}
 }
 \description{
 Plot a population pyramid (age-sex) from a dataframe.
 }
 \note{
-if \code{split_by} and \code{stack_by} are not the same, The values of \code{spit_by}
-will show up as labels at the top of the pyramid.
+If the \code{split_by} variable is bivariate (e.g. an indicator for pregnancy),
+then the result will show up as a pyramid, otherwise, it will be presented
+as a facetted barplot where the values of \code{spit_by} will show up as labels
+at top of each facet.
 }
 \examples{
 library(ggplot2)
@@ -48,11 +54,20 @@ set.seed(2018-01-15)
 ages <- cut(sample(80, 150, replace = TRUE),
             breaks = c(0, 5, 10, 30, 90), right = FALSE)
 sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
+gender <- sex
+gender[sample(5)] <- "NB"
 ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
-dat  <- data.frame(AGE = ages, sex = sex, ill = ill, stringsAsFactors = FALSE)
+dat  <- data.frame(AGE              = ages,
+                   sex              = sex,
+                   gender           = gender,
+                   ill              = ill,
+                   stringsAsFactors = FALSE)
 
 # Create the age pyramid, stratifying by sex
 print(ap   <- plot_age_pyramid(dat, age_group = AGE))
+
+# Create the age pyramid, stratifying by gender, which can include non-binary
+print(apg  <- plot_age_pyramid(dat, age_group = AGE, split_by = gender))
 
 # Remove NA categories with na.rm = TRUE
 dat2 <- dat
