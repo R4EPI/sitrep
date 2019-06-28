@@ -21,10 +21,12 @@
 #'   a population pyramid (non-binary variables cannot form a pyramid). If 
 #'   `FALSE`, a pyramid will not form.
 #'
-#' @note If the `split_by` variable is bivariate (e.g. an indicator for pregnancy),
-#'   then the result will show up as a pyramid, otherwise, it will be presented
-#'   as a facetted barplot where the values of `spit_by` will show up as labels
-#'   at top of each facet.
+#' @note If the `split_by` variable is bivariate (e.g. an indicator for
+#' pregnancy), then the result will show up as a pyramid, otherwise, it will be
+#' presented as a facetted barplot with with empty bars in the background
+#' indicating the range of the un-facetted data set. Values of `spit_by` will
+#' show up as labels at top of each facet.
+#'#'#'
 #' @import ggplot2
 #' @importFrom scales percent
 #' @export
@@ -112,10 +114,26 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                                     stack_by, 
                                     proportional, 
                                     na.rm)
+
+  age_levels    <- levels(plot_data[[age_group]])
+  max_age_group <- age_levels[length(age_levels)]
+  sex_levels    <- unique(plot_data[[split_by]])
+  sex_levels    <- sex_levels[!is.na(sex_levels)]
+  stk_levels    <- unique(plot_data[[stack_by]])
+  stopifnot(length(sex_levels) >= 1L)#, length(sex_levels) <= 2L)
+  sex_measured_binary <- pyramid && length(sex_levels) == 2L
+
+  if (sex_measured_binary) {
   # find the maximum x axis position
-  max_n <- dplyr::group_by(plot_data, !!ag, !!sb, .drop = FALSE)
-  max_n <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
-  max_n <- max(max_n[["n"]])
+    max_n <- dplyr::group_by(plot_data, !!ag, !!sb, .drop = FALSE)
+    max_n <- dplyr::summarise(max_n, n = sum(abs(!!quote(n))))
+    max_n <- max(max_n[["n"]])
+  } else {
+    maxdata <- dplyr::group_by(plot_data, !! ag, .drop = FALSE)
+    maxdata <- dplyr::tally(maxdata, wt = !! quote(n))
+    max_n   <- max(maxdata$n, na.rm = TRUE)
+  }
+
   # make sure the x axis is a multiple of ten
   if (proportional) {
     max_n     <- ceiling(max_n * 100)
@@ -130,27 +148,24 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     lab_fun   <- abs
     y_lab     <- "counts"
   }
-  stopifnot(is.finite(max_n), max_n > 0)
 
-  age_levels    <- levels(plot_data[[age_group]])
-  max_age_group <- age_levels[length(age_levels)]
-  sex_levels    <- unique(plot_data[[split_by]])
-  sex_levels    <- sex_levels[!is.na(sex_levels)]
-  stk_levels    <- unique(plot_data[[stack_by]])
   the_breaks    <- seq(0, max_n, step_size)
   the_breaks    <- c(-rev(the_breaks[-1]), the_breaks)
+  stopifnot(is.finite(max_n), max_n > 0)
 
-  stopifnot(length(sex_levels) >= 1L)#, length(sex_levels) <= 2L)
 
-  sex_measured_binary <- pyramid && length(sex_levels) == 2L
   if (sex_measured_binary) {
     plot_data[["n"]] <- ifelse(plot_data[[split_by]] == sex_levels[[1L]], -1L, 1L) * plot_data[["n"]]
-  } 
-
+  }
 
   pyramid <- ggplot(plot_data) +
-    aes(x = !!ag, y = !!quote(n), group = !!sb, fill = !!st) +
-    geom_bar(stat = "identity") +
+    aes(x = !!ag, y = !!quote(n)) 
+
+  if (!sex_measured_binary) {
+    pyramid <- pyramid + geom_col(color = "grey20", fill = "grey80", alpha = 0.5, data = maxdata)
+  }
+  pyramid <- pyramid + 
+    geom_col(aes(group = !!sb, fill = !!st), color = "grey20") +
     coord_flip() +
     scale_fill_manual(values  = incidence::incidence_pal1(length(stk_levels))) +
     scale_y_continuous(limits = if (sex_measured_binary) c(-max_n, max_n) else c(0, max_n),

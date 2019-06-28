@@ -42,10 +42,12 @@ a population pyramid (non-binary variables cannot form a pyramid). If
 Plot a population pyramid (age-sex) from a dataframe.
 }
 \note{
-If the \code{split_by} variable is bivariate (e.g. an indicator for pregnancy),
-then the result will show up as a pyramid, otherwise, it will be presented
-as a facetted barplot where the values of \code{spit_by} will show up as labels
-at top of each facet.
+If the \code{split_by} variable is bivariate (e.g. an indicator for
+pregnancy), then the result will show up as a pyramid, otherwise, it will be
+presented as a facetted barplot with with empty bars in the background
+indicating the range of the un-facetted data set. Values of \code{spit_by} will
+show up as labels at top of each facet.
+#'#'
 }
 \examples{
 library(ggplot2)
