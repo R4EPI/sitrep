@@ -405,8 +405,8 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # create an age group variable (combining those over 24 months and those under) 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(age_group = factor(
-    if_else(age_months >= 24,
+  mutate(age_group_bin = factor(
+    if_else(age_month >= 24,
       "24-60",
       "0-23"
     )
@@ -424,7 +424,7 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # create age group variable for under 1 years based on months
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(age_group_mon = age_categories(study_data_cleaned$age_month,
+  mutate(age_group = age_categories(study_data_cleaned$age_month,
                                                  breakers = c(6, 12, 24, 36, 48, 60),
                                                  ceiling = TRUE))
 
@@ -455,68 +455,108 @@ study_data_cleaned <- study_data_cleaned %>%
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(consent = head_consent == "Yes")
 
-# create a new variable by reordering the levels of a factor 
+# Set the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(cause_of_death = fct_relevel(q65_consent_no_reason,
-                                      "Refuse to explain", 
-                                      "No time", 
-                                      "Bad experience",
-                                      "Other reason")
-  )
+  mutate(sex = factor(sex,
+                      levels = c("Female", "Male")))
 
 
-# combine all vaccine variables in to one 
-# where if any of the variables contain one yes then it is given that 
-# simplified, keep the yes answers and change others to no 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status = case_when(
-    vaccine_mass    == "Yes - Vaccination card" ~ "Card", 
-    vaccine_routine == "Yes - Vaccination card" ~ "Card", 
-    vaccine_sia     == "Yes - Vaccination card" ~ "Card", 
-    vaccine_mass    == "Yes - Verbal" ~ "Verbal", 
-    vaccine_routine == "Yes - Verbal" ~ "Verbal", 
-    vaccine_sia     == "Yes - Verbal" ~ "Verbal",
-    TRUE ~ "Unvaccinated"))
 
 # correct the order of levels
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status = fct_relevel(vaccination_status, 
-                                          "Card", 
-                                          "Verbal", 
-                                          "Unvaccinated")
+  mutate(soap = fct_relevel(soap, 
+                            "Distribution", 
+                            "Healthcentre", 
+                            "Never")
   )
 
 
-# create a new grouping for vaccine status variable 
-# simplified, card or verbal then yes otherwise no 
-# grepl searches for rows with "Yes"
+# create a new grouping for soap variable 
+# simplified, distribution or health centre then covered otherwise not covered 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status_simple = case_when(
-    vaccination_status %in% c("Card", "Verbal") ~ "Vaccinated", 
-    TRUE ~ "Unvaccinated")
-  )
-
-# correct the order of levels
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status_simple = fct_relevel(vaccination_status_simple, 
-                                                 "Vaccinated", 
-                                                 "Unvaccinated")
+  mutate(coverage = case_when(
+    soap %in% c("Distribution", "Healthcentre") ~ "Covered", 
+    TRUE ~ "Not covered")
   )
 
 
+# explicitly replace NA of a factor
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate(coverage = fct_explicit_na(coverage, na_level = "Not Applicable"))
+
+
+## replace missing values in Dharma multi-choice questions to "" so that we can
+## filter them out later.
+
+study_data_cleaned <- study_data_cleaned %>%
+  mutate_at(.vars = vars(contains("q53")), # all variables that contain the word "q53"
+            .funs = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
+            ) 
 
 
 ######## weighting ------------------------------------------------------------
 
-study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
+study_data_cleaned <- add_weights(x = study_data_cleaned, 
+                                  p = population_data_age, 
+                                  age_group, sex)
 
 # drop unwanted rows  ---------------------------------------------------------
 
 # you may want to drop rows with missing IDs (i.e. blank rows from excel) 
-  # simply add a !is.na(fact_0_id) if using a dharma dataset
+  # simply add a & !is.na(fact_0_id) if using a dharma dataset
 # you will also want to drop those rows with no consent! 
-# study_data_cleaned <- study_data_cleaned %>%
-#   filter(consent)
+study_data_cleaned <- study_data_cleaned %>%
+  filter(consent & 
+           age_month > 6 & 
+           age_month < 60
+           )
+```
+
+
+```{r save_cleaned_data, eval = FALSE}
+## OPTIONAL: save your cleaned dataset as an excel file! 
+## put the current date in the name so you know!
+writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date(), ".xlsx"))
+```
+
+
+
+```{r survey_design}
+## USE THIS TO SET THE STUDY DESIGN FOR YOUR SURVEY  ---------------------------
+##
+## This creates "survey objects" which can be used as data frames for calculating
+## weighted proportions etc. 
+## There are several options for study design here. 
+## At the basic level you want to decide if it is a simple random or a cluster
+## design study. You will then need to identify your weights variable. 
+## You can also create several study designs, e.g. if you would like to have
+## an overall design and a stratified design (e.g. by sex or by region). 
+##
+## Checklist for study design --------------------------------------------------
+## 
+## - [ ] Make sure you have created all necessary variables in earlier code chunks!!
+## - [ ] Decide on your study design (cluster or simple random)
+## - [ ] If doing cluster:
+##          - [ ] place your cluster ID variable in the ids option 
+##                (e.g. householdID - "fact_0_id" not availble in dat dict)
+##          - [ ] specify your weight variable (created previously)
+##                (set to NULL if want no weights)
+## - [ ] If doing simple random: 
+##          - [ ] set ids equals 1 to have no clustering 
+##          - [ ] specify your weight variable (created previously)
+##                (set to NULL if want no weights)
+## - [ ] Create additional study designs based on strata if you did stratified 
+##        sampling 
+##      (make sure that your weight variable is based on appropriately stratified
+##        population data)
+
+
+# simple random sample (using srvyr package)
+survey_design <- study_data_cleaned %>% 
+  as_survey_design(ids = 1, # 1 for no cluster ids 
+                   weights = surv_weight, # weight variable created above 
+                   strata = NULL # sampling was simple (no strata)
+                   )
 ```
 
 
@@ -525,18 +565,154 @@ study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_g
 
 
 
+## Demographic information
+
+Compare the proportions in each age group between your sample and the source population. 
+This is important to be able to highlight potential sampling bias. 
+You could similarly repeat this looking at distributions by sex. 
+
+Note that these p-values are just indicative, and a descriptive discussion (or
+visualisation with age-pyramids below) of the distributions in your study sample 
+compared to the source population is more
+important that the binomial test itself. This is because increasing sample size
+will more often than not lead to differences that may be irrelevant after weighting
+your data. 
+
+
+```{r descriptive_sampling_bias}
+# first the counts and props of the study population
+ag <- descriptive(study_data_cleaned, "age_group") %>%
+  mutate(n_total = sum(n))
+
+# then the counts and props of the source population
+propcount <- group_by(population_data_age, age_group) %>%
+    tally(population) %>%
+    mutate(prop = n / sum(n))
+
+# bind together the columns of two tables, group by age, and perform a 
+# binomial test to see if n/total is significantly different from population
+# proportion.
+  # suffix here adds to text to the end of columns in each of the two datasets
+left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
+  group_by(age_group) %>%
+
+  # broom::tidy(binom.test()) makes a data frame out of the binomial test and
+  # will add the variables p.value, parameter, conf.low, conf.high, method, and
+  # alternative. We will only use p.value here. You can include other
+  # columns if you want to report confidence intervals
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, prop_pop)))) %>%
+  unnest() %>% # important for expanding the binom.test data frame
+  mutate(prop_pop = prop_pop * 100) %>%
+
+  # Adjusting the p-values to correct for false positives 
+  # (because testing multiple age groups). This will only make 
+  # a difference if you have many age categories
+  mutate(p.value = p.adjust(p.value, method = "holm")) %>%
+  select(age_group, n, prop, n_pop, prop_pop, p.value) %>%
+                      
+  # Only show p-values over 0.001 (those under report as <0.001)
+  mutate(p.value = if_else(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
+
+  # rename the columns appropriatley
+  rename(
+    "Age group" = age_group,
+    "Study population (n)" = n,
+    "%" = prop,
+    "Source population (n)" = n_pop,
+    "%" = prop_pop,
+    "P-value" = p.value
+  ) %>%
+  kable(digits = 2)
+
+```
 
 
 
+```{r median_age_sex_ratios}
+# compute the median age 
+medage <- median(study_data_cleaned$age_month)
+
+# paste the lower and uper quartile together
+iqr <- paste0(  # basically copy paste togehter the following
+  # calculate the 25% and 75% of distribution, with missings removed
+  quantile(     
+    study_data_cleaned$age_month, 
+    c(0.25, 0.75), 
+    na.rm = TRUE), 
+  # between lower and upper place a dash
+  collapse = "-")
+
+# compute overall sex ratio 
+sex_ratio <- study_data_cleaned %>% 
+  count(sex) %>% 
+  spread(sex, n) %>%
+  mutate(ratio = round(Male/Female, digits = 3)) %>%
+  pull(ratio)
+
+# compute sex ratios by age group 
+sex_ratio_age <- study_data_cleaned %>% 
+  count(age_group, sex) %>% 
+  spread(sex, n) %>%
+  mutate(ratio = round(Male/Female, digits = 3)) %>%
+  select(age_group, ratio)
+
+# sort table by ascending ratio then select the lowest (first)
+min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
+```
+
+
+Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
+`r fmt_count(study_data_cleaned, sex == "Female")` females and 
+`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
+female ratio was `r sex_ratio` in the surveyed population. The lowest male to
+female ratio was `r min_sex_ratio_age$ratio`
+in the `r min_sex_ratio_age$age_group` month age group.
+The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
+years). Children under two years of age made up 
+`r fmt_count(study_data_cleaned, age_group_bin == "0-23")`of the surveyed individuals.
+The highest number of surveyed indivduals (unweighted) were in the 
+`r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` 
+year age group.
 
 
 
+```{r cluster_hh_size}
+# get counts of the number of households per cluster
+clustersize <- study_data_cleaned %>% 
+  count(cluster_number) 
+
+# get the median number of households per cluster
+clustermed <- clustersize %>% 
+  summarise(median(n))
+
+# get the min and max number of households per cluster
+# paste these together seperated by a dash 
+clusterrange <- paste0(range(clustersize$n), collapse = "-")
+
+# get counts of children per household 
+# do this by cluster as household IDs are only unique within clusters
+hhsize <- study_data_cleaned %>% 
+  group_by(cluster_number) %>% 
+  count(household_id) 
+
+# get median number of children per household
+# ungroup to give you the overall median 
+hhmed <- hhsize %>%
+  ungroup() %>% 
+  summarise(median(n))
+
+# get the min and max number of children per household
+# paste these together seperated by a dash 
+hhrange <- paste0(
+  range(hhsize$n), 
+  collapse = "-")
+  
+```
 
 
-
-
-
-
+The median number of households per cluster was
+`r clustermed`, with a range of `r clusterrange`. The median number of children
+per household was `r hhmed` and the range was `r hhrange`. 
 
 
 
@@ -549,33 +725,6 @@ study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_g
 
 
 # Results
-
-```{r}
-# read in data
-# you can use rio to read in tabular data (Excel/csv) files
-survey_data <- rio::import("<your_data>", which = 2)
-
-colnames(survey_data) <- epitrix::clean_labels(colnames(survey_data))
-
-# then document all data cleaning you do
-
-# filter out all records that do not have a valid sex value
-survey_data <- filter(survey_data, sex %in% c(0, 1)) %>% 
-  mutate(sex = sex + 1L)
-
-# make weight and height numeric
-survey_data$height <- as.numeric(survey_data$height)
-
-# remove all entires for which we do not have an age in months
-survey_data <- filter(survey_data, age_months > 0, age_months < 60)
-
-survey_data$age_group <- age_categories(survey_data$age_months, breakers = c(6, 18, 30, 42, 54, 60))
-survey_data$age_24months <- age_categories(survey_data$age_months, breakers = c(6, 24, 60))
-
-# drop unused group
-survey_data$age_group <- forcats::fct_drop(survey_data$age_group, "60+")
-survey_data$age_24months <- forcats::fct_drop(survey_data$age_24months, "60+")
-```
 
 
 ## Characteristics of the sampled children
@@ -842,11 +991,5 @@ dplyr::bind_cols(survey_data, chronic) %>%
 # TODO
 ```
 
-# Discussion
 
-# Conclusions
-
-# Recommendations and priorities
-
-# Acknowledgements
 
