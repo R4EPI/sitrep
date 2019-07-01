@@ -4,8 +4,8 @@
 \alias{add_weights}
 \title{Add a column of weights to a data frame}
 \usage{
-add_weights(x, p, ..., population = population, weight = weight,
-  weight_ID = weight_ID)
+add_weights(x, p, ..., population = population,
+  surv_weight = surv_weight, surv_weight_ID = surv_weight_ID)
 }
 \arguments{
 \item{x}{a data frame of survey data}
@@ -17,15 +17,15 @@ to match the weights to the correct subset of the pouplation.}
 
 \item{population}{the column in \code{p} that defines the pouplation numbers}
 
-\item{weight}{the name of the new column to store the weights. Defaults to
-"weight".}
+\item{surv_weight}{the name of the new column to store the weights. Defaults to
+"surv_weight".}
 
-\item{weight_ID}{the name of the new ID column to be created. Defaults to
-"weight_ID"}
+\item{surv_weight_ID}{the name of the new ID column to be created. Defaults to
+"surv_weight_ID"}
 }
 \description{
 Add a column of weights to a data frame
 }
 \author{
-Zhian N. Kamvar Alex Spina
+Zhian N. Kamvar Alex Spina Lukas Richter
 }
