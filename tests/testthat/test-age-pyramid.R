@@ -1,17 +1,66 @@
 context("age pyramid tests")
 
-set.seed(2018-01-15)
-ages <- cut(sample(80, 150, replace = TRUE),
-           breaks = c(0, 5, 10, 30, 50, 80, 100), right = FALSE)
-sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
-gender <- sex
-gender[sample(5)] <- "NB"
-ill  <- sample(0:1, 150, replace = TRUE)
+# set.seed(2018-01-15)
+# ages <- cut(sample(80, 150, replace = TRUE),
+#            breaks = c(0, 5, 10, 30, 50, 80, 100), right = FALSE)
+# sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
+# gender <- sex
+# gender[sample(5)] <- "NB"
+# ill  <- sample(0:1, 150, replace = TRUE)
+ages <-  structure(c(4L, 4L, 5L, 3L, 3L, 1L, 5L, 5L, 4L, 3L, 5L, 2L, 5L, 5L,
+                     2L, 3L, 5L, 4L, 3L, 5L, 1L, 3L, 5L, 3L, 1L, 5L, 2L, 5L,
+                     4L, 3L, 4L, 2L, 5L, 1L, 4L, 3L, 4L, 3L, 3L, 4L, 4L, 2L,
+                     4L, 3L, 3L, 4L, 3L, 4L, 2L, 5L, 5L, 4L, 4L, 2L, 5L, 3L,
+                     5L, 4L, 4L, 5L, 3L, 5L, 2L, 4L, 4L, 5L, 5L, 5L, 5L, 5L,
+                     5L, 3L, 1L, 4L, 3L, 3L, 3L, 3L, 4L, 4L, 5L, 5L, 5L, 3L,
+                     5L, 5L, 5L, 3L, 4L, 1L, 3L, 5L, 5L, 3L, 5L, 5L, 4L, 5L,
+                     5L, 2L, 4L, 3L, 2L, 3L, 5L, 4L, 3L, 4L, 6L, 3L, 4L, 3L,
+                     5L, 3L, 5L, 5L, 4L, 5L, 4L, 4L, 4L, 5L, 5L, 5L, 3L, 2L,
+                     5L, 1L, 3L, 5L, 5L, 4L, 2L, 2L, 5L, 5L, 1L, 1L, 2L, 4L,
+                     5L, 4L, 3L, 5L, 3L, 5L, 3L, 4L, 4L, 4L), 
+                   .Label = c("[0,5)", "[5,10)", "[10,30)", "[30,50)", "[50,80)", "[80,100)"), 
+                   class = "factor")
+sex <- structure(c(1L, 1L, 2L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 1L, 2L, 1L,
+                   1L, 2L, 2L, 1L, 2L, 2L, 2L, 1L, 2L, 1L, 2L, 2L, 2L, 1L, 1L,
+                   2L, 1L, 2L, 2L, 1L, 1L, 1L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 1L,
+                   2L, 1L, 1L, 1L, 2L, 2L, 1L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 2L,
+                   2L, 1L, 2L, 2L, 2L, 1L, 2L, 2L, 1L, 1L, 1L, 2L, 2L, 2L, 2L,
+                   1L, 2L, 1L, 1L, 1L, 1L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 1L,
+                   1L, 1L, 1L, 1L, 2L, 2L, 1L, 2L, 2L, 2L, 2L, 2L, 1L, 1L, 2L,
+                   2L, 2L, 1L, 2L, 2L, 1L, 1L, 2L, 1L, 1L, 2L, 2L, 1L, 1L, 2L,
+                   1L, 2L, 2L, 1L, 2L, 1L, 2L, 1L, 1L, 1L, 2L, 1L, 2L, 1L, 2L,
+                   2L, 1L, 2L, 1L, 2L, 1L, 2L, 2L, 1L, 2L, 1L, 1L, 1L, 2L, 1L),
+                 .Label = c("Male", "Female"), 
+                 class = "factor")
+gender <- structure(c(2L, 2L, 2L, 2L, 2L, 1L, 1L, 1L, 1L, 3L, 3L, 3L, 1L, 3L,
+                      1L, 1L, 3L, 3L, 1L, 3L, 3L, 3L, 1L, 3L, 1L, 3L, 3L, 3L,
+                      1L, 1L, 3L, 1L, 3L, 3L, 1L, 1L, 1L, 3L, 1L, 1L, 1L, 1L,
+                      3L, 1L, 1L, 3L, 1L, 1L, 1L, 3L, 3L, 1L, 1L, 1L, 3L, 1L,
+                      3L, 1L, 1L, 3L, 3L, 1L, 3L, 3L, 3L, 1L, 3L, 3L, 1L, 1L,
+                      1L, 3L, 3L, 3L, 3L, 1L, 3L, 1L, 1L, 1L, 1L, 3L, 1L, 3L,
+                      3L, 3L, 3L, 3L, 3L, 1L, 1L, 1L, 1L, 1L, 3L, 3L, 1L, 3L,
+                      3L, 3L, 3L, 3L, 1L, 1L, 3L, 3L, 3L, 1L, 3L, 3L, 1L, 1L,
+                      3L, 1L, 1L, 3L, 3L, 1L, 1L, 3L, 1L, 3L, 3L, 1L, 3L, 1L,
+                      3L, 1L, 1L, 1L, 3L, 1L, 3L, 1L, 3L, 3L, 1L, 3L, 1L, 3L,
+                      1L, 3L, 3L, 1L, 3L, 1L, 1L, 1L, 3L, 1L), 
+                    .Label = c("Male", "NB", "Female"), 
+                    class = "factor")
+ill <- c(0L, 1L, 1L, 0L, 1L, 0L, 1L, 0L, 1L, 0L, 1L, 1L, 0L, 1L, 1L, 1L, 0L,
+         0L, 0L, 0L, 0L, 1L, 0L, 1L, 0L, 1L, 0L, 1L, 0L, 0L, 1L, 0L, 1L, 0L,
+         0L, 1L, 1L, 0L, 0L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 0L, 0L, 1L, 1L, 1L,
+         1L, 0L, 1L, 1L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 1L, 1L, 1L, 0L,
+         1L, 0L, 0L, 1L, 0L, 0L, 1L, 1L, 1L, 1L, 0L, 0L, 0L, 0L, 0L, 1L, 1L,
+         0L, 0L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 0L, 1L, 1L, 1L,
+         1L, 0L, 0L, 1L, 1L, 1L, 0L, 0L, 1L, 1L, 0L, 0L, 1L, 1L, 1L, 0L, 1L,
+         0L, 0L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 1L, 0L, 1L, 0L, 0L, 0L,
+         0L, 1L, 0L, 0L, 0L, 1L, 1L, 0L, 0L, 0L, 0L, 1L, 1L, 1L)
+
 dat  <- data.frame(AGE             = ages,
                   sex              = factor(sex, c("Male", "Female")),
                   gender           = factor(gender, c("Male", "NB", "Female")),
                   ill              = ill,
                   stringsAsFactors = FALSE)
+
 ap1  <- plot_age_pyramid(dat, age_group = "AGE")
 ap2  <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill")
 apg  <- plot_age_pyramid(dat, age_group = "AGE", split_by = gender)
