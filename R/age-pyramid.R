@@ -231,18 +231,19 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
 
 
   if (show_halfway) {
-    maxdata           <- dplyr::arrange(maxdata, !! ag)
-    maxdata[['x']]    <- seq_along(maxdata[[age_group]]) - 0.25
-    maxdata[['xend']] <- maxdata[['x']] + 0.5
-    maxdata[['halfway']] <- 'dashed' 
+    maxdata              <- dplyr::arrange(maxdata, !! ag)
+    maxdata[['x']]       <- seq_along(maxdata[[age_group]]) - 0.25
+    maxdata[['xend']]    <- maxdata[['x']] + 0.5
+    maxdata[['halfway']] <- 'dashed'
     pyramid <- pyramid + 
       geom_segment(aes(x        = !! quote(x),
                        xend     = !! quote(xend),
                        y        = !! quote(center),
                        yend     = !! quote(center),
                        linetype = !! quote(halfway)),
-                   color = "grey20",
-                   data  = maxdata) +
+                   color     = "grey20",
+                   key_glyph = "vpath",
+                   data      = maxdata) +
       scale_linetype_identity(guide = guide_legend(label = FALSE))
     
   }
