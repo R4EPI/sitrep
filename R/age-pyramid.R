@@ -41,8 +41,8 @@
 #' gender[sample(5)] <- "NB"
 #' ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
 #' dat  <- data.frame(AGE              = ages,
-#'                    sex              = sex,
-#'                    gender           = gender,
+#'                    sex              = factor(sex, c("Male", "Female")),
+#'                    gender           = factor(gender, c("Male", "NB", "Female")),
 #'                    ill              = ill,
 #'                    stringsAsFactors = FALSE)
 #'
@@ -268,6 +268,12 @@ count_age_categories <- function(data, age_group, split_by, stack_by, proportion
     plot_data <- dplyr::group_by(data, !!ag, !!sb, !!st, .drop = FALSE)
     plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
     plot_data <- dplyr::ungroup(plot_data)
+    if (is.factor(sbv)) {
+      plot_data[[split_by]] <- factor(plot_data[[split_by]], levels(sbv))
+    }
+    if (is.factor(stv)) {
+      plot_data[[stack_by]] <- factor(plot_data[[stack_by]], levels(stv))
+    }
   } else {
     plot_data <- srvyr::group_by(data, !!ag, !!sb, !!st, .drop = FALSE)
     plot_data <- srvyr::summarise(plot_data,
