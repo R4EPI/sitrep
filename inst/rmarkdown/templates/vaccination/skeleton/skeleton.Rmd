@@ -481,7 +481,9 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ######## weighting ------------------------------------------------------------
 
-study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
+study_data_cleaned <- add_weights(x = study_data_cleaned, 
+                                  p = population_data_age, 
+                                  age_group, sex)
 
 # drop unwanted rows  ---------------------------------------------------------
 
