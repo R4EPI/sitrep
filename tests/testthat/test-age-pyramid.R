@@ -7,7 +7,11 @@ sex  <- sample(c("Female", "Male"), 150, replace = TRUE)
 gender <- sex
 gender[sample(5)] <- "NB"
 ill  <- sample(0:1, 150, replace = TRUE)
-dat  <- data.frame(AGE = ages, sex = sex, gender = gender, ill = ill, stringsAsFactors = FALSE)
+dat  <- data.frame(AGE             = ages,
+                  sex              = factor(sex, c("Male", "Female")),
+                  gender           = factor(gender, c("Male", "NB", "Female")),
+                  ill              = ill,
+                  stringsAsFactors = FALSE)
 ap1  <- plot_age_pyramid(dat, age_group = "AGE")
 ap2  <- plot_age_pyramid(dat, age_group = "AGE", split_by = "ill")
 apg  <- plot_age_pyramid(dat, age_group = "AGE", split_by = gender)
@@ -46,23 +50,18 @@ test_that("choosing a column that doesn't exist results in an error", {
   expect_error(plot_age_pyramid(dat, age_group = "pourg_ega"))
 })
 
-test_that("plot by sex default works", {
-  expect_true("sex" %in% colnames(ap1$data))
-  expect_equal(unique(ap1$data$sex), c("Female", "Male"))
-})
-
 test_that("plot by gender works", {
   
   expect_true("gender" %in% colnames(apg$data))
-  expect_equal(unique(apg$data$gender), c("Female", "Male", "NB"))
+  expect_equal(levels(apg$data$gender), c("Male", "NB", "Female"))
 
 })
 
 test_that("plot by sex default works", {
   expect_true("sex" %in% colnames(ap1$data))
+  expect_equal(levels(ap1$data$sex), c("Male", "Female"))
   expect_true("AGE" %in% colnames(ap1$data))
   expect_false("ill" %in% colnames(ap1$data))
-  expect_equal(unique(ap1$data$sex), c("Female", "Male"))
 })
 
 test_that("plot by ill works", {

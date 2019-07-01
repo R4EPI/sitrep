@@ -6,7 +6,9 @@
 \usage{
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
   stack_by = split_by, proportional = FALSE, na.rm = FALSE,
-  vertical_lines = FALSE, horizontal_lines = TRUE, pyramid = TRUE)
+  show_halfway = TRUE, vertical_lines = FALSE,
+  horizontal_lines = TRUE, pyramid = TRUE, pal = function(n)
+  hcl.colors(n, "Geyser"))
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}
@@ -27,6 +29,10 @@ case counts}
 \item{na.rm}{If \code{TRUE}, this removes NA counts from the age groups. Defaults
 to \code{TRUE}.}
 
+\item{show_halfway}{When \code{TRUE} (default), a dashed vertical line will be
+added to each of the age bars showing the halfway point for the
+un-stratified age group. When \code{FALSE}, no halfway point is marked.}
+
 \item{vertical_lines}{If you would like to add dashed vertical lines to help
 visual interpretation of numbers. Default is to not show (\code{FALSE}),
 to turn on write \code{TRUE}.}
@@ -37,6 +43,10 @@ appear behind the bars of the pyramid}
 \item{pyramid}{if \code{TRUE}, then binary \code{split_by} variables will result in
 a population pyramid (non-binary variables cannot form a pyramid). If
 \code{FALSE}, a pyramid will not form.}
+
+\item{pal}{a color palette function or vector of colors to be passed to
+\code{\link[ggplot2:scale_fill_manual]{ggplot2::scale_fill_manual()}} defaults to the "Geyser" palette from
+\code{\link[=hcl.pals]{hcl.pals()}}.}
 }
 \description{
 Plot a population pyramid (age-sex) from a dataframe.
@@ -47,7 +57,6 @@ pregnancy), then the result will show up as a pyramid, otherwise, it will be
 presented as a facetted barplot with with empty bars in the background
 indicating the range of the un-facetted data set. Values of \code{spit_by} will
 show up as labels at top of each facet.
-#'#'
 }
 \examples{
 library(ggplot2)
@@ -60,8 +69,8 @@ gender <- sex
 gender[sample(5)] <- "NB"
 ill  <- sample(c("case", "non-case"), 150, replace = TRUE)
 dat  <- data.frame(AGE              = ages,
-                   sex              = sex,
-                   gender           = gender,
+                   sex              = factor(sex, c("Male", "Female")),
+                   gender           = factor(gender, c("Male", "NB", "Female")),
                    ill              = ill,
                    stringsAsFactors = FALSE)
 
