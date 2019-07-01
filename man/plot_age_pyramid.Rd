@@ -7,8 +7,7 @@
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
   stack_by = split_by, proportional = FALSE, na.rm = FALSE,
   show_halfway = TRUE, vertical_lines = FALSE,
-  horizontal_lines = TRUE, pyramid = TRUE, pal = function(n)
-  hcl.colors(n, "Geyser"))
+  horizontal_lines = TRUE, pyramid = TRUE, pal = NULL)
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}
@@ -45,8 +44,8 @@ a population pyramid (non-binary variables cannot form a pyramid). If
 \code{FALSE}, a pyramid will not form.}
 
 \item{pal}{a color palette function or vector of colors to be passed to
-\code{\link[ggplot2:scale_fill_manual]{ggplot2::scale_fill_manual()}} defaults to the "Geyser" palette from
-\code{\link[=hcl.pals]{hcl.pals()}}.}
+\code{\link[ggplot2:scale_fill_manual]{ggplot2::scale_fill_manual()}} defaults to the first "qual" palette from
+\code{\link[ggplot2:scale_fill_brewer]{ggplot2::scale_fill_brewer()}}.}
 }
 \description{
 Plot a population pyramid (age-sex) from a dataframe.

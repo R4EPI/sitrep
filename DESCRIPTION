@@ -6,6 +6,7 @@ Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
                     role = c("aut", "cre")))
 Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
+Depends: R (>= 3.2)
 Imports: 
     anthro,
     aweek (>= 1.0.0),
@@ -17,7 +18,7 @@ Imports:
     epitools,
     epitrix,
     forcats,
-    ggplot2,
+    ggplot2 (>= 3.2.0),
     ggspatial,
     here,
     incidence,

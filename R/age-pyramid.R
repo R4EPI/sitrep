@@ -24,8 +24,8 @@
 #'   a population pyramid (non-binary variables cannot form a pyramid). If 
 #'   `FALSE`, a pyramid will not form.
 #' @param pal a color palette function or vector of colors to be passed to
-#'   [ggplot2::scale_fill_manual()] defaults to the "Geyser" palette from
-#'   [hcl.pals()].
+#'   [ggplot2::scale_fill_manual()] defaults to the first "qual" palette from
+#'   [ggplot2::scale_fill_brewer()].
 #'
 #' @note If the `split_by` variable is bivariate (e.g. an indicator for
 #' pregnancy), then the result will show up as a pyramid, otherwise, it will be
@@ -99,7 +99,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                              stack_by = split_by, proportional = FALSE, na.rm = FALSE,
                              show_halfway = TRUE, vertical_lines = FALSE, 
                              horizontal_lines = TRUE, pyramid = TRUE, 
-                             pal = function(n) hcl.colors(n, "Geyser")) {
+                             pal = NULL) {
   
   is_df     <- is.data.frame(data)
   is_svy    <- inherits(data, "tbl_svy")
@@ -189,7 +189,10 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   }
 
   # Create base plot -----------------------------------------------------------
-  pyramid <- ggplot(plot_data, aes(x = !!ag, y = !!quote(n)))
+  pyramid <- ggplot(plot_data, aes(x = !!ag, y = !!quote(n))) + 
+    theme_classic() + 
+    theme(axis.line.y.left = element_blank()) +
+    labs(y = y_lab)
   pal     <- if (is.function(pal)) pal(length(stk_levels)) else pal
 
   if (!split_measured_binary) { 
@@ -202,15 +205,17 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   # Add bars, scales, and themes -----------------------------------------------
   pyramid <- pyramid + 
     geom_col(aes(group = !!sb, fill = !!st), color = "grey20") +
-    coord_flip() +
-    scale_fill_manual(values  = pal) +
+    coord_flip() 
+  if (is.null(pal)) {
+    pyramid <- pyramid + scale_fill_brewer(type = "qual") 
+  } else {
+    pyramid <- pyramid + scale_fill_manual(values = pal)
+  }
+  pyramid <- pyramid + 
     scale_y_continuous(limits = if (split_measured_binary) c(-max_n, max_n) else c(0, max_n),
                        breaks = the_breaks,
                        labels = lab_fun) +
-    scale_x_discrete(drop = FALSE) + # note: drop = FALSE important to avoid missing age groups
-    theme_classic() +
-    theme(axis.line.y.left = element_blank()) +
-    labs(y = y_lab)
+    scale_x_discrete(drop = FALSE) # note: drop = FALSE important to avoid missing age groups
 
   if (!split_measured_binary) {
     # Wrap the categories if the split is not binary
@@ -224,12 +229,6 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
       geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dotted", colour = "grey")
   }
 
-  if (horizontal_lines == TRUE) {
-    pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
-  }
-
-  pyramid <- pyramid +
-    geom_hline(yintercept = 0) # add vertical line
 
   if (show_halfway) {
     maxdata           <- dplyr::arrange(maxdata, !! ag)
@@ -265,7 +264,15 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                hjust = 0,
                label = split_levels[[2]])
   }
-  pyramid
+
+  if (horizontal_lines == TRUE) {
+    pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
+  }
+
+  pyramid <- pyramid +
+    geom_hline(yintercept = 0) # add vertical line
+
+  pyramid 
 }
 
 
