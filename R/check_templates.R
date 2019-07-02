@@ -13,6 +13,8 @@
 #'   template files. Defaults to the output_format defined in the templates
 #'   (which is `word_document`), but can be modified to `html_document` for
 #'   cross-platform cromulence checking.
+#' @param clean if `TRUE` (default), this will remove the previous output file
+#'   before rendering.
 #' 
 #' @return the path where the templates were built.
 #' @export
@@ -82,7 +84,9 @@ build_sitrep_template <- function(template, path, progress = FALSE, output_forma
 
   path_to_template <- file.path(path, sprintf("%s.Rmd", basename(template)))
   if (clean) {
-    file.remove(file.path(path, basename(path_to_template)))
+    tmplt <- basename(template)
+    fmt   <- if (is.null(output_format)) "docx" else output_format$pandoc$to
+    file.remove(file.path(path, sprintf("%s.%s", tmplt, fmt)))
   }
   res <- tryCatch({
     rmarkdown::draft(path_to_template,
