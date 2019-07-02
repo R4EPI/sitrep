@@ -841,7 +841,7 @@ filter(linelist_cleaned, age_years <= 2) %>%
   plot_age_pyramid(age_group = "age_group_mon",
                    split_by = "sex") +
                   # stack_by = "case_def") +
-  labs(y = "Cases (n)", x = "Age group") + # change axis  labels (nb. x/y flip)
+  labs(y = "Cases (n)", x = "Age group (months)") + # change axis  labels (nb. x/y flip)
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
