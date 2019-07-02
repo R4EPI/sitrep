@@ -82,7 +82,9 @@ required_packages <- c("knitr",       # create output docs
                        "forcats",     # clean/shape data
                        "ggplot2",     # create plots and charts
                        "sitrep",      # MSF field epi functions
-                       "anthro"       # WHO Child Growth Standards (wrapper of survey)
+                       "anthro",       # WHO Child Growth Standards (wrapper of survey)
+                       "survey",      # for survey functions
+                       "srvyr"        # dplyr wrapper for survey package
                        )
 
 for (pkg in required_packages) {
@@ -455,14 +457,19 @@ study_data_cleaned <- study_data_cleaned %>%
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(consent = head_consent == "Yes")
 
-# Set the levels of a factor 
+# Change a character to factor - set the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
   mutate(sex = factor(sex,
                       levels = c("Female", "Male")))
 
+# recode the levels of a factor 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(sex = recode_factor(sex, 
+                             "Female" = "F", 
+                             "Male" = "M"))
 
 
-# correct the order of levels
+# change the order of levels
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(soap = fct_relevel(soap, 
                             "Distribution", 
@@ -714,8 +721,62 @@ The median number of households per cluster was
 `r clustermed`, with a range of `r clusterrange`. The median number of children
 per household was `r hhmed` and the range was `r hhrange`. 
 
+Age distribution of household population by year age group and gender.
+
+```{r describe_by_age_group_and_sex}
+
+# return counts and proportions of individuals by age and sex
+# note that proportions are of the total sample (not within each gender) 
+  # to change this, set proptotal = FALSE
+descriptive(study_data_cleaned, 
+            "age_group", 
+            "sex", 
+            rowtotals = TRUE, 
+            coltotals = TRUE, proptotal = TRUE) %>% 
+  # rename column names appropriately
+  rename("Age" = age_group, 
+         "Female cases (n)" = Female_n, 
+         "%" = Female_prop, 
+         "Male cases (n)" = Male_n, 
+         "%" = Male_prop) %>% 
+  kable(digits = 2)
+```
 
 
+There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing information on sex and 
+`r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
+
+Age and gender distribution of household population covered by the survey.
+
+```{r age_pyramid, warning=FALSE}
+# This is unweighted as you are using study_data_cleaned
+plot_age_pyramid(study_data_cleaned, 
+                 age_group = "age_group", 
+                 split_by = "sex",
+                 proportion = TRUE) + 
+  labs(y = "Proportion", x = "Age group (months)") +                 # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+Weighted age and gender distribution - if this is substantially different to your unweighted 
+pyramid, then it may suggest some sampling bias (similarly to the table comparing 
+sample and source population distributions by binomial test). 
+
+```{r age_pyramid_survey, warning=FALSE}
+# Note that here you are using survey_design so will produce weighted proportions
+plot_age_pyramid(survey_design,
+                 age_group = "age_group",
+                 split_by = "sex", 
+                 proportion = TRUE) +
+  labs(y = "Proportion", x = "Age group (months)") +                 # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
 
 
 
@@ -727,55 +788,52 @@ per household was `r hhmed` and the range was `r hhrange`.
 # Results
 
 
-## Characteristics of the sampled children
-
-```{r}
-plot_age_pyramid(filter(survey_data, !is.na(age_group)))
-```
-
-
-
-```{r}
-survey_data %>%
-  mutate(total = 1) %>% 
-  select(sex, age_group, age_24months, total) %>% 
-  filter(!is.na(age_group)) %>% 
-  tidyr::gather(class, flagged) %>% 
-  count(class, flagged) %>% 
-  group_by(class) %>% 
-  mutate(prop = prop.table(n)) %>% 
-  knitr::kable()
-
-```
-
 
 ## Anthropometric results (based on WHO standards 2006)
 
 ```{r}
 # we can use the anthro package to compute z-scores
-zscore_results <- with(survey_data, anthro_zscores(
-  sex = sex,
-  age = age_months,
+zscore_results <- with(study_data_cleaned, anthro_zscores(
+  sex = as.character(sex),
+  age = age_month,
   is_age_in_month = TRUE,
   weight = weight,
   lenhei = height,
-  oedema = oedema,
+  oedema = as.numeric(oedema),
   armc = muac_mm_left_arm / 10 # convert to cm
 ))
+
 
 # the result is a data.frame with the different indicators and columns
 # indicating if they are flagged
 # indicators that could not be computed are NA
+
+
+# below is with weighting considered as well 
+zscore_results <- with(study_data_cleaned, anthro_prevalence(
+  sex = as.character(sex),
+  age = age_month,
+  is_age_in_month = TRUE,
+  weight = weight,
+  lenhei = height,
+  oedema = as.numeric(oedema),
+  armc = muac_mm_left_arm / 10, # convert to cm
+  sw = survey_weight
+))
+
 ```
 
 ### Acute malnutrition
 
 ```{r}
-library(ggplot2)
 # only consider z-scores that are not flagged
-zcurve(zscore_results$zwei[zscore_results$fwei == 0]) +
-  labs(title = "Weight-for-Height Z-scores") +
-  theme_classic()
+baseplot <- zscore_results %>% 
+  filter(fwei == 0) %>% 
+  pull(zwei) %>% 
+  zcurve()
+
+baseplot + 
+  scale_y_continuous(expand = c(0, 0))
 ```
 
 
@@ -783,9 +841,9 @@ zcurve(zscore_results$zwei[zscore_results$fwei == 0]) +
 ```{r}
 # here we use the zscores to classify children
 weight_for_height <- zscore_results %>% 
-  transmute(GAM = tidyr::replace_na(zwei < -2 | survey_data$oedema == "y", FALSE), 
+  transmute(GAM = tidyr::replace_na(zwei < -2 | study_data_cleaned$oedema == "Yes", FALSE), 
             MAM = tidyr::replace_na(-3 <= zwei & zwei < -2),
-            SAM = tidyr::replace_na(zwei < -3 |  survey_data$oedema == "y"))
+            SAM = tidyr::replace_na(zwei < -3 |  study_data_cleaned$oedema == "Yes"))
 ```
 
 Prevalence of acute malnutrition based on weight-for-height z-scores (and/or oedema) and by sex, children 6-59 months
@@ -795,13 +853,13 @@ Prevalence of acute malnutrition based on weight-for-height z-scores (and/or oed
 # or use anthro_prevalence to use the survey package to obtain better estimates
 
 # Calculate denominators for each group
-totals <- c(length(survey_data$sex), sum(survey_data$sex==1), sum(survey_data$sex==2))
+totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), sum(study_data_cleaned$sex == "M"))
 
-dplyr::bind_cols(survey_data, weight_for_height) %>%
+dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
   stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
   mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>% 
   select(stratum, sex, value) %>% 
-  mutate(sex = recode(sex, .missing = "All", "1" = "Sex 1", "2" = "Sex 2")) %>% 
+  mutate(sex = recode(sex, .missing = "All", "F" = "Sex 1", "M" = "Sex 2")) %>% 
   tidyr::spread(sex, value) %>%
   tibble::column_to_rownames(var = "stratum") %>% 
   knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)")) 
@@ -812,7 +870,7 @@ Prevalence of acute malnutrition by age, based on weight-for-height z-scores, ch
 
 ```{r}
 # quick prototype to go towards the expected result in the report
-dplyr::bind_cols(survey_data, weight_for_height) %>% 
+dplyr::bind_cols(study_data_cleaned, weight_for_height) %>% 
   mutate(Normal = !GAM & !MAM & !SAM) %>% 
   select(age_group, GAM, MAM, SAM) %>% 
   filter(!is.na(age_group)) %>% 
@@ -825,7 +883,7 @@ dplyr::bind_cols(survey_data, weight_for_height) %>%
   tidyr::unnest() %>% 
   ungroup() %>% 
   mutate(value = paste0(flagged, " ", fmt_ci(rel, lower, upper)),
-         age_group= paste0(age_group, " N = ", n)) %>% 
+         age_group = paste0(age_group, " N = ", n)) %>% 
   select(age_group, class, value) %>% 
   tidyr::spread(class, value) %>% 
   knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)"))) 
@@ -838,7 +896,7 @@ dplyr::bind_cols(survey_data, weight_for_height) %>%
 ```{r}
 # we can either estimate the prevalence using simple couting of the z-scores
 # or use anthro_prevalence to use the survey package to obtain better estimates
-dplyr::bind_cols(survey_data, weight_for_height) %>%
+dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
   filter(height < 85) %>% 
   stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
   knitr::kable()
@@ -849,17 +907,17 @@ dplyr::bind_cols(survey_data, weight_for_height) %>%
 ```{r}
 # we can either estimate the prevalence using simple couting of the z-scores
 # or use anthro_prevalence to use the survey package to obtain better estimates
-dplyr::bind_cols(survey_data, weight_for_height) %>%
+dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
   filter(height > 85) %>% 
   stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
   knitr::kable()
 ```
 
 ```{r}
-muac <- survey_data %>% 
-  transmute(GAM = tidyr::replace_na(muac_mm_left_arm < 125 | survey_data$oedema == "y", FALSE), 
-            MAM = tidyr::replace_na(muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 &  survey_data$oedema == "n"),
-            SAM = tidyr::replace_na(muac_mm_left_arm < 115 |  survey_data$oedema == "y"))
+muac <- study_data_cleaned %>% 
+  transmute(GAM = tidyr::replace_na(muac_mm_left_arm < 125 | oedema == "Yes", FALSE), 
+            MAM = tidyr::replace_na(muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 &  oedema == "No"),
+            SAM = tidyr::replace_na(muac_mm_left_arm < 115 |  oedema == "Yes"))
 ```
 
 Prevalence of acute malnutrition based on mid upper arm cicumference (MUAC) and by sex, children 6-59 months
@@ -869,9 +927,9 @@ Prevalence of acute malnutrition based on mid upper arm cicumference (MUAC) and 
 # or use anthro_prevalence to use the survey package to obtain better estimates
 
 # Calculate denominators for each group
-totals <- c(length(survey_data$sex), sum(survey_data$sex==1), sum(survey_data$sex==2))
+totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), sum(study_data_cleaned$sex == "M"))
 
-dplyr::bind_cols(survey_data, muac) %>%
+dplyr::bind_cols(study_data_cleaned, muac) %>%
   stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
   mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>% 
   select(stratum, sex, value) %>% 
@@ -886,7 +944,7 @@ Prevalence of acute malnutrition by age, based on mid upper arm cicumference (MU
 
 ```{r}
 # quick prototype to go towards the expected result in the report
-dplyr::bind_cols(survey_data, muac) %>% 
+dplyr::bind_cols(study_data_cleaned, muac) %>% 
   mutate(Normal = !GAM & !MAM & !SAM) %>% 
   select(age_group, GAM, MAM, SAM) %>% 
   filter(!is.na(age_group)) %>% 
@@ -908,6 +966,14 @@ dplyr::bind_cols(survey_data, muac) %>%
 ### Chronic malnutrition
 
 ```{r}
+# only include those not flagged
+zscore_results %>% 
+  filter(flen == 0) %>% 
+  pull(zlen) %>% 
+  zcurve()
+
+
+# old 
 zcurve(zscore_results$zlen[zscore_results$flen == 0]) +
   labs(title = "Length/Height-for-age Z-scores") +
   theme_classic()
@@ -915,7 +981,7 @@ zcurve(zscore_results$zlen[zscore_results$flen == 0]) +
 
 ```{r}
 chronic <- zscore_results %>% 
-  transmute(stunting= tidyr::replace_na(zlen < -2), 
+  transmute(stunting = tidyr::replace_na(zlen < -2), 
             moderate = tidyr::replace_na(zlen >= -3 & zlen < -2),
             severe = tidyr::replace_na(zlen < -3))
 ```
@@ -928,9 +994,9 @@ Prevalence of chronic malnutrition based on stunting z-scores and by sex, childr
 # or use anthro_prevalence to use the survey package to obtain better estimates
 
 # Calculate denominators for each group
-totals <- c(length(survey_data$sex), sum(survey_data$sex==1), sum(survey_data$sex==2))
+totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), sum(study_data_cleaned$sex == "M"))
 
-dplyr::bind_cols(survey_data, chronic) %>%
+dplyr::bind_cols(study_data_cleaned, chronic) %>%
   stratify_zscores(by = "sex", stunting, moderate, severe) %>%
   mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>% 
   select(stratum, sex, value) %>% 
@@ -945,7 +1011,7 @@ Prevalence of acute malnutrition by age, based on weight-for-height z-scores, ch
 
 ```{r}
 # quick prototype to go towards the expected result in the report
-dplyr::bind_cols(survey_data, chronic) %>% 
+dplyr::bind_cols(study_data_cleaned, chronic) %>% 
   select(age_group, stunting, moderate, severe) %>% 
   filter(!is.na(age_group)) %>% 
   tidyr::gather(class, flagged, -age_group) %>% 
