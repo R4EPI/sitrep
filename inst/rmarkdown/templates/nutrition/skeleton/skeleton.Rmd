@@ -829,8 +829,7 @@ zscore_results <- with(study_data_cleaned, anthro_prevalence(
 # only consider z-scores that are not flagged
 baseplot <- zscore_results %>% 
   filter(fwei == 0) %>% 
-  pull(zwei) %>% 
-  zcurve()
+  zcurve(zwei)
 
 baseplot + 
   scale_y_continuous(expand = c(0, 0))
@@ -969,9 +968,7 @@ dplyr::bind_cols(study_data_cleaned, muac) %>%
 # only include those not flagged
 zscore_results %>% 
   filter(flen == 0) %>% 
-  pull(zlen) %>% 
-  zcurve()
-
+  zcurve(zlen)
 
 # old 
 zcurve(zscore_results$zlen[zscore_results$flen == 0]) +
