@@ -31,9 +31,10 @@ zcurve <- function(x, zscore) {
   }
 
   ggplot(x) +
-    stat_density(aes(x = !! rlang::enquo(zscore), color = "observed"), geom = "line") +
-    stat_function(fun = stats::dnorm, 
-                  args = list(mean = 0, sd = 1),
+    stat_density(aes(x = !! rlang::enquo(zscore), color = "observed"), 
+                 geom = "line") +
+    stat_function(fun     = stats::dnorm,
+                  args    = list(mean = 0, sd = 1),
                   mapping = aes(color = "WHO standard")
                  ) +
     scale_color_manual("",
