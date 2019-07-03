@@ -1,6 +1,6 @@
 #' Create a curve comparing observed Z-scores to the WHO standard.
 #'
-#' @param dat a data frame
+#' @param x a data frame
 #' @param zscore bare name of a numeric vector containing computed zscores
 #' @return a ggplot2 object that is customisable via the ggplot2 package.
 #' @export
@@ -30,7 +30,7 @@ zcurve <- function(x, zscore) {
     stop("zscore must be a numeric variable")
   }
 
-  ggplot(dat) +
+  ggplot(x) +
     stat_density(aes(x = !! rlang::enquo(zscore), color = "observed"), geom = "line") +
     stat_function(fun = stats::dnorm, 
                   args = list(mean = 0, sd = 1),

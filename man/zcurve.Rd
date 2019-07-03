@@ -7,9 +7,9 @@
 zcurve(x, zscore)
 }
 \arguments{
-\item{zscore}{bare name of a numeric vector containing computed zscores}
+\item{x}{a data frame}
 
-\item{dat}{a data frame}
+\item{zscore}{bare name of a numeric vector containing computed zscores}
 }
 \value{
 a ggplot2 object that is customisable via the ggplot2 package.
