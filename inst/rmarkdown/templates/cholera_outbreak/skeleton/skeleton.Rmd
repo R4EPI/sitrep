@@ -1,6 +1,8 @@
 ---
 title: "Cholera outbreak report"
-output: word_document
+output: 
+  word_document:
+    keep_md: true
 ---
 
 # Introduction to this template
@@ -51,6 +53,7 @@ required_packages <- c("knitr",       # create output docs
                        "forcats",     # clean/shape data
                        "ggplot2",     # create plots and charts
                        "sitrep",      # MSF field epi functions
+                       "linelist",    # to clean variable codes to human-readable values
                        "incidence",   # create epicurves
                        "aweek",       # define epi weeks
                        "epitools",    # 2x2 tables and other epi goodness
@@ -553,18 +556,15 @@ linelist_cleaned <- linelist_cleaned %>%
 ## ideally this variable would fit your shapefile and population data! 
 ## If you have many regions - consider group by an overarching unit (e.g. province)
 # linelist_cleaned <- linelist_cleaned %>%
-#   mutate(patient_origin_free_text = recode(patient_origin_free_text,
-#     # List all incorrect mis-spellings here ("old" = "new")
-#     "Valliages DD" = "Village D"
+#   mutate(patient_origin_free_text = fct_recode(patient_origin_free_text,
+#     # List all incorrect mis-spellings here ("new" = "old")
+#     "Village D" = "Valliages DD",
+#     "Village D" = "Villiage D"
 #   ))
 
 
-# Change the level labels of a categorical variable
-# similarly to recode, here we use ("old" = "new")
-linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex, 
-                                      "Male" = "Male", 
-                                      "Female" = "Female", 
-                                      "Unknown/unspecified" = NA_character_)
+# Force missing values to be explicit
+linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
 
 
 # change the order of levels in a single categorical variable 
@@ -762,7 +762,7 @@ plot_age_pyramid(linelist_cleaned,
 #   plot_age_pyramid(age_group = "age_group_mon", 
 #                    split_by = "sex",
 #                    stack_by = "case_def") +
-#   labs(x = "Cases (n)", y = "Age group (months)") + # change axis labels (nb. x/y flip)
+#   labs(y = "Cases (n)", x = "Age group (months)") + # change axis labels (nb. x/y flip)
 #   theme(legend.position = "bottom",     # move legend to bottom
 #         legend.title = element_blank(), # remove title
 #         text = element_text(size = 18)  # change text size
@@ -1370,7 +1370,7 @@ You could also calculate mortality rate by region (cross reference with the mort
 ```{r mortality_rate_region}
 
 deaths <- group_by(linelist_cleaned, patient_origin) %>%
-  filter(exit_status2 == "Dead") %>% 
+  filter(exit_status2 == "Died") %>% 
   summarise(deaths = n()) %>%                 # count deaths by region
   left_join(population_data_region, by = "patient_origin")    # merge population data 
 

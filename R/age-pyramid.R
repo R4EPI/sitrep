@@ -197,7 +197,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
 
   if (!split_measured_binary) { 
     # add the background layer if the split is not binary
-    maxdata[["zzzzz_alpha"]] <- 0.5
+    maxdata[["zzzzz_alpha"]] <- "Total"
     pyramid <- pyramid + 
       geom_col(aes(alpha = !! quote(zzzzz_alpha)), fill = "grey80", color = "grey20", data = maxdata)
   }
@@ -221,8 +221,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     # Wrap the categories if the split is not binary
     pyramid <- pyramid + 
       facet_wrap(split_by) +
-      scale_alpha_continuous(guide = guide_legend(label = FALSE)) +
-      labs(alpha = "Total")
+      scale_alpha_manual(values = 0.5, guide = guide_legend(title = NULL)) 
   }
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
@@ -234,7 +233,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     maxdata              <- dplyr::arrange(maxdata, !! ag)
     maxdata[['x']]       <- seq_along(maxdata[[age_group]]) - 0.25
     maxdata[['xend']]    <- maxdata[['x']] + 0.5
-    maxdata[['halfway']] <- 'dashed'
+    maxdata[['halfway']] <- 'midpoint'
     pyramid <- pyramid + 
       geom_segment(aes(x        = !! quote(x),
                        xend     = !! quote(xend),
@@ -242,9 +241,9 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                        yend     = !! quote(center),
                        linetype = !! quote(halfway)),
                    color     = "grey20",
-                   key_glyph = "vpath",
+                   key_glyph = "vpath", # NOTE: key_glyph is only part of ggplot2 >= 2.3.0; this will warn otherwise
                    data      = maxdata) +
-      scale_linetype_identity(guide = guide_legend(label = FALSE))
+      scale_linetype_manual(values = 'dashed', guide = guide_legend(title = NULL))
     
   }
 

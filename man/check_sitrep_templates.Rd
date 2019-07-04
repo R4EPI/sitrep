@@ -6,7 +6,7 @@
 \usage{
 check_sitrep_templates(templates = available_sitrep_templates(),
   path = tempdir(), quiet = FALSE, progress = FALSE,
-  mustwork = FALSE, output_format = NULL)
+  mustwork = FALSE, output_format = NULL, clean = TRUE)
 }
 \arguments{
 \item{templates}{a vector of templates to create and render}
@@ -27,6 +27,9 @@ succeed. Defaults to \code{FALSE}, which will simply print the errors.}
 template files. Defaults to the output_format defined in the templates
 (which is \code{word_document}), but can be modified to \code{html_document} for
 cross-platform cromulence checking.}
+
+\item{clean}{if \code{TRUE} (default), this will remove the previous output file
+before rendering.}
 }
 \value{
 the path where the templates were built.

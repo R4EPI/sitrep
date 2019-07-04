@@ -1,6 +1,8 @@
 ---
 title: "Nutrition survey"
-output: github_document
+output: 
+  word_document:
+    keep_md: true
 ---
 
 ```{r setup, include=FALSE}
