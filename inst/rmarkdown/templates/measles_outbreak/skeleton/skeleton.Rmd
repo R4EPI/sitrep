@@ -1,6 +1,8 @@
 ---
 title: "Measles outbreak report"
-output: word_document
+output: 
+  word_document:
+    keep_md: true
 ---
 
 # Introduction to this template
