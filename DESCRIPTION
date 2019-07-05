@@ -14,7 +14,6 @@ Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
                     role = c("aut")),
              person("Lukas", "Richter",
                     role = c("aut")))
-)
 Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
 Depends: R (>= 3.2)
