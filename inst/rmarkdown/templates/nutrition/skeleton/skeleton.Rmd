@@ -463,8 +463,10 @@ study_data_cleaned <- study_data_cleaned %>%
                       levels = c("Female", "Male")))
 
 # recode the levels of a factor 
+# put these in a second variable called sex_brief
+# (this is necessary because the anthro package doesnt accept "Male"/"female")
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(sex = recode_factor(sex, 
+  mutate(sex_brief = recode_factor(sex, 
                              "Female" = "F", 
                              "Male" = "M"))
 
@@ -498,6 +500,89 @@ study_data_cleaned <- study_data_cleaned %>%
 study_data_cleaned <- study_data_cleaned %>%
   mutate_at(.vars = vars(contains("q53")), # all variables that contain the word "q53"
             .funs = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
+            ) 
+
+
+######## nutrition indicators -------------------------------------------------
+
+# we can use the anthro package to compute z-scores (compared to WHO standards 2006)
+# the result is a data.frame with the different indicators and columns
+# indicating if they are flagged
+# indicators that could not be computed are NA
+zscore_results <- with(study_data_cleaned, anthro_zscores(
+  sex = as.character(sex_brief),
+  age = age_month,
+  is_age_in_month = TRUE,
+  weight = weight,
+  lenhei = height,
+  oedema = as.numeric(oedema),
+  armc = muac_mm_left_arm / 10 # convert to cm
+))
+
+
+# add columns zscore columns to study dataset
+study_data_cleaned <- bind_cols(study_data_cleaned, zscore_results)
+
+
+# classify child according to weight for height z-scores
+# * Global acute malnutrition (GAM): a WHZ score of less than (<) -2 and/or oedema;
+# * Moderate acute malnutrition: WHZ score <-2 and ≥ -3 and no oedema; 
+# * Severe acute malnutrition (SAM): WHZ score <-3 and/or oedema.
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    gam_whz = zwei < -2 | oedema == "Yes", 
+    mam_whz = zwei >= -3 & zwei < -2, 
+    sam_whz = zwei < -3 |  oedema == "Yes"
+  )
+
+
+# classify children according to muac 
+# * Global acute malnutrition (GAM): MUAC of <125mm and/or oedema;
+# * Moderate acute malnutrirtion: MUAC <125mm and >= 115mm and no oedema;
+# * Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
+
+
+# define muac 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    gam_muac = muac_mm_left_arm < 125 | oedema == "Yes", 
+    mam_muac = muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 &  oedema == "No", 
+    sam_muac = muac_mm_left_arm < 115 |  oedema == "Yes"
+  )
+
+
+# classify children for stunting according to height for age z-scores
+# * Stunting: HAZ score <-2;
+# * Moderate stunting: HAZ score >=-3 and <-2; 
+# * Severe stunting: HAZ score <-3.
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    stunting_haz = zlen < -2, 
+    moderate_stunting_haz = zlen >= -3 & zlen < -2, 
+    severe_stunting_haz = zlen < -3
+  )
+
+
+
+
+# define all the indicators of interest 
+# we will use this to run the same function over all variables later on
+indicators <- c("gam_whz",
+                "mam_whz",
+                "sam_whz",
+                "gam_muac",
+                "mam_muac", 
+                "sam_muac", 
+                "stunting_haz", 
+                "moderate_stunting_haz", 
+                "severe_stunting_haz"
+                )
+
+
+# turn all indicators in to factors 
+study_data_cleaned <- study_data_cleaned %>%
+  mutate_at(.vars = vars(indicators), # all variables named in indicators
+            .funs = ~factor(.) # turn into a factor
             ) 
 
 
@@ -794,7 +879,7 @@ plot_age_pyramid(survey_design,
 ```{r}
 # we can use the anthro package to compute z-scores
 zscore_results <- with(study_data_cleaned, anthro_zscores(
-  sex = as.character(sex),
+  sex = as.character(sex_brief),
   age = age_month,
   is_age_in_month = TRUE,
   weight = weight,
@@ -810,16 +895,22 @@ zscore_results <- with(study_data_cleaned, anthro_zscores(
 
 
 # below is with weighting considered as well 
-zscore_results <- with(study_data_cleaned, anthro_prevalence(
-  sex = as.character(sex),
+dirk_results <- with(study_data_cleaned, anthro_prevalence(
+  sex = as.character(sex_brief),
   age = age_month,
   is_age_in_month = TRUE,
   weight = weight,
   lenhei = height,
   oedema = as.numeric(oedema),
   armc = muac_mm_left_arm / 10, # convert to cm
-  sw = survey_weight
+  sw = surv_weight
 ))
+
+
+survey_design %>% 
+  filter(fwei == 0 & !is.na(zwei)) %>% 
+  tabulate_binary_survey(indicators[1:3], keep = TRUE)
+
 
 ```
 
