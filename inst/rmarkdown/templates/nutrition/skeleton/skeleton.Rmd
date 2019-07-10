@@ -530,9 +530,9 @@ study_data_cleaned <- bind_cols(study_data_cleaned, zscore_results)
 # * Severe acute malnutrition (SAM): WHZ score <-3 and/or oedema.
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
-    gam_whz = zwei < -2 | oedema == "Yes", 
-    mam_whz = zwei >= -3 & zwei < -2, 
-    sam_whz = zwei < -3 |  oedema == "Yes"
+    gam_whz = zwfl < -2 | oedema == "Yes", 
+    mam_whz = zwfl >= -3 & zwei < -2, 
+    sam_whz = zwfl < -3 |  oedema == "Yes"
   )
 
 
@@ -901,14 +901,15 @@ dirk_results <- with(study_data_cleaned, anthro_prevalence(
   is_age_in_month = TRUE,
   weight = weight,
   lenhei = height,
-  oedema = as.numeric(oedema),
+  oedema = oedema2,
   armc = muac_mm_left_arm / 10, # convert to cm
   sw = surv_weight
 ))
 
 
+# exclude those that are missing gam_whz and those flagged (WHO excludes those certain z score number away)
 survey_design %>% 
-  filter(fwei == 0 & !is.na(zwei)) %>% 
+  filter(fwfl == 0 & !is.na(sam_whz)) %>%
   tabulate_binary_survey(indicators[1:3], keep = TRUE)
 
 
