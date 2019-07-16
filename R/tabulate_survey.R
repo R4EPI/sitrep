@@ -19,6 +19,10 @@
 #'
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
+#' 
+#' @param na.rm when `TRUE` (default), missing values in the categorical 
+#'   variable will be removed prior to calculations with a warning. `FALSE` will
+#'   not remove these missing values and may result in an error. 
 #'
 #' @param deff a logical indicating if the design effect should be reported.
 #'   Defaults to "TRUE"
@@ -78,7 +82,7 @@
 #' surv %>%
 #'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-                            digits = 1, method = "logit", deff = FALSE,
+                            digits = 1, method = "logit", na.rm = TRUE, deff = FALSE,
                             proptotal = FALSE, rowtotals = FALSE, 
                             coltotals = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
@@ -128,6 +132,13 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   }
 
   x <- srvyr::select(x, !! cod, !!st)
+  if (na.rm) {
+    nas <- sum(is.na(x$variables[[vars[1]]]))
+    if (nas > 0) {
+      warning(sprintf("removing %s missing value(s)", nas))
+      x <- srvyr::filter(x, !is.na(!! cod))
+    }
+  }
 
   # here we are creating a dummy variable that is either the var or the
   # combination of var and strata so that we can get the right proportions from
