@@ -22,6 +22,12 @@ counts <- apistrat %>%
 # Default workflow
 s <- srvyr::as_survey_design(apistrat, strata = stype, weights = pw)
 
+# Adding in missing data
+aps            <- rbind(apistrat, NA)
+aps$pw[201]    <- aps$pw[200]
+aps$stype[201] <- aps$stype[200]
+sm             <- srvyr::as_survey_design(aps, strata = stype, weights = pw)
+
 # with the above example
 yr_rnd <- tabulate_survey(s, yr.rnd, stype, wide = FALSE, pretty = FALSE)
 
@@ -44,7 +50,6 @@ sa_pcrd_p <- tabulate_survey(s,
 
 
 
-
 # Testing ----------------------------------------------------------------------
 
 test_that("manual calculation matches ours", {
@@ -54,6 +59,15 @@ test_that("manual calculation matches ours", {
 
 })
 
+test_that("a warning is thrown for missing data", {
+                             
+  expect_warning(miss <- tabulate_survey(sm, yr.rnd, stype, wide = FALSE, pretty = FALSE),
+                 "removing 1 missing value(s)", fixed = TRUE)                             
+  # when comparing to known data, it's identical
+  expect_identical(miss$n, yr_rnd$n)
+  expect_identical(miss$proportion, yr_rnd$proportion)
+
+})
 
 test_that("tabulate_survey will throw an error if the stratification is not correct", {
   
