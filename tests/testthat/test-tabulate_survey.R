@@ -27,6 +27,7 @@ aps            <- rbind(apistrat, NA)
 aps$pw[201]    <- aps$pw[200]
 aps$stype[201] <- aps$stype[200]
 sm             <- srvyr::as_survey_design(aps, strata = stype, weights = pw)
+sm2            <- srvyr::as_survey_design(aps, strata = stype, weights = pw)
 
 # with the above example
 yr_rnd <- tabulate_survey(s, yr.rnd, stype, wide = FALSE, pretty = FALSE)
@@ -60,12 +61,49 @@ test_that("manual calculation matches ours", {
 })
 
 test_that("a warning is thrown for missing data", {
-                             
-  expect_warning(miss <- tabulate_survey(sm, yr.rnd, stype, wide = FALSE, pretty = FALSE),
-                 "removing 1 missing value(s)", fixed = TRUE)                             
-  # when comparing to known data, it's identical
-  expect_identical(miss$n, yr_rnd$n)
-  expect_identical(miss$proportion, yr_rnd$proportion)
+
+  # na.rm = TRUE: WARNING ----------------------
+  expect_warning(miss <- tabulate_survey(sm, 
+                                         yr.rnd, 
+                                         stype, 
+                                         na.rm = TRUE,
+                                         wide = FALSE, 
+                                         pretty = FALSE),
+                 "removing 1 missing value(s) from `yr.rnd`", fixed = TRUE)                             
+
+  # na.rm = FALSE: NO WARNING ------------------
+  expect_failure({
+  expect_warning(miss2 <- tabulate_survey(sm2, 
+                                         yr.rnd, 
+                                         stype, 
+                                         na.rm = FALSE,
+                                         wide = FALSE, 
+                                         pretty = FALSE),
+                 "removing 1 missing value(s) from `yr.rnd`", fixed = TRUE)                             
+  })
+
+  # when comparing to known data, the proportions are identical and the
+  # confidence intervals are ~nearly~ identical
+  expect_equal(miss$proportion,     yr_rnd$proportion)
+  expect_equal(miss$proportion_low, yr_rnd$proportion_low, tol = 1e-04)
+  expect_equal(miss$proportion_upp, yr_rnd$proportion_upp, tol = 1e-04)
+  
+  # not dropping missing will result in extra rows to account for the
+  # new missing category
+  expect_equal(nrow(miss2), nrow(miss) + 3)
+  expect_equal(miss2$n[1:nrow(miss)], miss$n)
+  
+  # the new proportions should be less because of the extra weight
+  expect_lt(miss2$proportion[miss2$yr.rnd == "Yes" & miss2$stype == "H"], 
+             miss$proportion[ miss$yr.rnd == "Yes" &  miss$stype == "H"])
+
+  expect_lt(miss2$proportion[miss2$yr.rnd == "No"  & miss2$stype == "H"], 
+             miss$proportion[ miss$yr.rnd == "No"  &  miss$stype == "H"])
+
+  # The missing row we inserted had a schooltype of "H", so we should expect
+  # that the count of the missing values should be identical to the weight:
+  expect_equal(miss2$n[miss2$yr.rnd == "(Missing)" & miss2$stype == "H"],
+               tail(apistrat$pw, 1))
 
 })
 
