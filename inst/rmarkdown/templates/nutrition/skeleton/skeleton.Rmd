@@ -48,10 +48,20 @@ We used the following definitions for the analysis of the survey results for MUA
 In order to estimate stunting in the surveyed population, we looked at Height for Age z-scores (HAZ) and used the following definitions:
 
 * Stunting: HAZ score <-2;
-* Moderate stunting: HAZ score >=-3 and <-2; Severe stunting: HAZ score <-3.
-* Exclusion of z-scores from Observed mean SMART flags included: WHZ -3 to 3; HAZ -3 to 3; (Weight for age Z-scores) WAZ -3 to 3.
+* Moderate stunting: HAZ score >=-3 and <-2; 
+* Severe stunting: HAZ score <-3.
 
 
+In order to estimate underweight in the surveyed population, we looked at Weight for Age z-scores (WAZ) and used the following definitions: 
+* Underweight: WAZ score < -2; 
+* moderate underweight: WAZ score >=-3 and <-2; 
+* Severe underweight: WAZ <-3
+
+
+Exclusion of z-scores from Observed mean SMART flags included:
+* WHZ: <-5 or >5; 
+* HAZ: <-6 or >6; 
+* WAZ: <-6 or >5.
 
 
 ## Installing and loading required packages 
@@ -534,23 +544,12 @@ study_data_cleaned <- study_data_cleaned %>%
     mam_whz = zwfl >= -3 & zwei < -2, 
     sam_whz = zwfl <  -3 | oedema == "Yes"
   ) %>%
-  mutate_at(.vars = vars(gam_whz, mam_whz, sam_whz), # mask flagged cases
-            .funs = ~if_else(!is.na(fwfl) & fwfl == 1, NA, .))
+  # set flagged children to NA for each of the indicator variables
+    # if the flag for this indicator is not missing and is 1 then set indicator vars to NA
+    # else leave the indicator variable as it was
+  mutate_at(.vars = vars(gam_whz, mam_whz, sam_whz), # select the indicator variables
+            .funs = ~if_else(!is.na(fwfl) & fwfl == 1, NA, .)) # NA if flagged, else leave as is
 
-
-# classify children according to muac 
-# * Global acute malnutrition (GAM): MUAC of <125mm and/or oedema;
-# * Moderate acute malnutrirtion: MUAC <125mm and >= 115mm and no oedema;
-# * Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
-
-
-# define muac 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(
-    gam_muac = muac_mm_left_arm < 125 | oedema == "Yes", 
-    mam_muac = muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 & oedema == "No", 
-    sam_muac = muac_mm_left_arm < 115 |  oedema == "Yes"
-  )
 
 
 # classify children for stunting according to height for age z-scores
@@ -562,9 +561,47 @@ study_data_cleaned <- study_data_cleaned %>%
     stunting_haz = zlen < -2, 
     moderate_stunting_haz = zlen >= -3 & zlen < -2, 
     severe_stunting_haz = zlen < -3
+  ) %>%
+  # set flagged children to NA for each of the indicator variables
+    # if the flag for this indicator is not missing and is 1 then set indicator vars to NA
+    # else leave the indicator variable as it was
+  mutate_at(.vars = vars(stunting_haz, 
+                         moderate_stunting_haz, 
+                         severe_stunting_haz), # select the indicator variables
+            .funs = ~if_else(!is.na(flen) & flen == 1, NA, .)) # NA if flagged, else leave as is
+
+
+
+# classify children for underweight according to height for age z-scores 
+# * Underweight: WAZ score < -2; 
+# * moderate underweight: WAZ score >=-3 and <-2; 
+# * Severe underweight: WAZ <-3
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    underweight_waz = zwei < -2, 
+    moderate_underweight_waz = zwei >= -3 & zwei < -2, 
+    severe_underweight_waz = zwei < -3
+  ) %>%
+  # set flagged children to NA for each of the indicator variables
+    # if the flag for this indicator is not missing and is 1 then set indicator vars to NA
+    # else leave the indicator variable as it was
+  mutate_at(.vars = vars(underweight_waz, 
+                         moderate_underweight_waz, 
+                         severe_underweight_waz), # select the indicator variables
+            .funs = ~if_else(!is.na(fwei) & fwei == 1, NA, .)) # NA if flagged, else leave as is
+
+
+
+# classify children according to muac 
+# * Global acute malnutrition (GAM): MUAC of <125mm and/or oedema;
+# * Moderate acute malnutrirtion: MUAC <125mm and >= 115mm and no oedema;
+# * Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    gam_muac = muac_mm_left_arm < 125 | oedema == "Yes", 
+    mam_muac = muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 & oedema == "No", 
+    sam_muac = muac_mm_left_arm < 115 |  oedema == "Yes"
   )
-
-
 
 
 # define all the indicators of interest 
@@ -572,12 +609,18 @@ study_data_cleaned <- study_data_cleaned %>%
 indicators <- c("gam_whz",
                 "mam_whz",
                 "sam_whz",
-                "gam_muac",
-                "mam_muac", 
-                "sam_muac", 
+                 
                 "stunting_haz", 
                 "moderate_stunting_haz", 
-                "severe_stunting_haz"
+                "severe_stunting_haz", 
+                
+                "underweight_waz", 
+                "moderate_underweight_waz", 
+                "severe_underweight_waz",
+                
+                "gam_muac",
+                "mam_muac", 
+                "sam_muac"
                 )
 
 
@@ -863,6 +906,51 @@ plot_age_pyramid(survey_design,
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
        )
+```
+
+
+
+You may want to look at the standard deviation of your zscores using box-plots. 
+This will also help you to assess how reliable your survey sample is. 
+A wide distribution may suggest an unreliable survey sample. 
+Standard deviations are expected to be higher in younger age groups as it can 
+be harder to measure babies. 
+There is some suggestion that deviation may be higher in boys due to a higher 
+rate of pre-term births. But generally these should not be substantially different. 
+
+```{r boxplot_indicators}
+
+temp_data <- study_data_cleaned %>%
+  gather("indicator", "value", zwfl, zlen, zwei) %>% 
+  select(indicator, value)
+
+
+ggplot(temp_data, aes(y = value, x = indicator)) + 
+  geom_boxplot() + 
+  geom_hline(yintercept = 0)
+
+```
+
+```{r boxplot_haz_age}
+
+ggplot(study_data_cleaned, aes(y = zlen, x = age_group)) + 
+  geom_boxplot() + 
+  geom_hline(yintercept = 0)
+
+```
+
+
+
+```{r boxplot_indicators_sex}
+
+temp_data <- study_data_cleaned %>%
+  gather("indicator", "value", zwfl, zlen, zwei) %>%
+  select(sex, indicator, value)
+
+
+ggplot(temp_data, aes(y = value, x = indicator, fill = sex)) + 
+  geom_boxplot() + 
+  geom_hline(yintercept = 0)
 ```
 
 
