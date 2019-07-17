@@ -530,10 +530,12 @@ study_data_cleaned <- bind_cols(study_data_cleaned, zscore_results)
 # * Severe acute malnutrition (SAM): WHZ score <-3 and/or oedema.
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
-    gam_whz = zwfl < -2 | oedema == "Yes", 
+    gam_whz = zwfl <  -2 | oedema == "Yes", 
     mam_whz = zwfl >= -3 & zwei < -2, 
-    sam_whz = zwfl < -3 |  oedema == "Yes"
-  )
+    sam_whz = zwfl <  -3 | oedema == "Yes"
+  ) %>%
+  mutate_at(.vars = vars(gam_whz, mam_whz, sam_whz), # mask flagged cases
+            .funs = ~if_else(!is.na(fwfl) & fwfl == 1, NA, .))
 
 
 # classify children according to muac 
@@ -546,7 +548,7 @@ study_data_cleaned <- study_data_cleaned %>%
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
     gam_muac = muac_mm_left_arm < 125 | oedema == "Yes", 
-    mam_muac = muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 &  oedema == "No", 
+    mam_muac = muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 & oedema == "No", 
     sam_muac = muac_mm_left_arm < 115 |  oedema == "Yes"
   )
 

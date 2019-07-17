@@ -19,6 +19,7 @@ Imports:
     forcats,
     ggplot2,
     ggspatial,
+    glue,
     here,
     incidence,
     knitr,

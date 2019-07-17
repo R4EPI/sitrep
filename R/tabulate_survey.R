@@ -19,6 +19,11 @@
 #'
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
+#' 
+#' @param na.rm When `TRUE`, missing (NA) values present in `var` will be removed
+#'   from the data set with a warning, causing a change in denominator for the
+#'   tabulations.  The default is set to `FALSE`, which creates an explicit
+#'   missing value called "(Missing)".
 #'
 #' @param deff a logical indicating if the design effect should be reported.
 #'   Defaults to "TRUE"
@@ -78,7 +83,7 @@
 #' surv %>%
 #'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-                            digits = 1, method = "logit", deff = FALSE,
+                            digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
                             proptotal = FALSE, rowtotals = FALSE, 
                             coltotals = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
@@ -117,17 +122,32 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     st <- st 
   } else {
     if (vars[2] != names(x$strata)[1]) {
-      msg <- paste("The stratification present in the survey object (%s) does",
-                   "not match the user-specified stratification (%s). If you",
-                   "want to assess the survey tabulation stratifying by '%s',",
-                   "re-specify the survey object with this",
-                   "strata and the appropriate weights.")
-      stop(sprintf(msg, names(x$strata)[1], vars[2], vars[2]))
+      msg <- glue::glue(
+        "The stratification present in the survey object ({names(x$strata[1])})",
+        "does not match the user-specified stratification ({vars[2]}). If you",
+        "want to assess the survey tabulation stratifying by '{vars[2]}',",
+        "re-specify the survey object with this",
+        "strata and the appropriate weights.",
+        .sep = " "
+        )
+      stop(msg)
     }
     st <- rlang::sym(vars[2])
   }
 
   x <- srvyr::select(x, !! cod, !!st)
+
+  # if there is missing data, we should treat it by either removing the rows
+  # with the missing values or making the missing explicit.
+  if (na.rm) {
+    nas <- sum(is.na(x$variables[[vars[1]]]))
+    if (nas > 0) {
+      warning(glue::glue("removing {nas} missing value(s) from `{vars[1]}`"))
+      x <- srvyr::filter(x, !is.na(!! cod))
+    }
+  } else {
+    x <- srvyr::mutate(x, !! cod := forcats::fct_explicit_na(!! cod, na_level = "(Missing)"))
+  }
 
   # here we are creating a dummy variable that is either the var or the
   # combination of var and strata so that we can get the right proportions from
@@ -143,8 +163,8 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
   # Calculating the survey total will also give us zero counts
   y <- srvyr::summarise(x,
-                        n    = survey_total(vartype = "se", na.rm = TRUE),
-                        mean = survey_mean(na.rm    = TRUE, deff  = deff))
+                        n    = srvyr::survey_total(vartype = "se", na.rm = TRUE),
+                        mean = srvyr::survey_mean(na.rm    = TRUE, deff  = deff))
 
   # Removing the mean values here because we are going to calculate them later
   y$mean             <- NULL
