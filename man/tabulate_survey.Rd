@@ -6,7 +6,7 @@
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
 tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", na.rm = TRUE, deff = FALSE,
+  digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
   proptotal = FALSE, rowtotals = FALSE, coltotals = FALSE)
 
 tabulate_binary_survey(x, ..., strata = NULL, proptotal = FALSE,
@@ -34,9 +34,10 @@ for proportion and CI}
 \item{method}{a method from \code{\link[survey:svyciprop]{survey::svyciprop()}} to calculate the confidence
 interval. Defaults to "logit"}
 
-\item{na.rm}{when \code{TRUE} (default), missing values in the categorical
-variable will be removed prior to calculations with a warning. \code{FALSE} will
-not remove these missing values and may result in an error.}
+\item{na.rm}{When \code{TRUE}, missing values present in \code{var} will be removed
+from the data set with a warning, causing a change in denominator for the
+tabulations.  The default is set to \code{FALSE}, which creates an explicit
+missing value called "(Missing)".}
 
 \item{deff}{a logical indicating if the design effect should be reported.
 Defaults to "TRUE"}

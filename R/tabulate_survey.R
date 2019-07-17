@@ -20,9 +20,10 @@
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
 #' 
-#' @param na.rm when `TRUE` (default), missing values in the categorical 
-#'   variable will be removed prior to calculations with a warning. `FALSE` will
-#'   not remove these missing values and may result in an error. 
+#' @param na.rm When `TRUE`, missing values present in `var` will be removed
+#'   from the data set with a warning, causing a change in denominator for the
+#'   tabulations.  The default is set to `FALSE`, which creates an explicit
+#'   missing value called "(Missing)".
 #'
 #' @param deff a logical indicating if the design effect should be reported.
 #'   Defaults to "TRUE"
@@ -82,7 +83,7 @@
 #' surv %>%
 #'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-                            digits = 1, method = "logit", na.rm = TRUE, deff = FALSE,
+                            digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
                             proptotal = FALSE, rowtotals = FALSE, 
                             coltotals = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
@@ -132,12 +133,17 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   }
 
   x <- srvyr::select(x, !! cod, !!st)
+
+  # if there is missing data, we should treat it by either removing the rows
+  # with the missing values or making the missing explicit.
   if (na.rm) {
     nas <- sum(is.na(x$variables[[vars[1]]]))
     if (nas > 0) {
-      warning(sprintf("removing %s missing value(s)", nas))
+      warning(glue::glue("removing {nas} missing value(s) from `{vars[1]}`"))
       x <- srvyr::filter(x, !is.na(!! cod))
     }
+  } else {
+    x <- srvyr::mutate(x, !! cod := forcats::fct_explicit_na(!! cod, na_level = "(Missing)"))
   }
 
   # here we are creating a dummy variable that is either the var or the
@@ -154,8 +160,8 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
   # Calculating the survey total will also give us zero counts
   y <- srvyr::summarise(x,
-                        n    = survey_total(vartype = "se", na.rm = TRUE),
-                        mean = survey_mean(na.rm    = TRUE, deff  = deff))
+                        n    = srvyr::survey_total(vartype = "se", na.rm = TRUE),
+                        mean = srvyr::survey_mean(na.rm    = TRUE, deff  = deff))
 
   # Removing the mean values here because we are going to calculate them later
   y$mean             <- NULL
