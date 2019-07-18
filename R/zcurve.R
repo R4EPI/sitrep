@@ -40,7 +40,7 @@ zcurve <- function(x, zscore) {
                  ) +
     scale_color_manual("",
                        values = c("Observed" = "red",
-                                  "WHO standard" = "dark green")
+                                  "WHO standard" = "dark grey")
     ) +
     scale_x_continuous(limits = c(-6, 6)) +
     scale_y_continuous(labels = scales::percent_format()) +
