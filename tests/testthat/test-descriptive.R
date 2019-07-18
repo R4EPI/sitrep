@@ -13,14 +13,6 @@ phair_table <- descriptive(humans, hair_color, proptotal = TRUE)
 phome_eye   <- descriptive(humans, homeworld, eye_color, proptotal = TRUE)
 
 
-
-test_that("warnings are generated for missing data", {
-  
-})
-
-
-
-
 test_that("descriptive returns a table of counts and proportions that sum to 100", {
 
   skip_on_cran()
@@ -38,6 +30,23 @@ test_that("descriptive returns a table of counts and proportions that sum to 100
 
 })
 
+test_that("descriptive will convert numbers to factors with cut", {
+
+  massive <- cut(humans$mass, breaks = pretty(range(humans$mass, na.rm = TRUE)))
+
+  expect_message(humass <- descriptive(humans, mass, gender), "converting numeric variable to factor")
+  expect_identical(levels(humass$mass), c(levels(massive), "Missing"))
+
+})
+
+
+test_that("descriptive will convert logicals to factors", {
+
+  humans$luke <- humans$name == "Luke Skywalker"
+  huluke <- descriptive(humans, luke, gender)
+  expect_identical(huluke$luke, factor(c(TRUE, FALSE), as.character(c(TRUE, FALSE))))
+
+})
 
 test_that("descriptive will add rows and columns for totals", {
 

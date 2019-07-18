@@ -121,7 +121,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   if (null_strata) {
     st <- st 
   } else {
-    if (vars[2] != names(x$strata)[1]) {
+    if (x$has.strata && vars[2] != names(x$strata)[1]) {
       msg <- glue::glue(
         "The stratification present in the survey object ({names(x$strata[1])})",
         "does not match the user-specified stratification ({vars[2]}). If you",

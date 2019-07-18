@@ -1,6 +1,8 @@
 ---
 title: "AJS outbreak report"
-output: word_document
+output: 
+  word_document:
+    keep_md: true
 ---
 
 # Introduction to this template
@@ -37,7 +39,11 @@ copy and paste the packages into Program Files/R/R-[version]/library.
 
 ```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
 # hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
+knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
+                      error = TRUE,       # show errors if they appear, but don't stop
+                      fig.width = 6*1.25, # Figure width
+                      fig.height = 6      # Figure height
+                     )
 # set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
 
@@ -608,18 +614,15 @@ linelist_cleaned <- linelist_cleaned %>%
 ## ideally this variable would fit your shapefile and population data! 
 ## If you have many regions - consider group by an overarching unit (e.g. province)
 # linelist_cleaned <- linelist_cleaned %>%
-#   mutate(patient_origin_free_text = recode(patient_origin_free_text,
-#     # List all incorrect mis-spellings here ("old" = "new")
-#     "Valliages DD" = "Village D"
+#   mutate(patient_origin_free_text = fct_recode(patient_origin_free_text,
+#     # List all incorrect mis-spellings here ("new" = "old")
+#     "Village D" = "Valliages DD",
+#     "Village D" = "Villiage D"
 #   ))
 
 
-# Change the level labels of a categorical variable
-# similarly to recode, here we use ("old" = "new")
-linelist_cleaned$sex <- recode_factor(linelist_cleaned$sex, 
-                                      "Male" = "Male", 
-                                      "Female" = "Female", 
-                                      "Unknown/unspecified" = NA_character_)
+# Force missing values to be explicit
+# linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
 
 
 # change the order of levels in a single categorical variable 
@@ -840,7 +843,7 @@ filter(linelist_cleaned, age_years <= 2) %>%
   plot_age_pyramid(age_group = "age_group_mon",
                    split_by = "sex") +
                   # stack_by = "case_def") +
-  labs(x = "Cases (n)", y = "Age group (months)") + # change axis labels (nb. x/y flip)
+  labs(y = "Cases (n)", x = "Age group (months)") + # change axis  labels (nb. x/y flip)
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size

@@ -1,6 +1,8 @@
 ---
 title: "Vaccination survey"
-output: word_document
+output: 
+  word_document:
+    keep_md: true
 ---
 
 
@@ -133,8 +135,8 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 ## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
 # generates a fake dataset for use as an example in this template
 study_data_raw <- gen_data(dictionary = "Vaccination", 
-                         varnames = "column_name",
-                         numcases = 1000)
+                           varnames = "column_name",
+                           numcases = 1000)
 
 ## Data dictionary ---------------
 ## The data dictionary has variable names in the "column_name" column.
@@ -655,15 +657,16 @@ year age group.
 ```{r cluster_hh_size}
 # get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
-  count(cluster) 
+  count(cluster)
 
 # get the median number of households per cluster
 clustermed <- clustersize %>% 
-  summarise(median(n))
+  pull(n) %>%
+  median()
 
 # get the min and max number of households per cluster
 # paste these together seperated by a dash 
-clusterrange <- paste0(range(clustersize$n), collapse = "-")
+clusterrange <- paste0(range(clustersize$n), collapse = "--")
 
 # get counts of children per household 
 # do this by cluster as household IDs are only unique within clusters
@@ -675,14 +678,12 @@ hhsize <- study_data_cleaned %>%
 # ungroup to give you the overall median 
 hhmed <- hhsize %>%
   ungroup() %>% 
-  summarise(median(n))
+  pull(n) %>%
+  median()
 
 # get the min and max number of children per household
 # paste these together seperated by a dash 
-hhrange <- paste0(
-  range(hhsize$n), 
-  collapse = "-")
-  
+hhrange <- paste0(range(hhsize$n), collapse = "--")
 ```
 
 
@@ -745,7 +746,7 @@ plot_age_pyramid(study_data_cleaned,
                  age_group = "age_group", 
                  split_by = "sex",
                  proportion = TRUE) + 
-  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  labs(y = "Proportion", x = "Age group (years)") + # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -777,12 +778,12 @@ Accepting equal validity from self-reported and card-reported vaccination status
 survey_design %>%  # use the survey object (weighted)
   # calculate weighted counts and weighted proportions, 
   # include design effect because cluster sample
-  tabulate_survey(vaccination_status_simple, deff = TRUE) %>% 
+  tabulate_survey(vaccination_status_simple, deff = TRUE, digits = 2) %>% 
   rename("Vaccination status" = vaccination_status_simple, 
          "Children (n)" = n, 
          "Design effect" = deff, 
          "% (95% CI)" = ci) %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 Distinguishing between vaccination cards and verbal confirmation 
@@ -791,12 +792,12 @@ Distinguishing between vaccination cards and verbal confirmation
 survey_design %>% # use the survey object (weighted)
   # calculate weighted counts and weighted proportions, 
   # include design effect because cluster sample
-  tabulate_survey(vaccination_status, deff = TRUE) %>%
+  tabulate_survey(vaccination_status, deff = TRUE, digits = 2) %>%
   rename("Vaccination status" = vaccination_status, 
          "Children (n)" = n, 
          "Design effect" = deff, 
          "% (95% CI)" = ci) %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 
@@ -806,54 +807,54 @@ Accepting equal validity from self-reported and card-reported vaccination status
 survey_design %>% # use the survey object (weighted)
   # calculate weighted counts and weighted proportions - stratified by sex
   # include design effect because cluster sample
-  tabulate_survey(vaccination_status_simple, sex, deff = TRUE) %>%
+  tabulate_survey(vaccination_status_simple, sex, deff = TRUE, digits = 2) %>%
   rename("Vaccination status" = vaccination_status_simple) %>% 
   # wrap all "n" variables in braces (note space before n).
   augment_redundant(" n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
   rename_redundant(" ci"   = "% (95% CI)", 
                    "deff" = "Design effect") %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 Distinguishing between vaccination cards and verbal confirmation, by sex 
 ```{r vaccination_coverage_sex_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(vaccination_status, sex, deff = TRUE) %>%
+  tabulate_survey(vaccination_status, sex, deff = TRUE, digits = 2) %>%
   rename("Vaccination status" = vaccination_status) %>% 
   # wrap all "n" variables in braces (note space before n).
   augment_redundant(" n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
   rename_redundant(" ci"   = "% (95% CI)", 
                    "deff" = "Design effect") %>%
-  kable()
+  kable(digits = 2)
 ```
 
 Accepting equal validity from self-reported and card-reported vaccination status, by age group
 ```{r vaccination_coverage_age_group}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(age_group, vaccination_status_simple, deff = TRUE) %>%
+  tabulate_survey(age_group, vaccination_status_simple, deff = TRUE, digits = 2) %>%
   rename("Age group (years)" = age_group) %>% 
   # wrap all "n" variables in braces (note space before n).
   augment_redundant(" n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
   rename_redundant(" ci"   = "% (95% CI)", 
                    "deff" = "Design effect") %>%
-  kable()
+  kable(digits = 2)
 ```
 
 Distinguishing between vaccination cards and verbal confirmation, by age group  
 ```{r vaccination_coverage_age_group_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(age_group, vaccination_status, deff = TRUE) %>%
+  tabulate_survey(age_group, vaccination_status, deff = TRUE, digits = 2) %>%
   rename("Age group (years)" = age_group) %>% 
   # wrap all "n" variables in braces (note space before n).
   augment_redundant(" n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
   rename_redundant(" ci"   = "% (95% CI)", 
                    "deff" = "Design effect") %>%
-  kable()
+  kable(digits = 2)
 ```

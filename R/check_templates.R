@@ -13,6 +13,8 @@
 #'   template files. Defaults to the output_format defined in the templates
 #'   (which is `word_document`), but can be modified to `html_document` for
 #'   cross-platform cromulence checking.
+#' @param clean if `TRUE` (default), this will remove the previous output file
+#'   before rendering.
 #' 
 #' @return the path where the templates were built.
 #' @export
@@ -25,7 +27,8 @@ check_sitrep_templates <- function(templates = available_sitrep_templates(),
                                    quiet = FALSE, 
                                    progress = FALSE, 
                                    mustwork = FALSE,
-                                   output_format = NULL) {
+                                   output_format = NULL,
+                                   clean = TRUE) {
 
   stopifnot(is.character(templates), length(templates) > 0)
 
@@ -33,7 +36,7 @@ check_sitrep_templates <- function(templates = available_sitrep_templates(),
   names(res) <- templates
   for (i in templates) {
     if (!quiet) message(sprintf("Building %s", i))
-    res[[i]] <- build_sitrep_template(i, path, progress, output_format)
+    res[[i]] <- build_sitrep_template(i, path, progress, output_format, clean = clean)
   }
   if (mustwork && any(errs <- vapply(res, inherits, logical(1), "error"))) {
     errs <- paste(names(res)[errs], collapse = ", ")
@@ -77,9 +80,14 @@ available_sitrep_templates <- function(categorise = FALSE, ...) {
 }
 
 # Draft and build a sitrep template (internal)
-build_sitrep_template <- function(template, path, progress = FALSE, output_format = NULL) {
+build_sitrep_template <- function(template, path, progress = FALSE, output_format = NULL, clean = TRUE) {
 
   path_to_template <- file.path(path, sprintf("%s.Rmd", basename(template)))
+  if (clean) {
+    tmplt <- basename(template)
+    fmt   <- if (is.null(output_format)) "docx" else output_format$pandoc$to
+    file.remove(file.path(path, sprintf("%s.%s", tmplt, fmt)))
+  }
   res <- tryCatch({
     rmarkdown::draft(path_to_template,
                      template = template,

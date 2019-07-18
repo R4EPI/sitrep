@@ -1,6 +1,8 @@
 ---
 title: "Mortality survey"
-output: word_document
+output: 
+  word_document:
+    keep_md: true
 ---
 
 # Introduction to this template
@@ -127,9 +129,9 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 
 ## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
 # generates a fake dataset for use as an example in this template
-study_data_raw <- gen_data(dictionary = "Mortality", 
-                         varnames = "column_name",
-                         numcases = 1000)
+study_data_raw <- gen_data(dictionary = "Mortality",
+                           varnames   = "column_name",
+                           numcases   = 1000)
 
 ## Data dictionary ---------------
 ## The data dictionary has variable names in the "column_name" column.
@@ -139,7 +141,7 @@ study_data_raw <- gen_data(dictionary = "Mortality",
 
 # read in data dictionary (for reference purposes)
 # study_data_dict <- rio::import("mortality_survey.xlsx",
-#                       which = "Data Dictionary")
+#                                which = "Data Dictionary")
 
 ## you can look at the dictionary by uncommenting the line below
 # View(study_data_dict) 
@@ -166,8 +168,7 @@ study_data_dict <- msf_dict_survey("Mortality")
 ## fact_0_id, the merging variable, needs to be applied to all relevant rows in the indidivual data set
 ## (equivalent of dragging down with mouse in excel)
 ## this is achieved using the fill function from the tidyr package
-# study_data_indiv <- study_data_indiv %>%
-#                       fill(fact_0_id)
+# study_data_indiv <- study_data_indiv %>% fill(fact_0_id)
 
 ## join the individual and household data to form a complete data set
 #study_data_raw <- left_join(study_data_hh, study_data_indiv, by = "fact_0_id")
@@ -216,11 +217,11 @@ study_data_dict <- msf_dict_survey("Mortality")
 
 # generate population data by age groups in years 
 population_data_age <- gen_population(total_pop = 10000, # set the total population 
-  groups = c("0-2", "3-14", "15-29", "30-44", "45+"),    # set the groups
-  proportions = c(0.182, 0.278, 0.26, 0.11, 0.07),       # set the proportions for each group
-  strata = c("Male", "Female")) %>%                      # stratify by gender 
-  rename(age_group = groups,                        # rename columns (syntax is NEW NAME = OLD NAME)
-         sex = strata,
+  groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set the groups
+  proportions = c(0.182, 0.278, 0.26, 0.11, 0.07), # set the proportions for each group
+  strata      = c("Male", "Female")) %>%           # stratify by gender
+  rename(age_group  = groups,                      # rename columns (syntax is NEW NAME = OLD NAME)
+         sex        = strata,
          population = n)
 ```
 
@@ -315,8 +316,8 @@ colnames(study_data_cleaned) <- cleaned_colnames
 # The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 
 study_data_cleaned <- rename(study_data_cleaned, 
-                              sex = q4_q6_sex, 
-                              age_in_years = q155_q5_age_year)
+                             sex          = q4_q6_sex,
+                             age_in_years = q155_q5_age_year)
 
 
 ## OPTIONAL: if you only want to keep certain variables - 
@@ -357,7 +358,7 @@ study_data_cleaned <- study_data_cleaned %>%
     # IF day of questionnaire then use variable of date when form generated
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(recall_start = as.Date("2018-02-01"), 
-         recall_end = as.Date("2018-05-01")
+         recall_end   = as.Date("2018-05-01")
   )
 
 
@@ -420,8 +421,8 @@ study_data_cleaned <- study_data_cleaned %>%
 ## to combine different age categories use the following function 
 ## this prioritises the smaller unit, i.e. if given months and years, will return months first
 study_data_cleaned <- group_age_categories(study_data_cleaned, 
-                                         years = age_group, 
-                                         months = age_group_mon)
+                                           years  = age_group,
+                                           months = age_group_mon)
 
 
 # Factor (categorical) variables ---------------------------------
@@ -449,8 +450,8 @@ study_data_cleaned <- study_data_cleaned %>%
 
 study_data_cleaned <- study_data_cleaned %>%
   mutate_at(.vars = vars(contains("symptom")), # all variables that contain the word "symptom"
-            .funs = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
-            ) 
+            .funs = ~fct_explicit_na(., "")    # replace missing values with "" 
+           ) 
 
 ######## weighting ------------------------------------------------------------
 
@@ -639,7 +640,7 @@ flow_table <- study_data_cleaned %>%
   mutate(x = fct_relevel(x, c("startcause", "endcause")),  # set the factor levels to have start first
          x = fct_recode(x, 
                         "Start \n cause" = "startcause",  # add a return (\n): cause plots below start
-                        "End \n cause" = "endcause") 
+                        "End \n cause"   = "endcause")
         )
 
 # plot your dataset 
@@ -928,7 +929,7 @@ dplyr::left_join(cause_of_death_prop, cause_of_death_mort, by = "cause_of_death"
          "Deaths (n)" = n,
          "% (95% CI)" = ci
         ) %>% 
-  kable()
+  kable(digits = 2)
 ```
 
 
@@ -960,7 +961,7 @@ survey_design %>%
   rename("Cause of Death" = "cause_of_death") %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
-  kable()
+  kable(digits = 1)
 
 ```
 
@@ -977,7 +978,7 @@ survey_design %>%
   rename("Cause of Death" = "cause_of_death") %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
-  kable()
+  kable(digits = 1)
 
 ```
 
@@ -994,13 +995,13 @@ survey_design %>%                  # use the survey object (weighted)
     # (this could also be "yes" if your variables were yes/no; 
     # or a combination, e.g. c("yes", TRUE, "sick"))
     # method xlogit uses the CDC SUDAAN method of calculating confidence intervals
-  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, method = "xlogit") %>%
+  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, method = "xlogit", digits = 2) %>%
   select(-variable) %>%
   rename("Symptom" = value,
          "N reported" = n,
          "% (95% CI)" = ci
         ) %>%
-  kable()
+  kable(digits = 2)
 
 ```
 
@@ -1012,13 +1013,13 @@ Symptoms reported among those who were sick, stratified by age group
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
-  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, 
+  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE,  digits = 2,
                          strata = age_group, pretty = TRUE, method = "xlogit") %>%
   select(-variable) %>%
   rename("Symptom" = value) %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
-  kable()
+  kable(digits = 2)
 ```
 
 
@@ -1029,13 +1030,13 @@ Symptoms reported among those who were sick, stratified by gender
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by sex!!
-  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE,
+  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, digits = 2,
                   strata = sex, pretty = TRUE, method = "xlogit") %>%
   select(-variable) %>%
   rename("Symptom" = value) %>%
   augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
-  kable()
+  kable(digits = 2)
 
 ```
 

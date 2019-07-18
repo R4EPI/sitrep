@@ -3,9 +3,20 @@ Package: sitrep
 Title: Report templates and helper functions for EPI
 Version: 0.1.0
 Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
-                    role = c("aut", "cre")))
+                    role = c("aut")), 
+             person("Zhian N.", "Kamvar", email = "zkamvar@gmail.com",
+                    role = c("aut", "cre")),
+             person("Alex", "Spina", 
+                    role = c("aut")),
+             person("Kate", "Doyle", 
+                    role = c("aut")),
+             person("Chris", "Jarvis", 
+                    role = c("aut")),
+             person("Lukas", "Richter",
+                    role = c("aut")))
 Description: Report templates and helper functions for EPI.
 License: MIT + file LICENSE
+Depends: R (>= 3.2)
 Imports: 
     anthro,
     aweek (>= 1.0.0),
@@ -45,6 +56,7 @@ Imports:
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
+    vdiffr,
     covr
 Remotes:
   reconhub/linelist
