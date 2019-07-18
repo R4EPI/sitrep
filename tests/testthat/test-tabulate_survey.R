@@ -96,6 +96,19 @@ test_that("logical data are converted to factors", {
 
 })
 
+test_that("integer categorical data are converted to factors", {
+
+  expect_warning({
+  summer <- s %>%
+    mutate(summer = as.integer(yr.rnd == "Yes")) %>%
+    tabulate_survey(summer, stype, wide = FALSE, pretty = FALSE)
+  }, "converting `summer` to a factor", fixed = TRUE)
+
+  expect_identical(summer[-1], yr_rnd[-1])
+  expect_equal(levels(summer[[1]]), c("0", "1"))
+
+})
+
 test_that("a warning is thrown for missing data", {
 
   # na.rm = TRUE: WARNING ----------------------
