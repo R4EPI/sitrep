@@ -710,6 +710,9 @@ survey_design <- study_data_cleaned %>%
 
 
 
+# Results 
+
+
 
 ## Demographic information
 
@@ -918,6 +921,7 @@ plot_age_pyramid(survey_design,
 ```
 
 
+## Quality of indicators collected
 
 You may want to look at the standard deviation of your zscores using box-plots. 
 This will also help you to assess how reliable your survey sample is. 
@@ -1112,8 +1116,15 @@ study_data_cleaned %>%
 ```
 
 
+## Nutritional status based on MUAC 
+
+```{r}
+
+survey_design %>% 
+tabulate_binary_survey(indicators[1:3], strata = age_group, keep = TRUE)
 
 
+```
 
 
 
@@ -1388,18 +1399,5 @@ dplyr::bind_cols(study_data_cleaned, chronic) %>%
 ```{r}
 # TODO
 ```
-
-### Sitting height
-
-```{r}
-# TODO
-```
-
-### Food distribution
-
-```{r}
-# TODO
-```
-
 
 
