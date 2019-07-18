@@ -145,7 +145,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   # For numeric data, however, we need to warn the user
   if (is.numeric(x$variables[[vars[1]]])) {
     warning(glue::glue("converting `{vars[1]}` to a factor"))
-    x <- srvyr::mutate(x, !! cod := cut(!! cod, breaks = pretty(range(!! cod, na.rm = TRUE)), include.lowest = TRUE))
+    x <- srvyr::mutate(x, !! cod := fac_from_num(!! cod))
   }
 
   # if there is missing data, we should treat it by either removing the rows

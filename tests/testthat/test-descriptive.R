@@ -12,6 +12,29 @@ home_eye   <- descriptive(humans, homeworld, eye_color)
 phair_table <- descriptive(humans, hair_color, proptotal = TRUE)
 phome_eye   <- descriptive(humans, homeworld, eye_color, proptotal = TRUE)
 
+test_that("descriptive doesn't force zero counts to missing for binary", {
+
+  onezero <- data.frame(x = c(1, 0, 0, 1, NA))
+  expect_warning(res <- descriptive(onezero, x),
+                 "converting `x` to a factor", fixed = TRUE)
+  expect_equal(nrow(res), 3)
+  expect_equal(res$n, c(2, 2, 1))
+  expect_equivalent(res$x, forcats::fct_inorder(c("0", "1", "Missing")))
+
+})
+
+
+test_that("descriptive doesn't use cut for five categories", { 
+
+  onezero <- data.frame(x = c(1, 0, 0, 1, NA, 42, 37, 341))
+  expect_warning(res <- descriptive(onezero, x),
+                 "converting `x` to a factor", fixed = TRUE)
+  expect_equal(nrow(res), 6)
+  expect_equal(res$n, c(2, 2, 1, 1, 1, 1))
+  expect_equivalent(res$x, forcats::fct_inorder(c("0", "1", "37", "42", "341", "Missing")))
+
+})
+
 
 test_that("descriptive returns a table of counts and proportions that sum to 100", {
 
@@ -32,9 +55,12 @@ test_that("descriptive returns a table of counts and proportions that sum to 100
 
 test_that("descriptive will convert numbers to factors with cut", {
 
-  massive <- cut(humans$mass, breaks = pretty(range(humans$mass, na.rm = TRUE)))
+  massive <- cut(humans$mass, 
+                 breaks = pretty(range(humans$mass, na.rm = TRUE)), 
+                 include.lowest = TRUE)
 
-  expect_message(humass <- descriptive(humans, mass, gender), "converting numeric variable to factor")
+  expect_warning(humass <- descriptive(humans, mass, gender), 
+                 "converting `mass` to a factor", fixed = TRUE)
   expect_identical(levels(humass$mass), c(levels(massive), "Missing"))
 
 })
