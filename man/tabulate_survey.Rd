@@ -34,7 +34,7 @@ for proportion and CI}
 \item{method}{a method from \code{\link[survey:svyciprop]{survey::svyciprop()}} to calculate the confidence
 interval. Defaults to "logit"}
 
-\item{na.rm}{When \code{TRUE}, missing values present in \code{var} will be removed
+\item{na.rm}{When \code{TRUE}, missing (NA) values present in \code{var} will be removed
 from the data set with a warning, causing a change in denominator for the
 tabulations.  The default is set to \code{FALSE}, which creates an explicit
 missing value called "(Missing)".}

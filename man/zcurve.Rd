@@ -30,4 +30,13 @@ zcurve(dat, observed) +
 zcurve(dat, skewed) +
   labs(title = "Weight-for-Height Z-scores") +
   theme_classic()
+
+# Including different groups to facet
+dat <- data.frame(
+  observed = c(rnorm(204) + runif(1), rnorm(204) + runif(1, 0.5)),
+  groups   = rep(c("A", "B"), each = 204),
+  treat    = sample(c('up', 'down'), 408, replace = TRUE)
+                 )
+zcurve(dat, observed) +
+  facet_grid(treat~groups)
 }
