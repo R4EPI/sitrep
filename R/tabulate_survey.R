@@ -402,7 +402,7 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
 tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
                                    keep = NULL, invert = FALSE, pretty = TRUE,
                                    wide = TRUE, digits = 1, method = "logit",
-                                   deff = FALSE) {
+                                   deff = FALSE, transpose = FALSE) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -410,6 +410,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   }
 
   vars <- tidyselect::vars_select(colnames(x), ...)
+  stra <- rlang::enquo(strata)
 
   # Create list for results to go into that will eventually be bound together
   res <- vector(mode = "list", length = length(vars))
@@ -420,7 +421,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
     i        <- rlang::ensym(i)
     res[[i]] <- tabulate_survey(x,
                                 var       = !! i,
-                                strata    = !! enquo(strata),
+                                strata    = !! stra,
                                 proptotal = proptotal,
                                 pretty    = pretty,
                                 digits    = digits,
@@ -436,5 +437,59 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))
 
   # return the results with only the selected values
-  res[if (invert) !res$value %in% keep else res$value %in% keep, ]
+  res <- res[if (invert) !res$value %in% keep else res$value %in% keep, ]
+  nr  <- seq_len(nrow(res))
+  if (transpose) {
+    var <- rlang::sym("variable")
+    nv  <- rlang::sym("n")
+
+    n   <- transpose_pretty(res, !! stra, !! var, !! nv)
+    if (pretty) {
+      cv  <- rlang::sym("ci")
+      ci  <- transpose_pretty(res, !! stra, !! var, !! cv)
+      res <- dplyr::bind_cols(n, ci[-1])
+      res <- res[c(1, order(c(nr, nr)) + 1)]
+    } else {
+
+      prv  <- rlang::sym("proportion")
+      prl  <- rlang::sym("proportion_low")
+      pru  <- rlang::sym("proportion_upp")
+      prop  <- transpose_pretty(res, !! stra, !! var, !! prv)
+      propl <- transpose_pretty(res, !! stra, !! var, !! prl)
+      propu <- transpose_pretty(res, !! stra, !! var, !! pru)
+      
+      res <- dplyr::bind_cols(n, prop[-1], propl[-1], propu[-1])
+      res <- res[c(1, order(c(nr, nr, nr, nr)) + 1)]
+    }
+  }
+  res
+}
+
+#' transpose the output of tabulate_binary_survey
+#'
+#' @param x a transposable data frame with a suffix for columns
+#' @param columns the new name for the column in which to place the columns
+#' @param rows the name of the rows
+#' @param suffix the suffix of the columns to transpose
+#'
+#' @noRd
+#'
+transpose_pretty <- function(x, columns, rows, suffix) {
+  col      <- rlang::enquo(columns)
+  var      <- rlang::enquo(rows)
+  sfx      <- rlang::enquo(suffix)
+  sfx_char <- paste0(" ", rlang::as_name(sfx))
+
+  # Strategy: 
+  #   1. select only the variables that matter
+  #   2. gather in the long format
+  #   3. remove the suffix
+  #   4. spread out the data so that the rows are now the columns
+
+  res <- dplyr::select(x,   !! var, dplyr::ends_with(sfx_char))
+  res <- tidyr::gather(res, !! col, !! sfx, - !! var)
+  res <- dplyr::mutate(res, !! col := gsub(sfx_char, "", !! col))
+  res <- tidyr::spread(res, !! var, !! sfx)
+  names(res)[-1] <- paste0(names(res)[-1], sfx_char)
+  res
 }
