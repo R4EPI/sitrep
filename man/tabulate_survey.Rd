@@ -11,7 +11,7 @@ tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
 tabulate_binary_survey(x, ..., strata = NULL, proptotal = FALSE,
   keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", deff = FALSE)
+  digits = 1, method = "logit", deff = FALSE, transpose = FALSE)
 }
 \arguments{
 \item{x}{a survey design object}
@@ -57,6 +57,10 @@ created.}
 \item{keep}{a vector of binary values to keep}
 
 \item{invert}{if \code{TRUE}, the kept values are rejected. Defaults to \code{FALSE}}
+
+\item{transpose}{if \code{TRUE} and \code{strata} is not \code{NULL}, then the data are
+transposed such that the \code{strata} is in rows and the variables are in
+columns.}
 }
 \value{
 a long or wide tibble with tabulations n, ci, and deff

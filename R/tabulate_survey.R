@@ -398,6 +398,9 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
 #' @param ... binary variables for tabulation
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
+#' @param transpose if `TRUE` and `strata` is not `NULL`, then the data are
+#'   transposed such that the `strata` is in rows and the variables are in
+#'   columns.
 #'
 tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
                                    keep = NULL, invert = FALSE, pretty = TRUE,
