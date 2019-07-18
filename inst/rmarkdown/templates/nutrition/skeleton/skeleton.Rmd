@@ -919,40 +919,123 @@ There is some suggestion that deviation may be higher in boys due to a higher
 rate of pre-term births. But generally these should not be substantially different. 
 
 ```{r boxplot_indicators}
-
+# pull variables together for plotting 
 temp_data <- study_data_cleaned %>%
-  gather("indicator", "value", zwfl, zlen, zwei) %>% 
-  select(indicator, value)
+  # stack variable names in one column and values for vars in another
+  # call first column indicator and second column zscore
+  gather("Indicator", "Zscore", zwfl, zlen, zwei) %>% 
+  # only keep variables of interest
+  select(Indicator, Zscore) %>% 
+  # rename indicators to something more understandable
+  mutate(
+    Indicator = recode_factor(Indicator, 
+    "zlen" = "HAZ", 
+    "zwei" = "WAZ", 
+    "zwfl" = "WHZ" 
+  ))
 
 
-ggplot(temp_data, aes(y = value, x = indicator)) + 
+# use indicators on the x-axis and z-score on the y-axis
+ggplot(temp_data, aes(x = Indicator, y = Zscore)) + 
+  # plot as a box plot
   geom_boxplot() + 
-  geom_hline(yintercept = 0)
+  # add a dotted horizontal line at 0 for reference 
+  geom_hline(yintercept = 0, linetype = "dashed")
 
 ```
 
-```{r boxplot_haz_age}
 
-ggplot(study_data_cleaned, aes(y = zlen, x = age_group)) + 
-  geom_boxplot() + 
-  geom_hline(yintercept = 0)
-
-```
-
-
+Box plot of Zscores for height-for-age, weight-for-age and weight-for-height by sex
 
 ```{r boxplot_indicators_sex}
 
+# pull variables together for plotting 
 temp_data <- study_data_cleaned %>%
-  gather("indicator", "value", zwfl, zlen, zwei) %>%
-  select(sex, indicator, value)
+  # stack variable names in one column and values for vars in another
+  # call first column indicator and second column zscore
+  gather("Indicator", "Zscore", zwfl, zlen, zwei) %>% 
+  # only keep variables of interest
+  select(sex, Indicator, Zscore) %>% 
+  # rename indicators to something more understandable
+  mutate(
+    Indicator = recode_factor(Indicator, 
+    "zlen" = "HAZ", 
+    "zwei" = "WAZ", 
+    "zwfl" = "WHZ" 
+  ))
 
-
-ggplot(temp_data, aes(y = value, x = indicator, fill = sex)) + 
+# use indicators on the x-axis and z-score on the y-axis
+# colour according to sex 
+ggplot(temp_data, aes(x = Indicator, y = Zscore, fill = sex)) + 
+  # plot as a boxplot
   geom_boxplot() + 
-  geom_hline(yintercept = 0)
+  # add a dotted horizontal line at 0 for reference 
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  # remove the title of legend 
+  theme(legend.title = element_blank())
 ```
 
+
+Box plot of Zscores for height-for-age by age group
+
+```{r boxplot_haz_age}
+
+# use age group on the x-axis and  height z-score  on the y-axis
+ggplot(study_data_cleaned, aes(x = age_group, y = zlen)) + 
+  # plot as a boxplot
+  geom_boxplot() + 
+  # add a dotted horizontal line at 0 for reference 
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  # change axis titles 
+  labs(x = "Age group (Months)", y = "HAZ score")
+
+```
+
+Box plot of Zscores for weight-for-age by age group
+
+```{r boxplot_waz_age}
+
+# use age group on the x-axis and  weight z-score  on the y-axis
+ggplot(study_data_cleaned, aes(x = age_group, y = zwei)) + 
+  # plot as a boxplot
+  geom_boxplot() + 
+  # add a dotted horizontal line at 0 for reference 
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  # change axis titles 
+  labs(x = "Age group (Months)", y = "WAZ score")
+
+```
+
+
+Box plot of Zscores for weight-for-height by age group
+
+```{r boxplot_whz_age}
+
+# use age group on the x-axis and  weight-height z-score  on the y-axis
+ggplot(study_data_cleaned, aes(x = age_group, y = zwfl)) + 
+  # plot as a boxplot
+  geom_boxplot() + 
+  # add a dotted horizontal line at 0 for reference 
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  # change axis titles 
+  labs(x = "Age group (Months)", y = "WHZ score")
+
+```
+
+
+You can then also plot your zscores in comparison to the WHO reference population. 
+While the observed scores will not to match the reference scores, the hope is 
+that they are somewhat normally distributed. 
+
+```{r zcurve_haz}
+
+# only consider z-scores that are not flagged
+study_data_cleaned %>% 
+  filter(flen == 0) %>% 
+  zcurve(zlen) + 
+  theme_classic()
+
+```
 
 
 ######################### DIRKS CODE ########################################################
