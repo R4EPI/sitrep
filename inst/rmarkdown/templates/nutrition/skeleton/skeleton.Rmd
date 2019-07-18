@@ -633,6 +633,13 @@ study_data_cleaned <- study_data_cleaned %>%
             ) 
 
 
+# turn all flags in to TRUE/FALSE variables
+study_data_cleaned <- study_data_cleaned %>%
+  mutate_at(.vars = vars(c("fwei", "flen", "fwfl")), # names of flag variables
+            .funs = ~as.logical(.) # turn in to logical
+            )
+
+
 ######## weighting ------------------------------------------------------------
 
 study_data_cleaned <- add_weights(x = study_data_cleaned, 
@@ -1028,16 +1035,88 @@ ggplot(study_data_cleaned, aes(x = age_group, y = zwfl)) +
 You can then also plot your zscores in comparison to the WHO reference population. 
 While the observed scores will not to match the reference scores, the hope is 
 that they are somewhat normally distributed. 
-
+Z-curve of height-for-age among non-flagged children for this indicator
 ```{r zcurve_haz}
 
-# only consider z-scores that are not flagged
+# use unweighted dataset 
 study_data_cleaned %>% 
-  filter(flen == 0) %>% 
+  # only consider z-scores that are not flagged
+  filter(flen == FALSE) %>% 
+  # plot zcurve
   zcurve(zlen) + 
+  # change theme to white background with black axes
   theme_classic()
 
 ```
+
+
+Z-curve of weight-for-age among non-flagged children for this indicator
+```{r zcurve_waz}
+
+# use unweighted dataset 
+study_data_cleaned %>% 
+  # only consider z-scores that are not flagged
+  filter(fwei == FALSE) %>% 
+  # plot zcurve
+  zcurve(zwei) + 
+  # change theme to white background with black axes
+  theme_classic()
+
+```
+
+
+Z-curve of weight-for-height among non-flagged children for this indicator
+```{r zcurve_waz}
+
+# use unweighted dataset 
+study_data_cleaned %>% 
+  # only consider z-scores that are not flagged
+  filter(fwfl == FALSE) %>% 
+  # plot zcurve
+  zcurve(zwfl) + 
+  # change theme to white background with black axes
+  theme_classic()
+
+```
+
+
+You will also want to look at the number of children missing indicator measures, 
+as well as the number of flagged by indicator. 
+
+```{r missing_flagged_indicators}
+
+study_data_cleaned %>% 
+  multi_descriptive(flen, fwei, fwfl, .id = "Indicator") %>% 
+  # re-order columns (drop total_prop too)
+  select(Indicator, Missing_n, Missing_prop, TRUE_n, TRUE_prop, FALSE_n, FALSE_prop, Total_n) %>%
+  
+  # rename indicators to something more understandable
+  mutate(
+    Indicator = recode_factor(Indicator, 
+    "flen" = "HAZ", 
+    "fwei" = "WAZ", 
+    "fwfl" = "WHZ" 
+  )) %>% 
+  
+  # rename total column to have a capital N in brackets
+  rename("Total (N)" = Total_n) %>% 
+  # swap variabales with props in for percentages 
+  rename_redundant("prop" = "%") %>%
+  # swap TRUEs for Flagged and FALSE for included
+  # put n's in brackets
+  augment_redundant("TRUE" = "Flagged",
+                    "FALSE" = "Included",
+                    "_n$" = " (n)") 
+
+```
+
+
+
+
+
+
+
+
 
 
 ######################### DIRKS CODE ########################################################
