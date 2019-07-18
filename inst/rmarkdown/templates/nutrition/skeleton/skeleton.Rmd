@@ -1082,6 +1082,7 @@ study_data_cleaned %>%
 
 You will also want to look at the number of children missing indicator measures, 
 as well as the number of flagged by indicator. 
+In addition the number of children missing MUAC was `r fmt_count(study_data_cleaned, is.na(muac_mm_left_arm))`. 
 
 ```{r missing_flagged_indicators}
 
