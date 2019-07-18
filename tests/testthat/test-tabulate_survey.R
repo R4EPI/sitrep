@@ -60,6 +60,42 @@ test_that("manual calculation matches ours", {
 
 })
 
+test_that("numeric data are converted to factors", {
+
+  expect_warning(pct <- tabulate_survey(s, pcttest), 
+                 "converting `pcttest` to a factor", fixed = TRUE)
+
+  pcf <- cut(apistrat$pcttest, 
+             breaks = pretty(range(apistrat$pcttest, na.rm = TRUE)), 
+             include.lowest = TRUE)
+
+  expect_identical(levels(pct$pcttest), levels(pcf))
+
+})
+
+
+test_that("character data works", {
+
+  char <- s %>%
+    mutate(yr = as.character(yr.rnd)) %>%
+    tabulate_survey(yr, stype, wide = FALSE, pretty = FALSE)
+
+  names(char)[1] <- "yr.rnd"
+  expect_identical(char, yr_rnd)
+
+})
+
+test_that("logical data are converted to factors", {
+
+  summer <- s %>%
+    mutate(summer = yr.rnd == "No") %>%
+    tabulate_survey(summer, stype, wide = FALSE, pretty = FALSE)
+
+  expect_identical(summer[-1], yr_rnd[-1])
+  expect_equal(levels(summer[[1]]), c("TRUE", "FALSE"))
+
+})
+
 test_that("a warning is thrown for missing data", {
 
   # na.rm = TRUE: WARNING ----------------------

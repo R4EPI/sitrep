@@ -137,6 +137,17 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
   x <- srvyr::select(x, !! cod, !!st)
 
+  # If the counter variable is numeric or logical, we need to convert it to a
+  # factor. For logical variables, this is trivial, so we just do it.
+  if (is.logical(x$variables[[vars[1]]])) {
+    x <- srvyr::mutate(x, !! cod := factor(!! cod, levels = c("TRUE", "FALSE")))
+  }
+  # For numeric data, however, we need to warn the user
+  if (is.numeric(x$variables[[vars[1]]])) {
+    warning(glue::glue("converting `{vars[1]}` to a factor"))
+    x <- srvyr::mutate(x, !! cod := cut(!! cod, breaks = pretty(range(!! cod, na.rm = TRUE)), include.lowest = TRUE))
+  }
+
   # if there is missing data, we should treat it by either removing the rows
   # with the missing values or making the missing explicit.
   if (na.rm) {
