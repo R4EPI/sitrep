@@ -1121,7 +1121,9 @@ study_data_cleaned %>%
 ```{r}
 
 survey_design %>% 
-tabulate_binary_survey(indicators[1:3], strata = age_group, keep = TRUE)
+  tabulate_binary_survey(indicators[1:3], strata = age_group, keep = TRUE,
+                         transpose = "variable") %>%
+  knitr::kable(digits = 1)
 
 
 ```
