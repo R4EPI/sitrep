@@ -207,9 +207,9 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     geom_col(aes(group = !!sb, fill = !!st), color = "grey20") +
     coord_flip() 
   if (is.null(pal)) {
-    pyramid <- pyramid + scale_fill_brewer(type = "qual") 
+    pyramid <- pyramid + scale_fill_brewer(type = "qual", guide = guide_legend(order = 1)) 
   } else {
-    pyramid <- pyramid + scale_fill_manual(values = pal)
+    pyramid <- pyramid + scale_fill_manual(values = pal, guide = guide_legend(order = 1))
   }
   pyramid <- pyramid + 
     scale_y_continuous(limits = if (split_measured_binary) c(-max_n, max_n) else c(0, max_n),
@@ -221,7 +221,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     # Wrap the categories if the split is not binary
     pyramid <- pyramid + 
       facet_wrap(split_by) +
-      scale_alpha_manual(values = 0.5, guide = guide_legend(title = NULL)) 
+      scale_alpha_manual(values = 0.5, guide = guide_legend(title = NULL, order = 3)) 
   }
   if (vertical_lines == TRUE) {
     pyramid <- pyramid +
@@ -243,7 +243,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                    color     = "grey20",
                    key_glyph = "vpath", # NOTE: key_glyph is only part of ggplot2 >= 2.3.0; this will warn otherwise
                    data      = maxdata) +
-      scale_linetype_manual(values = 'dashed', guide = guide_legend(title = NULL))
+      scale_linetype_manual(values = 'dashed', guide = guide_legend(title = NULL, order = 2))
     
   }
 
