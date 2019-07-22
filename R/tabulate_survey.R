@@ -486,7 +486,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
       slevels   <- NULL
     } else {
       slevels   <- dplyr::pull(x$variables, !! stra)
-      slevels   <- if (is.factor(slevels)) levels(slevels) else unique(slevels)
+      slevels   <- if (is.factor(slevels)) levels(slevels) else sort(slevels)
     }
 
     # transposing the count variable, which is always there.
