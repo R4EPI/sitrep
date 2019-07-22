@@ -21,6 +21,9 @@ counts <- apistrat %>%
 
 # Default workflow
 s <- srvyr::as_survey_design(apistrat, strata = stype, weights = pw)
+rs <- apistrat %>%
+  mutate(stype = forcats::fct_rev(stype)) %>%
+  srvyr::as_survey_design(strata = stype, weights = pw)
 
 # Adding in missing data
 aps            <- rbind(apistrat, NA)
@@ -244,6 +247,7 @@ bin_tot <- tabulate_binary_survey(s,
                                   wide      = FALSE,
                                   keep      = "Yes")
 
+
 bin_inv <- tabulate_binary_survey(s,
                                   awards,
                                   yr.rnd,
@@ -313,6 +317,22 @@ test_that("values are sensible in a transposition", {
                                     transpose = NULL,
                                     keep      = "Yes")
 
+  # with reverse strata levels
+  rbin_trn <- tabulate_binary_survey(rs,
+                                    awards,
+                                    yr.rnd,
+                                    sch.wide,
+                                    strata    = stype,
+                                    proptotal = TRUE,
+                                    pretty    = FALSE,
+                                    deff      = TRUE,
+                                    wide      = TRUE,
+                                    transpose = "variable",
+                                    keep      = "Yes")
+
+  # factor levels of strata are preserved
+  expect_failure(expect_equal(rbin_trn, bin_trn))
+  expect_equal(rbin_trn[3:1, -1], bin_trn[-1])
   trn_props <- bin_trn[grepl("proportion", names(bin_trn))]
   str_props <- bin_str[grepl("proportion", names(bin_str))]
 
