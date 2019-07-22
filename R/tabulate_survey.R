@@ -398,10 +398,10 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
 #' @param ... binary variables for tabulation
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
-#' @param transpose if strata is not `NULL` and `wide = TRUE`, then this will
-#'   transpose the columns to the rows, which is useful when you stratify by
-#'   age group. Default is `NULL`, which will not transpose anything. You have
-#'   three options for transpose:
+#' @param transpose if `wide = TRUE`, then this will transpose the columns to 
+#'   the rows, which is useful when you stratify by age group. Default is
+#'   `NULL`, which will not transpose anything. You have three options for
+#'   transpose:
 #'    - `transpose = "variable"`: uses the variable column, dropping values.
 #'       Use this if you know that your values are all identical or at least
 #'       identifiable by the variable name.
@@ -410,11 +410,11 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
 #'       generic placeholders.
 #'    - `transpose = "both"`    : combines the variable and value columns.
 #'       Use this if both the variables and values are important.
-#'  
+#'    If there is no stratification, the results will produce a single-row table
 tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
                                    keep = NULL, invert = FALSE, pretty = TRUE,
                                    wide = TRUE, digits = 1, method = "logit",
-                                   deff = FALSE, transpose = NULL) {
+                                   na.rm = FALSE, deff = FALSE, transpose = NULL) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -427,7 +427,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   strata_exists <- tidyselect::vars_select(colnames(x), !! stra)
   strata_exists <- length(strata_exists) > 0
 
-  flip_it <- wide && !is.null(transpose) && strata_exists
+  flip_it <- wide && !is.null(transpose)
 
   if (flip_it) {
     transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
@@ -449,6 +449,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
                                 digits    = digits,
                                 method    = method,
                                 wide      = wide,
+                                na.rm     = na.rm,
                                 deff      = deff)
 
     # The ouptut columns will have the value as whatever i was, so we should
@@ -476,7 +477,13 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
     nc   <- 1L + deff + if (pretty) 1L else 3L
     # the variable column to be transposed
     var  <- rlang::ensym(transpose)
-
+    # when there is no strata, we have to come up with a dummy variable
+    if (!strata_exists) {
+      stra      <- paste0("__", as.integer(Sys.time()))
+      stra      <- rlang::ensym(stra)
+      old_names <- names(res)[names(res) != transpose]
+      names(res)[names(res) != transpose] <- paste0(" ", old_names)
+    }
 
     # transposing the count variable, which is always there.
     tres <- transpose_pretty(res, !! stra, !! var, !! rlang::sym("n"))
@@ -496,6 +503,9 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
 
     # re-ordering the columns so that they are grouped by the original row order
     res <- tres[c(1, order(rep(nr, nc)) + 1)]
+  }
+  if (flip_it && !strata_exists) {
+    res <- dplyr::select(res, - !! stra)
   }
   res
 }
