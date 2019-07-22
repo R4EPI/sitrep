@@ -214,6 +214,12 @@ test_that("Proportions are correct", {
 })
 
 
+
+
+# tabulate_binary_survey tests -------------------------------------------------
+
+
+
 test_that("tabulate_binary_survey needs a 'keep' argument", {
 
   expect_error({
@@ -254,5 +260,62 @@ test_that("tabulate_binary_survey returns complementary proportions", {
   expect_equal(bin_tot$proportion + bin_inv$proportion, c(1,    1,    1))
   expect_equal(bin_tot$n          + bin_inv$n,          c(6194, 6194, 6194))
   expect_equal(bin_tot$deff,                            bin_inv$deff)
+
+})
+
+
+test_that("transposition doesn't happen without strata", {
+
+  bin_trn <- tabulate_binary_survey(s,
+                                    awards,
+                                    yr.rnd,
+                                    sch.wide,
+                                    proptotal = TRUE,
+                                    pretty    = FALSE,
+                                    deff      = TRUE,
+                                    wide      = TRUE,
+                                    transpose = "variable",
+                                    keep      = "Yes")
+  
+  expect_identical(bin_trn, bin_tot)
+
+})
+
+
+test_that("values are sensible in a transposition", {
+
+  
+  bin_trn <- tabulate_binary_survey(s,
+                                    awards,
+                                    yr.rnd,
+                                    sch.wide,
+                                    strata    = stype,
+                                    proptotal = TRUE,
+                                    pretty    = FALSE,
+                                    deff      = TRUE,
+                                    wide      = TRUE,
+                                    transpose = "variable",
+                                    keep      = "Yes")
+  bin_str <- tabulate_binary_survey(s,
+                                    awards,
+                                    yr.rnd,
+                                    sch.wide,
+                                    strata    = stype,
+                                    proptotal = TRUE,
+                                    pretty    = FALSE,
+                                    deff      = TRUE,
+                                    wide      = TRUE,
+                                    transpose = NULL,
+                                    keep      = "Yes")
+
+  trn_props <- bin_trn[grepl("proportion", names(bin_trn))]
+  str_props <- bin_str[grepl("proportion", names(bin_str))]
+
+  # The tables are not equal
+  expect_failure(expect_equal(trn_props, str_props))
+  # Their names don't match
+  expect_failure(expect_named(trn_props, str_props))
+  # but they do sum to the same value
+  expect_equal(sum(trn_props), sum(str_props))
 
 })

@@ -398,11 +398,23 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
 #' @param ... binary variables for tabulation
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
-#'
+#' @param transpose if strata is not `NULL` and `wide = TRUE`, then this will
+#'   transpose the columns to the rows, which is useful when you stratify by
+#'   age group. Default is `NULL`, which will not transpose anything. You have
+#'   three options for transpose:
+#'    - `transpose = "variable"`: uses the variable column, dropping values.
+#'       Use this if you know that your values are all identical or at least
+#'       identifiable by the variable name.
+#'    - `transpose = "value"`   : uses the value column, dropping variables.
+#'       Use this if your values are important and the variable names are
+#'       generic placeholders.
+#'    - `transpose = "both"`    : combines the variable and value columns.
+#'       Use this if both the variables and values are important.
+#'  
 tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
                                    keep = NULL, invert = FALSE, pretty = TRUE,
                                    wide = TRUE, digits = 1, method = "logit",
-                                   deff = FALSE) {
+                                   deff = FALSE, transpose = NULL) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -410,17 +422,28 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   }
 
   vars <- tidyselect::vars_select(colnames(x), ...)
+  stra <- rlang::enquo(strata)
+
+  strata_exists <- tidyselect::vars_select(colnames(x), !! stra)
+  strata_exists <- length(strata_exists) > 0
+
+  flip_it <- wide && !is.null(transpose) && strata_exists
+
+  if (flip_it) {
+    transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
+  }
 
   # Create list for results to go into that will eventually be bound together
   res <- vector(mode = "list", length = length(vars))
   names(res) <- vars
+
 
   # loop over each name in the list and tabulate the survey for that variable
   for (i in names(res)) {
     i        <- rlang::ensym(i)
     res[[i]] <- tabulate_survey(x,
                                 var       = !! i,
-                                strata    = !! enquo(strata),
+                                strata    = !! stra,
                                 proptotal = proptotal,
                                 pretty    = pretty,
                                 digits    = digits,
@@ -436,5 +459,72 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))
 
   # return the results with only the selected values
-  res[if (invert) !res$value %in% keep else res$value %in% keep, ]
+  res <- res[if (invert) !res$value %in% keep else res$value %in% keep, ]
+  
+  # If the user wants to transpose the data, then we need to do this for each
+  # level of data available into separate tables, combine the columns, and then
+  # rearrange them so that they are grouped by variable/value
+
+  if (flip_it) {
+    if (transpose == "both") {
+      # if the user wants to keep both columns, then we unite them and then
+      res <- tidyr::unite(res, col = "both", "variable", "value", remove = TRUE)
+    }
+    # number of rows in the original table
+    nr   <- seq_len(nrow(res))
+    # number of new columns based on the number of rows
+    nc   <- 1L + deff + if (pretty) 1L else 3L
+    # the variable column to be transposed
+    var  <- rlang::ensym(transpose)
+
+
+    # transposing the count variable, which is always there.
+    tres <- transpose_pretty(res, !! stra, !! var, !! rlang::sym("n"))
+
+    # determining the list of suffixes to run through when appending the columns
+    suffix <- c(
+      if (deff) "deff" else NULL,
+      if (pretty) "ci" else c("proportion", "proportion_low", "proportion_upp")
+    )
+
+    # transposing and appending the columns
+    for (i in suffix) {
+      suff <- rlang::ensym(i)
+      tmp  <- transpose_pretty(res, !! stra, !! var, !! suff)
+      tres <- dplyr::bind_cols(tres, tmp[-1])
+    }
+
+    # re-ordering the columns so that they are grouped by the original row order
+    res <- tres[c(1, order(rep(nr, nc)) + 1)]
+  }
+  res
+}
+
+#' transpose the output of tabulate_binary_survey
+#'
+#' @param x a transposable data frame with a suffix for columns
+#' @param columns the new name for the column in which to place the columns
+#' @param rows the name of the rows
+#' @param suffix the suffix of the columns to transpose
+#'
+#' @noRd
+#'
+transpose_pretty <- function(x, columns, rows, suffix) {
+  col      <- rlang::enquo(columns)
+  var      <- rlang::enquo(rows)
+  sfx      <- rlang::enquo(suffix)
+  sfx_char <- paste0(" ", rlang::as_name(sfx))
+
+  # Strategy: 
+  #   1. select only the variables that matter
+  #   2. gather in the long format
+  #   3. remove the suffix
+  #   4. spread out the data so that the rows are now the columns
+
+  res <- dplyr::select(x,   !! var, dplyr::ends_with(sfx_char))
+  res <- tidyr::gather(res, !! col, !! sfx, - !! var)
+  res <- dplyr::mutate(res, !! col := gsub(sfx_char, "", !! col))
+  res <- tidyr::spread(res, !! var, !! sfx)
+  names(res)[-1] <- paste0(names(res)[-1], sfx_char)
+  res
 }
