@@ -264,7 +264,7 @@ test_that("tabulate_binary_survey returns complementary proportions", {
 })
 
 
-test_that("transposition doesn't happen without strata", {
+test_that("transposition can happen without strata", {
 
   bin_trn <- tabulate_binary_survey(s,
                                     awards,
@@ -277,7 +277,12 @@ test_that("transposition doesn't happen without strata", {
                                     transpose = "variable",
                                     keep      = "Yes")
   
-  expect_identical(bin_trn, bin_tot)
+  # has one row
+  expect_equal(nrow(bin_trn), 1L)
+  # has nrow * (ncol - 2) columns
+  expect_equal(ncol(bin_trn), nrow(bin_tot) * (ncol(bin_tot) - 2L))
+  # the summation of the values are equal
+  expect_equal(sum(bin_trn), sum(bin_tot[-(1:2)]))
 
 })
 

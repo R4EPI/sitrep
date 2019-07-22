@@ -11,7 +11,8 @@ tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
 tabulate_binary_survey(x, ..., strata = NULL, proptotal = FALSE,
   keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", deff = FALSE, transpose = NULL)
+  digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
+  transpose = NULL)
 }
 \arguments{
 \item{x}{a survey design object}
@@ -58,10 +59,10 @@ created.}
 
 \item{invert}{if \code{TRUE}, the kept values are rejected. Defaults to \code{FALSE}}
 
-\item{transpose}{if strata is not \code{NULL} and \code{wide = TRUE}, then this will
-transpose the columns to the rows, which is useful when you stratify by
-age group. Default is \code{NULL}, which will not transpose anything. You have
-three options for transpose:
+\item{transpose}{if \code{wide = TRUE}, then this will transpose the columns to
+the rows, which is useful when you stratify by age group. Default is
+\code{NULL}, which will not transpose anything. You have three options for
+transpose:
 \itemize{
 \item \code{transpose = "variable"}: uses the variable column, dropping values.
 Use this if you know that your values are all identical or at least
@@ -71,6 +72,7 @@ Use this if your values are important and the variable names are
 generic placeholders.
 \item \code{transpose = "both"}    : combines the variable and value columns.
 Use this if both the variables and values are important.
+If there is no stratification, the results will produce a single-row table
 }}
 }
 \value{
