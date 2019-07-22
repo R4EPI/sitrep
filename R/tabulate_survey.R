@@ -483,10 +483,14 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
       stra      <- rlang::ensym(stra)
       old_names <- names(res)[names(res) != transpose]
       names(res)[names(res) != transpose] <- paste0(" ", old_names)
+      slevels   <- NULL
+    } else {
+      slevels   <- dplyr::pull(x$variables, !! stra)
+      slevels   <- if (is.factor(slevels)) levels(slevels) else sort(slevels)
     }
 
     # transposing the count variable, which is always there.
-    tres <- transpose_pretty(res, !! stra, !! var, !! rlang::sym("n"))
+    tres <- transpose_pretty(res, !! stra, !! var, !! rlang::sym("n"), slevels)
 
     # determining the list of suffixes to run through when appending the columns
     suffix <- c(
@@ -497,7 +501,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
     # transposing and appending the columns
     for (i in suffix) {
       suff <- rlang::ensym(i)
-      tmp  <- transpose_pretty(res, !! stra, !! var, !! suff)
+      tmp  <- transpose_pretty(res, !! stra, !! var, !! suff, slevels)
       tres <- dplyr::bind_cols(tres, tmp[-1])
     }
 
@@ -519,7 +523,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
 #'
 #' @noRd
 #'
-transpose_pretty <- function(x, columns, rows, suffix) {
+transpose_pretty <- function(x, columns, rows, suffix, clev = NULL) {
   col      <- rlang::enquo(columns)
   var      <- rlang::enquo(rows)
   sfx      <- rlang::enquo(suffix)
@@ -534,6 +538,9 @@ transpose_pretty <- function(x, columns, rows, suffix) {
   res <- dplyr::select(x,   !! var, dplyr::ends_with(sfx_char))
   res <- tidyr::gather(res, !! col, !! sfx, - !! var)
   res <- dplyr::mutate(res, !! col := gsub(sfx_char, "", !! col))
+  if (!is.null(clev)) {
+    res <- dplyr::mutate(res, !! col := factor(!! col, clev))
+  }
   res <- tidyr::spread(res, !! var, !! sfx)
   names(res)[-1] <- paste0(names(res)[-1], sfx_char)
   res
