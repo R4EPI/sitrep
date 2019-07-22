@@ -1080,7 +1080,7 @@ study_data_cleaned %>%
 
 
 Z-curve of weight-for-height among non-flagged children for this indicator
-```{r zcurve_waz}
+```{r zcurve_whz}
 
 # use unweighted dataset 
 study_data_cleaned %>% 
@@ -1337,7 +1337,7 @@ zscore_results <- with(study_data_cleaned, anthro_zscores(
 # indicators that could not be computed are NA
 
 
-# below is with weighting considered as well 
+# below is with weighting considered as well
 dirk_results <- with(study_data_cleaned, anthro_prevalence(
   sex = as.character(sex_brief),
   age = age_month,
@@ -1351,7 +1351,7 @@ dirk_results <- with(study_data_cleaned, anthro_prevalence(
 
 
 # exclude those that are missing gam_whz and those flagged (WHO excludes those certain z score number away)
-survey_design %>% 
+survey_design %>%
   filter(fwfl == 0 & !is.na(sam_whz)) %>%
   tabulate_binary_survey(indicators[1:3], keep = TRUE)
 
@@ -1362,11 +1362,11 @@ survey_design %>%
 
 ```{r}
 # only consider z-scores that are not flagged
-baseplot <- zscore_results %>% 
-  filter(fwei == 0) %>% 
+baseplot <- zscore_results %>%
+  filter(fwei == 0) %>%
   zcurve(zwei)
 
-baseplot + 
+baseplot +
   scale_y_continuous(expand = c(0, 0))
 ```
 
@@ -1374,8 +1374,8 @@ baseplot +
 
 ```{r}
 # here we use the zscores to classify children
-weight_for_height <- zscore_results %>% 
-  transmute(GAM = tidyr::replace_na(zwei < -2 | study_data_cleaned$oedema == "Yes", FALSE), 
+weight_for_height <- zscore_results %>%
+  transmute(GAM = tidyr::replace_na(zwei < -2 | study_data_cleaned$oedema == "Yes", FALSE),
             MAM = tidyr::replace_na(-3 <= zwei & zwei < -2),
             SAM = tidyr::replace_na(zwei < -3 |  study_data_cleaned$oedema == "Yes"))
 ```
@@ -1391,12 +1391,12 @@ totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), 
 
 dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
   stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
-  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>% 
-  select(stratum, sex, value) %>% 
-  mutate(sex = recode(sex, .missing = "All", "F" = "Sex 1", "M" = "Sex 2")) %>% 
+  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>%
+  select(stratum, sex, value) %>%
+  mutate(sex = recode(sex, .missing = "All", "F" = "Sex 1", "M" = "Sex 2")) %>%
   tidyr::spread(sex, value) %>%
-  tibble::column_to_rownames(var = "stratum") %>% 
-  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)")) 
+  tibble::column_to_rownames(var = "stratum") %>%
+  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)"))
 ```
 
 
@@ -1404,23 +1404,23 @@ Prevalence of acute malnutrition by age, based on weight-for-height z-scores, ch
 
 ```{r}
 # quick prototype to go towards the expected result in the report
-dplyr::bind_cols(study_data_cleaned, weight_for_height) %>% 
-  mutate(Normal = !GAM & !MAM & !SAM) %>% 
-  select(age_group, GAM, MAM, SAM) %>% 
-  filter(!is.na(age_group)) %>% 
-  tidyr::gather(class, flagged, -age_group) %>% 
-  group_by(age_group, class) %>% 
-  summarise(n = n(), 
-            flagged = sum(flagged, na.rm = TRUE), 
-            rel = flagged / n, 
+dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
+  mutate(Normal = !GAM & !MAM & !SAM) %>%
+  select(age_group, GAM, MAM, SAM) %>%
+  filter(!is.na(age_group)) %>%
+  tidyr::gather(class, flagged, -age_group) %>%
+  group_by(age_group, class) %>%
+  summarise(n = n(),
+            flagged = sum(flagged, na.rm = TRUE),
+            rel = flagged / n,
             ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
-  tidyr::unnest() %>% 
-  ungroup() %>% 
+  tidyr::unnest() %>%
+  ungroup() %>%
   mutate(value = paste0(flagged, " ", fmt_ci(rel, lower, upper)),
-         age_group = paste0(age_group, " N = ", n)) %>% 
-  select(age_group, class, value) %>% 
-  tidyr::spread(class, value) %>% 
-  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)"))) 
+         age_group = paste0(age_group, " N = ", n)) %>%
+  select(age_group, class, value) %>%
+  tidyr::spread(class, value) %>%
+  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)")))
 ```
 
 ## Filter by height
@@ -1431,25 +1431,25 @@ dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
 # we can either estimate the prevalence using simple couting of the z-scores
 # or use anthro_prevalence to use the survey package to obtain better estimates
 dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
-  filter(height < 85) %>% 
+  filter(height < 85) %>%
   stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
   knitr::kable()
 ```
 
 >85 <110 cm
- 
+
 ```{r}
 # we can either estimate the prevalence using simple couting of the z-scores
 # or use anthro_prevalence to use the survey package to obtain better estimates
 dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
-  filter(height > 85) %>% 
+  filter(height > 85) %>%
   stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
   knitr::kable()
 ```
 
 ```{r}
-muac <- study_data_cleaned %>% 
-  transmute(GAM = tidyr::replace_na(muac_mm_left_arm < 125 | oedema == "Yes", FALSE), 
+muac <- study_data_cleaned %>%
+  transmute(GAM = tidyr::replace_na(muac_mm_left_arm < 125 | oedema == "Yes", FALSE),
             MAM = tidyr::replace_na(muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 &  oedema == "No"),
             SAM = tidyr::replace_na(muac_mm_left_arm < 115 |  oedema == "Yes"))
 ```
@@ -1465,12 +1465,12 @@ totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), 
 
 dplyr::bind_cols(study_data_cleaned, muac) %>%
   stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
-  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>% 
-  select(stratum, sex, value) %>% 
-  mutate(sex = recode(sex, .missing = "All", "1" = "Sex 1", "2" = "Sex 2")) %>% 
+  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>%
+  select(stratum, sex, value) %>%
+  mutate(sex = recode(sex, .missing = "All", "1" = "Sex 1", "2" = "Sex 2")) %>%
   tidyr::spread(sex, value) %>%
-  tibble::column_to_rownames(var = "stratum") %>% 
-  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)")) 
+  tibble::column_to_rownames(var = "stratum") %>%
+  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)"))
 ```
 
 
@@ -1478,42 +1478,42 @@ Prevalence of acute malnutrition by age, based on mid upper arm cicumference (MU
 
 ```{r}
 # quick prototype to go towards the expected result in the report
-dplyr::bind_cols(study_data_cleaned, muac) %>% 
-  mutate(Normal = !GAM & !MAM & !SAM) %>% 
-  select(age_group, GAM, MAM, SAM) %>% 
-  filter(!is.na(age_group)) %>% 
-  tidyr::gather(class, flagged, -age_group) %>% 
-  group_by(age_group, class) %>% 
-  summarise(n = n(), 
-            flagged = sum(flagged, na.rm = TRUE), 
-            rel = flagged / n, 
+dplyr::bind_cols(study_data_cleaned, muac) %>%
+  mutate(Normal = !GAM & !MAM & !SAM) %>%
+  select(age_group, GAM, MAM, SAM) %>%
+  filter(!is.na(age_group)) %>%
+  tidyr::gather(class, flagged, -age_group) %>%
+  group_by(age_group, class) %>%
+  summarise(n = n(),
+            flagged = sum(flagged, na.rm = TRUE),
+            rel = flagged / n,
             ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
-  tidyr::unnest() %>% 
-  ungroup() %>% 
+  tidyr::unnest() %>%
+  ungroup() %>%
   mutate(value = paste0(flagged, " ", fmt_ci(rel, lower, upper)),
-         age_group= paste0(age_group, " N = ", n)) %>% 
-  select(age_group, class, value) %>% 
-  tidyr::spread(class, value) %>% 
-  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)"))) 
+         age_group= paste0(age_group, " N = ", n)) %>%
+  select(age_group, class, value) %>%
+  tidyr::spread(class, value) %>%
+  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)")))
 ```
 
 ### Chronic malnutrition
 
 ```{r}
 # only include those not flagged
-zscore_results %>% 
-  filter(flen == 0) %>% 
+zscore_results %>%
+  filter(flen == 0) %>%
   zcurve(zlen)
 
-# old 
+# old
 zcurve(zscore_results$zlen[zscore_results$flen == 0]) +
   labs(title = "Length/Height-for-age Z-scores") +
   theme_classic()
 ```
 
 ```{r}
-chronic <- zscore_results %>% 
-  transmute(stunting = tidyr::replace_na(zlen < -2), 
+chronic <- zscore_results %>%
+  transmute(stunting = tidyr::replace_na(zlen < -2),
             moderate = tidyr::replace_na(zlen >= -3 & zlen < -2),
             severe = tidyr::replace_na(zlen < -3))
 ```
@@ -1530,12 +1530,12 @@ totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), 
 
 dplyr::bind_cols(study_data_cleaned, chronic) %>%
   stratify_zscores(by = "sex", stunting, moderate, severe) %>%
-  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>% 
-  select(stratum, sex, value) %>% 
-  mutate(sex = recode(sex, .missing = "All", "1" = "Sex 1", "2" = "Sex 2")) %>% 
+  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>%
+  select(stratum, sex, value) %>%
+  mutate(sex = recode(sex, .missing = "All", "1" = "Sex 1", "2" = "Sex 2")) %>%
   tidyr::spread(sex, value) %>%
-  tibble::column_to_rownames(var = "stratum") %>% 
-  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)")) 
+  tibble::column_to_rownames(var = "stratum") %>%
+  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)"))
 ```
 
 
@@ -1543,22 +1543,22 @@ Prevalence of acute malnutrition by age, based on weight-for-height z-scores, ch
 
 ```{r}
 # quick prototype to go towards the expected result in the report
-dplyr::bind_cols(study_data_cleaned, chronic) %>% 
-  select(age_group, stunting, moderate, severe) %>% 
-  filter(!is.na(age_group)) %>% 
-  tidyr::gather(class, flagged, -age_group) %>% 
-  group_by(age_group, class) %>% 
-  summarise(n = n(), 
-            flagged = sum(flagged, na.rm = TRUE), 
-            rel = flagged / n, 
+dplyr::bind_cols(study_data_cleaned, chronic) %>%
+  select(age_group, stunting, moderate, severe) %>%
+  filter(!is.na(age_group)) %>%
+  tidyr::gather(class, flagged, -age_group) %>%
+  group_by(age_group, class) %>%
+  summarise(n = n(),
+            flagged = sum(flagged, na.rm = TRUE),
+            rel = flagged / n,
             ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
-  tidyr::unnest() %>% 
-  ungroup() %>% 
+  tidyr::unnest() %>%
+  ungroup() %>%
   mutate(value = paste0(flagged, " ", fmt_ci(rel, lower, upper)),
-         age_group= paste0(age_group, " N = ", n)) %>% 
-  select(age_group, class, value) %>% 
-  tidyr::spread(class, value) %>% 
-  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)"))) 
+         age_group= paste0(age_group, " N = ", n)) %>%
+  select(age_group, class, value) %>%
+  tidyr::spread(class, value) %>%
+  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)")))
 ```
 
 
