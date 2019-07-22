@@ -1116,17 +1116,182 @@ study_data_cleaned %>%
 ```
 
 
-## Nutritional status based on MUAC 
+## Nutritional status based on indicators  
 
-```{r}
+Prevalence of malnutrition based on MUAC, by age group (months) and overall 
 
-survey_design %>% 
-  tabulate_binary_survey(indicators[1:3], strata = age_group, keep = TRUE,
-                         transpose = "variable") %>%
+```{r muac_age_group}
+
+overall <- survey_design %>% 
+  # tabulate multiple variables with same values
+  # indicators[10:12] has the names of muac variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to indicators as columns 
+  # important to drop missings! use na.rm = TRUE)
+  tabulate_binary_survey(indicators[10:12], keep = TRUE, 
+                         transpose = "variable", na.rm = TRUE) %>% 
+  # add in an age_group variable to be able to bind to age_group table below 
+  mutate(age_group = "Overall") %>% 
+  # reorganise columns so can bind to age_group table below 
+  select(age_group, 1:6)
+
+
+
+age_strat <- survey_design %>% 
+  # tabulate multiple variables with same values
+  # indicators[10:12] has the names of muac variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to have age groups as rows
+  tabulate_binary_survey(indicators[10:12], strata = age_group, keep = TRUE,
+                         transpose = "variable", na.rm = TRUE) 
+
+# bind the age stratified and overall tables together 
+bind_rows(age_strat, overall) %>% 
+  # change column names 
+  rename("Age group (months)" = "age_group", 
+         "GAM (n)" = "gam_muac n", 
+         "Proportion (95%CI)" = "gam_muac ci", 
+         "MAM (n)" = "mam_muac n", 
+         "Proportion (95%CI)" = "mam_muac ci", 
+         "SAM (n)" = "sam_muac n", 
+         "Proportion (95%CI)" = "sam_muac ci") %>% 
+  knitr::kable(digits = 1)
+
+  
+
+```
+
+
+
+Prevalence of malnutrition based on height-for-age z-score categories, by age group (months) and overall
+
+
+```{r haz_age_group}
+
+overall <- survey_design %>% 
+  # tabulate multiple variables with same values
+  # indicators[10:12] has the names of muac variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to indicators as columns 
+  # important to drop missings! use na.rm = TRUE)
+  tabulate_binary_survey(indicators[4:6], keep = TRUE, 
+                         transpose = "variable", na.rm = TRUE) %>% 
+  # add in an age_group variable to be able to bind to age_group table below 
+  mutate(age_group = "Overall") %>% 
+  # reorganise columns so can bind to age_group table below 
+  select(age_group, 1:6)
+
+age_strat <- survey_design %>% 
+  # tabulate multiple variables with same values
+  # indicators has the names of indicator variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to have age groups as rows
+  tabulate_binary_survey(indicators[4:6], strata = age_group, keep = TRUE,
+                         transpose = "variable", na.rm = TRUE) 
+
+# bind the age stratified and overall tables together 
+bind_rows(age_strat, overall) %>% 
+  # change column names 
+  rename("Age group (months)" = "age_group", 
+         "Moderate stunting (n)" = "moderate_stunting_haz n", 
+         "Proportion (95%CI)" = "moderate_stunting_haz ci", 
+         "Severe stunting (n)" = "severe_stunting_haz n", 
+         "Proportion (95%CI)" = "severe_stunting_haz ci", 
+         "Stunting (n)" = "stunting_haz n", 
+         "Proportion (95%CI)" = "stunting_haz ci") %>% 
   knitr::kable(digits = 1)
 
 
 ```
+
+
+Prevalence of malnutrition based on weight-for-age z-score categories, by age group (months) and overall
+
+```{r waz_age_group}
+
+overall <- survey_design %>% 
+  # tabulate multiple variables with same values
+  # indicatorshas the names of indicator variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to indicators as columns 
+  # important to drop missings! use na.rm = TRUE)
+  tabulate_binary_survey(indicators[7:9], keep = TRUE, 
+                         transpose = "variable", na.rm = TRUE) %>% 
+  # add in an age_group variable to be able to bind to age_group table below 
+  mutate(age_group = "Overall") %>% 
+  # reorganise columns so can bind to age_group table below 
+  select(age_group, 1:6)
+
+age_strat <- survey_design %>% 
+  # tabulate multiple variables with same values
+  # indicators has the names of indicator variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to have age groups as rows
+  tabulate_binary_survey(indicators[7:9], strata = age_group, keep = TRUE,
+                         transpose = "variable", na.rm = TRUE) 
+
+# bind the age stratified and overall tables together 
+bind_rows(age_strat, overall) %>% 
+  # change column names 
+  rename("Age group (months)" = "age_group", 
+         "Moderate underweight (n)" = "moderate_underweight_waz n", 
+         "Proportion (95%CI)" = "moderate_underweight_waz ci", 
+         "Severe underweight (n)" = "severe_underweight_waz n", 
+         "Proportion (95%CI)" = "severe_underweight_waz ci", 
+         "Underweight (n)" = "underweight_waz n", 
+         "Proportion (95%CI)" = "underweight_waz ci" ) %>% 
+  knitr::kable(digits = 1)
+
+
+```
+
+
+
+
+Prevalence of malnutrition based on weight-for-height z-score categories, by age group (months) and overall
+
+```{r whz_age_group}
+
+overall <- survey_design %>% 
+  # tabulate multiple variables with same values
+  # indicatorshas the names of indicator variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to indicators as columns 
+  # important to drop missings! use na.rm = TRUE)
+  tabulate_binary_survey(indicators[1:3], keep = TRUE, 
+                         transpose = "variable", na.rm = TRUE) %>% 
+  # add in an age_group variable to be able to bind to age_group table below 
+  mutate(age_group = "Overall") %>% 
+  # reorganise columns so can bind to age_group table below 
+  select(age_group, 1:6)
+
+age_strat <- survey_design %>% 
+  # tabulate multiple variables with same values
+  # indicators has the names of indicator variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to have age groups as rows
+  tabulate_binary_survey(indicators[1:3], strata = age_group, keep = TRUE,
+                         transpose = "variable", na.rm = TRUE) 
+
+# bind the age stratified and overall tables together 
+bind_rows(age_strat, overall) %>% 
+  # change column names 
+  rename("Age group (months)" = "age_group", 
+         "GAM (n)" = "gam_whz n", 
+         "Proportion (95%CI)" = "gam_whz ci", 
+         "MAM (n)" = "mam_whz n", 
+         "Proportion (95%CI)" = "mam_whz ci", 
+         "SAM (n)" = "sam_whz n", 
+         "Proportion (95%CI)" = "sam_whz ci") %>% 
+  knitr::kable(digits = 1)
+
+
+```
+
+
+
+
+
 
 
 
@@ -1169,7 +1334,7 @@ dirk_results <- with(study_data_cleaned, anthro_prevalence(
   is_age_in_month = TRUE,
   weight = weight,
   lenhei = height,
-  oedema = oedema2,
+  oedema = as.numeric(oedema),
   armc = muac_mm_left_arm / 10, # convert to cm
   sw = surv_weight
 ))
