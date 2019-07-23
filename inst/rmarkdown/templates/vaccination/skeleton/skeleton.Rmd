@@ -484,6 +484,9 @@ study_data_cleaned <- study_data_cleaned %>%
                                                  "Unvaccinated")
   )
 
+# explicitly replace NA of a factor
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(vaccine_routine = fct_explicit_na(vaccine_routine, na_level = "No answer"))
 
 
 
