@@ -432,7 +432,7 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # create a new variable by reordering the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(cause_of_death = fct_relevel(q65_consent_no_reason,
+  mutate(no_consent = fct_relevel(q65_consent_no_reason,
                                       "Refuse to explain", 
                                       "No time", 
                                       "Bad experience",
@@ -443,8 +443,12 @@ study_data_cleaned <- study_data_cleaned %>%
 # combine all vaccine variables in to one 
 # where if any of the variables contain one yes then it is given that 
 # simplified, keep the yes answers and change others to no 
+# if missing in all three vars then stays NA
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(vaccination_status = case_when(
+    is.na(vaccine_mass) & 
+      is.na(vaccine_routine) & 
+      is.na(vaccine_sia)  ~ NA_character_
     vaccine_mass    == "Yes - Vaccination card" ~ "Card", 
     vaccine_routine == "Yes - Vaccination card" ~ "Card", 
     vaccine_sia     == "Yes - Vaccination card" ~ "Card", 
@@ -464,11 +468,13 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # create a new grouping for vaccine status variable 
 # simplified, card or verbal then yes otherwise no 
-# grepl searches for rows with "Yes"
+# %in% checks if row contains "Card" or "Verabl"
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status_simple = case_when(
-    vaccination_status %in% c("Card", "Verbal") ~ "Vaccinated", 
-    TRUE ~ "Unvaccinated")
+  mutate(
+    vaccination_status_simple = case_when(
+      is.na(vaccination_status) ~ NA_character_
+      vaccination_status %in% c("Card", "Verbal") ~ "Vaccinated", 
+      TRUE ~ "Unvaccinated")
   )
 
 # correct the order of levels
