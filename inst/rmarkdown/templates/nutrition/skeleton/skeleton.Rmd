@@ -828,15 +828,25 @@ year age group.
 ```{r cluster_hh_size}
 # get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
-  count(cluster_number) 
+  group_by(cluster_number) %>% 
+  # return the number of unique household IDs by each cluster
+  summarise(
+    n = length(
+      unique(household_id)
+      )
+    )
 
 # get the median number of households per cluster
 clustermed <- clustersize %>% 
-  summarise(median(n))
+  summarise(
+    median(n)
+    )
 
 # get the min and max number of households per cluster
 # paste these together seperated by a dash 
-clusterrange <- paste0(range(clustersize$n), collapse = "-")
+clusterrange <- paste0(
+  range(clustersize$n), 
+  collapse = "-")
 
 # get counts of children per household 
 # do this by cluster as household IDs are only unique within clusters
@@ -848,7 +858,9 @@ hhsize <- study_data_cleaned %>%
 # ungroup to give you the overall median 
 hhmed <- hhsize %>%
   ungroup() %>% 
-  summarise(median(n))
+  summarise(
+    median(n)
+    )
 
 # get the min and max number of children per household
 # paste these together seperated by a dash 
