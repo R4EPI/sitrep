@@ -625,12 +625,12 @@ linelist_cleaned <- linelist_cleaned %>%
                                        "Yes - verbal",
                                        "Yes - vaccination card/ink"))
 
-# change the order of levels of multiple categorical variables
-linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(vars(starts_with("dehydration")),
-            fct_relevel,
-            "None", "Some", "Severe", "Unknown"
-           )
+# Optional: Uncomment code below to change the order of levels of multiple categorical variables
+#linelist_cleaned <- linelist_cleaned %>%
+#  mutate_at(vars(starts_with("prescribed")),   #Looks for variables beginning with "prescribed"
+#            fct_relevel,                     
+#            "No", "Yes"                        #Sets order of levels to "No" then "Yes"
+#           )
 
 # Create a factor variable based on rules from other simple character variables
 # If you have access to lab results, you can create a case definition variable 
