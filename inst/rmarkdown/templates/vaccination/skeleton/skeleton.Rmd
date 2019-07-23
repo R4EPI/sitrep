@@ -842,13 +842,24 @@ Accepting equal validity from self-reported and card-reported vaccination status
 ```{r vaccination_coverage_age_group}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(vaccination_status_simple, age_group, deff = TRUE, digits = 2, transpose = "variable") %>%
+  tabulate_survey(vaccination_status_simple, age_group, deff = TRUE, digits = 2, wide = FALSE) %>%
+  # spread values to wide format to have appropriate groups 
+    # collect variables of interest (n, deff and ci) (call the clasifier column "variable")
+  gather(key = "variable", value = "value", c(n, deff, ci)) %>% 
+    # create temp column which combine the classifier column with vacc_status column seperated by underscore
+  unite(col = "temp", vaccination_status_simple, variable, sep = "_") %>%
+    # spread wide based on newly create combo column above 
+  spread(temp, value) %>% 
+  # change order of columns 
+  select(age_group, Vaccinated_n, Vaccinated_ci, Vaccinated_deff, 
+         Unvaccinated_n, Unvaccinated_ci, Unvaccinated_deff) %>% 
+  
   rename("Age group (years)" = age_group) %>% 
   # wrap all "n" variables in braces (note space before n).
-  augment_redundant(" n" = " (n)") %>% 
+  augment_redundant("_n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant(" ci"   = "% (95% CI)", 
-                   "deff" = "Design effect") %>%
+  rename_redundant("_ci"   = "% (95% CI)", 
+                   "_deff" = "Design effect") %>%
   kable(digits = 2)
 ```
 
@@ -856,12 +867,25 @@ Distinguishing between vaccination cards and verbal confirmation, by age group
 ```{r vaccination_coverage_age_group_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(age_group, vaccination_status, deff = TRUE, digits = 2) %>%
+  tabulate_survey(vaccination_status, age_group,  deff = TRUE, digits = 2, wide = FALSE) %>%
+  
+  # spread values to wide format to have appropriate groups 
+    # collect variables of interest (n, deff and ci) (call the clasifier column "variable")
+  gather(key = "variable", value = "value", c(n, deff, ci)) %>% 
+    # create temp column which combine the classifier column with vacc_status column seperated by underscore
+  unite(col = "temp", vaccination_status, variable, sep = "_") %>%
+    # spread wide based on newly create combo column above 
+  spread(temp, value) %>% 
+  # change order of columns 
+  select(age_group, Card_n, Card_ci, Card_deff, 
+         Verbal_n, Verbal_ci, Verbal_deff,
+         Unvaccinated_n, Unvaccinated_ci, Unvaccinated_deff) %>% 
+  
   rename("Age group (years)" = age_group) %>% 
   # wrap all "n" variables in braces (note space before n).
-  augment_redundant(" n" = " (n)") %>% 
+  augment_redundant("_n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant(" ci"   = "% (95% CI)", 
+  rename_redundant("_ci"   = "% (95% CI)", 
                    "deff" = "Design effect") %>%
   kable(digits = 2)
 ```
