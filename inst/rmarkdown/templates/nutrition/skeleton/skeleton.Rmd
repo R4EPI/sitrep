@@ -1173,6 +1173,61 @@ bind_rows(age_strat, overall) %>%
 
 
 
+You could add a filter argument to this to only look at children <87cm for example. 
+
+
+
+Prevalence of malnutrition based on MUAC among children <87cm, by age group (months) and overall 
+
+```{r muac_filter_age_group}
+
+overall <- survey_design %>% 
+  filter(height < 87) %>% 
+  # tabulate multiple variables with same values
+  # indicators[10:12] has the names of muac variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to indicators as columns 
+  # important to drop missings! use na.rm = TRUE)
+  tabulate_binary_survey(indicators[10:12], keep = TRUE, 
+                         transpose = "variable", na.rm = TRUE) %>% 
+  # add in an age_group variable to be able to bind to age_group table below 
+  mutate(age_group = "Overall") %>% 
+  # reorganise columns so can bind to age_group table below 
+  select(age_group, 1:6)
+
+
+
+age_strat <- survey_design %>% 
+  filter(height < 87) %>% 
+  # tabulate multiple variables with same values
+  # indicators[10:12] has the names of muac variables in it 
+  # keep will drop all rows in the output where the value is not "TRUE"
+  # transpose flips the table to have age groups as rows
+  tabulate_binary_survey(indicators[10:12], strata = age_group, keep = TRUE,
+                         transpose = "variable", na.rm = TRUE) 
+
+# bind the age stratified and overall tables together 
+bind_rows(age_strat, overall) %>% 
+  # change column names 
+  rename("Age group (months)" = "age_group", 
+         "GAM (n)" = "gam_muac n", 
+         "Proportion (95%CI)" = "gam_muac ci", 
+         "MAM (n)" = "mam_muac n", 
+         "Proportion (95%CI)" = "mam_muac ci", 
+         "SAM (n)" = "sam_muac n", 
+         "Proportion (95%CI)" = "sam_muac ci") %>% 
+  knitr::kable(digits = 1)
+
+  
+
+```
+
+
+
+
+
+
+
 Prevalence of malnutrition based on height-for-age z-score categories, by age group (months) and overall
 
 
@@ -1356,209 +1411,6 @@ survey_design %>%
   tabulate_binary_survey(indicators[1:3], keep = TRUE)
 
 
-```
-
-### Acute malnutrition
-
-```{r}
-# only consider z-scores that are not flagged
-baseplot <- zscore_results %>%
-  filter(fwei == 0) %>%
-  zcurve(zwei)
-
-baseplot +
-  scale_y_continuous(expand = c(0, 0))
-```
-
-
-
-```{r}
-# here we use the zscores to classify children
-weight_for_height <- zscore_results %>%
-  transmute(GAM = tidyr::replace_na(zwei < -2 | study_data_cleaned$oedema == "Yes", FALSE),
-            MAM = tidyr::replace_na(-3 <= zwei & zwei < -2),
-            SAM = tidyr::replace_na(zwei < -3 |  study_data_cleaned$oedema == "Yes"))
-```
-
-Prevalence of acute malnutrition based on weight-for-height z-scores (and/or oedema) and by sex, children 6-59 months
-
-```{r}
-# we can either estimate the prevalence using simple couting of the z-scores
-# or use anthro_prevalence to use the survey package to obtain better estimates
-
-# Calculate denominators for each group
-totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), sum(study_data_cleaned$sex == "M"))
-
-dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
-  stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
-  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>%
-  select(stratum, sex, value) %>%
-  mutate(sex = recode(sex, .missing = "All", "F" = "Sex 1", "M" = "Sex 2")) %>%
-  tidyr::spread(sex, value) %>%
-  tibble::column_to_rownames(var = "stratum") %>%
-  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)"))
-```
-
-
-Prevalence of acute malnutrition by age, based on weight-for-height z-scores, children 6-59 months
-
-```{r}
-# quick prototype to go towards the expected result in the report
-dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
-  mutate(Normal = !GAM & !MAM & !SAM) %>%
-  select(age_group, GAM, MAM, SAM) %>%
-  filter(!is.na(age_group)) %>%
-  tidyr::gather(class, flagged, -age_group) %>%
-  group_by(age_group, class) %>%
-  summarise(n = n(),
-            flagged = sum(flagged, na.rm = TRUE),
-            rel = flagged / n,
-            ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
-  tidyr::unnest() %>%
-  ungroup() %>%
-  mutate(value = paste0(flagged, " ", fmt_ci(rel, lower, upper)),
-         age_group = paste0(age_group, " N = ", n)) %>%
-  select(age_group, class, value) %>%
-  tidyr::spread(class, value) %>%
-  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)")))
-```
-
-## Filter by height
-
-< 85cm
-
-```{r}
-# we can either estimate the prevalence using simple couting of the z-scores
-# or use anthro_prevalence to use the survey package to obtain better estimates
-dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
-  filter(height < 85) %>%
-  stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
-  knitr::kable()
-```
-
->85 <110 cm
-
-```{r}
-# we can either estimate the prevalence using simple couting of the z-scores
-# or use anthro_prevalence to use the survey package to obtain better estimates
-dplyr::bind_cols(study_data_cleaned, weight_for_height) %>%
-  filter(height > 85) %>%
-  stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
-  knitr::kable()
-```
-
-```{r}
-muac <- study_data_cleaned %>%
-  transmute(GAM = tidyr::replace_na(muac_mm_left_arm < 125 | oedema == "Yes", FALSE),
-            MAM = tidyr::replace_na(muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 &  oedema == "No"),
-            SAM = tidyr::replace_na(muac_mm_left_arm < 115 |  oedema == "Yes"))
-```
-
-Prevalence of acute malnutrition based on mid upper arm cicumference (MUAC) and by sex, children 6-59 months
-
-```{r}
-# we can either estimate the prevalence using simple couting of the z-scores
-# or use anthro_prevalence to use the survey package to obtain better estimates
-
-# Calculate denominators for each group
-totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), sum(study_data_cleaned$sex == "M"))
-
-dplyr::bind_cols(study_data_cleaned, muac) %>%
-  stratify_zscores(by = "sex", GAM, MAM, SAM) %>%
-  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>%
-  select(stratum, sex, value) %>%
-  mutate(sex = recode(sex, .missing = "All", "1" = "Sex 1", "2" = "Sex 2")) %>%
-  tidyr::spread(sex, value) %>%
-  tibble::column_to_rownames(var = "stratum") %>%
-  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)"))
-```
-
-
-Prevalence of acute malnutrition by age, based on mid upper arm cicumference (MUAC), children 6-59 months
-
-```{r}
-# quick prototype to go towards the expected result in the report
-dplyr::bind_cols(study_data_cleaned, muac) %>%
-  mutate(Normal = !GAM & !MAM & !SAM) %>%
-  select(age_group, GAM, MAM, SAM) %>%
-  filter(!is.na(age_group)) %>%
-  tidyr::gather(class, flagged, -age_group) %>%
-  group_by(age_group, class) %>%
-  summarise(n = n(),
-            flagged = sum(flagged, na.rm = TRUE),
-            rel = flagged / n,
-            ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
-  tidyr::unnest() %>%
-  ungroup() %>%
-  mutate(value = paste0(flagged, " ", fmt_ci(rel, lower, upper)),
-         age_group= paste0(age_group, " N = ", n)) %>%
-  select(age_group, class, value) %>%
-  tidyr::spread(class, value) %>%
-  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)")))
-```
-
-### Chronic malnutrition
-
-```{r}
-# only include those not flagged
-zscore_results %>%
-  filter(flen == 0) %>%
-  zcurve(zlen)
-
-# old
-zcurve(zscore_results$zlen[zscore_results$flen == 0]) +
-  labs(title = "Length/Height-for-age Z-scores") +
-  theme_classic()
-```
-
-```{r}
-chronic <- zscore_results %>%
-  transmute(stunting = tidyr::replace_na(zlen < -2),
-            moderate = tidyr::replace_na(zlen >= -3 & zlen < -2),
-            severe = tidyr::replace_na(zlen < -3))
-```
-
-
-Prevalence of chronic malnutrition based on stunting z-scores and by sex, children 6-59 months
-
-```{r}
-# we can either estimate the prevalence using simple couting of the z-scores
-# or use anthro_prevalence to use the survey package to obtain better estimates
-
-# Calculate denominators for each group
-totals <- c(length(study_data_cleaned$sex), sum(study_data_cleaned$sex == "F"), sum(study_data_cleaned$sex == "M"))
-
-dplyr::bind_cols(study_data_cleaned, chronic) %>%
-  stratify_zscores(by = "sex", stunting, moderate, severe) %>%
-  mutate(value = paste(flagged," ", fmt_ci(rel, lower, upper))) %>%
-  select(stratum, sex, value) %>%
-  mutate(sex = recode(sex, .missing = "All", "1" = "Sex 1", "2" = "Sex 2")) %>%
-  tidyr::spread(sex, value) %>%
-  tibble::column_to_rownames(var = "stratum") %>%
-  knitr::kable(col.names = paste0(names(.), " N = ", totals,  " (n, %)"))
-```
-
-
-Prevalence of acute malnutrition by age, based on weight-for-height z-scores, children 6-59 months
-
-```{r}
-# quick prototype to go towards the expected result in the report
-dplyr::bind_cols(study_data_cleaned, chronic) %>%
-  select(age_group, stunting, moderate, severe) %>%
-  filter(!is.na(age_group)) %>%
-  tidyr::gather(class, flagged, -age_group) %>%
-  group_by(age_group, class) %>%
-  summarise(n = n(),
-            flagged = sum(flagged, na.rm = TRUE),
-            rel = flagged / n,
-            ci = list(binom::binom.wilson(flagged, n)[, c("lower", "upper")])) %>%
-  tidyr::unnest() %>%
-  ungroup() %>%
-  mutate(value = paste0(flagged, " ", fmt_ci(rel, lower, upper)),
-         age_group= paste0(age_group, " N = ", n)) %>%
-  select(age_group, class, value) %>%
-  tidyr::spread(class, value) %>%
-  knitr::kable(col.names = c("Age groups", paste0(names(.)[2:4], " (n, %)")))
 ```
 
 
