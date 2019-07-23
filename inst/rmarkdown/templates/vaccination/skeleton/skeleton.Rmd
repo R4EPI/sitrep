@@ -448,7 +448,7 @@ study_data_cleaned <- study_data_cleaned %>%
   mutate(vaccination_status = case_when(
     is.na(vaccine_mass) & 
       is.na(vaccine_routine) & 
-      is.na(vaccine_sia)  ~ NA_character_
+      is.na(vaccine_sia)  ~ NA_character_,
     vaccine_mass    == "Yes - Vaccination card" ~ "Card", 
     vaccine_routine == "Yes - Vaccination card" ~ "Card", 
     vaccine_sia     == "Yes - Vaccination card" ~ "Card", 
@@ -472,7 +472,7 @@ study_data_cleaned <- study_data_cleaned %>%
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
     vaccination_status_simple = case_when(
-      is.na(vaccination_status) ~ NA_character_
+      is.na(vaccination_status) ~ NA_character_,
       vaccination_status %in% c("Card", "Verbal") ~ "Vaccinated", 
       TRUE ~ "Unvaccinated")
   )
@@ -567,6 +567,7 @@ your data.
 ```{r descriptive_sampling_bias}
 # first the counts and props of the study population
 ag <- descriptive(study_data_cleaned, "age_group") %>%
+  filter(age_group != "Missing") %>%  # drop missings to fit with population data
   mutate(n_total = sum(n))
 
 # then the counts and props of the source population
@@ -841,7 +842,7 @@ Accepting equal validity from self-reported and card-reported vaccination status
 ```{r vaccination_coverage_age_group}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(age_group, vaccination_status_simple, deff = TRUE, digits = 2) %>%
+  tabulate_survey(vaccination_status_simple, age_group, deff = TRUE, digits = 2, transpose = "variable") %>%
   rename("Age group (years)" = age_group) %>% 
   # wrap all "n" variables in braces (note space before n).
   augment_redundant(" n" = " (n)") %>% 
