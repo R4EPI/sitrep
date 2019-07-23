@@ -636,7 +636,8 @@ linelist_cleaned <- linelist_cleaned %>%
 # change the order of levels of multiple categorical variables
 linelist_cleaned <- linelist_cleaned %>%
   mutate_at(vars(starts_with("dehydration")), 
-            list(~factor(., levels = c("None", "Some", "Severe", "Unknown")))
+            fct_relevel,
+            "None", "Some", "Severe", "Unknown"
            )
 
 # Create a factor variable based on rules from other simple character variables
@@ -1329,8 +1330,8 @@ We could then also look at admissions and exits among inpatients by epiweek for 
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+  #augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
+  #rename_redundant("prop" = "%")    %>% # rename proportions to %
   kable(digits = 2)
 ```
 
