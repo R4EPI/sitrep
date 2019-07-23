@@ -580,9 +580,9 @@ study_data_cleaned <- study_data_cleaned %>%
 # * Severe underweight: WAZ <-3
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
-    underweight_waz = zwei < -2, 
+    underweight_waz = zwei < -2 | oedema == "Yes", 
     moderate_underweight_waz = zwei >= -3 & zwei < -2, 
-    severe_underweight_waz = zwei < -3
+    severe_underweight_waz = zwei < -3 | oedema == "Yes"
   ) %>%
   # set flagged children to NA for each of the indicator variables
     # if the flag for this indicator is not missing and is 1 then set indicator vars to NA
@@ -1293,7 +1293,7 @@ age_strat <- survey_design %>%
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to have age groups as rows
   tabulate_binary_survey(indicators[7:9], strata = age_group, keep = TRUE,
-                         transpose = "variable", na.rm = TRUE) 
+                         transpose = "variable", na.rm = TRUE)
 
 # bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
