@@ -843,6 +843,7 @@ Accepting equal validity from self-reported and card-reported vaccination status
 # return weighted counts and weighted proportions 
 survey_design %>% 
   tabulate_survey(vaccination_status_simple, age_group, deff = TRUE, digits = 2, wide = FALSE) %>%
+  
   # spread values to wide format to have appropriate groups 
     # collect variables of interest (n, deff and ci) (call the clasifier column "variable")
   gather(key = "variable", value = "value", c(n, deff, ci)) %>% 
@@ -889,3 +890,52 @@ survey_design %>%
                    "deff" = "Design effect") %>%
   kable(digits = 2)
 ```
+
+
+## Reasons for not vaccinating 
+
+Weighted counts and proportions for reasons not vaccinated in routine and campaign circumstances, individually,
+among those not vaccinated
+```{r no_vacc_reason_routine_campaign_combo}
+
+# get weight counts and proportions for routine vaccination
+routine <- survey_design %>% 
+  # filter for those not vaccinated 
+  filter(!vaccine_routine %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  tabulate_survey(q7_no_routine_vacc_r) %>%
+  # rename columns appropriately
+  rename(Reasons = q7_no_routine_vacc_r, 
+         "Routine (n)" = n , 
+         "% (95%CI)" = ci)
+
+# get weight counts and proportions for routine vaccination
+campaign <- survey_design %>% 
+  # filter for not vaccinated 
+  filter(!vaccine_mass %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  tabulate_survey(q28_no_campaign_vacc_r) %>% 
+  # drop the reasons column 
+  select(-q28_no_campaign_vacc_r) 
+  
+
+bind_cols(routine, 
+          campaign) %>% 
+  # rename remaining columns appropriately 
+  rename("Campaign (n)" = n, 
+         "% (95%CI)" = ci)
+
+```
+
+
+Weighted counts and proportions for reasons not vaccinated in supplemented immunisation activities, 
+among those not vaccinated
+```{r no_vacc_reason_sia}
+# get weight counts and proportions for routine vaccination
+survey_design %>% 
+  filter(!vaccine_sia %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  tabulate_survey(q38_no_sia_vacc_reason) %>%
+  # rename columns appropriately
+  rename(Reasons = q38_no_sia_vacc_reason, 
+         "Routine (n)" = n , 
+         "% (95%CI)" = ci)
+```
+
