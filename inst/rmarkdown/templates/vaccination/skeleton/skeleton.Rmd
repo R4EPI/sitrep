@@ -537,7 +537,7 @@ writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date()
 # cluster sample (using srvyr package)
 survey_design <- study_data_cleaned %>% 
   as_survey_design(ids = cluster, # cluster id variable (created during collection) 
-                   weights = weight,  # weight variable created above 
+                   weights = surv_weight,  # weight variable created above 
                    strata = NULL)  # # sampling was clustered without strata
 ```
 
