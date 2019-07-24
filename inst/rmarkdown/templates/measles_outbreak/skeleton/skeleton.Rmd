@@ -23,7 +23,7 @@ report for measles.
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
 - For a more detailed explanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
-- Feedback and suggestions are welcome at the [Github issues page](https://github.com/R4EPI/sitrep/issues)
+- Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 
 
 
