@@ -19,6 +19,11 @@
 #'
 #' @param method a method from [survey::svyciprop()] to calculate the confidence
 #'   interval. Defaults to "logit"
+#' 
+#' @param na.rm When `TRUE`, missing (NA) values present in `var` will be removed
+#'   from the data set with a warning, causing a change in denominator for the
+#'   tabulations.  The default is set to `FALSE`, which creates an explicit
+#'   missing value called "(Missing)".
 #'
 #' @param deff a logical indicating if the design effect should be reported.
 #'   Defaults to "TRUE"
@@ -78,7 +83,7 @@
 #' surv %>%
 #'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-                            digits = 1, method = "logit", deff = FALSE,
+                            digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
                             proptotal = FALSE, rowtotals = FALSE, 
                             coltotals = FALSE) {
   stopifnot(inherits(x, "tbl_svy"))
@@ -117,17 +122,43 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     st <- st 
   } else {
     if (x$has.strata && vars[2] != names(x$strata)[1]) {
-      msg <- paste("The stratification present in the survey object (%s) does",
-                   "not match the user-specified stratification (%s). If you",
-                   "want to assess the survey tabulation stratifying by '%s',",
-                   "re-specify the survey object with this",
-                   "strata and the appropriate weights.")
-      stop(sprintf(msg, names(x$strata)[1], vars[2], vars[2]))
+      msg <- glue::glue(
+        "The stratification present in the survey object ({names(x$strata[1])})",
+        "does not match the user-specified stratification ({vars[2]}). If you",
+        "want to assess the survey tabulation stratifying by '{vars[2]}',",
+        "re-specify the survey object with this",
+        "strata and the appropriate weights.",
+        .sep = " "
+        )
+      stop(msg)
     }
     st <- rlang::sym(vars[2])
   }
 
   x <- srvyr::select(x, !! cod, !!st)
+
+  # If the counter variable is numeric or logical, we need to convert it to a
+  # factor. For logical variables, this is trivial, so we just do it.
+  if (is.logical(x$variables[[vars[1]]])) {
+    x <- srvyr::mutate(x, !! cod := factor(!! cod, levels = c("TRUE", "FALSE")))
+  }
+  # For numeric data, however, we need to warn the user
+  if (is.numeric(x$variables[[vars[1]]])) {
+    warning(glue::glue("converting `{vars[1]}` to a factor"))
+    x <- srvyr::mutate(x, !! cod := fac_from_num(!! cod))
+  }
+
+  # if there is missing data, we should treat it by either removing the rows
+  # with the missing values or making the missing explicit.
+  if (na.rm) {
+    nas <- sum(is.na(x$variables[[vars[1]]]))
+    if (nas > 0) {
+      warning(glue::glue("removing {nas} missing value(s) from `{vars[1]}`"))
+      x <- srvyr::filter(x, !is.na(!! cod))
+    }
+  } else {
+    x <- srvyr::mutate(x, !! cod := forcats::fct_explicit_na(!! cod, na_level = "(Missing)"))
+  }
 
   # here we are creating a dummy variable that is either the var or the
   # combination of var and strata so that we can get the right proportions from
@@ -143,8 +174,8 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
   # Calculating the survey total will also give us zero counts
   y <- srvyr::summarise(x,
-                        n    = survey_total(vartype = "se", na.rm = TRUE),
-                        mean = survey_mean(na.rm    = TRUE, deff  = deff))
+                        n    = srvyr::survey_total(vartype = "se", na.rm = TRUE),
+                        mean = srvyr::survey_mean(na.rm    = TRUE, deff  = deff))
 
   # Removing the mean values here because we are going to calculate them later
   y$mean             <- NULL
@@ -367,11 +398,23 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
 #' @param ... binary variables for tabulation
 #' @param keep a vector of binary values to keep
 #' @param invert if `TRUE`, the kept values are rejected. Defaults to `FALSE`
-#'
+#' @param transpose if `wide = TRUE`, then this will transpose the columns to 
+#'   the rows, which is useful when you stratify by age group. Default is
+#'   `NULL`, which will not transpose anything. You have three options for
+#'   transpose:
+#'    - `transpose = "variable"`: uses the variable column, dropping values.
+#'       Use this if you know that your values are all identical or at least
+#'       identifiable by the variable name.
+#'    - `transpose = "value"`   : uses the value column, dropping variables.
+#'       Use this if your values are important and the variable names are
+#'       generic placeholders.
+#'    - `transpose = "both"`    : combines the variable and value columns.
+#'       Use this if both the variables and values are important.
+#'    If there is no stratification, the results will produce a single-row table
 tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
                                    keep = NULL, invert = FALSE, pretty = TRUE,
                                    wide = TRUE, digits = 1, method = "logit",
-                                   deff = FALSE) {
+                                   na.rm = FALSE, deff = FALSE, transpose = NULL) {
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
@@ -379,22 +422,34 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   }
 
   vars <- tidyselect::vars_select(colnames(x), ...)
+  stra <- rlang::enquo(strata)
+
+  strata_exists <- tidyselect::vars_select(colnames(x), !! stra)
+  strata_exists <- length(strata_exists) > 0
+
+  flip_it <- wide && !is.null(transpose)
+
+  if (flip_it) {
+    transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
+  }
 
   # Create list for results to go into that will eventually be bound together
   res <- vector(mode = "list", length = length(vars))
   names(res) <- vars
+
 
   # loop over each name in the list and tabulate the survey for that variable
   for (i in names(res)) {
     i        <- rlang::ensym(i)
     res[[i]] <- tabulate_survey(x,
                                 var       = !! i,
-                                strata    = !! enquo(strata),
+                                strata    = !! stra,
                                 proptotal = proptotal,
                                 pretty    = pretty,
                                 digits    = digits,
                                 method    = method,
                                 wide      = wide,
+                                na.rm     = na.rm,
                                 deff      = deff)
 
     # The ouptut columns will have the value as whatever i was, so we should
@@ -405,5 +460,88 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))
 
   # return the results with only the selected values
-  res[if (invert) !res$value %in% keep else res$value %in% keep, ]
+  res <- res[if (invert) !res$value %in% keep else res$value %in% keep, ]
+  
+  # If the user wants to transpose the data, then we need to do this for each
+  # level of data available into separate tables, combine the columns, and then
+  # rearrange them so that they are grouped by variable/value
+
+  if (flip_it) {
+    if (transpose == "both") {
+      # if the user wants to keep both columns, then we unite them and then
+      res <- tidyr::unite(res, col = "both", "variable", "value", remove = TRUE)
+    }
+    # number of rows in the original table
+    nr   <- seq_len(nrow(res))
+    # number of new columns based on the number of rows
+    nc   <- 1L + deff + if (pretty) 1L else 3L
+    # the variable column to be transposed
+    var  <- rlang::ensym(transpose)
+    # when there is no strata, we have to come up with a dummy variable
+    if (!strata_exists) {
+      stra      <- paste0("__", as.integer(Sys.time()))
+      stra      <- rlang::ensym(stra)
+      old_names <- names(res)[names(res) != transpose]
+      names(res)[names(res) != transpose] <- paste0(" ", old_names)
+      slevels   <- NULL
+    } else {
+      slevels   <- dplyr::pull(x$variables, !! stra)
+      slevels   <- if (is.factor(slevels)) levels(slevels) else sort(slevels)
+    }
+
+    # transposing the count variable, which is always there.
+    tres <- transpose_pretty(res, !! stra, !! var, !! rlang::sym("n"), slevels)
+
+    # determining the list of suffixes to run through when appending the columns
+    suffix <- c(
+      if (deff) "deff" else NULL,
+      if (pretty) "ci" else c("proportion", "proportion_low", "proportion_upp")
+    )
+
+    # transposing and appending the columns
+    for (i in suffix) {
+      suff <- rlang::ensym(i)
+      tmp  <- transpose_pretty(res, !! stra, !! var, !! suff, slevels)
+      tres <- dplyr::bind_cols(tres, tmp[-1])
+    }
+
+    # re-ordering the columns so that they are grouped by the original row order
+    res <- tres[c(1, order(rep(nr, nc)) + 1)]
+  }
+  if (flip_it && !strata_exists) {
+    res <- dplyr::select(res, - !! stra)
+  }
+  res
+}
+
+#' transpose the output of tabulate_binary_survey
+#'
+#' @param x a transposable data frame with a suffix for columns
+#' @param columns the new name for the column in which to place the columns
+#' @param rows the name of the rows
+#' @param suffix the suffix of the columns to transpose
+#'
+#' @noRd
+#'
+transpose_pretty <- function(x, columns, rows, suffix, clev = NULL) {
+  col      <- rlang::enquo(columns)
+  var      <- rlang::enquo(rows)
+  sfx      <- rlang::enquo(suffix)
+  sfx_char <- paste0(" ", rlang::as_name(sfx))
+
+  # Strategy: 
+  #   1. select only the variables that matter
+  #   2. gather in the long format
+  #   3. remove the suffix
+  #   4. spread out the data so that the rows are now the columns
+
+  res <- dplyr::select(x,   !! var, dplyr::ends_with(sfx_char))
+  res <- tidyr::gather(res, !! col, !! sfx, - !! var)
+  res <- dplyr::mutate(res, !! col := gsub(sfx_char, "", !! col))
+  if (!is.null(clev)) {
+    res <- dplyr::mutate(res, !! col := factor(!! col, clev))
+  }
+  res <- tidyr::spread(res, !! var, !! sfx)
+  names(res)[-1] <- paste0(names(res)[-1], sfx_char)
+  res
 }

@@ -6,12 +6,13 @@
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
 tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", deff = FALSE, proptotal = FALSE,
-  rowtotals = FALSE, coltotals = FALSE)
+  digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
+  proptotal = FALSE, rowtotals = FALSE, coltotals = FALSE)
 
 tabulate_binary_survey(x, ..., strata = NULL, proptotal = FALSE,
   keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", deff = FALSE)
+  digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
+  transpose = NULL)
 }
 \arguments{
 \item{x}{a survey design object}
@@ -34,6 +35,11 @@ for proportion and CI}
 \item{method}{a method from \code{\link[survey:svyciprop]{survey::svyciprop()}} to calculate the confidence
 interval. Defaults to "logit"}
 
+\item{na.rm}{When \code{TRUE}, missing (NA) values present in \code{var} will be removed
+from the data set with a warning, causing a change in denominator for the
+tabulations.  The default is set to \code{FALSE}, which creates an explicit
+missing value called "(Missing)".}
+
 \item{deff}{a logical indicating if the design effect should be reported.
 Defaults to "TRUE"}
 
@@ -52,6 +58,22 @@ created.}
 \item{keep}{a vector of binary values to keep}
 
 \item{invert}{if \code{TRUE}, the kept values are rejected. Defaults to \code{FALSE}}
+
+\item{transpose}{if \code{wide = TRUE}, then this will transpose the columns to
+the rows, which is useful when you stratify by age group. Default is
+\code{NULL}, which will not transpose anything. You have three options for
+transpose:
+\itemize{
+\item \code{transpose = "variable"}: uses the variable column, dropping values.
+Use this if you know that your values are all identical or at least
+identifiable by the variable name.
+\item \code{transpose = "value"}   : uses the value column, dropping variables.
+Use this if your values are important and the variable names are
+generic placeholders.
+\item \code{transpose = "both"}    : combines the variable and value columns.
+Use this if both the variables and values are important.
+If there is no stratification, the results will produce a single-row table
+}}
 }
 \value{
 a long or wide tibble with tabulations n, ci, and deff
