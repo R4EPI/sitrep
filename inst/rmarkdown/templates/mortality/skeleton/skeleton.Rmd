@@ -428,6 +428,14 @@ study_data_cleaned <- group_age_categories(study_data_cleaned,
 # Factor (categorical) variables ---------------------------------
 
 # Change a yes/no variable in to TRUE/FALSE
+# create a new variable called consent 
+# where the old one is yes place TRUE in the new one
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(consent = q49_cq3 == "Yes")
+
+
+
+# Change a yes/no variable in to TRUE/FALSE
 # create a new variable called died 
 # where the old one is yes place TRUE in the new one
 study_data_cleaned <- study_data_cleaned %>% 
@@ -527,13 +535,21 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # drop unwanted rows  ---------------------------------------------------------
 
+
+# store the cases that you drop so you can describe them (e.g. non-consenting)
+dropped <- study_data_cleaned %>% 
+  filter(!consent)
+
+
 # you may want to drop rows with missing IDs (i.e. blank rows from excel) 
   # simply add a !is.na(fact_0_id) if using a dharma dataset
 # you will also want to drop those rows where both the start and enddate occur
 # outside of your recall period! 
 # if yor check_dates shows rows with negative obs time - make sure to solve those or drop!
+# those without consent need to be dropped too
 study_data_cleaned <- study_data_cleaned %>%
-  filter(!(is.na(startdate) | is.na(enddate)))
+  filter(!(is.na(startdate) | is.na(enddate)) & 
+           consent)
 ```
 
 ```{r save_cleaned_data, eval = FALSE}
@@ -583,6 +599,7 @@ survey_design <- study_data_cleaned %>%
 
 
 # Results
+
 
 ```{r tally_change, echo = FALSE}
 at_start <- tally(study_data_cleaned, startcause == "Present at start")
@@ -727,6 +744,18 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   ) %>%
   kable(digits = 2)
 
+```
+
+
+
+Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
+the reasons for refusal are described below. 
+
+```{r reason_no_consent}
+
+## NEED TO ADD reasons for not consent using new tab_linelist function 
+## use the "dropped" dataset 
+## use the q53_cq4a_000 to 003 variables 
 ```
 
 

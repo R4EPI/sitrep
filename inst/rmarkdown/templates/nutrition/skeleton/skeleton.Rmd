@@ -648,6 +648,10 @@ study_data_cleaned <- add_weights(x = study_data_cleaned,
 
 # drop unwanted rows  ---------------------------------------------------------
 
+# store the cases that you drop so you can describe them (e.g. non-consenting)
+dropped <- study_data_cleaned %>% 
+  filter(!consent)
+
 # you may want to drop rows with missing IDs (i.e. blank rows from excel) 
   # simply add a & !is.na(fact_0_id) if using a dharma dataset
 # you will also want to drop those rows with no consent! 
@@ -775,6 +779,16 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
 
 ```
 
+
+Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
+the reasons for refusal are described below. 
+
+```{r reason_no_consent}
+
+## NEED TO ADD reasons for not consent using new tab_linelist function 
+## use the "dropped" dataset 
+## use the q53_cq4a_000 to 003 variables
+```
 
 
 ```{r median_age_sex_ratios}

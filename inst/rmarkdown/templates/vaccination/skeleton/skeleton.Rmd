@@ -497,11 +497,15 @@ study_data_cleaned <- add_weights(x = study_data_cleaned,
 
 # drop unwanted rows  ---------------------------------------------------------
 
+# store the cases that you drop so you can describe them (e.g. non-consenting)
+dropped <- study_data_cleaned %>% 
+  filter(!consent)
+
 # you may want to drop rows with missing IDs (i.e. blank rows from excel) 
   # simply add a !is.na(fact_0_id) if using a dharma dataset
 # you will also want to drop those rows with no consent! 
-# study_data_cleaned <- study_data_cleaned %>%
-#   filter(consent)
+study_data_cleaned <- study_data_cleaned %>%
+  filter(consent)
 ```
 
 ```{r save_cleaned_data, eval = FALSE}
@@ -613,6 +617,23 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   kable(digits = 2)
 
 ```
+
+
+Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
+the reasons for refusal are described below. 
+
+```{r reason_no_consent}
+# get counts and props 
+descriptive(dropped,
+            "q65_consent_no_reason", 
+            coltotals = TRUE) %>% 
+  # change column names 
+  rename(Reason = q65_consent_no_reason, 
+         "Individuals (n)" = n, 
+         "%" = prop)
+```
+
+
 
 
 
