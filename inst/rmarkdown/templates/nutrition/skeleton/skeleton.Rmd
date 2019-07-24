@@ -11,7 +11,7 @@ output:
 This is a template which can be used to create a report from a nutrition survey. 
 
 - There are sections for reading and cleaning data, followed by 
-    weighting and observation time calculations and then survey analysis. 
+    weighting and then survey analysis. 
     Use the drop-down menu on the bottom left of this script window to jump 
     between sections. 
 - You can type normal text in white spaces (such as here) and r-code in grey
@@ -26,6 +26,7 @@ This is a template which can be used to create a report from a nutrition survey.
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
 - For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
+- Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 
 This template will guide you through the following steps:  
   - merging household and individual level data
