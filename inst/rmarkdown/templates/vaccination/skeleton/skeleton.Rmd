@@ -326,7 +326,6 @@ study_data_cleaned <- rename(study_data_cleaned,
                              vaccine_sia = q32_vaccine_sia,
                              vaccine_mass = q17_vaccine_mass,
                              disease_diagnosis = q47_disease_diagnosis,
-                             area = q4_settlement,
                              cluster = q77_what_is_the_cluster_number)
 
 
