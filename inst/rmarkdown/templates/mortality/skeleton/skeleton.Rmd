@@ -782,8 +782,58 @@ The highest proportion of pregnant women was among the
 `r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(age_group)`year age group, at 
 `r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(Yes_prop)`%.
 
-The median number of people per surveyed house hold was `r median(study_data_cleaned$q65_iq4)`,
-with a range of `r paste0(range(study_data_cleaned$q65_iq4), collapse = "-")`. 
+
+
+
+```{r cluster_hh_size}
+# get counts of the number of households per cluster
+clustersize <- study_data_cleaned %>% 
+  group_by(cluster_number) %>% 
+  # return the number of unique household IDs by each cluster
+  summarise(
+    n = length(
+      unique(q65_iq4)
+      )
+    )
+
+# get the median number of households per cluster
+clustermed <- clustersize %>% 
+  summarise(
+    median(n)
+    )
+
+# get the min and max number of households per cluster
+# paste these together seperated by a dash 
+clusterrange <- paste0(
+  range(clustersize$n), 
+  collapse = "--")
+
+# get counts of children per household 
+# do this by cluster as household IDs are only unique within clusters
+hhsize <- study_data_cleaned %>% 
+  group_by(cluster_number) %>% 
+  count(q65_iq4) 
+
+# get median number of children per household
+# ungroup to give you the overall median 
+hhmed <- hhsize %>%
+  ungroup() %>% 
+  summarise(
+    median(n)
+    )
+
+# get the min and max number of children per household
+# paste these together seperated by a dash 
+hhrange <- paste0(
+  range(hhsize$n), 
+  collapse = "--")
+```
+
+
+
+The median number of households per cluster was
+`r clustermed`, with a range of `r clusterrange`. The median number of children
+per household was `r hhmed` and the range was `r hhrange`. 
 
 Age distribution of household population by year age group and gender.
 
