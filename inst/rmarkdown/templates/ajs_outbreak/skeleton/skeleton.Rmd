@@ -635,9 +635,9 @@ linelist_cleaned <- linelist_cleaned %>%
 
 # Change the order of levels of multiple categorical variables
 linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(vars(starts_with("test")),          #Looks for variables beginning with "test"
+  mutate_at(vars(starts_with("test")),          # Looks for variables beginning with "test"
             fct_relevel,
-            "Positive", "Negative", "Not done"  #Sets order of levels
+            "Positive", "Negative", "Not done"  # Sets order of levels
            )
 
 # Create a factor variable based on rules from other simple character variables

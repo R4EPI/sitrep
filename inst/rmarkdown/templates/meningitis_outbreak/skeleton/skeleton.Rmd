@@ -632,7 +632,7 @@ linelist_cleaned <- linelist_cleaned %>%
 linelist_cleaned <- linelist_cleaned %>%
   mutate_at(vars(starts_with("seizure")), # Looks for variables beginning with "seizure"
             fct_relevel,
-            "Yes", "No"                   # Sets order of levels to "No" then "Yes"
+            "Yes", "No"                   # Sets order of levels
            )
 
 # Create a factor variable based on rules from other simple character variables
