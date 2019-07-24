@@ -13,7 +13,7 @@ This is a template which can be used to create a report from a vaccination
 coverage survey. 
 
 - There are sections for reading and cleaning data, followed by 
-    weighting and observation time calculations and then survey analysis. 
+    weighting and then survey analysis. 
     Use the drop-down menu on the bottom left of this script window to jump 
     between sections. 
 - You can type normal text in white spaces (such as here) and r-code in grey
