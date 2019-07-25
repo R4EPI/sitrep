@@ -652,6 +652,7 @@ linelist_cleaned <- linelist_cleaned %>%
 #
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
+    is.na(hep_e_rdt) & is.na(other_cases_in_hh)           ~ NA_character_,
     hep_e_rdt == "Positive"                               ~ "Confirmed",
     hep_e_rdt != "Positive" & other_cases_in_hh == "Yes"  ~ "Probable",
     TRUE                                                  ~ "Suspected"

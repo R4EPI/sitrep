@@ -531,12 +531,13 @@ linelist_cleaned <- linelist_cleaned %>%
   ))
 
 
-## OPTIONAL: change those who are above or below a certain age to NA
-# linelist_cleaned <- mutate(linelist_cleaned, 
+# OPTIONAL: change those who are above or below a certain age to NA
+# linelist_cleaned <- mutate(linelist_cleaned,
 #                            age_years = case_when(
-#                              age_years < 0   ~ NA_integer_, 
-#                              age_years > 120 ~ NA_integer_,
-#                              TRUE            ~ as.integer(age_years) #Preserves other values
+#                              is.na(age_years) ~ NA_integer_,
+#                              age_years < 0    ~ NA_integer_,
+#                              age_years > 120  ~ NA_integer_,
+#                              TRUE             ~ as.integer(age_years) #Preserves other values
 #                            ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
@@ -597,6 +598,8 @@ linelist_cleaned <- linelist_cleaned %>%
     exit_status == "Left against medical advice"              ~ "Left"
   ),
   previously_vaccinated = case_when(
+    is.na(vaccinated_meningitis_mvc) & 
+      is.na(vaccinated_meningitis_routine)                    ~ NA_character_,
     grepl("Yes", vaccinated_meningitis_mvc)                   ~ "Yes",
     grepl("Yes", vaccinated_meningitis_routine)               ~ "Yes",
     vaccinated_meningitis_routine == "No" &
@@ -646,6 +649,9 @@ linelist_cleaned <- linelist_cleaned %>%
 
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
+    is.na(pastorex_result) & is.na(fever) & 
+      is.na(stiff_neck) & 
+      is.na(petechiae_purpura_at_admission)                 ~ NA_character_,                 
     grepl("Mening", pastorex_result)                        ~ "Confirmed",
     fever == "Yes" & stiff_neck == "Yes"                    ~ "Probable",
     fever == "Yes" & 

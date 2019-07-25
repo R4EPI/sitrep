@@ -535,15 +535,16 @@ linelist_cleaned <- linelist_cleaned %>%
 ## OPTIONAL: change those who are above or below a certain age to NA
 # linelist_cleaned <- mutate(linelist_cleaned, 
 #                            age_years = case_when(
-#                              age_years < 0   ~ NA_integer_, 
-#                              age_years > 120 ~ NA_integer_,
-#                              TRUE            ~ as.integer(age_years) #Preserves other values
+#                              is.na(age_years) ~ NA_integer_,
+#                              age_years < 0    ~ NA_integer_, 
+#                              age_years > 120  ~ NA_integer_,
+#                              TRUE             ~ as.integer(age_years) #Preserves other values
 #                            ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
 # linelist_cleaned <- mutate(linelist_cleaned,
 #                            age_months = case_when(
-#                              age_years < 5 ~ age_years * 12
+#                              age_years < 5    ~ age_years * 12
 #                              )) 
 
 

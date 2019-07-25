@@ -486,9 +486,10 @@ linelist_cleaned <- linelist_cleaned %>%
 ## OPTIONAL: change those who are above or below a certain age to NA
 # linelist_cleaned <- mutate(linelist_cleaned, 
 #                            age_years = case_when(
-#                              age_years < 0   ~ NA_integer_, 
-#                              age_years > 120 ~ NA_integer_,
-#                              TRUE            ~ as.integer(age_years)
+#                              is.na(age_years) ~ NA_integer_,
+#                              age_years < 0    ~ NA_integer_, 
+#                              age_years > 120  ~ NA_integer_,
+#                              TRUE             ~ as.integer(age_years)
 #                            ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
@@ -593,6 +594,7 @@ linelist_cleaned <- linelist_cleaned %>%
 # TRUE assigns all remaining rows 
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate(case_def = case_when(
+#     is.na(test_result)                            ~ NA_character_,
 #     test_result == "Positive"                     ~ "Confirmed",
 #     test_result == "Negative" & symptoms == "Yes" ~ "Probable",
 #     test_result == "Negative"                     ~ "Suspected",
@@ -606,6 +608,9 @@ linelist_cleaned <- linelist_cleaned %>%
 # TRUE assigns all remaining rows 
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
+    is.na(cholera_pcr_result) &
+      is.na(cholera_culture_result) &
+      is.na(cholera_rdt_result)               ~ NA_character_,
     grepl("Positive", cholera_pcr_result)     ~ "Confirmed",  
     grepl("Positive", cholera_culture_result) ~ "Confirmed",
     grepl("Positive", cholera_rdt_result)     ~ "Probable",
