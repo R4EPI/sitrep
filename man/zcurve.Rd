@@ -4,10 +4,12 @@
 \alias{zcurve}
 \title{Create a curve comparing observed Z-scores to the WHO standard.}
 \usage{
-zcurve(zscore)
+zcurve(x, zscore)
 }
 \arguments{
-\item{zscore}{a umeric vector containing computed zscores}
+\item{x}{a data frame}
+
+\item{zscore}{bare name of a numeric vector containing computed zscores}
 }
 \value{
 a ggplot2 object that is customisable via the ggplot2 package.
@@ -17,8 +19,24 @@ Create a curve comparing observed Z-scores to the WHO standard.
 }
 \examples{
 library("ggplot2")
-dat <- rnorm(204) + runif(1) # slightly skewed
-zcurve(dat) +
+set.seed(9)
+dat <- data.frame(observed = rnorm(204) + runif(1),
+                  skewed   = rnorm(204) + runif(1, 0.5)
+                 ) # slightly skewed
+zcurve(dat, observed) +
   labs(title = "Weight-for-Height Z-scores") +
   theme_classic()
+
+zcurve(dat, skewed) +
+  labs(title = "Weight-for-Height Z-scores") +
+  theme_classic()
+
+# Including different groups to facet
+dat <- data.frame(
+  observed = c(rnorm(204) + runif(1), rnorm(204) + runif(1, 0.5)),
+  groups   = rep(c("A", "B"), each = 204),
+  treat    = sample(c('up', 'down'), 408, replace = TRUE)
+                 )
+zcurve(dat, observed) +
+  facet_grid(treat~groups)
 }

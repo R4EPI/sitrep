@@ -92,8 +92,8 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   # Check if counter is an integer and force factor ----------------------------
 
   if (is.numeric(df[[counter]])) {
-    message("converting numeric variable to factor")
-    df[[counter]] <- cut(df[[counter]], breaks = pretty(range(df[[counter]], na.rm = TRUE)))
+    warning(glue::glue("converting `{counter}` to a factor"))
+    df[[counter]] <- fac_from_num(df[[counter]])
   }
   
   if (is.logical(df[[counter]])) {

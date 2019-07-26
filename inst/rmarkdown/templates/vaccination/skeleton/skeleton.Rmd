@@ -13,7 +13,7 @@ This is a template which can be used to create a report from a vaccination
 coverage survey. 
 
 - There are sections for reading and cleaning data, followed by 
-    weighting and observation time calculations and then survey analysis. 
+    weighting and then survey analysis. 
     Use the drop-down menu on the bottom left of this script window to jump 
     between sections. 
 - You can type normal text in white spaces (such as here) and r-code in grey
@@ -129,11 +129,11 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 # password protected excels is in the read_data_generic code chunk)
 
 ## read in household data sheet
-# study_data_hh <- rio::import("mortality_survey.xlsx", 
+# study_data_hh <- rio::import("vaccination_survey.xlsx", 
 #                               which = "Level 0 Named", na = ".")
 
 ## read in individual level data sheet
-# study_data_indiv <- rio::import("mortality_survey.xlsx", 
+# study_data_indiv <- rio::import("vaccination_survey.xlsx", 
 #                               which = "Level 1 Named", na = ".")
 
 ## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
@@ -330,7 +330,6 @@ study_data_cleaned <- rename(study_data_cleaned,
                              vaccine_sia = q32_vaccine_sia,
                              vaccine_mass = q17_vaccine_mass,
                              disease_diagnosis = q47_disease_diagnosis,
-                             area = q4_settlement,
                              cluster = q77_what_is_the_cluster_number)
 
 
@@ -436,7 +435,7 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # create a new variable by reordering the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(cause_of_death = fct_relevel(q65_consent_no_reason,
+  mutate(no_consent = fct_relevel(q65_consent_no_reason,
                                       "Refuse to explain", 
                                       "No time", 
                                       "Bad experience",
@@ -447,8 +446,12 @@ study_data_cleaned <- study_data_cleaned %>%
 # combine all vaccine variables in to one 
 # where if any of the variables contain one yes then it is given that 
 # simplified, keep the yes answers and change others to no 
+# if missing in all three vars then stays NA
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(vaccination_status = case_when(
+    is.na(vaccine_mass) & 
+      is.na(vaccine_routine) & 
+      is.na(vaccine_sia)  ~ NA_character_,
     vaccine_mass    == "Yes - Vaccination card" ~ "Card", 
     vaccine_routine == "Yes - Vaccination card" ~ "Card", 
     vaccine_sia     == "Yes - Vaccination card" ~ "Card", 
@@ -468,11 +471,13 @@ study_data_cleaned <- study_data_cleaned %>%
 
 # create a new grouping for vaccine status variable 
 # simplified, card or verbal then yes otherwise no 
-# grepl searches for rows with "Yes"
+# %in% checks if row contains "Card" or "Verabl"
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status_simple = case_when(
-    vaccination_status %in% c("Card", "Verbal") ~ "Vaccinated", 
-    TRUE ~ "Unvaccinated")
+  mutate(
+    vaccination_status_simple = case_when(
+      is.na(vaccination_status) ~ NA_character_,
+      vaccination_status %in% c("Card", "Verbal") ~ "Vaccinated", 
+      TRUE ~ "Unvaccinated")
   )
 
 # correct the order of levels
@@ -482,20 +487,29 @@ study_data_cleaned <- study_data_cleaned %>%
                                                  "Unvaccinated")
   )
 
+# explicitly replace NA of a factor
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(vaccine_routine = fct_explicit_na(vaccine_routine, na_level = "No answer"))
 
 
 
 ######## weighting ------------------------------------------------------------
 
-study_data_cleaned <- add_weights(study_data_cleaned, population_data_age, age_group, sex)
+study_data_cleaned <- add_weights(x = study_data_cleaned, 
+                                  p = population_data_age, 
+                                  age_group, sex)
 
 # drop unwanted rows  ---------------------------------------------------------
+
+# store the cases that you drop so you can describe them (e.g. non-consenting)
+dropped <- study_data_cleaned %>% 
+  filter(!consent)
 
 # you may want to drop rows with missing IDs (i.e. blank rows from excel) 
   # simply add a !is.na(fact_0_id) if using a dharma dataset
 # you will also want to drop those rows with no consent! 
-# study_data_cleaned <- study_data_cleaned %>%
-#   filter(consent)
+study_data_cleaned <- study_data_cleaned %>%
+  filter(consent)
 ```
 
 ```{r save_cleaned_data, eval = FALSE}
@@ -539,7 +553,7 @@ writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date()
 # cluster sample (using srvyr package)
 survey_design <- study_data_cleaned %>% 
   as_survey_design(ids = cluster, # cluster id variable (created during collection) 
-                   weights = weight,  # weight variable created above 
+                   weights = surv_weight,  # weight variable created above 
                    strata = NULL)  # # sampling was clustered without strata
 ```
 
@@ -563,6 +577,7 @@ your data.
 ```{r descriptive_sampling_bias}
 # first the counts and props of the study population
 ag <- descriptive(study_data_cleaned, "age_group") %>%
+  filter(age_group != "Missing") %>%  # drop missings to fit with population data
   mutate(n_total = sum(n))
 
 # then the counts and props of the source population
@@ -606,6 +621,23 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   kable(digits = 2)
 
 ```
+
+
+Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
+the reasons for refusal are described below. 
+
+```{r reason_no_consent}
+# get counts and props 
+descriptive(dropped,
+            "q65_consent_no_reason", 
+            coltotals = TRUE) %>% 
+  # change column names 
+  rename(Reason = q65_consent_no_reason, 
+         "Individuals (n)" = n, 
+         "%" = prop)
+```
+
+
 
 
 
@@ -659,16 +691,25 @@ year age group.
 ```{r cluster_hh_size}
 # get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
-  count(cluster)
+  group_by(cluster) %>% 
+  # return the number of unique household IDs by each cluster
+  summarise(
+    n = length(
+      unique(q14_hh_no)
+      )
+    )
 
 # get the median number of households per cluster
 clustermed <- clustersize %>% 
-  pull(n) %>%
-  median()
+  summarise(
+    median(n)
+    )
 
 # get the min and max number of households per cluster
 # paste these together seperated by a dash 
-clusterrange <- paste0(range(clustersize$n), collapse = "--")
+clusterrange <- paste0(
+  range(clustersize$n), 
+  collapse = "--")
 
 # get counts of children per household 
 # do this by cluster as household IDs are only unique within clusters
@@ -680,12 +721,15 @@ hhsize <- study_data_cleaned %>%
 # ungroup to give you the overall median 
 hhmed <- hhsize %>%
   ungroup() %>% 
-  pull(n) %>%
-  median()
+  summarise(
+    median(n)
+    )
 
 # get the min and max number of children per household
 # paste these together seperated by a dash 
-hhrange <- paste0(range(hhsize$n), collapse = "--")
+hhrange <- paste0(
+  range(hhsize$n), 
+  collapse = "--")
 ```
 
 
@@ -837,13 +881,25 @@ Accepting equal validity from self-reported and card-reported vaccination status
 ```{r vaccination_coverage_age_group}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(age_group, vaccination_status_simple, deff = TRUE, digits = 2) %>%
+  tabulate_survey(vaccination_status_simple, age_group, deff = TRUE, digits = 2, wide = FALSE) %>%
+  
+  # spread values to wide format to have appropriate groups 
+    # collect variables of interest (n, deff and ci) (call the clasifier column "variable")
+  gather(key = "variable", value = "value", c(n, deff, ci)) %>% 
+    # create temp column which combine the classifier column with vacc_status column seperated by underscore
+  unite(col = "temp", vaccination_status_simple, variable, sep = "_") %>%
+    # spread wide based on newly create combo column above 
+  spread(temp, value) %>% 
+  # change order of columns 
+  select(age_group, Vaccinated_n, Vaccinated_ci, Vaccinated_deff, 
+         Unvaccinated_n, Unvaccinated_ci, Unvaccinated_deff) %>% 
+  
   rename("Age group (years)" = age_group) %>% 
   # wrap all "n" variables in braces (note space before n).
-  augment_redundant(" n" = " (n)") %>% 
+  augment_redundant("_n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant(" ci"   = "% (95% CI)", 
-                   "deff" = "Design effect") %>%
+  rename_redundant("_ci"   = "% (95% CI)", 
+                   "_deff" = "Design effect") %>%
   kable(digits = 2)
 ```
 
@@ -851,12 +907,74 @@ Distinguishing between vaccination cards and verbal confirmation, by age group
 ```{r vaccination_coverage_age_group_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(age_group, vaccination_status, deff = TRUE, digits = 2) %>%
+  tabulate_survey(vaccination_status, age_group,  deff = TRUE, digits = 2, wide = FALSE) %>%
+  
+  # spread values to wide format to have appropriate groups 
+    # collect variables of interest (n, deff and ci) (call the clasifier column "variable")
+  gather(key = "variable", value = "value", c(n, deff, ci)) %>% 
+    # create temp column which combine the classifier column with vacc_status column seperated by underscore
+  unite(col = "temp", vaccination_status, variable, sep = "_") %>%
+    # spread wide based on newly create combo column above 
+  spread(temp, value) %>% 
+  # change order of columns 
+  select(age_group, Card_n, Card_ci, Card_deff, 
+         Verbal_n, Verbal_ci, Verbal_deff,
+         Unvaccinated_n, Unvaccinated_ci, Unvaccinated_deff) %>% 
+  
   rename("Age group (years)" = age_group) %>% 
   # wrap all "n" variables in braces (note space before n).
-  augment_redundant(" n" = " (n)") %>% 
+  augment_redundant("_n" = " (n)") %>% 
   # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant(" ci"   = "% (95% CI)", 
+  rename_redundant("_ci"   = "% (95% CI)", 
                    "deff" = "Design effect") %>%
   kable(digits = 2)
 ```
+
+
+## Reasons for not vaccinating 
+
+Weighted counts and proportions for reasons not vaccinated in routine and campaign circumstances, individually,
+among those not vaccinated
+```{r no_vacc_reason_routine_campaign_combo}
+
+# get weight counts and proportions for routine vaccination
+routine <- survey_design %>% 
+  # filter for those not vaccinated 
+  filter(!vaccine_routine %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  tabulate_survey(q7_no_routine_vacc_r) %>%
+  # rename columns appropriately
+  rename(Reasons = q7_no_routine_vacc_r, 
+         "Routine (n)" = n , 
+         "% (95%CI)" = ci)
+
+# get weight counts and proportions for routine vaccination
+campaign <- survey_design %>% 
+  # filter for not vaccinated 
+  filter(!vaccine_mass %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  tabulate_survey(q28_no_campaign_vacc_r) %>% 
+  # drop the reasons column 
+  select(-q28_no_campaign_vacc_r) 
+  
+
+bind_cols(routine, 
+          campaign) %>% 
+  # rename remaining columns appropriately 
+  rename("Campaign (n)" = n, 
+         "% (95%CI)" = ci)
+
+```
+
+
+Weighted counts and proportions for reasons not vaccinated in supplemented immunisation activities, 
+among those not vaccinated
+```{r no_vacc_reason_sia}
+# get weight counts and proportions for routine vaccination
+survey_design %>% 
+  filter(!vaccine_sia %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  tabulate_survey(q38_no_sia_vacc_reason) %>%
+  # rename columns appropriately
+  rename(Reasons = q38_no_sia_vacc_reason, 
+         "Routine (n)" = n , 
+         "% (95%CI)" = ci)
+```
+

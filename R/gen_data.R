@@ -2,7 +2,7 @@
 #'
 #' These function reads in MSF data dictionaries and produces randomised
 #' datasets based on values defined in the dictionaries.  The randomised
-#' dataset produced should mimic an excel export from DHIS2. 
+#' dataset produced should mimic an excel export from DHIS2.
 #'
 #' @param disease Specify which disease you would like to use.
 #'   Currently supports "Cholera", "Measles" and "Meningitis".
@@ -20,14 +20,14 @@
 #'
 #' @param tibble Return data dictionary as a tidyverse tibble (default is TRUE)
 #'
-#' @param compact if `TRUE` (default), then a nested data frame is returned 
+#' @param compact if `TRUE` (default), then a nested data frame is returned
 #'   where each row represents a single variable and a nested data frame column
 #'   called "options", which can be expanded with [tidyr::unnest()]. This only
 #'   works if `long = TRUE`.
 #'
-#' @param long If TRUE (default), the returned data dictionary is in long format with 
+#' @param long If TRUE (default), the returned data dictionary is in long format with
 #'   each option getting one row. If `FALSE`, then two data frames are returned,
-#'   one with variables and the other with content options. 
+#'   one with variables and the other with content options.
 #'
 #' @param copy_to_clipboard if `TRUE` (default), the rename template will be
 #'   copied to the user's clipboard with [clipr::write_clip()]. If `FALSE`, the
@@ -45,10 +45,10 @@
 #' if (require('dplyr') & require('linelist')) { withAutoprint({
 #' # You will often want to use MSF dictionaries to translate codes to human-
 #' # readable variables. Here, we generate a data set of 20 cases:
-#' dat <- gen_data(dictionary = "Cholera", varnames = "data_element_shortname", 
+#' dat <- gen_data(dictionary = "Cholera", varnames = "data_element_shortname",
 #'                 numcases = 20)
 #' print(dat)
-#' 
+#'
 #' # We want the expanded dictionary, so we will select `compact = FALSE`
 #' dict <- msf_dict(disease = "Cholera", long = TRUE, compact = FALSE, tibble = TRUE)
 #' print(dict)
@@ -60,8 +60,8 @@
 #' #  - 2nd column: translations
 #' #  - 3rd column: data column name
 #' #  - 4th column: order of options
-#' # 
-#' # we also want to make sure to filter out any columns that are blank for 
+#' #
+#' # we also want to make sure to filter out any columns that are blank for
 #' # the option codes, because this means that they don't have a fixed number of
 #' # options
 #' dict <- dict %>%
@@ -128,15 +128,15 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
   dat_opts$option_name <- gsub(".*] ", "", dat_opts$option_name)
 
   if (long) {
-  
-    outtie <- dplyr::left_join(dat_dict, dat_opts, 
+
+    outtie <- dplyr::left_join(dat_dict, dat_opts,
                                by = c("used_optionset_uid" = "optionset_uid"))
     outtie <- if (tibble) tibble::as_tibble(outtie) else outtie
-    
+
   }
   # produce clean compact data dictionary for use in gen_data
   if (long && compact == TRUE) {
-    
+
     squished <- dplyr::group_by(outtie, !! quote(data_element_shortname))
     squished <- tidyr::nest(squished,  dplyr::starts_with("option_"), .key = "options")
     outtie   <- dplyr::select(outtie, -dplyr::starts_with("option_"))
@@ -259,7 +259,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   # codecol <- grep("Code", names(dat_dict))
   # dat_output <- dat_dict[, c(varcol, codecol), drop = FALSE]
 
-  
+
   # # use the var names as rows
   # row.names(dat_output) <- dat_output[[varnames]]
   # # remove the var names column
@@ -313,14 +313,14 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     # Fix DATES
     # exit dates before date of entry
     # just add 20 to admission.... (was easiest...)
-    dis_output <- enforce_timing(dis_output, 
-                                 first  = "date_of_consultation_admission", 
-                                 second = "date_of_exit", 
+    dis_output <- enforce_timing(dis_output,
+                                 first  = "date_of_consultation_admission",
+                                 second = "date_of_exit",
                                  20)
 
-    dis_output <- enforce_timing(dis_output, 
-                                 first  = "date_of_admission", 
-                                 second = "date_of_exit", 
+    dis_output <- enforce_timing(dis_output,
+                                 first  = "date_of_admission",
+                                 second = "date_of_exit",
                                  20)
     # lab sample dates before admission
     # add 2 to admission....
@@ -476,8 +476,26 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   }
 
   if (dictionary == "Mortality") {
-    # q65_iq4 GPS number (from Osmand) - use as a standin for fact_0_id as household num for now
-    dis_output$q65_iq4 <- sample(1:as.integer(numcases/5), numcases, replace = TRUE)
+
+
+    # sample villages
+    dis_output$village <- sample(c("Village A", "Village B",
+                                   "Village C", "Village D"),
+                                 numcases, replace = TRUE)
+
+
+    # cluster ID (based on village)
+    dis_output$cluster_number <- as.numeric(factor(dis_output$village))
+
+    # q65_iq4 household ID (the GPS point number) - (numbering starts again for each cluster)
+    for (i in unique(dis_output$cluster_number)) {
+
+      nums <- nrow(dis_output[dis_output$cluster_number == i,])
+
+      dis_output[dis_output$cluster_number == i, "q65_iq4"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
+    }
+
+    # use household num as a standin for fact_0_id for now
     dis_output$fact_0_id <- dis_output$q65_iq4
 
     # q53_cq4a ("Why is no occupant agreeing to participate?") shoud be NA if
@@ -498,7 +516,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
                        "q145_q43_died_country")] <- NA
     # pregnancy related cause of death n.a. for too old/young and for males
     no_pregnancy <- dis_output$q138_q36_died_cause == "Pregnancy-related" &
-                      (dis_output$q4_q6_sex == "Male"    | 
+                      (dis_output$q4_q6_sex == "Male"    |
                        dis_output$q155_q5_age_year >= 50 |
                        dis_output$q155_q5_age_year < 12
                       )
@@ -508,8 +526,8 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
     # fix arrival/leave dates
     dis_output$q41_q25_hh_arrive_date <-
-      pmin(dis_output$q41_q25_hh_arrive_date, 
-           dis_output$q45_q29_hh_leave_date, 
+      pmin(dis_output$q41_q25_hh_arrive_date,
+           dis_output$q45_q29_hh_leave_date,
            dis_output$q88_q33_born_date, na.rm = TRUE)
 
     # leave date
@@ -549,8 +567,22 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     # cluster ID (based on village)
     dis_output$cluster_number <- as.numeric(factor(dis_output$village))
 
-    # household number just each its own
-    dis_output$household_id <- 1:numcases
+
+    # household ID (numbering starts again for each cluster)
+    for (i in unique(dis_output$cluster_number)) {
+
+      nums <- nrow(dis_output[dis_output$cluster_number == i,])
+
+      dis_output[dis_output$cluster_number == i, "household_id"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
+    }
+
+    # use household num as a standin for fact_0_id for now
+    dis_output$fact_0_id <- dis_output$household_id
+
+
+
+
+
 
     # age in months (1 to 60 - i.e. under 5 years)
     dis_output$age_month <- sample(1:60L, numcases, replace = TRUE)
@@ -571,8 +603,14 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
   }
   if (dictionary == "Vaccination") {
 
-    # cluster number (1 to a 30th of total cases)
-    dis_output$q77_what_is_the_cluster_number <- sample(1:as.integer(numcases/30), numcases, replace = TRUE)
+
+    # sample villages
+    dis_output$village <- sample(c("Village A", "Village B",
+                                   "Village C", "Village D"),
+                                 numcases, replace = TRUE)
+
+    # cluster ID (based on village)
+    dis_output$q77_what_is_the_cluster_number <- as.numeric(factor(dis_output$village))
 
     # household ID (numbering starts again for each cluster)
     for (i in unique(dis_output$q77_what_is_the_cluster_number)) {
@@ -581,6 +619,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
       dis_output[dis_output$q77_what_is_the_cluster_number == i, "q14_hh_no"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
     }
+    # use household num as a standin for fact_0_id for now
     dis_output$fact_0_id <- dis_output$q14_hh_no
 
 

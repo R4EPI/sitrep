@@ -5,18 +5,18 @@
 #' @param ... shared grouping columns across both `x` and `p`. These are used
 #'   to match the weights to the correct subset of the pouplation.
 #' @param population the column in `p` that defines the pouplation numbers
-#' @param weight the name of the new column to store the weights. Defaults to
-#'   "weight".
-#' @param weight_ID the name of the new ID column to be created. Defaults to
-#'   "weight_ID"
-#' @author Zhian N. Kamvar Alex Spina
+#' @param surv_weight the name of the new column to store the weights. Defaults to
+#'   "surv_weight".
+#' @param surv_weight_ID the name of the new ID column to be created. Defaults to
+#'   "surv_weight_ID"
+#' @author Zhian N. Kamvar Alex Spina Lukas Richter
 #' @export
-add_weights <- function(x, p, ..., population = population, weight = weight, weight_ID = weight_ID) {
+add_weights <- function(x, p, ..., population = population, surv_weight = surv_weight, surv_weight_ID = surv_weight_ID) {
 
   .dots      <- rlang::enquos(...)
   population <- rlang::enquo(population)
-  weight_ID  <- rlang::enquo(weight_ID)
-  weight     <- rlang::enquo(weight)
+  surv_weight_ID  <- rlang::enquo(surv_weight_ID)
+  surv_weight     <- rlang::enquo(surv_weight)
 
   # create a merger ID by age group and sex
   p <- tidyr::unite(p, "ID", !!! .dots)
@@ -30,14 +30,14 @@ add_weights <- function(x, p, ..., population = population, weight = weight, wei
   p <- dplyr::left_join(p, counts, by = "ID")
 
   # create weight variable
-  p <- dplyr::mutate(p, !! weight := !! population / .data$n)
-  p <- dplyr::select(p, .data$ID, !! weight)
+  p <- dplyr::mutate(p, !! surv_weight := !! population / .data$n)
+  p <- dplyr::select(p, .data$ID, !! surv_weight)
 
 
   # merge to study sample
   merge_by <- "ID"
-  names(merge_by) <- as.character(rlang::expr(weight_ID))
-  d <- tidyr::unite(x, !! weight_ID, !!! .dots, remove = FALSE)
+  names(merge_by) <- as.character(rlang::expr(surv_weight_ID))
+  d <- tidyr::unite(x, !! surv_weight_ID, !!! .dots, remove = FALSE)
   d <- dplyr::left_join(d, p, by = merge_by)
   d
 
