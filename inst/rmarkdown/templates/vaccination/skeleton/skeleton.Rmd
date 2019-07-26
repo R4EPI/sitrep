@@ -45,7 +45,10 @@ install other packages they need to work (called dependencies).
 
 These packages can be quite large and may take a while to download in the
 field. If you have access to a USB key with these packages, it makes sense to
-copy and paste the packages into Program Files/R/R-[version]/library.
+copy and paste the packages into your computer's R package library 
+(run the command .libPaths() to see the folder path). 
+
+For help installing packages, see the [Wiki](https://github.com/R4EPI/sitrep/wiki/1)-Getting-started)
   
 
 ```{r setup, include = FALSE, results='hide', message=FALSE, warning=FALSE}

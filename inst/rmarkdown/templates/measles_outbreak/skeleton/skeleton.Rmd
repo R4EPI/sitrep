@@ -36,7 +36,10 @@ install other packages they need to work (called dependencies).
 
 These packages can be quite large and may take a while to download in the
 field. If you have access to a USB key with these packages, it makes sense to
-copy and paste the packages into Program Files/R/R-[version]/library.
+copy and paste the packages into your computer's R package library 
+(run the command .libPaths() to see the folder path). 
+
+For help installing packages, see the [Wiki](https://github.com/R4EPI/sitrep/wiki/1)-Getting-started)
 
 
 ```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -535,14 +538,16 @@ linelist_cleaned <- linelist_cleaned %>%
 ## OPTIONAL: change those who are above or below a certain age to NA
 # linelist_cleaned <- mutate(linelist_cleaned, 
 #                            age_years = case_when(
-#                              age_years < 0   ~ NA_integer_, 
-#                              age_years > 120 ~ NA_integer_
+#                              is.na(age_years) ~ NA_integer_,
+#                              age_years < 0    ~ NA_integer_, 
+#                              age_years > 120  ~ NA_integer_,
+#                              TRUE             ~ as.integer(age_years) #Preserves other values
 #                            ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
 # linelist_cleaned <- mutate(linelist_cleaned,
 #                            age_months = case_when(
-#                              age_years < 5 ~ age_years * 12
+#                              age_years < 5    ~ age_years * 12
 #                              )) 
 
 

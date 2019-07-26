@@ -35,7 +35,10 @@ install other packages they need to work (called dependencies).
 
 These packages can be quite large and may take a while to download in the
 field. If you have access to a USB key with these packages, it makes sense to
-copy and paste the packages into Program Files/R/R-[version]/library.
+copy and paste the packages into your computer's R package library 
+(run the command .libPaths() to see the folder path). 
+
+For help installing packages, see the [Wiki](https://github.com/R4EPI/sitrep/wiki/1)-Getting-started)
 
 
 ```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -531,11 +534,13 @@ linelist_cleaned <- linelist_cleaned %>%
   ))
 
 
-## OPTIONAL: change those who are above or below a certain age to NA
-# linelist_cleaned <- mutate(linelist_cleaned, 
+# OPTIONAL: change those who are above or below a certain age to NA
+# linelist_cleaned <- mutate(linelist_cleaned,
 #                            age_years = case_when(
-#                              age_years < 0   ~ NA_integer_, 
-#                              age_years > 120 ~ NA_integer_
+#                              is.na(age_years) ~ NA_integer_,
+#                              age_years < 0    ~ NA_integer_,
+#                              age_years > 120  ~ NA_integer_,
+#                              TRUE             ~ as.integer(age_years) #Preserves other values
 #                            ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
@@ -596,6 +601,8 @@ linelist_cleaned <- linelist_cleaned %>%
     exit_status == "Left against medical advice"              ~ "Left"
   ),
   previously_vaccinated = case_when(
+    is.na(vaccinated_meningitis_mvc) & 
+      is.na(vaccinated_meningitis_routine)                    ~ NA_character_,
     grepl("Yes", vaccinated_meningitis_mvc)                   ~ "Yes",
     grepl("Yes", vaccinated_meningitis_routine)               ~ "Yes",
     vaccinated_meningitis_routine == "No" &
@@ -645,6 +652,9 @@ linelist_cleaned <- linelist_cleaned %>%
 
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
+    is.na(pastorex_result) & is.na(fever) & 
+      is.na(stiff_neck) & 
+      is.na(petechiae_purpura_at_admission)                 ~ NA_character_,                 
     grepl("Mening", pastorex_result)                        ~ "Confirmed",
     fever == "Yes" & stiff_neck == "Yes"                    ~ "Probable",
     fever == "Yes" & 

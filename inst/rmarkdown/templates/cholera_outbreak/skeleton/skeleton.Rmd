@@ -35,7 +35,10 @@ install other packages they need to work (called dependencies).
 
 These packages can be quite large and may take a while to download in the
 field. If you have access to a USB key with these packages, it makes sense to
-copy and paste the packages into Program Files/R/R-[version]/library.
+copy and paste the packages into your computer's R package library 
+(run the command .libPaths() to see the folder path). 
+
+For help installing packages, see the [Wiki](https://github.com/R4EPI/sitrep/wiki/1)-Getting-started)
 
 
 ```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -486,8 +489,10 @@ linelist_cleaned <- linelist_cleaned %>%
 ## OPTIONAL: change those who are above or below a certain age to NA
 # linelist_cleaned <- mutate(linelist_cleaned, 
 #                            age_years = case_when(
-#                              age_years < 0   ~ NA_integer_, 
-#                              age_years > 120 ~ NA_integer_
+#                              is.na(age_years) ~ NA_integer_,
+#                              age_years < 0    ~ NA_integer_, 
+#                              age_years > 120  ~ NA_integer_,
+#                              TRUE             ~ as.integer(age_years)
 #                            ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
@@ -592,6 +597,7 @@ linelist_cleaned <- linelist_cleaned %>%
 # TRUE assigns all remaining rows 
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate(case_def = case_when(
+#     is.na(test_result)                            ~ NA_character_,
 #     test_result == "Positive"                     ~ "Confirmed",
 #     test_result == "Negative" & symptoms == "Yes" ~ "Probable",
 #     test_result == "Negative"                     ~ "Suspected",
@@ -605,6 +611,9 @@ linelist_cleaned <- linelist_cleaned %>%
 # TRUE assigns all remaining rows 
 linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
+    is.na(cholera_pcr_result) &
+      is.na(cholera_culture_result) &
+      is.na(cholera_rdt_result)               ~ NA_character_,
     grepl("Positive", cholera_pcr_result)     ~ "Confirmed",  
     grepl("Positive", cholera_culture_result) ~ "Confirmed",
     grepl("Positive", cholera_rdt_result)     ~ "Probable",
