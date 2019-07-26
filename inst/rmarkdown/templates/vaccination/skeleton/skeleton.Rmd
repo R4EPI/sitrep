@@ -818,7 +818,9 @@ plot_age_pyramid(survey_design,
 
 
 ## Vaccination coverage
+
 Accepting equal validity from self-reported and card-reported vaccination status
+
 ```{r vaccination_coverage_overall}
 # return weighted counts and weighted proportions 
 survey_design %>%  # use the survey object (weighted)
@@ -833,6 +835,7 @@ survey_design %>%  # use the survey object (weighted)
 ```
 
 Distinguishing between vaccination cards and verbal confirmation 
+
 ```{r vaccination_coverage_overall_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% # use the survey object (weighted)
@@ -848,6 +851,7 @@ survey_design %>% # use the survey object (weighted)
 
 
 Accepting equal validity from self-reported and card-reported vaccination status, by sex
+
 ```{r vaccination_coverage_sex}
 # return weighted counts and weighted proportions 
 survey_design %>% # use the survey object (weighted)
@@ -855,29 +859,28 @@ survey_design %>% # use the survey object (weighted)
   # include design effect because cluster sample
   tabulate_survey(vaccination_status_simple, sex, deff = TRUE, digits = 2) %>%
   rename("Vaccination status" = vaccination_status_simple) %>% 
-  # wrap all "n" variables in braces (note space before n).
-  augment_redundant(" n" = " (n)") %>% 
-  # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant(" ci"   = "% (95% CI)", 
-                   "deff" = "Design effect") %>% 
+  augment_redundant(" (n)"         = " n") %>%    # wrap all "n" vars in braces (note space before n).
+  rename_redundant("% (95% CI)"    = "ci",        # relabel all columns containing "ci" to "% (95% CI)"
+                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
   kable(digits = 2)
 ```
 
 Distinguishing between vaccination cards and verbal confirmation, by sex 
+
 ```{r vaccination_coverage_sex_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
   tabulate_survey(vaccination_status, sex, deff = TRUE, digits = 2) %>%
   rename("Vaccination status" = vaccination_status) %>% 
   # wrap all "n" variables in braces (note space before n).
-  augment_redundant(" n" = " (n)") %>% 
-  # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant(" ci"   = "% (95% CI)", 
-                   "deff" = "Design effect") %>%
+  augment_redundant(" (n)"         = " n") %>%    # wrap all "n" vars in braces (note space before n).
+  rename_redundant("% (95% CI)"    = "ci",        # relabel all columns containing "ci" to "% (95% CI)"
+                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
   kable(digits = 2)
 ```
 
 Accepting equal validity from self-reported and card-reported vaccination status, by age group
+
 ```{r vaccination_coverage_age_group}
 # return weighted counts and weighted proportions 
 survey_design %>% 
@@ -895,15 +898,15 @@ survey_design %>%
          Unvaccinated_n, Unvaccinated_ci, Unvaccinated_deff) %>% 
   
   rename("Age group (years)" = age_group) %>% 
+  augment_redundant(" (n)"         = "_n") %>%    # wrap all "n" vars in braces (note space before n).
+  rename_redundant("% (95% CI)"    = "_ci",       # relabel all columns containing "ci" to "% (95% CI)"
+                   "Design Effect" = "_deff") %>% # "deff" to "Design effect"
   # wrap all "n" variables in braces (note space before n).
-  augment_redundant("_n" = " (n)") %>% 
-  # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant("_ci"   = "% (95% CI)", 
-                   "_deff" = "Design effect") %>%
   kable(digits = 2)
 ```
 
 Distinguishing between vaccination cards and verbal confirmation, by age group  
+
 ```{r vaccination_coverage_age_group_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
@@ -922,11 +925,9 @@ survey_design %>%
          Unvaccinated_n, Unvaccinated_ci, Unvaccinated_deff) %>% 
   
   rename("Age group (years)" = age_group) %>% 
-  # wrap all "n" variables in braces (note space before n).
-  augment_redundant("_n" = " (n)") %>% 
-  # relabel all columns containing "ci" to "% (95% CI)" and "deff" to "design effect"
-  rename_redundant("_ci"   = "% (95% CI)", 
-                   "deff" = "Design effect") %>%
+  augment_redundant(" (n)"         = "_n") %>%    # wrap all "n" vars in braces (note space before n).
+  rename_redundant("% (95% CI)"    = "_ci",       # relabel all columns containing "ci" to "% (95% CI)"
+                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
   kable(digits = 2)
 ```
 
@@ -935,6 +936,7 @@ survey_design %>%
 
 Weighted counts and proportions for reasons not vaccinated in routine and campaign circumstances, individually,
 among those not vaccinated
+
 ```{r no_vacc_reason_routine_campaign_combo}
 
 # get weight counts and proportions for routine vaccination
@@ -945,7 +947,7 @@ routine <- survey_design %>%
   # rename columns appropriately
   rename(Reasons = q7_no_routine_vacc_r, 
          "Routine (n)" = n , 
-         "% (95%CI)" = ci)
+         "% (95% CI)" = ci)
 
 # get weight counts and proportions for routine vaccination
 campaign <- survey_design %>% 
@@ -960,13 +962,14 @@ bind_cols(routine,
           campaign) %>% 
   # rename remaining columns appropriately 
   rename("Campaign (n)" = n, 
-         "% (95%CI)" = ci)
+         "% (95% CI)" = ci)
 
 ```
 
 
 Weighted counts and proportions for reasons not vaccinated in supplemented immunisation activities, 
 among those not vaccinated
+
 ```{r no_vacc_reason_sia}
 # get weight counts and proportions for routine vaccination
 survey_design %>% 
@@ -975,6 +978,6 @@ survey_design %>%
   # rename columns appropriately
   rename(Reasons = q38_no_sia_vacc_reason, 
          "Routine (n)" = n , 
-         "% (95%CI)" = ci)
+         "% (95% CI)" = ci)
 ```
 

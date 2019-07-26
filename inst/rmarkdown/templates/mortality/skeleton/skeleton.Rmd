@@ -462,7 +462,7 @@ study_data_cleaned <- study_data_cleaned %>%
 
 study_data_cleaned <- study_data_cleaned %>%
   mutate_at(.vars = vars(contains("symptom")), # all variables that contain the word "symptom"
-            .funs = ~fct_explicit_na(., "")    # replace missing values with "" 
+            .funs = ~fct_explicit_na(as.character(.), "") # replace missing values with "" 
            ) 
 
 ######## weighting ------------------------------------------------------------
@@ -1042,8 +1042,8 @@ survey_design %>%
   tabulate_survey(cause_of_death, age_group) %>%
   filter(cause_of_death != "Not Applicable") %>%
   rename("Cause of Death" = "cause_of_death") %>%
-  augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
-  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
+  augment_redundant(" (n)"      = " n") %>% # wrap all "n" variables in braces (note space before n).
+  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" to "% (95% CI)"
   kable(digits = 1)
 
 ```
@@ -1059,8 +1059,8 @@ survey_design %>%
   tabulate_survey(cause_of_death, sex) %>%
   filter(cause_of_death != "Not Applicable") %>%
   rename("Cause of Death" = "cause_of_death") %>%
-  augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
-  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
+  augment_redundant(" (n)"      = " n") %>% # wrap all "n" variables in braces (note space before n).
+  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" to "% (95% CI)"
   kable(digits = 1)
 
 ```
@@ -1100,8 +1100,8 @@ survey_design %>%                  # use the survey object (weighted)
                          strata = age_group, pretty = TRUE, method = "xlogit") %>%
   select(-variable) %>%
   rename("Symptom" = value) %>%
-  augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
-  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
+  augment_redundant(" (n)"      = " n") %>% # wrap all "n" variables in braces (note space before n).
+  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" to "% (95% CI)"
   kable(digits = 2)
 ```
 
@@ -1117,8 +1117,8 @@ survey_design %>%                  # use the survey object (weighted)
                   strata = sex, pretty = TRUE, method = "xlogit") %>%
   select(-variable) %>%
   rename("Symptom" = value) %>%
-  augment_redundant(" n" = " (n)") %>% # wrap all "n" variables in braces (note space before n).
-  rename_redundant("ci"   = "% (95% CI)") %>% # relabel all columns containing "prop" to "% (95% CI)"
+  augment_redundant(" (n)"      = " n") %>% # wrap all "n" variables in braces (note space before n).
+  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" to "% (95% CI)"
   kable(digits = 2)
 
 ```
