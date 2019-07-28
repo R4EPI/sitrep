@@ -9,8 +9,7 @@ test_that("templates can be built", {
   dir.create(p, recursive = TRUE)
 
   for (i in avail) {
-  
-    if (basename(i) == "nutrition") skip("Nutrition survey is not ready yet")
+
     tmp <- check_sitrep_templates(i, path = p, quiet = TRUE, mustwork = TRUE)
     expect_is(tmp, "character", label = sprintf("f: %s, msg: %s", i, tmp[[1]]))
 

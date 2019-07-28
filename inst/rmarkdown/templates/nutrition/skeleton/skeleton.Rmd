@@ -1144,12 +1144,12 @@ study_data_cleaned %>%
   # rename total column to have a capital N in brackets
   rename("Total (N)" = Total_n) %>% 
   # swap variabales with props in for percentages 
-  rename_redundant("prop" = "%") %>%
+  rename_redundant("%" = "prop") %>%
   # swap TRUEs for Flagged and FALSE for included
   # put n's in brackets
-  augment_redundant("TRUE" = "Flagged",
-                    "FALSE" = "Included",
-                    "_n$" = " (n)") 
+  augment_redundant("Flagged"  = "TRUE",
+                    "Included" = "FALSE",
+                    " (n)"     = "_n$") 
 
 ```
 

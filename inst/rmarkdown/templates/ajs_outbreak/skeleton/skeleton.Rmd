@@ -794,8 +794,8 @@ Cases by age group and definition
 # include column and row totals 
 descriptive(linelist_cleaned, "age_group", "case_def", coltotals = TRUE, rowtotals = TRUE) %>%
   rename("Age group" = age_group) %>%
-  rename_redundant(prop = "%") %>%
-  augment_redundant("_n$" = " cases (n)") %>%
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" cases (n)" = "_n$") %>%
   kable(digits = 2)
 ```
 
@@ -807,8 +807,8 @@ Cases by age group and sex
 ```{r describe_by_age_group_and_sex}
 descriptive(linelist_cleaned, "age_group", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Age group" = age_group) %>%
-  rename_redundant(prop = "%") %>%
-  augment_redundant("_n$" = " cases (n)") %>%
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" cases (n)" = "_n$") %>%
   kable(digits = 2)
 ```
 
@@ -818,8 +818,8 @@ Alternatively if you would like proportions to be of the total population, use t
 descriptive(linelist_cleaned, "age_group", "sex", 
             coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
   rename("Age group" = age_group) %>%
-  rename_redundant(prop = "%") %>%
-  augment_redundant("_n$" = " cases (n)") %>%
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" cases (n)" = "_n$") %>%
   kable(digits = 2)
 ```
 
@@ -870,8 +870,8 @@ multi_descriptive(linelist_cleaned, SYMPTOMS) %>%
   # re-order columns (drop total_prop too)
   select(symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
   # rename accordingly
-  rename_redundant("prop" = "%") %>%
-  augment_redundant("_n$" = " (n)") %>%
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" (n)" = "_n$") %>%
   kable(digits = 2)
 
 
@@ -887,8 +887,8 @@ multi_descriptive(linelist_cleaned, LABS, .id = "Lab test") %>%
          "Not done_n", "Not done_prop", Total_n) %>% 
   # rename accordingly
   rename("Unknown (n)" = "Not done_n") %>%
-  rename_redundant("prop" = "%") %>%
-  augment_redundant("_n$" = " (n)") %>%
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" (n)" = "_n$") %>%
   kable(digits = 2)
 
 ```
@@ -1336,8 +1336,8 @@ We could then also look at admissions and exits among inpatients by epiweek for 
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
 descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" (n)" = "_n$") %>%
   kable(digits = 2)
 ```
 
@@ -1351,8 +1351,8 @@ linelist_cleaned %>%
 descriptive("epiweek", "exit_status2", 
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Week" = "epiweek") %>%
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" (n)" = "_n$") %>%
   kable(digits = 2)
 ```
 
@@ -1378,8 +1378,8 @@ descriptive(linelist_cleaned, "patient_origin",
             "patient_facility_type",
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Region" = "patient_origin") %>%
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" (n)" = "_n$") %>%
   kable(digits = 2)
 ```
 
@@ -1395,8 +1395,8 @@ descriptive(filter(linelist_cleaned,
             "patient_origin", "exit_status2",
             coltotals = TRUE, rowtotals = TRUE) %>% 
   rename("Region" = "patient_origin") %>%
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+  rename_redundant("%" = prop) %>%
+  augment_redundant(" (n)" = "_n$") %>%
   kable(digits = 2)
 ```
 
