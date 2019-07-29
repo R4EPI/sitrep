@@ -87,8 +87,29 @@ tab_univariate <- function(x, outcome, ..., perstime = NULL, strata = NULL, meas
   # start an empty list for the counts tables
   count_list <- list()
 
-  # for "OR" & "RR" get basic counts table to pass to the epiR::epi2by2 function
-  if (measure != "IRR") {
+  # for "OR" get basic counts table to pass to the epiR::epi2by2 function
+  # NOTE that this is flipped the wrong way (cases/controls as rows) - because epi2by2 calculates ORs WRONG!!
+  if (measure == "OR") {
+
+    # if no strata then give a simple 2-by-2 counts table
+    if (is.null(strata)) {
+      for (i in the_vars) {
+        count_list[[i]] <- table(temp[[outcome_var]], temp[[i]])
+      }
+    }
+
+    # if strata specified then give a 2-by-2-by-2 table
+    if (!is.null(strata)) {
+      for (i in the_vars) {
+        count_list[[i]] <- table(temp[[outcome_var]], temp[[i]], temp[[strata_var]])
+      }
+    }
+
+  }
+
+  # for "RR" get basic counts table to pass to the epiR::epi2by2 function
+  # NOTE for RRs inputting with cases as columns is fine for using epi2by2
+  if (measure == "RR") {
 
     # if no strata then give a simple 2-by-2 counts table
     if (is.null(strata)) {
@@ -105,6 +126,10 @@ tab_univariate <- function(x, outcome, ..., perstime = NULL, strata = NULL, meas
     }
 
   }
+
+
+
+
 
   # for "IRR" return counts and person time by exposure - NEEDS FIXING!!
   # if (measure == "IRR") {
@@ -144,10 +169,10 @@ tab_univariate <- function(x, outcome, ..., perstime = NULL, strata = NULL, meas
       # pull outputs together
       for (i in names(count_list)) {
         nums <- cbind(i,                                   # name of the exposure variable
-                      epitable[[i]]$tab[1L, c(1L, 2L)],    # pull outcomes among exposed
-                      epitable[[i]]$tab[1L, 5L],           # pull odds among exposed
-                      epitable[[i]]$tab[2L, c(1L, 2L)],    # pull outcomes among unexposed
-                      epitable[[i]]$tab[2L, 5L],           # pull odds among exposed
+                      epitable[[i]]$tab[1L, c(1L, 2L)],    # pull counts of exposed among cases (REMEMBER IS FLIPPED!)
+                      epitable[[i]]$tab[1L, 5L],           # pull odds of exposure among cases
+                      epitable[[i]]$tab[2L, c(1L, 2L)],    # pull counts of exposed among among controls
+                      epitable[[i]]$tab[2L, 5L],           # pull odds of exposure among controls
                       epitable[[i]]$massoc$OR.strata.wald, # pull the the OR and CIs
                       epitable[[i]]$massoc$chisq.strata[3] # pull the p-value
                       )
@@ -171,10 +196,10 @@ tab_univariate <- function(x, outcome, ..., perstime = NULL, strata = NULL, meas
         # crude counts and estimates
         crude <- cbind(i,                            # name of the exposure variable
                        "crude",                            # type of estimate
-                       epitable[[i]]$tab[1L, c(1L, 2L)],   # pull outcomes among exposed
-                       epitable[[i]]$tab[1L, 5L],          # pull odds among exposed
-                       epitable[[i]]$tab[2L, c(1L, 2L)],   # pull outcomes among unexposed
-                       epitable[[i]]$tab[2L, 5L],          # pull odds among exposed
+                       epitable[[i]]$tab[1L, c(1L, 2L)],   # pull counts of exposed among cases (REMEMBER IS FLIPPED!)
+                       epitable[[i]]$tab[1L, 5L],          # pull odds of exposure among cases
+                       epitable[[i]]$tab[2L, c(1L, 2L)],   # pull counts of exposed among among controls
+                       epitable[[i]]$tab[2L, 5L],          # pull odds of exposure among controls
                        epitable[[i]]$massoc$OR.crude.wald, # pull the the OR and CIs
                        epitable[[i]]$massoc$chisq.crude[3] # pull the p-value
                        )
