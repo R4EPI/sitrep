@@ -13,7 +13,7 @@
 #' @param digits Specify number of decimal places (default is 3)
 #' @param mergeCI Whether or not to put the confidence intervals in one column (default is FALSE)
 #' @importFrom epiR epi.2by2
-#' @importFrom dplyr select
+#' @importFrom dplyr select mutate_at group_by summarise
 #' @references Inspired by Daniel Gardiner,
 #' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12)
 #' @export
@@ -146,13 +146,40 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
   # for "IRR" return counts and person time by exposure
   if (measure == "IRR") {
 
-      # sum outcome and obstime by exposure
-      the_table <- group_by(temp, {{exposure}})
-      the_table <- summarise(the_table,
-                          otcm = sum({{outcome}} == TRUE),
-                          tme = sum({{perstime}}))
+    # if no stratifier then simple table
+      if ((length(strata_var) == 0)) {
+        # sum outcome and obstime by exposure
+        the_table <- group_by(temp, {{exposure}})
+        the_table <- summarise(the_table,
+                            otcm = sum({{outcome}} == TRUE),
+                            tme = sum({{perstime}}))
 
-      the_table <- as.table(data.matrix(the_table[,2:3]))
+        # drop the first column and change to a table (for use in epi.2by2)
+        the_table <- as.table(data.matrix(the_table[,2:3]))
+      }
+
+    # if stratifier specified then do by each group
+      if ((length(strata_var) != 0)) {
+        # sum outcome and obstime by exposure and strata
+        temp_table <- group_by(temp, {{exposure}}, {{strata}})
+        temp_table <- summarise(temp_table,
+                               otcm = sum({{outcome}} == TRUE, na.rm = TRUE),
+                               tme = sum({{perstime}}, na.rm = TRUE))
+
+        arr <- tidyr::gather(temp_table, variable, value, -{{exposure}}, -{{strata}})
+        arr <- arrange(arr, {{strata}}, variable, {{exposure}})
+
+        the_table <- array(arr$value,
+                           dim = c(2, 2, 2),
+                           dimnames = list(
+                             unique(arr[[exposure_var]]),
+                             unique(arr$variable),
+                             unique(arr[[strata_var]])
+                             )
+                           )
+      }
+
+
 
     }
 
@@ -180,11 +207,14 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                     epitable$massoc$OR.strata.wald, # pull the the OR and CIs
                     epitable$massoc$chisq.strata[3] # pull the p-value
       )
+      # set correct column names
       colnames(nums) <- c("variable",
                           "exp_cases", "unexp_cases", "cases_odds",
                           "exp_controls", "unexp_controls", "controls_odds",
                           "est", "lower", "upper", "pval"
       )
+      # remove row names
+      rownames(nums) <- NULL
 
     }
 
@@ -257,6 +287,8 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                             "exp_controls", "unexp_controls", "controls_odds",
                             "est", "lower", "upper", "pval"
                             )
+        # remove row names
+        rownames(nums) <- NULL
 
     }
   }
@@ -281,11 +313,14 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                     epitable$massoc$chisq.strata[3] # pull the p-value
                     )
 
+      # set correct column names
       colnames(nums) <- c("variable",
                           "exp_cases", "exp_total", "exp_risk",
                           "unexp_cases", "unexp_total", "unexp_risk",
                           "est", "lower", "upper", "pval"
       )
+      # remove row names
+      rownames(nums) <- NULL
     }
 
     # if strata specified then pull together four rows (crude, strataTRUE, strataFALSE and MH estimates)
@@ -296,8 +331,8 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                      "crude",                        # type of estimate
                      epitable$tab[1L, c(1L, 3L)],    # pull counts of cases on among exposed and total exposed
                      epitable$tab[1L, 4L],           # pull risk of being case among exposed (as proportion)
-                     epitable$tab[2L, c(1L, 3L)],    # pull counts of cases on among exposed and total exposed
-                     epitable$tab[2L, 4L],           # pull risk of being case among exposed (as proportion)
+                     epitable$tab[2L, c(1L, 3L)],    # pull counts of cases on among unexposed and total unexposed
+                     epitable$tab[2L, 4L],           # pull risk of being case among unexposed (as proportion)
                      epitable$massoc$RR.crude.wald, # pull the the RR and CIs
                      epitable$massoc$chisq.crude[3] # pull the p-value
       )
@@ -316,7 +351,7 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                               the_table[TRUE][2L] /
                                 sum(the_table[TRUE][c(2L,4L)]) * 100  # risk among the unexposed
                             ),
-                            cbind(
+                            cbind(                                   # cbind strata_false counts together seperately
                               the_table[TRUE][5L],                     # counts of cases among exposed
                               sum(the_table[TRUE][c(5L,7L)]),          # total exposed
                               the_table[TRUE][5L] /
@@ -361,11 +396,151 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                           "unexp_cases", "unexp_total", "unexp_risk",
                           "est", "lower", "upper", "pval"
       )
+      # remove row names
+      rownames(nums) <- NULL
 
 
     }
 
   }
+
+  # pull together a incidence rate ratio table
+  # note that this pulls the counts of cases and the total observation time - for calculating INCIDENCE RATES
+
+  if (measure == "IRR") {
+    # get a contingency table with lots of stats in it
+    epitable <- epiR::epi.2by2(the_table, method = "cohort.time")
+
+    # for non stratified results, simply pull together one liners
+    if (length(strata_var) == 0) {
+
+      # pull outputs together
+      nums <- cbind(exposure_var,                    # name of the exposure variable
+                    epitable$tab[1L, 1L:3L],         # pull counts of cases on among exposed, total person-time among exp and incidence per 100 pers-time
+                    epitable$tab[2L, 1L:3L],         # pull counts of cases on among unexposed, total person-time among unexp and incidence per 100 pers-time
+                    epitable$massoc$IRR.strata.wald, # pull the the IRR and CIs
+                    epitable$massoc$chisq.strata[3]  # pull the p-value
+      )
+
+      # set correct column names
+      colnames(nums) <- c("variable",
+                          "exp_cases", "exp_perstime", "exp_incidence",
+                          "unexp_cases", "unexp_perstime", "unexp_incidence",
+                          "est", "lower", "upper", "pval"
+      )
+      # remove row names
+      rownames(nums) <- NULL
+
+    }
+
+    # if strata specified then pull together four rows (crude, strataTRUE, strataFALSE and MH estimates)
+    if (length(strata_var) != 0) {
+
+      # crude counts and estimates
+      crude <- cbind(exposure_var,               # name of the exposure variable
+                     "crude",                    # type of estimate
+                     epitable$tab[1L, 1L:3L],    # pull counts of cases on among exposed, total person-time among exp and incidence per 100 pers-time
+                     epitable$tab[2L, 1L:3L],    # pull counts of cases on among unexposed, total person-time among unexp and incidence per 100 pers-time
+                     epitable$massoc$IRR.crude.wald, # pull the the IRR and CIs
+                     epitable$massoc$chisq.crude[3] # pull the p-value
+      )
+
+      # stratified counts and estimates
+      stratified <- cbind(rep(exposure_var, 2),                # name of the exposure variable repeated for each strata
+                          c("strata_TRUE", "strata_FALSE"),    # type of estimate
+                          rbind(                               # row bind strata counts and risks together
+                            cbind(                                  # cbind strata_true counts together seperately
+                              the_table[TRUE][1L],                     # counts of cases among exposed
+                              the_table[TRUE][3L],                     # person time among exposed
+                              the_table[TRUE][1L] /
+                                the_table[TRUE][3L] * 100,             # incidence among the exposed
+                              the_table[TRUE][2L],                     # counts of cases among unexposed
+                              the_table[TRUE][4L],                     # person time among unexposed
+                              the_table[TRUE][2L] /
+                                the_table[TRUE][4L] * 100              # incidence among the unexposed
+                            ),
+                            cbind(                                  # cbind strata_false counts together seperately
+                              the_table[TRUE][5L],                     # counts of cases among exposed
+                              the_table[TRUE][7L],                     # person time among exposed
+                              the_table[TRUE][5L] /
+                                the_table[TRUE][7L] * 100,             # incidence among the exposed
+                              the_table[TRUE][6L],                     # counts of cases among unexposed
+                              the_table[TRUE][8L],                     # person time among unexposed
+                              the_table[TRUE][6L] /
+                                the_table[TRUE][8L] * 100              # incidence among the unexposed
+
+                            )
+                          ),
+                          epitable$massoc$IRR.strata.wald,       # pull the RR and CIs for each strata
+                          data.frame(                            # pull the p-values for each strata as a dataframe
+                            epitable$massoc$chisq.strata[,3]
+                          )
+      )
+
+      # mantel-haenszel counts (NAs) and estimates
+      mh <- cbind(exposure_var,                          # name of exposure variable
+                  "mh",                                  # type of estimate
+                  t(rep(NA, 6)),                         # make all the counts and odds NAs
+                  epitable$massoc$IRR.mh.wald,           # pull the mh IRR and CIS
+                  epitable$massoc$chisq.mh$p.value       # pull the mh pvalue
+      )
+
+      # remove all the colnames and column names
+      colnames(crude) <- NA
+      colnames(stratified) <- NA
+      colnames(mh) <- NA
+      rownames(crude) <- NULL
+      rownames(stratified) <- NULL
+      rownames(mh) <- NULL
+
+
+      # bind the four rows together (each cbinded together seperately below)
+      nums <- rbind(crude, stratified, mh)
+
+      # set correct column names
+      colnames(nums) <- c("variable",
+                          "est_type",
+                          "exp_cases", "exp_perstime", "exp_incidence",
+                          "unexp_cases", "unexp_perstime", "unexp_incidence",
+                          "est", "lower", "upper", "pval"
+                          )
+      # remove row names
+      rownames(nums) <- NULL
+
+
+    }
+
+  }
+
+
+  # fix digits and turn things to numeric
+  if (length(strata_var) == 0) {
+    nums <- mutate_at(nums, vars(-variable), ~round(as.numeric(.), digits = digits))
+  }
+  if (length(strata_var) != 0) {
+    nums <- mutate_at(nums, vars(-variable, -est_type), ~round(as.numeric(.), digits = digits))
+  }
+
+
+  # merge upper and lower CIs
+  # if (mergeCI) {
+  #   nums <- unite_ci(nums, est, lower, upper, percent = FALSE)
+  # }
+
+  # drop columns if specified
+  # use numbers because names will be different according to measure, but place is always same
+  if (!extend_output & length(strata_var) == 0) {
+    nums <- select(nums, -4, -7, -11)
+  }
+  if (!extend_output & length(strata_var) != 0) {
+    nums <- select(nums, -5, -8, -12)
+  }
+
+
+  # change output table to a tibble
+  # nums <- tibble(nums)
+
+  # spit out the out table
   return(nums)
 }
 

@@ -59,7 +59,7 @@ dataset produced should mimic an excel export from DHIS2.
 if (require('dplyr') & require('linelist')) { withAutoprint({
 # You will often want to use MSF dictionaries to translate codes to human-
 # readable variables. Here, we generate a data set of 20 cases:
-dat <- gen_data(dictionary = "Cholera", varnames = "data_element_shortname", 
+dat <- gen_data(dictionary = "Cholera", varnames = "data_element_shortname",
                 numcases = 20)
 print(dat)
 
@@ -74,8 +74,8 @@ print(dict)
 #  - 2nd column: translations
 #  - 3rd column: data column name
 #  - 4th column: order of options
-# 
-# we also want to make sure to filter out any columns that are blank for 
+#
+# we also want to make sure to filter out any columns that are blank for
 # the option codes, because this means that they don't have a fixed number of
 # options
 dict <- dict \%>\%
