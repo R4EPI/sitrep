@@ -15,12 +15,14 @@
 #' @param woolf_test Only if strata specified and measure is "RR" or "OR". TRUE/FALSE to specify whether to
 #' include woolf test for homogeneity p-value. Tests whether there is a significant difference in the
 #' estimates between strata.
+#'
 #' @importFrom epiR epi.2by2
 #' @importFrom dplyr select mutate_at group_by summarise
 #' @references Inspired by Daniel Gardiner,
 #' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12)
 #' @export
 #' @examples
+#'
 #' # generate a fake dataset
 #' a <- tibble(potato = sample(c(TRUE, FALSE), 2000, replace = TRUE),
 #'            apple = sample(c(TRUE, FALSE), 2000, replace = TRUE),
@@ -71,15 +73,20 @@ tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
   the_vars <- tidyselect::vars_select(colnames(x), ...)
 
   # lapply to each of the vars
-  runner <- lapply(the_vars, FUN = function(z) {
-    backend_tab_univariate(x = x, {{outcome}}, exposure = z, perstime = {{perstime}},
-                   strata = {{strata}} , measure = measure, extend_output = extend_output,
-                   digits = digits, mergeCI = mergeCI, woolf_test = woolf_test)
-    }
-    )
+  purrr::map_dfr(the_vars,
+                 backend_tab_univariate,
+                 # Exposure comes from the_vars
+                 outcome       = {{outcome}},
+                 x             = x,
+                 perstime      = {{perstime}},
+                 strata        = {{strata}},
+                 measure       = measure,
+                 extend_output = extend_output,
+                 digits        = digits,
+                 mergeCI       = mergeCI,
+                 woolf_test    = woolf_test
+  )
 
-  # bind all the list tables together in to one
-  bind_rows(runner)
 
 }
 
@@ -87,7 +94,7 @@ tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
 
 # the single exposure variable version of the above function
 #' @noRd
-backend_tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
+backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata = NULL,
                            measure = "OR", extend_output = TRUE,
                            digits = 3, mergeCI = FALSE, woolf_test = FALSE) {
 
@@ -125,12 +132,12 @@ backend_tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata
   }
 
   # check that strata variable is logical
-  if (length(strata_var) != 0 & !is.logical(x[[strata_var]])) {
+  if (length(strata_var) != 0 && !is.logical(x[[strata_var]])) {
     stop("strata variable must be a TRUE/FALSE variable")
   }
 
   # check person time is not missing for incidence rate ratio
-  if (length(perstime_var) == 0 & measure == "IRR") {
+  if (length(perstime_var) == 0 && measure == "IRR") {
     stop("You have selected IRR as a measure but not specified a perstime variable.
          To calculate an incidence rate ratio please specify a variable which indicates
          observation time for each individual")

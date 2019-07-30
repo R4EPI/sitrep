@@ -39,6 +39,7 @@ estimates between strata.}
 Produce odds ratios, risk ratios or incidence rate ratios with accompanying confidence intervals
 }
 \examples{
+
 # generate a fake dataset
 a <- tibble(potato = sample(c(TRUE, FALSE), 2000, replace = TRUE),
            apple = sample(c(TRUE, FALSE), 2000, replace = TRUE),
