@@ -80,32 +80,32 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
 
   ### checks and messasges
 
-  # # check that x is a data frame
-  # if (!is.data.frame(x)) {
-  #   stop("x must be a data frame")
-  # }
-  #
-  # # check that outcome variable is logical
-  # if (!is.logical(outcome_var)) {
-  #   stop("outcome must be a TRUE/FALSE variable")
-  # }
-  #
-  # # check if exposure variable is logical
-  # if (!is.logical(exposure_var)) {
-  #   stop("exposure variable must be a TRUE/FALSE variable")
-  # }
-  #
-  # # check that strata variable is logical
-  # if (!is.logical(strata_var)) {
-  #   stop("strata variable must be a TRUE/FALSE variable")
-  # }
-  #
-  # # check person time is not missing for incidence rate ratio
-  # if (is.null(perstime_var) & measure == "IRR") {
-  #   stop("You have selected IRR as a measure but not specified a perstime variable.
-  #        To calculate an incidence rate ratio please specify a variable which indicates
-  #        observation time for each individual")
-  # }
+  # check that x is a data frame
+  if (!is.data.frame(x)) {
+    stop("x must be a data frame")
+  }
+
+  # check that outcome variable is logical
+  if (!is.logical(x[[outcome_var]])) {
+    stop("outcome must be a TRUE/FALSE variable")
+  }
+
+  # check if exposure variable is logical
+  if (!is.logical(x[[exposure_var]])) {
+    stop("exposure variable must be a TRUE/FALSE variable")
+  }
+
+  # check that strata variable is logical
+  if (length(strata_var) != 0 & !is.logical(x[[strata_var]])) {
+    stop("strata variable must be a TRUE/FALSE variable")
+  }
+
+  # check person time is not missing for incidence rate ratio
+  if (length(perstime_var) == 0 & measure == "IRR") {
+    stop("You have selected IRR as a measure but not specified a perstime variable.
+         To calculate an incidence rate ratio please specify a variable which indicates
+         observation time for each individual")
+  }
 
 
   ### backing data and fixing variable levels
