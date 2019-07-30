@@ -12,6 +12,9 @@
 #' Non-extended output drops group odds or risk calculations as well as p-values
 #' @param digits Specify number of decimal places (default is 3)
 #' @param mergeCI Whether or not to put the confidence intervals in one column (default is FALSE)
+#' @param woolf_test Only if strata specified and measure is "RR" or "OR". TRUE/FALSE to specify whether to
+#' include woolf test for homogeneity p-value. Tests whether there is a significant difference in the
+#' estimates between strata.
 #' @importFrom epiR epi.2by2
 #' @importFrom dplyr select mutate_at group_by summarise
 #' @references Inspired by Daniel Gardiner,
@@ -59,8 +62,9 @@
 #' func_res$controls_odds == expo_controls_odds
 #' )
 
-tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL, measure = "OR", extend_output = TRUE,
-                           digits = 3, mergeCI = FALSE) {
+tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
+                           measure = "OR", extend_output = TRUE,
+                           digits = 3, mergeCI = FALSE, woolf_test = FALSE) {
 
 
   ### Selecting variables
@@ -189,7 +193,7 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
 
   ### Run the epiR::epi2by2 function on the counts data to get appropriate outputs
 
-  # pull together an Odds ratio table
+  ## pull together an Odds ratio table
   # note that for this pulls the counts of cases and controls (not the totals by exposure) - for calculating ODDS
   if (measure == "OR") {
 
@@ -229,7 +233,8 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                        epitable$tab[2L, c(1L, 2L)],   # pull counts of exposed among controls
                        epitable$tab[2L, 5L],          # pull odds of exposure among controls
                        epitable$massoc$OR.crude.wald, # pull the the OR and CIs
-                       epitable$massoc$chisq.crude[3] # pull the p-value
+                       epitable$massoc$chisq.crude[3], # pull the p-value
+                       NA                              # Leave space for wolf-test of homogeneity in strata rows
                        )
 
         # stratified counts and estimates
@@ -256,7 +261,8 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                 epitable$massoc$OR.strata.wald,       # pull the OR and CIs for each strata
                 data.frame(                           # pull the p-values for each strata as a dataframe
                   epitable$massoc$chisq.strata[,3]
-                  )
+                  ),
+                rbind(epitable$massoc$OR.homog.woolf[,3], NA)    # pull the woolf test of homogeneity p-value
                 )
 
 
@@ -265,7 +271,8 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                 "mh",                                  # type of estimate
                 t(rep(NA, 6)),                         # make all the counts and odds NAs
                 epitable$massoc$OR.mh.wald,            # pull the mh OR and CIS
-                epitable$massoc$chisq.mh$p.value       # pull the mh pvalue
+                epitable$massoc$chisq.mh$p.value,      # pull the mh pvalue
+                NA                                     # Leave space for wolf-test of homogeneity in strata rows
                 )
 
           # remove all the colnames and column names
@@ -285,7 +292,7 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                             "est_type",
                             "exp_cases", "unexp_cases", "cases_odds",
                             "exp_controls", "unexp_controls", "controls_odds",
-                            "est", "lower", "upper", "pval"
+                            "est", "lower", "upper", "pval", "woolf_pval"
                             )
         # remove row names
         rownames(nums) <- NULL
@@ -293,7 +300,7 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
     }
   }
 
-  # pull together a risk ratio table
+  ## pull together a risk ratio table
   # note that this pulls the counts of cases and the total observations - for calculating RISKS
 
   if (measure == "RR") {
@@ -333,8 +340,9 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                      epitable$tab[1L, 4L],           # pull risk of being case among exposed (as proportion)
                      epitable$tab[2L, c(1L, 3L)],    # pull counts of cases on among unexposed and total unexposed
                      epitable$tab[2L, 4L],           # pull risk of being case among unexposed (as proportion)
-                     epitable$massoc$RR.crude.wald, # pull the the RR and CIs
-                     epitable$massoc$chisq.crude[3] # pull the p-value
+                     epitable$massoc$RR.crude.wald,  # pull the the RR and CIs
+                     epitable$massoc$chisq.crude[3], # pull the p-value
+                     NA                              # Leave space for wolf-test of homogeneity in strata rows
       )
 
       # stratified counts and estimates
@@ -366,7 +374,8 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                           epitable$massoc$RR.strata.wald,       # pull the RR and CIs for each strata
                           data.frame(                           # pull the p-values for each strata as a dataframe
                             epitable$massoc$chisq.strata[,3]
-                          )
+                          ),
+                          rbind(epitable$massoc$RR.homog.woolf[,3], NA)    # pull the woolf test of homogeneity p-value
                           )
 
       # mantel-haenszel counts (NAs) and estimates
@@ -374,7 +383,8 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                   "mh",                                  # type of estimate
                   t(rep(NA, 6)),                         # make all the counts and odds NAs
                   epitable$massoc$RR.mh.wald,            # pull the mh RR and CIS
-                  epitable$massoc$chisq.mh$p.value       # pull the mh pvalue
+                  epitable$massoc$chisq.mh$p.value,      # pull the mh pvalue
+                  NA                                     # Leave space for wolf-test of homogeneity in strata rows
       )
 
       # remove all the colnames and column names
@@ -394,7 +404,7 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                           "est_type",
                           "exp_cases", "exp_total", "exp_risk",
                           "unexp_cases", "unexp_total", "unexp_risk",
-                          "est", "lower", "upper", "pval"
+                          "est", "lower", "upper", "pval", "woolf_pval"
       )
       # remove row names
       rownames(nums) <- NULL
@@ -404,7 +414,7 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
 
   }
 
-  # pull together a incidence rate ratio table
+  ## pull together a incidence rate ratio table
   # note that this pulls the counts of cases and the total observation time - for calculating INCIDENCE RATES
 
   if (measure == "IRR") {
@@ -521,12 +531,6 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
     nums <- mutate_at(nums, vars(-variable, -est_type), ~round(as.numeric(.), digits = digits))
   }
 
-
-  # merge upper and lower CIs
-  # if (mergeCI) {
-  #   nums <- unite_ci(nums, est, lower, upper, percent = FALSE)
-  # }
-
   # drop columns if specified
   # use numbers because names will be different according to measure, but place is always same
   if (!extend_output & length(strata_var) == 0) {
@@ -536,6 +540,15 @@ tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
     nums <- select(nums, -5, -8, -12)
   }
 
+  # drop woolf-test pvalue
+  if (length(strata_var != 0) & measure != "IRR" & woolf_test == FALSE) {
+    nums <- select(nums, -woolf_pval)
+  }
+
+  # merge upper and lower CIs
+  if (mergeCI) {
+    nums <- unite_ci(nums, col = "est_ci", est, lower, upper, m100 = FALSE, digits = digits)
+  }
 
   # change output table to a tibble
   # nums <- tibble(nums)
