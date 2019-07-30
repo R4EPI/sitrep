@@ -62,7 +62,32 @@
 #' func_res$controls_odds == expo_controls_odds
 #' )
 
-tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
+
+tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
+                           measure = "OR", extend_output = TRUE,
+                           digits = 3, mergeCI = FALSE, woolf_test = FALSE) {
+
+  # pull multiple variables from ...
+  the_vars <- tidyselect::vars_select(colnames(x), ...)
+
+  # lapply to each of the vars
+  runner <- lapply(the_vars, FUN = function(z) {
+    backend_tab_univariate(x = x, {{outcome}}, exposure = z, perstime = {{perstime}},
+                   strata = {{strata}} , measure = measure, extend_output = extend_output,
+                   digits = digits, mergeCI = mergeCI, woolf_test = woolf_test)
+    }
+    )
+
+  # bind all the list tables together in to one
+  bind_rows(runner)
+
+}
+
+
+
+# the single exposure variable version of the above function
+#' @noRd
+backend_tab_univariate <- function(x, outcome, exposure, perstime = NULL, strata = NULL,
                            measure = "OR", extend_output = TRUE,
                            digits = 3, mergeCI = FALSE, woolf_test = FALSE) {
 

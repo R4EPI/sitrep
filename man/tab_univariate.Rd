@@ -4,7 +4,7 @@
 \alias{tab_univariate}
 \title{Produce odds ratios, risk ratios or incidence rate ratios with accompanying confidence intervals}
 \usage{
-tab_univariate(x, outcome, exposure, perstime = NULL, strata = NULL,
+tab_univariate(x, outcome, ..., perstime = NULL, strata = NULL,
   measure = "OR", extend_output = TRUE, digits = 3,
   mergeCI = FALSE, woolf_test = FALSE)
 }
@@ -12,6 +12,8 @@ tab_univariate(x, outcome, exposure, perstime = NULL, strata = NULL,
 \item{x}{A data frame}
 
 \item{outcome}{Name of A TRUE/FALSE variable as your outcome of interest (e.g. illness)}
+
+\item{...}{Names of TRUE/FALSE variables as exposures of interest (e.g. risk factors)}
 
 \item{perstime}{A numeric variable containing the observation time for each individual}
 
@@ -32,8 +34,6 @@ Non-extended output drops group odds or risk calculations as well as p-values}
 \item{woolf_test}{Only if strata specified and measure is "RR" or "OR". TRUE/FALSE to specify whether to
 include woolf test for homogeneity p-value. Tests whether there is a significant difference in the
 estimates between strata.}
-
-\item{...}{Names of TRUE/FALSE variables as exposures of interest (e.g. risk factors)}
 }
 \description{
 Produce odds ratios, risk ratios or incidence rate ratios with accompanying confidence intervals
