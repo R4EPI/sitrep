@@ -1,4 +1,4 @@
-# This is supposed to 
+# This is supposed to
 # Odds Ratios, no strata:
 #
 # nums <- cbind(exposure_var,                   # name of the exposure variable
@@ -18,7 +18,6 @@
 #
 # Odds Ratios with strata:
 #
-jj
 #                epitable$tab[1L, c(1L, 2L)],   # pull counts of exposed among cases (REMEMBER IS FLIPPED!)
 #                epitable$tab[1L, 5L],          # pull odds of exposure among cases
 #                epitable$tab[2L, c(1L, 2L)],   # pull counts of exposed among controls
