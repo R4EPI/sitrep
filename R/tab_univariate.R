@@ -1,23 +1,34 @@
 #' Produce odds ratios, risk ratios or incidence rate ratios with accompanying confidence intervals
+#'
 #' @param x A data frame
+#'
 #' @param outcome Name of A TRUE/FALSE variable as your outcome of interest (e.g. illness)
+#'
 #' @param ... Names of TRUE/FALSE variables as exposures of interest (e.g. risk factors)
+#'
 #' @param perstime A numeric variable containing the observation time for each individual
+#'
 #' @param strata Name of a TRUE/FALSE variable to be used for stratifying results. Note that this results
 #' in a different output table - giving you a table of crude measure, measures for each strata and
 #' the mantel-haeszel adjusted measure for each exposure variable listed in `...`
+#'
 #' @param measure Specify what you would like to calculated, options are "OR", "RR" or "IRR"
 #' default is "OR"
+#'
 #' @param extend_output TRUE/FALSE to specify whether would like all columns in the outputs (default is TRUE)
 #' Non-extended output drops group odds or risk calculations as well as p-values
+#'
 #' @param digits Specify number of decimal places (default is 3)
+#'
 #' @param mergeCI Whether or not to put the confidence intervals in one column (default is FALSE)
+#'
 #' @param woolf_test Only if strata specified and measure is "RR" or "OR". TRUE/FALSE to specify whether to
 #' include woolf test for homogeneity p-value. Tests whether there is a significant difference in the
 #' estimates between strata.
 #'
 #' @importFrom epiR epi.2by2
 #' @importFrom dplyr select mutate_at group_by summarise
+#'
 #' @references Inspired by Daniel Gardiner,
 #' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12)
 #' @export
