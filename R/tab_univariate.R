@@ -50,11 +50,11 @@
 #'            )
 #'
 #' # get the results from tab_univariate function
-#' func_res <- tab_univariate(a, case_def, riskA, 
+#' func_res <- tab_univariate(a, case_def, riskA,
 #'                            strata = stratifier, digits = 6, measure = "OR")
-#' 
+#'
 #' # get risk ratios
-#' func_res <- tab_univariate(a, case_def, riskA, 
+#' func_res <- tab_univariate(a, case_def, riskA,
 #'                            strata = stratifier, digits = 6, measure = "RR")
 #'
 #'
@@ -94,7 +94,7 @@ tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
   # check that strata variable is logical
   if (length(strata_var) != 0 && !is.logical(x[[strata_var]])) {
     stop("strata variable must be a TRUE/FALSE variable")
-  } 
+  }
 
   # check person time is not missing for incidence rate ratio
   if (length(perstime_var) == 0 && measure == "IRR") {
@@ -154,15 +154,15 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     stop("exposure variable must be a TRUE/FALSE variable")
   }
 
-  
+
 
   # select the var in the outcome column
   outcome_var <- outcome
   outcome     <- if (length(outcome_var) > 0) rlang::sym(outcome_var) else NULL
 
   # select the var in the perstime column
-  perstime_var <- perstime 
-  perstime     <- if (length(perstime_var) > 0) rlang::sym(perstime_var) else NULL 
+  perstime_var <- perstime
+  perstime     <- if (length(perstime_var) > 0) rlang::sym(perstime_var) else NULL
 
 
   # select the var in the strata column
@@ -257,7 +257,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   if (measure == "OR") {
 
     # get a contingency table with lots of stats in it
-    epitable <- epiR::epi.2by2(the_table, method = "case.control")
+    epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = "case.control"))
 
     # for non stratified results, simply pull together one liners
     if (length(strata_var) == 0) {
@@ -365,7 +365,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   if (measure == "RR") {
 
     # get a contingency table with lots of stats in it
-    epitable <- epiR::epi.2by2(the_table, method = "cohort.count")
+    epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = "cohort.count"))
 
     # for non stratified results, simply pull together one liners
     if (length(strata_var) == 0) {
@@ -478,7 +478,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   if (measure == "IRR") {
     # get a contingency table with lots of stats in it
-    epitable <- epiR::epi.2by2(the_table, method = "cohort.time")
+    epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = "cohort.time"))
 
     # for non stratified results, simply pull together one liners
     if (length(strata_var) == 0) {
