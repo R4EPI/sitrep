@@ -1,4 +1,4 @@
-
+# Sample data ------------------------------------------------------------------
 # generate a fake dataset
 samp_tf <- function(n = 2000) sample(c(TRUE, FALSE), n, replace = TRUE)
 a       <- tibble::tibble(case_def   = samp_tf(),
@@ -11,6 +11,8 @@ a       <- tibble::tibble(case_def   = samp_tf(),
 ## read this article for details of calculations
 # http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704-ep713_confounding-em/BS704-EP713_Confounding-EM7.html
 
+
+# Odds Ratios ------------------------------------------------------------------
 # get counts table crude
 counts <- table(a[c("case_def", "riskA")])
 
@@ -110,7 +112,7 @@ test_that("function mh odds are equal to calculated mh", {
 })
 
 
-
+# Risk Ratios ------------------------------------------------------------------
 ## Tests for RRs
 # get counts table crude
 counts       <- table(a[c("riskA", "case_def")])
@@ -133,7 +135,7 @@ rr_from_risk             <- expo_cases_risk / nonexpo_cases_risk
 rr_from_risk_strat_true  <- expo_cases_risk_strat_true / nonexpo_cases_risk_strat_true
 rr_from_risk_strat_false <- expo_cases_risk_strat_false / nonexpo_cases_risk_strat_false
 
-# calculate mantel-haeszel ORs
+# calculate mantel-haeszel RRs
 # get sums of strata
 sum_strat_true  <- sum(counts_strat[ , ,2])
 sum_strat_false <- sum(counts_strat[ , , 1])
@@ -145,10 +147,11 @@ rr_mh <- (
   (
     ((counts_strat[7] * (counts_strat[6] + counts_strat[8])) / sum_strat_true) +
       ((counts_strat[3] * (counts_strat[2] + counts_strat[4])) / sum_strat_false))
-  
+
 # get the results from tab_univariate function
 func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6, measure = "RR")
 
+# Tests ------------------------------------------------------------------------
 
 ## crude
 test_that("function RR is equal to RR from risks", {
@@ -178,6 +181,129 @@ test_that("function risks are equal to count risks for strata", {
 
 
 ## Mantel-haeszel
-test_that("function mh odds are equal to calculated mh", {
+test_that("function mh risks are equal to calculated mh", {
   expect_equal(func_res$est[4], rr_mh, tol = 1e-6)
 })
+
+
+
+# Incidence Rate Ratios --------------------------------------------------------
+## Tests for IRRs
+
+# get counts and person time crude
+counts <- aggregate(
+  formula(cbind(case_def, perstime) ~ riskA),
+  FUN = sum,
+  data = a)
+
+
+# get counts and person time stratified
+counts_strat <- aggregate(
+  formula(cbind(case_def, perstime) ~ riskA + stratifier),
+  FUN = sum,
+  data = a)
+
+
+
+## For incidence rate ratios
+# get incidence of being a case among exposed
+expo_cases_inc             <- counts$case_def[2]/counts$perstime[2] * 100
+expo_cases_inc_strat_true  <- counts_strat$case_def[counts_strat$riskA == TRUE &
+                                                      counts_strat$stratifier == TRUE] /
+                              counts_strat$perstime[counts_strat$riskA == TRUE &
+                                                      counts_strat$stratifier == TRUE] * 100
+expo_cases_inc_strat_false <- counts_strat$case_def[counts_strat$riskA == TRUE &
+                                                      counts_strat$stratifier == FALSE] /
+                              counts_strat$perstime[counts_strat$riskA == TRUE &
+                                                      counts_strat$stratifier == FALSE] * 100
+
+
+# get incidence of being a case among unexposed
+nonexpo_cases_inc             <- counts$case_def[1]/counts$perstime[1] * 100
+nonexpo_cases_inc_strat_true  <- counts_strat$case_def[counts_strat$riskA == FALSE &
+                                                      counts_strat$stratifier == TRUE] /
+                                  counts_strat$perstime[counts_strat$riskA == FALSE &
+                                                          counts_strat$stratifier == TRUE] * 100
+nonexpo_cases_inc_strat_false <- counts_strat$case_def[counts_strat$riskA == FALSE &
+                                                      counts_strat$stratifier == FALSE] /
+                                  counts_strat$perstime[counts_strat$riskA == FALSE &
+                                                          counts_strat$stratifier == FALSE] * 100
+
+
+# calculate risk ratio by using risks above
+irr_from_inc             <- expo_cases_inc / nonexpo_cases_inc
+irr_from_inc_strat_true  <- expo_cases_inc_strat_true / nonexpo_cases_inc_strat_true
+irr_from_inc_strat_false <- expo_cases_inc_strat_false / nonexpo_cases_inc_strat_false
+
+
+# calculate mantel-haeszel IRRs
+# get sums of strata
+sum_strat_true  <- sum(counts_strat$perstime[counts_strat$stratifier == TRUE])
+sum_strat_false <- sum(counts_strat$perstime[counts_strat$stratifier == FALSE])
+
+# sigma(a_i * PTo / PTt) / sigma(c_i * PTe / PTt)
+# where PTt is the sum of respective strata
+# and the table is set out as follows:
+#           outcome+   | person time
+# exposure+     a      |      PTe
+# exposure-     c      |      PTo
+# Total                |      PTt
+
+irr_mh <- (((counts_strat$case_def[counts_strat$riskA == TRUE &
+                                  counts_strat$stratifier == TRUE] *
+            counts_strat$perstime[counts_strat$riskA == FALSE &
+                                    counts_strat$stratifier == TRUE]) / sum_strat_true) +
+          ((counts_strat$case_def[counts_strat$riskA == TRUE &
+                                    counts_strat$stratifier == FALSE] *
+              counts_strat$perstime[counts_strat$riskA == FALSE &
+                                      counts_strat$stratifier == FALSE]) / sum_strat_false)) /
+
+          (((counts_strat$case_def[counts_strat$riskA == FALSE &
+                                     counts_strat$stratifier == TRUE] *
+               counts_strat$perstime[counts_strat$riskA == TRUE &
+                                       counts_strat$stratifier == TRUE]) / sum_strat_true) +
+             ((counts_strat$case_def[counts_strat$riskA == FALSE &
+                                       counts_strat$stratifier == FALSE] *
+                 counts_strat$perstime[counts_strat$riskA == TRUE &
+                                         counts_strat$stratifier == FALSE]) / sum_strat_false))
+
+
+# get the results from tab_univariate function
+func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, perstime = perstime, digits = 6, measure = "IRR")
+
+
+
+# Tests ------------------------------------------------------------------------
+
+## crude
+test_that("function IRR is equal to IRR from incidence", {
+  expect_equal(func_res$est[1], irr_from_inc, tol = 1e-6)
+})
+
+
+test_that("function incidence among exposed/unexposed is equal to count incidence", {
+  expect_equal(func_res$exp_incidence[1], expo_cases_inc, tol = 1e-3)
+  expect_equal(func_res$unexp_incidence[1], nonexpo_cases_inc, tol = 1e-3)
+})
+
+
+## strata
+test_that("function IRR is equal to IRR from incidence for strata", {
+  expect_equal(func_res$est[2], irr_from_inc_strat_true, tol = 1e-6)
+  expect_equal(func_res$est[3], irr_from_inc_strat_false, tol = 1e-6)
+})
+
+
+test_that("function incidence are equal to count incidence for strata", {
+  expect_equal(func_res$exp_incidence[2], expo_cases_inc_strat_true, tol = 1e-6)
+  expect_equal(func_res$exp_incidence[3], expo_cases_inc_strat_false, tol = 1e-6)
+  expect_equal(func_res$unexp_incidence[2], nonexpo_cases_inc_strat_true, tol = 1e-6)
+  expect_equal(func_res$unexp_incidence[3], nonexpo_cases_inc_strat_false, tol = 1e-6)
+})
+
+
+## Mantel-haeszel
+test_that("function mh risks are equal to calculated mh", {
+  expect_equal(func_res$est[4], irr_mh, tol = 1e-6)
+})
+
