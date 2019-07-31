@@ -62,39 +62,15 @@ tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
                            measure = "OR", extend_output = TRUE,
                            digits = 3, mergeCI = FALSE, woolf_test = FALSE) {
 
-  # pull multiple variables from ...
-  the_vars <- tidyselect::vars_select(colnames(x), ...)
-
-  # lapply to each of the vars
-  purrr::map_dfr(the_vars,
-                 backend_tab_univariate,
-                 # Exposure comes from the_vars
-                 outcome       = {{outcome}},
-                 x             = x,
-                 perstime      = {{perstime}},
-                 strata        = {{strata}},
-                 measure       = measure,
-                 extend_output = extend_output,
-                 digits        = digits,
-                 mergeCI       = mergeCI,
-                 woolf_test    = woolf_test
-  )
-
-
-}
-
-
-
-# the single exposure variable version of the above function
-#' @noRd
-backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata = NULL,
-                           measure = "OR", extend_output = TRUE,
-                           digits = 3, mergeCI = FALSE, woolf_test = FALSE) {
-
+  # check that x is a data frame
+  if (!is.data.frame(x)) {
+    stop("x must be a data frame")
+  }
 
   ### Selecting variables
-  # select the vars in the dots
-  exposure_var <- tidyselect::vars_select(colnames(x), {{exposure}})
+
+  # pull multiple variables from ...
+  the_vars <- tidyselect::vars_select(colnames(x), ...)
 
   # select the var in the outcome column
   outcome_var <- tidyselect::vars_select(colnames(x), {{outcome}})
@@ -109,25 +85,16 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   ### checks and messasges
 
-  # check that x is a data frame
-  if (!is.data.frame(x)) {
-    stop("x must be a data frame")
-  }
 
   # check that outcome variable is logical
   if (!is.logical(x[[outcome_var]])) {
     stop("outcome must be a TRUE/FALSE variable")
   }
 
-  # check if exposure variable is logical
-  if (!is.logical(x[[exposure_var]])) {
-    stop("exposure variable must be a TRUE/FALSE variable")
-  }
-
   # check that strata variable is logical
   if (length(strata_var) != 0 && !is.logical(x[[strata_var]])) {
     stop("strata variable must be a TRUE/FALSE variable")
-  }
+  } 
 
   # check person time is not missing for incidence rate ratio
   if (length(perstime_var) == 0 && measure == "IRR") {
@@ -135,6 +102,73 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
          To calculate an incidence rate ratio please specify a variable which indicates
          observation time for each individual")
   }
+
+  # lapply to each of the vars
+  purrr::map_dfr(the_vars,
+                 backend_tab_univariate,
+                 # Exposure in here
+                 outcome       = outcome_var,
+                 x             = x,
+                 perstime      = perstime_var,
+                 strata        = strata_var,
+                 measure       = measure,
+                 extend_output = extend_output,
+                 digits        = digits,
+                 mergeCI       = mergeCI,
+                 woolf_test    = woolf_test
+  )
+
+
+}
+
+
+
+# the single exposure variable version of the above function
+#' @noRd
+#' This is an internal function that does the work of tab_univariate over
+#' several exposure variables
+#'
+#' @param exposure a character
+#' @param outcome a character`
+#' @param x a data frame
+#' @param perstime a character
+#' @param strata a character
+#' @param measure either "OR" or "RR"
+#' @param extend_output logical
+#' @param digits an integer
+#' @param mergeCI logical
+#' @param woolf_test logical
+#'
+#' @return a data frame
+backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata = NULL,
+                           measure = "OR", extend_output = TRUE,
+                           digits = 3, mergeCI = FALSE, woolf_test = FALSE) {
+
+
+  ### Selecting variables
+  # select the vars in the dots
+  exposure_var <- exposure
+  exposure     <- if (length(exposure_var) > 0) rlang::sym(exposure_var) else NULL
+  # check if exposure variable is logical
+  if (!is.logical(x[[exposure_var]])) {
+    stop("exposure variable must be a TRUE/FALSE variable")
+  }
+
+  
+
+  # select the var in the outcome column
+  outcome_var <- outcome
+  outcome     <- if (length(outcome_var) > 0) rlang::sym(outcome_var) else NULL
+
+  # select the var in the perstime column
+  perstime_var <- perstime 
+  perstime     <- if (length(perstime_var) > 0) rlang::sym(perstime_var) else NULL 
+
+
+  # select the var in the strata column
+  strata_var <- strata
+  strata     <- if (length(strata_var) > 0) rlang::sym(strata_var) else NULL
+
 
 
   ### backing data and fixing variable levels
@@ -196,7 +230,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
                                tme = sum({{perstime}}, na.rm = TRUE))
 
         arr <- tidyr::gather(temp_table, variable, value, -{{exposure}}, -{{strata}})
-        arr <- arrange(arr, {{strata}}, variable, {{exposure}})
+        arr <- dplyr::arrange(arr, {{strata}}, variable, {{exposure}})
 
         the_table <- array(arr$value,
                            dim = c(2, 2, 2),
