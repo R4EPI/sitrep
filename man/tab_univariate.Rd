@@ -2,7 +2,7 @@
 % Please edit documentation in R/tab_univariate.R
 \name{tab_univariate}
 \alias{tab_univariate}
-\title{Produce odds ratios, risk ratios or incidence rate ratios with accompanying confidence intervals}
+\title{Produce odds ratios, risk ratios or incidence rate ratios}
 \usage{
 tab_univariate(x, outcome, ..., perstime = NULL, strata = NULL,
   measure = "OR", extend_output = TRUE, digits = 3,
@@ -11,132 +11,61 @@ tab_univariate(x, outcome, ..., perstime = NULL, strata = NULL,
 \arguments{
 \item{x}{A data frame}
 
-\item{outcome}{Name of A TRUE/FALSE variable as your outcome of interest (e.g. illness)}
+\item{outcome}{Name of A TRUE/FALSE variable as your outcome of interest
+(e.g. illness)}
 
-\item{...}{Names of TRUE/FALSE variables as exposures of interest (e.g. risk factors)}
+\item{...}{Names of TRUE/FALSE variables as exposures of interest (e.g. risk
+factors)}
 
-\item{perstime}{A numeric variable containing the observation time for each individual}
+\item{perstime}{A numeric variable containing the observation time for each
+individual}
 
-\item{strata}{Name of a TRUE/FALSE variable to be used for stratifying results. Note that this results
-in a different output table - giving you a table of crude measure, measures for each strata and
-the mantel-haeszel adjusted measure for each exposure variable listed in \code{...}}
+\item{strata}{Name of a TRUE/FALSE variable to be used for stratifying
+results. Note that this results in a different output table - giving you a
+table of crude measure, measures for each strata and the mantel-haeszel
+adjusted measure for each exposure variable listed in \code{...}}
 
-\item{measure}{Specify what you would like to calculated, options are "OR", "RR" or "IRR"
-default is "OR"}
+\item{measure}{Specify what you would like to calculated, options are "OR",
+"RR" or "IRR" default is "OR"}
 
-\item{extend_output}{TRUE/FALSE to specify whether would like all columns in the outputs (default is TRUE)
-Non-extended output drops group odds or risk calculations as well as p-values}
+\item{extend_output}{TRUE/FALSE to specify whether would like all columns in
+the outputs (default is TRUE) Non-extended output drops group odds or risk
+calculations as well as p-values}
 
 \item{digits}{Specify number of decimal places (default is 3)}
 
-\item{mergeCI}{Whether or not to put the confidence intervals in one column (default is FALSE)}
+\item{mergeCI}{Whether or not to put the confidence intervals in one column
+(default is FALSE)}
 
-\item{woolf_test}{Only if strata specified and measure is "RR" or "OR". TRUE/FALSE to specify whether to
-include woolf test for homogeneity p-value. Tests whether there is a significant difference in the
-estimates between strata.}
+\item{woolf_test}{Only if strata specified and measure is "RR" or "OR".
+TRUE/FALSE to specify whether to include woolf test for homogeneity
+p-value. Tests whether there is a significant difference in the estimates
+between strata.}
 }
 \description{
-Produce odds ratios, risk ratios or incidence rate ratios with accompanying confidence intervals
+Produce odds ratios, risk ratios or incidence rate ratios
 }
 \examples{
 
 # generate a fake dataset
-a <- tibble(case_def = sample(c(TRUE, FALSE), 2000, replace = TRUE),
+a <- data.frame(case_def = sample(c(TRUE, FALSE), 2000, replace = TRUE),
            riskA = sample(c(TRUE, FALSE), 2000, replace = TRUE),
            riskB = sample(c(TRUE, FALSE), 2000, replace = TRUE),
            stratifier = sample(c(TRUE, FALSE), 2000, replace = TRUE),
            perstime = sample(150:250, 2000, replace = TRUE)
            )
 
-## read this article for details of calculations
-# http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704-ep713_confounding-em/BS704-EP713_Confounding-EM7.html
-
-
-
-
-# get counts table crude
-counts <- table(a[c("case_def", "riskA")])
-
-# get counts table stratified
-counts_strat <- table(a[c("case_def", "riskA", "stratifier")])
-
-## For odds ratios
-
-# get odds of exposure among cases
-expo_cases_odds <- counts[4]/counts[2]
-expo_cases_odds_strat_true <- counts_strat[8]/counts_strat[6]
-expo_cases_odds_strat_false <- counts_strat[4]/counts_strat[2]
-
-# get odds of exposure among controls
-expo_controls_odds <- counts[3]/counts[1]
-expo_controls_odds_strat_true <- counts_strat[7]/counts_strat[5]
-expo_control_odds_strat_false <- counts_strat[3] / counts_strat[1]
-
-# calculate odds ratio by using odds above
-or_from_odds <- expo_cases_odds / expo_controls_odds
-or_from_odds_strat_true <- expo_cases_odds_strat_true / expo_controls_odds_strat_true
-or_from_odds_strat_false <- expo_cases_odds_strat_false / expo_control_odds_strat_false
-
-# calculate odds ratio by cross multiplying counts
-or_from_cross <- (counts[4] * counts[1]) / (counts[2] * counts[3])
-or_from_cross_strat_true <- (counts_strat[8] * counts_strat[5]) / (counts_strat[6] * counts_strat[7])
-or_from_cross_strat_false <- (counts_strat[4] * counts_strat[1]) / (counts_strat[2] * counts_strat[3])
-
-
-# calculate mantel-haeszel ORs
-
-# get sums of strata
-sum_strat_true <- sum(counts_strat[ , ,2])
-sum_strat_false <- sum(counts_strat[ , , 1])
-
-# sigma(a_i * d_i / n_i) / sigma(b_i * c_i / n_i) where n_i is the sum of respective strata
-or_mh <- (((counts_strat[8] * counts_strat[5]) / sum_strat_true) +
-              ((counts_strat[4] * counts_strat[1]) / sum_strat_false) ) /
-  (((counts_strat[6] * counts_strat[7]) / sum_strat_true) +
-       ((counts_strat[2] * counts_strat[3]) / sum_strat_false) )
-
-
 # get the results from tab_univariate function
-func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6)
+func_res <- tab_univariate(a, case_def, riskA, 
+                           strata = stratifier, digits = 6, measure = "OR")
 
-# tests
-stopifnot(
-
-  ## crude
-
-  # check that function OR is equal to OR from odds
-  func_res$est[1] == or_from_odds,
-
-  # check that function OR is equal to OR from cross multiplying
-  func_res$est[1] == or_from_cross,
-
-  # check that function case_odds is equal to count odds
-  func_res$cases_odds[1] == expo_cases_odds,
-  func_res$controls_odds[1] == expo_controls_odds,
-
-  ## strata
-  # check that function OR is equal to OR from odds for strata
-  func_res$est[2] == or_from_odds_strat_true,
-  func_res$est[3] == or_from_odds_strat_false,
-
-  # check that function OR is equal to OR from cross multiplying for strata
-  func_res$est[2] == or_from_cross_strat_true,
-  func_res$est[3] == or_from_cross_strat_false,
-
-  # check that function case odds are equal to count odds for strata
-  func_res$cases_odds[2] == expo_cases_odds_strat_true,
-  func_res$cases_odds[3] == expo_cases_odds_strat_false,
-  func_res$controls_odds[2] == expo_controls_odds_strat_true,
-  func_res$controls_odds[3] == expo_control_odds_strat_false,
+# get risk ratios
+func_res <- tab_univariate(a, case_def, riskA, 
+                           strata = stratifier, digits = 6, measure = "RR")
 
 
-  ## Mantel-haeszel
-  # check that function mh odds are equal to calculated mh
-  func_res$est[4] == or_mh
-
-)
 }
 \references{
 Inspired by Daniel Gardiner,
-see \href{https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12}{github repo}
+see \href{https://github.com/DanielGardiner/UsefulFunctions/single.variable.analysis.v0.3.R}{github repo}
 }

@@ -1,214 +1,63 @@
-#' Produce odds ratios, risk ratios or incidence rate ratios with accompanying confidence intervals
+#' Produce odds ratios, risk ratios or incidence rate ratios
 #'
 #' @param x A data frame
 #'
-#' @param outcome Name of A TRUE/FALSE variable as your outcome of interest (e.g. illness)
+#' @param outcome Name of A TRUE/FALSE variable as your outcome of interest
+#'   (e.g. illness)
 #'
-#' @param ... Names of TRUE/FALSE variables as exposures of interest (e.g. risk factors)
+#' @param ... Names of TRUE/FALSE variables as exposures of interest (e.g. risk
+#'   factors)
 #'
-#' @param perstime A numeric variable containing the observation time for each individual
+#' @param perstime A numeric variable containing the observation time for each
+#'   individual
 #'
-#' @param strata Name of a TRUE/FALSE variable to be used for stratifying results. Note that this results
-#' in a different output table - giving you a table of crude measure, measures for each strata and
-#' the mantel-haeszel adjusted measure for each exposure variable listed in `...`
+#' @param strata Name of a TRUE/FALSE variable to be used for stratifying
+#'   results. Note that this results in a different output table - giving you a
+#'   table of crude measure, measures for each strata and the mantel-haeszel
+#'   adjusted measure for each exposure variable listed in `...`
 #'
-#' @param measure Specify what you would like to calculated, options are "OR", "RR" or "IRR"
-#' default is "OR"
+#' @param measure Specify what you would like to calculated, options are "OR",
+#'   "RR" or "IRR" default is "OR"
 #'
-#' @param extend_output TRUE/FALSE to specify whether would like all columns in the outputs (default is TRUE)
-#' Non-extended output drops group odds or risk calculations as well as p-values
+#' @param extend_output TRUE/FALSE to specify whether would like all columns in
+#'   the outputs (default is TRUE) Non-extended output drops group odds or risk
+#'   calculations as well as p-values
 #'
 #' @param digits Specify number of decimal places (default is 3)
 #'
-#' @param mergeCI Whether or not to put the confidence intervals in one column (default is FALSE)
+#' @param mergeCI Whether or not to put the confidence intervals in one column
+#'   (default is FALSE)
 #'
-#' @param woolf_test Only if strata specified and measure is "RR" or "OR". TRUE/FALSE to specify whether to
-#' include woolf test for homogeneity p-value. Tests whether there is a significant difference in the
-#' estimates between strata.
+#' @param woolf_test Only if strata specified and measure is "RR" or "OR".
+#'   TRUE/FALSE to specify whether to include woolf test for homogeneity
+#'   p-value. Tests whether there is a significant difference in the estimates
+#'   between strata.
 #'
 #' @importFrom epiR epi.2by2
 #' @importFrom dplyr select mutate_at group_by summarise
 #'
 #' @references Inspired by Daniel Gardiner,
-#' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/blob/efffde624d424d977651ed1a9ee4430cbf2b0d6f/single.variable.analysis.v0.3.R#L12)
+#' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/single.variable.analysis.v0.3.R)
 #' @export
 #' @examples
 #'
 #' # generate a fake dataset
-#' a <- tibble(case_def = sample(c(TRUE, FALSE), 2000, replace = TRUE),
+#' a <- data.frame(case_def = sample(c(TRUE, FALSE), 2000, replace = TRUE),
 #'            riskA = sample(c(TRUE, FALSE), 2000, replace = TRUE),
 #'            riskB = sample(c(TRUE, FALSE), 2000, replace = TRUE),
 #'            stratifier = sample(c(TRUE, FALSE), 2000, replace = TRUE),
 #'            perstime = sample(150:250, 2000, replace = TRUE)
 #'            )
 #'
-#' ## read this article for details of calculations
-#' # http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704-ep713_confounding-em/BS704-EP713_Confounding-EM7.html
-#'
-#'
-#'
-#' ## Tests for ORs
-#'
-#' # get counts table crude
-#' counts <- table(a[c("case_def", "riskA")])
-#'
-#' # get counts table stratified
-#' counts_strat <- table(a[c("case_def", "riskA", "stratifier")])
-#'
-#' ## For odds ratios
-#'
-#' # get odds of exposure among cases
-#' expo_cases_odds <- counts[4] / counts[2]
-#' expo_cases_odds_strat_true <- counts_strat[8] / counts_strat[6]
-#' expo_cases_odds_strat_false <- counts_strat[4] / counts_strat[2]
-#'
-#' # get odds of exposure among controls
-#' expo_controls_odds <- counts[3] / counts[1]
-#' expo_controls_odds_strat_true <- counts_strat[7] / counts_strat[5]
-#' expo_control_odds_strat_false <- counts_strat[3] / counts_strat[1]
-#'
-#' # calculate odds ratio by using odds above
-#' or_from_odds <- expo_cases_odds / expo_controls_odds
-#' or_from_odds_strat_true <- expo_cases_odds_strat_true / expo_controls_odds_strat_true
-#' or_from_odds_strat_false <- expo_cases_odds_strat_false / expo_control_odds_strat_false
-#'
-#' # calculate odds ratio by cross multiplying counts
-#' or_from_cross <- (counts[4] * counts[1]) / (counts[2] * counts[3])
-#' or_from_cross_strat_true <- (counts_strat[8] * counts_strat[5]) / (counts_strat[6] * counts_strat[7])
-#' or_from_cross_strat_false <- (counts_strat[4] * counts_strat[1]) / (counts_strat[2] * counts_strat[3])
-#'
-#'
-#' # calculate mantel-haeszel ORs
-#'
-#' # get sums of strata
-#' sum_strat_true <- sum(counts_strat[ , ,2])
-#' sum_strat_false <- sum(counts_strat[ , , 1])
-#'
-#' # sigma(a_i * d_i / n_i) / sigma(b_i * c_i / n_i) where n_i is the sum of respective strata
-#' or_mh <- (((counts_strat[8] * counts_strat[5]) / sum_strat_true) +
-#'               ((counts_strat[4] * counts_strat[1]) / sum_strat_false) ) /
-#'   (((counts_strat[6] * counts_strat[7]) / sum_strat_true) +
-#'        ((counts_strat[2] * counts_strat[3]) / sum_strat_false) )
-#'
-#'
 #' # get the results from tab_univariate function
-#' func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6)
-#'
-#' # tests
-#' stopifnot(
-#'
-#'   ## crude
-#'
-#'   # check that function OR is equal to OR from odds
-#'   func_res$est[1] == or_from_odds,
-#'
-#'   # check that function OR is equal to OR from cross multiplying
-#'   func_res$est[1] == or_from_cross,
-#'
-#'   # check that function case_odds is equal to count odds
-#'   func_res$cases_odds[1] == expo_cases_odds,
-#'   func_res$controls_odds[1] == expo_controls_odds,
-#'
-#'   ## strata
-#'   # check that function OR is equal to OR from odds for strata
-#'   func_res$est[2] == or_from_odds_strat_true,
-#'   func_res$est[3] == or_from_odds_strat_false,
-#'
-#'   # check that function OR is equal to OR from cross multiplying for strata
-#'   func_res$est[2] == or_from_cross_strat_true,
-#'   func_res$est[3] == or_from_cross_strat_false,
-#'
-#'   # check that function case odds are equal to count odds for strata
-#'   func_res$cases_odds[2] == expo_cases_odds_strat_true,
-#'   func_res$cases_odds[3] == expo_cases_odds_strat_false,
-#'   func_res$controls_odds[2] == expo_controls_odds_strat_true,
-#'   func_res$controls_odds[3] == expo_control_odds_strat_false,
+#' func_res <- tab_univariate(a, case_def, riskA, 
+#'                            strata = stratifier, digits = 6, measure = "OR")
+#' 
+#' # get risk ratios
+#' func_res <- tab_univariate(a, case_def, riskA, 
+#'                            strata = stratifier, digits = 6, measure = "RR")
 #'
 #'
-#'   ## Mantel-haeszel
-#'   # check that function mh odds are equal to calculated mh
-#'   func_res$est[4] == or_mh
-#'
-#' )
-#'
-#'
-#' ## Tests for RRs
-#'
-#' # get counts table crude
-#' counts <- table(a[c("riskA", "case_def")])
-#'
-#' # get counts table stratified
-#' counts_strat <- table(a[c("riskA", "case_def", "stratifier")])
-#'
-#' ## For risk ratios
-#'
-#' # get risk of being a case among exposed
-#' expo_cases_risk <- counts[4]/sum(counts[2,]) * 100
-#' expo_cases_risk_strat_true <- counts_strat[8] / sum(counts_strat[2, , 2]) * 100
-#' expo_cases_risk_strat_false <- counts_strat[4] / sum(counts_strat[2, , 1]) * 100
-#'
-#' # get risk of being a case among unexposed
-#' nonexpo_cases_risk <- counts[3]/sum(counts[1,]) * 100
-#' nonexpo_cases_risk_strat_true <- counts_strat[7] / sum(counts_strat[1, , 2]) * 100
-#' nonexpo_cases_risk_strat_false <- counts_strat[3] / sum(counts_strat[1, , 1]) * 100
-#'
-#' # calculate risk ratio by using risks above
-#' rr_from_risk <- expo_cases_risk / nonexpo_cases_risk
-#' rr_from_risk_strat_true <- expo_cases_risk_strat_true / nonexpo_cases_risk_strat_true
-#' rr_from_risk_strat_false <- expo_cases_risk_strat_false / nonexpo_cases_risk_strat_false
-#'
-#' # calculate mantel-haeszel ORs
-#'
-#' # get sums of strata
-#' sum_strat_true <- sum(counts_strat[ , ,2])
-#' sum_strat_false <- sum(counts_strat[ , , 1])
-#'
-#' # sigma(a_i * c_i + d_i / n_i) / sigma(c_i * a_i + b_i / n_i) where n_i is the sum of respective strata
-#' rr_mh <- (
-#'   ((counts_strat[8] * (counts_strat[5] + counts_strat[7])) / sum_strat_true) +
-#'     ((counts_strat[4] * (counts_strat[1] + counts_strat[3])) / sum_strat_false)) /
-#'   (
-#'     ((counts_strat[7] * (counts_strat[6] + counts_strat[8])) / sum_strat_true) +
-#'       ((counts_strat[3] * (counts_strat[2] + counts_strat[4])) / sum_strat_false))
-#'
-#'
-#' # get the results from tab_univariate function
-#' func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6, measure = "RR")
-#'
-#'
-#' # tests
-#' stopifnot(
-#'
-#'   ## crude
-#'
-#'   # check that function RR is equal to RR from risks
-#'   func_res$est[1] == rr_from_risk,
-#'
-#'   # check that function risk among exposed/unexposed is equal to count risks
-#'   func_res$exp_risk[1] == expo_cases_risk,
-#'   func_res$unexp_risk[1] == nonexpo_cases_risk,
-#'
-#'   ## strata
-#'   # check that function RR is equal to RR from risks for strata
-#'   func_res$est[2] == rr_from_risk_strat_true,
-#'   func_res$est[3] == rr_from_risk_strat_false,
-#'
-#'
-#'   # check that function risks are equal to count risks for strata
-#'   func_res$exp_risk[2] == expo_cases_risk_strat_true,
-#'   func_res$exp_risk[3] == expo_cases_risk_strat_false,
-#'   func_res$unexp_risk[2] == nonexpo_cases_risk_strat_true,
-#'   func_res$unexp_risk[3] == nonexpo_cases_risk_strat_false,
-#'
-#'
-#'   ## Mantel-haeszel
-#'   # check that function mh odds are equal to calculated mh
-#'   func_res$est[4] == rr_mh
-#'
-#' )
-
-
-
 tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
                            measure = "OR", extend_output = TRUE,
                            digits = 3, mergeCI = FALSE, woolf_test = FALSE) {

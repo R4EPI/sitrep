@@ -62,51 +62,51 @@ func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6)
 
 test_that("function OR is equal to OR from odds", {
 
-  expect_equal(func_res$est[1], or_from_odds, tol = 1e-3)
+  expect_equal(func_res$est[1], or_from_odds, tol = 1e-6)
 
 })
 
 test_that("function OR is equal to OR from cross multiplying", {
 
-  expect_equal(func_res$est[1], or_from_cross, tol = 1e-3)
+  expect_equal(func_res$est[1], or_from_cross, tol = 1e-6)
 
 })
 
 test_that("function case_odds is equal to count odds", {
 
-  expect_equal(func_res$cases_odds[1],    expo_cases_odds,    tol = 1e-3)
-  expect_equal(func_res$controls_odds[1], expo_controls_odds, tol = 1e-3)
+  expect_equal(func_res$cases_odds[1],    expo_cases_odds,    tol = 1e-2)
+  expect_equal(func_res$controls_odds[1], expo_controls_odds, tol = 1e-2)
 
 })
 
 ## strata
 test_that("function OR is equal to OR from odds for strata", {
 
-  expect_equal(func_res$est[2], or_from_odds_strat_true,  tol = 1e-3)
-  expect_equal(func_res$est[3], or_from_odds_strat_false, tol = 1e-3)
+  expect_equal(func_res$est[2], or_from_odds_strat_true,  tol = 1e-6)
+  expect_equal(func_res$est[3], or_from_odds_strat_false, tol = 1e-6)
 
 })
 
 test_that("function OR is equal to OR from cross multiplying for strata", {
 
-  expect_equal(func_res$est[2], or_from_cross_strat_true,  tol = 1e-3)
-  expect_equal(func_res$est[3], or_from_cross_strat_false, tol = 1e-3)
+  expect_equal(func_res$est[2], or_from_cross_strat_true,  tol = 1e-6)
+  expect_equal(func_res$est[3], or_from_cross_strat_false, tol = 1e-6)
 
 })
 
 test_that("function case odds are equal to count odds for strata", {
 
-  expect_equal(func_res$cases_odds[2],    expo_cases_odds_strat_true,    tol = 1e-3)
-  expect_equal(func_res$cases_odds[3],    expo_cases_odds_strat_false,   tol = 1e-3)
-  expect_equal(func_res$controls_odds[2], expo_controls_odds_strat_true, tol = 1e-3)
-  expect_equal(func_res$controls_odds[3], expo_control_odds_strat_false, tol = 1e-3)
+  expect_equal(func_res$cases_odds[2],    expo_cases_odds_strat_true,    tol = 1e-6)
+  expect_equal(func_res$cases_odds[3],    expo_cases_odds_strat_false,   tol = 1e-6)
+  expect_equal(func_res$controls_odds[2], expo_controls_odds_strat_true, tol = 1e-6)
+  expect_equal(func_res$controls_odds[3], expo_control_odds_strat_false, tol = 1e-6)
 
 })
 
 
 ## Mantel-haeszel
 test_that("function mh odds are equal to calculated mh", {
-  expect_equal(func_res$est[4], or_mh, tol = 1e-3)
+  expect_equal(func_res$est[4], or_mh, tol = 1e-6)
 })
 
 
@@ -152,7 +152,7 @@ func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6, 
 
 ## crude
 test_that("function RR is equal to RR from risks", {
-  expect_equal(func_res$est[1], rr_from_risk, tol = 1e-3)
+  expect_equal(func_res$est[1], rr_from_risk, tol = 1e-6)
 })
 
 
@@ -164,20 +164,20 @@ test_that("function risk among exposed/unexposed is equal to count risks", {
 
 ## strata
 test_that("function RR is equal to RR from risks for strata", {
-  expect_equal(func_res$est[2], rr_from_risk_strat_true, tol = 1e-3)
-  expect_equal(func_res$est[3], rr_from_risk_strat_false, tol = 1e-3)
+  expect_equal(func_res$est[2], rr_from_risk_strat_true, tol = 1e-6)
+  expect_equal(func_res$est[3], rr_from_risk_strat_false, tol = 1e-6)
 })
 
 
 test_that("function risks are equal to count risks for strata", {
-  expect_equal(func_res$exp_risk[2], expo_cases_risk_strat_true, tol = 1e-3)
-  expect_equal(func_res$exp_risk[3], expo_cases_risk_strat_false, tol = 1e-3)
-  expect_equal(func_res$unexp_risk[2], nonexpo_cases_risk_strat_true, tol = 1e-3)
-  expect_equal(func_res$unexp_risk[3], nonexpo_cases_risk_strat_false, tol = 1e-3)
+  expect_equal(func_res$exp_risk[2], expo_cases_risk_strat_true, tol = 1e-6)
+  expect_equal(func_res$exp_risk[3], expo_cases_risk_strat_false, tol = 1e-6)
+  expect_equal(func_res$unexp_risk[2], nonexpo_cases_risk_strat_true, tol = 1e-6)
+  expect_equal(func_res$unexp_risk[3], nonexpo_cases_risk_strat_false, tol = 1e-6)
 })
 
 
 ## Mantel-haeszel
 test_that("function mh odds are equal to calculated mh", {
-  expect_equal(func_res$est[4], rr_mh, tol = 1e-3)
+  expect_equal(func_res$est[4], rr_mh, tol = 1e-6)
 })
