@@ -989,13 +989,13 @@ ar %>%
   merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
   rename("Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   select(-Population) %>% # drop the population column as it is not changing
   knitr::kable(digits = 2, align = "r")
 ```
 
-Here, we can see that the Attack Rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
+Here, we can see that the attack rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
 
 To give attack rate by age group, with appropriate population denominators, use the following code. 
 
@@ -1004,13 +1004,13 @@ cases <- count(linelist_cleaned, age_category) %>%   # cases for each week
   left_join(population_data_age_categories, by = "age_category")    # merge population data 
 
 # attack rate for each week
-attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>% 
+attack_rate(cases$n, cases$population, multiplier = 10000, mergeCI = TRUE) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, age_category), .) %>% 
   rename("Age group" = age_category, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   kable(digits = 2, format.args = list(big.mark = ",")) # set thousands separator
 ```
@@ -1220,7 +1220,7 @@ cases <- linelist_cleaned %>%
   mutate(cumulative = cumsum(n))    # add a cumulative sum
 
 # attack rate for each week
-ar <- attack_rate(cases$n, population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$n, population, multiplier = 10000) %>% 
   bind_cols(select(cases, epiweek), .) # add the epiweek column to table
 
 ar %>%
@@ -1228,7 +1228,7 @@ ar %>%
   rename("Epiweek" = epiweek, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   knitr::kable(digits = 2, align = "r")
 ```
@@ -1238,13 +1238,13 @@ The below gives the cumulative attack rate per week.
 
 ```{r cumulative_attack_rate_per_week}
 # cumulative attack rate by week
-attack_rate(cases$cumulative, population, multiplier = 100000) %>% 
+attack_rate(cases$cumulative, population, multiplier = 10000) %>% 
   bind_cols(select(cases, epiweek), .) %>% # add the epiweek column to table
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
   rename("Epiweek" = epiweek, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   knitr::kable(digits = 2, align = "r")
 ```
@@ -1279,7 +1279,7 @@ ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   # scale the x axis the same as the incidence curve. Expand forces it to align. 
   incidence::scale_x_incidence(inc_week_7, n_breaks = nrow(inc_week_7), expand = c(0, 7 * 1.5)) +
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 100,000)") + 
+  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 10,000)") + 
   # change visuals of dates and remove legend title
   epicurve_theme
 ```
@@ -1399,13 +1399,13 @@ If you do not have spatial data available, it may also be worth calculating atta
 cases <- count(linelist_cleaned, patient_origin) %>%   # cases for each region
   left_join(population_data_region, by = "patient_origin")    # merge population data 
 # attack rate for region
-ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$n, cases$population, multiplier = 10000) %>% 
   # add the region column to table
   bind_cols(select(cases, patient_origin), .) %>% 
   rename("Region" = patient_origin, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) 
 
@@ -1420,13 +1420,13 @@ You could then also plot this on a bar chart with confidence intervals.
 ```{r bar_attack_rate_by_region}
 # plot with the region on the x axis sorted by increasing ar
 # ar value on the y axis 
-ggplot(ar, aes(x = reorder(Region, `AR (per 100,000)`),
-               y = `AR (per 100,000)`)) + 
+ggplot(ar, aes(x = reorder(Region, `AR (per 10,000)`),
+               y = `AR (per 10,000)`)) + 
   geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
   geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
-  labs(x = "Region", y = "AR (per 100,000)", 
+  labs(x = "Region", y = "AR (per 10,000)", 
        captions = paste0("Source: MSF data from ", reporting_week)) + 
   epicurve_theme
 ```
@@ -1514,7 +1514,7 @@ breakers <- as.integer(c(0, # include zero as a standalone group
 ## add a categorical variable using the age_categories function 
 ## nb in this case we arent using ages - but it functions the same way!
 ar <- mutate(ar, 
-             categories = age_categories(`AR (per 100,000)`, 
+             categories = age_categories(`AR (per 10,000)`, 
                                          breakers = breakers)
              )
 
@@ -1526,7 +1526,7 @@ mapsub <- left_join(map, ar, by = c("name" = "Region"))
 ## plotting with polygons ------------------------------------------------------
 
 ## choropleth 
-## you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 100,000)`
+## you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 10,000)`
 ggplot() +
   geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + # shapefile as polygon
   coord_sf(datum = NA) + # needed to avoid gridlines being drawn
@@ -1534,7 +1534,7 @@ ggplot() +
   # color the scale to be perceptually uniform 
   # drop FALSE keeps all levels 
   # name allows you to change the legend title 
-  scale_fill_viridis_d(drop = FALSE, option = "C", name = "AR (per 100,000)") + 
+  scale_fill_viridis_d(drop = FALSE, option = "C", name = "AR (per 10,000)") + 
   geom_sf_text(data = mapsub, aes(label = name), colour = "grey50") + # label polygons
   theme_void() # remove coordinates and axes
 
@@ -1563,7 +1563,7 @@ You could then also throw your bar plot by region and the choropleth map, for ea
 ## Checklist for plotting in for-loop ------------------------------------------
 ## - [ ] decide if you would like to show counts, AR or categories of those
 ## - [ ] define appropriate breaks to ensure legend is uniform by week
-## - [ ] replace `Cases (n)` and `AR (per 100,000)` or "categories", appropriately
+## - [ ] replace `Cases (n)` and `AR (per 10,000)` or "categories", appropriately
 ## - [ ] consider facet wrapping by an overarching unit if have many regions (e.g. by province)
 
 
@@ -1579,13 +1579,13 @@ cases <- linelist_cleaned %>%
   left_join(population_data_region, by = "patient_origin")    # merge population data 
 
 # attack rate for region
-ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$n, cases$population, multiplier = 10000) %>% 
   # add the region column to table
   bind_cols(select(cases, epiweek, patient_origin), .) %>% 
   rename("Region" = patient_origin, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper)
 max_cases <- max(cases$n, na.rm = TRUE) # define the maximum number of cases for the color palette 
@@ -1598,7 +1598,7 @@ breakers <- as.integer(c(0, # include zero as a standalone group
 ## add a categorical variable using the age_categories function 
 ## nb in this case we arent using ages - but it functions the same way!
 ar <- mutate(ar, 
-             categories = age_categories(`AR (per 100,000)`, 
+             categories = age_categories(`AR (per 10,000)`, 
                                          breakers = breakers)
              )
 
@@ -1616,18 +1616,18 @@ for (i in unique(cases$epiweek)) {
     coord_sf(datum = NA) + # needed to avoid gridlines being drawn
     annotation_scale() + # add a scalebar
     scale_fill_viridis_d(drop = FALSE, option = "C", 
-                         name = "AR (per 100,000)") + # color the scale to be perceptually uniform (keep levels)
+                         name = "AR (per 10,000)") + # color the scale to be perceptually uniform (keep levels)
     theme_void() # remove coordinates and axes
   
   # plot with the region on the x axis sorted by increasing ar
   # ar value on the y axis 
-  barplot <- ggplot(this_ar, aes(x = reorder(Region, `AR (per 100,000)`),
-                                 y = `AR (per 100,000)`)) + 
+  barplot <- ggplot(this_ar, aes(x = reorder(Region, `AR (per 10,000)`),
+                                 y = `AR (per 10,000)`)) + 
     geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
     geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
     scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  # set origin for axes
     # add labels to axes and below chart
-    labs(x = "Region", y = "AR (per 100,000)", 
+    labs(x = "Region", y = "AR (per 10,000)", 
          captions = paste0("Source: MSF data from ", reporting_week)) + 
     epicurve_theme
   # combine the barplot and map plot into one
