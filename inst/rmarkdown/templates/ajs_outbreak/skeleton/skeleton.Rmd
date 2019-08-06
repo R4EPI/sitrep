@@ -252,7 +252,14 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ##
 ## This assumes your data does not fit the standardised MSF data dictionary for
 ## this disease. If you are using this section, be aware that this template may
-## not work simply due to the unpredictable nature of non-standardized data
+## take more effort due to the unpredictable nature of non-standardized data.
+##
+## Your data must be in an Excel or CSV file. If your data is in Excel, make
+## sure that the Excel sheet is not protected. Many of the old MSF Excel
+## templates are in protected sheets.
+## If you have a protected sheet, you can save the sheet as a new file.
+## This will unprotect the sheet.
+##
 ##
 ## Checklist to clean and update this script to match your data ---------------
 ## 
