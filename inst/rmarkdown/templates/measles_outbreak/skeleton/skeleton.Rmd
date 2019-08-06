@@ -129,10 +129,12 @@ linelist_raw <- gen_data("Measles")
 
 ## Excel file (password-protected) ------
 #
-## Use the excel.link package 
+## Use the excel.link package
+## The askpass password will prompt you to enter the password
+
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
-# library(askpass)
+# 
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
@@ -288,12 +290,16 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # 
 # For password protected Excel file 
 # use the excel.link package 
+## Use the excel.link package
+## The askpass password will prompt you to enter the password
+
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
-# library(askpass)
+# 
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
-#                              password = askpass::askpass("please enter file password"))
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 # 
