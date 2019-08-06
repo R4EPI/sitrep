@@ -85,6 +85,15 @@ aweek::set_week_start("Monday")
 ```
 
 
+```{r define_current_week}
+
+# In order to automate your report you need define week of interest (reporting_week)
+# This will generally be one week in the past from when you write your report
+
+# define current week 
+reporting_week <- "2019-W10"
+
+```
 
 
 ```{r read_DHIS_excel_data, warning = FALSE, message = FALSE}
@@ -110,6 +119,7 @@ aweek::set_week_start("Monday")
 ## Excel file (password-protected) ------
 #
 ## Use the excel.link package 
+# install.packages(excel.link)
 # library(excel.link)
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
@@ -258,6 +268,7 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # 
 # For password protected Excel file 
 # use the excel.link package 
+# install.packages(excel.link)
 # library(excel.link)
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
@@ -714,6 +725,22 @@ LABS <- c("hep_b_rdt",
 linelist_cleaned <- linelist_cleaned %>% 
   filter(!is.na(case_number) & !is.na(date_of_admission)) 
 
+
+
+# drop cases after reporting week
+linelist_cleaned <- linelist_cleaned %>% 
+  filter(date_of_onset <= week2date(sprintf("%s-7", reporting_week)))
+
+# define the first week of outbreak (date of first case)
+first_week <- levels(linelist_cleaned$epiweek)[1]
+
+# outbreak start 
+# return the first day in the week of first case 
+obs_start <- week2date(sprintf("%s-1", first_week))
+
+# return last day of reporting week 
+obs_end   <- week2date(sprintf("%s-7", reporting_week))
+
 # OPTIONAL: drop several variables you might not want
 # the negative sign before the "c"" in select drops those variables
 # without the negative you would only keep the names variables
@@ -729,43 +756,6 @@ linelist_cleaned <- linelist_cleaned %>%
 ## put the current date in the name so you know!
 writexl::write_xlsx(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
 ```
-
-
-
-```{r define_current_week}
-
-# In order to automate your report you need define week of interest (reporting_week)
-# This will generally be one week in the past from when you write your report
-
-# to demonstrate in this template we will take the maximum epiweek
-# however you can define epiweek by hand as below
-
-# define current week 
-# reporting_week <- "2018-W10"
-
-# DELETE THIS LINE (this is just for the purpose of the template)
-reporting_week <- levels(linelist_cleaned$epiweek)[nlevels(linelist_cleaned$epiweek)]
-
-
-# drop cases after current week
-# you will probably have cases in your dataset if case finding continues
-# as these are after the week of reporting, drop them
-linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_onset <= week2date(sprintf("%s-7", reporting_week)))
-
-# define the first week of outbreak (date of first case)
-first_week <- levels(linelist_cleaned$epiweek)[1]
-
-# outbreak start 
-# return the first day in the week of first case 
-obs_start <- week2date(sprintf("%s-1", first_week))
-
-# return last day of reporting week 
-obs_end   <- week2date(sprintf("%s-7", reporting_week))
-
-```
-
-
 
 
 
