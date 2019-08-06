@@ -118,6 +118,8 @@ linelist_raw <- gen_data("Measles")
 
 
 ## Read data ------------------------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
 
 # USE ONE OF THE BELOW TWO OPTIONS TO READ IN YOUR DATA FROM EXCEL
 # one version is for password protected files
@@ -215,6 +217,9 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # This assumes your data fits the standardised MSF data dictionary for this disease
 
 ## Read data ------------------------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
+
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
 
@@ -284,6 +289,9 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 
 
 ## Read data ------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
+
 # Excel file
 # to read in a specific sheet use "which"
 # linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
@@ -387,6 +395,8 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 
 
 ## Read data ------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
 
 ## Excel file
 ## to read in a specific sheet use "which"
@@ -441,6 +451,8 @@ population_data_age_categories <- gen_population(total_pop = 5000,
 ## - [ ] DELETE THE FAKE DATA SECTION!!
 
 ## Read data ------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
 
 ## Excel file
 ## to read in a specific sheet use "which"
