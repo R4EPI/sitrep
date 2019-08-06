@@ -1550,9 +1550,7 @@ map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin))
 
 
 ## reading in a shapefile 
-## shapefiles consist of multiple files
-## so you dont need to specify the file type (reas_sf recognises it for you)
-# map <- read_sf(here("mapfolder", "region"))
+# map <- read_sf(here("mapfolder", "region.shp"))
 
 
 ## check the coordinate reference system (CRS)
