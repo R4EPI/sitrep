@@ -188,7 +188,7 @@ linelist_cleaned <- linelist_raw
 ## and their column number using: names(linelist_cleaned) this example keeps
 ## the first three columns as well as age_years and sex variables
 
-# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
+# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 
 ## Standardising values --------------------------------------------
 ## 
