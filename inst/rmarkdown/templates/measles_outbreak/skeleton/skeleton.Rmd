@@ -52,12 +52,14 @@ options(knitr.kable.NA = "-")
 required_packages <- c("knitr",       # create output docs
                        "dplyr",       # clean/shape data
                        "forcats",     # clean/shape data
-                       "linelist",    # clean data based on a dictionary
+                       "rio",         # read in data
                        "ggplot2",     # create plots and charts
                        "sitrep",      # MSF field epi functions
+                       "linelist",    # Functions for cleaning/standardising data
                        "incidence",   # create epicurves
                        "aweek",       # define epi weeks
                        "epitools",    # 2x2 tables and other epi goodness
+                       "epitrix",     # epi helpers and tricks
                        "sf",          # encode spatial vector data
                        "ggspatial")   # plot maps
 
@@ -83,6 +85,24 @@ aweek::set_week_start("Monday")
 ```
 
 
+
+```{r define_current_week}
+
+# In order to automate your report you need define week of interest (reporting_week)
+# This will generally be one week in the past from when you write your report
+
+# define current week 
+reporting_week <- "2019-W25"
+
+```
+
+
+
+```{r read_fake_data, warning = FALSE, message = FALSE}
+# This chunk creates fake data for to use as an example in this template.
+# Comment out if you have your own data.
+linelist_raw <- gen_data("Measles")
+```
 
 
 
@@ -110,13 +130,13 @@ aweek::set_week_start("Monday")
 ## Excel file (password-protected) ------
 #
 ## Use the excel.link package 
+# install.packages(c("excel.link", "askpass"))
 # library(excel.link)
+# library(askpass)
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
-## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
-linelist_raw <- gen_data("Measles") # generates a fake dataset for use as an example in this template
 
 ## MSF Measles Dictionary ---------------
 ## The data dictionary has variable names in the data_element_shortname column. 
@@ -170,7 +190,7 @@ linelist_cleaned <- linelist_raw
 ## and their column number using: names(linelist_cleaned) this example keeps
 ## the first three columns as well as age_years and sex variables
 
-# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
+# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 
 ## Standardising values --------------------------------------------
 ## 
@@ -179,7 +199,8 @@ linelist_cleaned <- linelist_raw
 ## sex coded as M or F. This line uses the MSF dictionary to recode these values
 ## back to a human-readable format.
 linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
-                                            wordlists = filter(linelist_dict, !is.na(option_code)),
+                                            wordlists = filter(linelist_dict,
+                                                               !is.na(option_code)),
                                             spelling_vars = "data_element_shortname",
                                             sort_by = "option_order_in_set"
                                            )
@@ -260,7 +281,9 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # 
 # For password protected Excel file 
 # use the excel.link package 
+# install.packages(c("excel.link", "askpass"))
 # library(excel.link)
+# library(askpass)
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass("please enter file password"))
@@ -314,7 +337,7 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ## and their column number using: names(linelist_cleaned) this example keeps
 ## the first three columns as well as age_years and sex variables
 
-# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
+# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 ```
 
 
@@ -690,42 +713,8 @@ SYMPTOMS <- c("fever",
 linelist_cleaned <- linelist_cleaned %>% 
   filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
 
-# OPTIONAL: drop several variables you might not want
-# the negative sign before the "c"" in select drops those variabels 
-# without the negative you would only keep the names variables
-# linelist_cleaned <- linelist_cleaned %>% 
-#   select(-c(msf_involvement, treatment_facility_name))
 
-```
-
-
-
-```{r save_cleaned_data, eval = FALSE}
-## OPTIONAL: save your cleaned dataset as an excel file! 
-## put the current date in the name so you know!
-writexl::write_xlsx(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
-```
-
-
-
-```{r define_current_week}
-
-# In order to automate your report you need define week of interest (reporting_week)
-# This will generally be one week in the past from when you write your report
-
-# to demonstrate in this template we will take the maximum epiweek
-# however you can define epiweek by hand as below
-
-# define current week 
-# reporting_week <- "2018-W10"
-
-# DELETE THIS LINE (this is just for the purpose of the template)
-reporting_week <- levels(linelist_cleaned$epiweek)[nlevels(linelist_cleaned$epiweek)]
-
-
-# drop cases after current week
-# you will probably have cases in your dataset if case finding continues
-# as these are after the week of reporting, drop them
+# drop cases after reporting week
 linelist_cleaned <- linelist_cleaned %>% 
   filter(date_of_onset <= week2date(sprintf("%s-7", reporting_week)))
 
@@ -739,7 +728,22 @@ obs_start <- week2date(sprintf("%s-1", first_week))
 # return last day of reporting week 
 obs_end   <- week2date(sprintf("%s-7", reporting_week))
 
+# OPTIONAL: drop several variables you might not want
+# the negative sign before the "c"" in select drops those variabels 
+# without the negative you would only keep the names variables
+# linelist_cleaned <- linelist_cleaned %>% 
+#   select(-c(msf_involvement, treatment_facility_name))
+
 ```
+
+
+
+```{r save_cleaned_data, eval = FALSE}
+## OPTIONAL: save your cleaned dataset as an excel file! 
+## put the current date in the name so you know!
+rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
+```
+
 
 
 
@@ -834,8 +838,8 @@ filter(linelist_cleaned, age_years <= 2) %>%
        )
 ```
 
-Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpatient")` were seen as outpatients and `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` were inpatients. Among inpatients, the median number of days admitted was `r median(linelist_cleaned$obs_days)`, 
-with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_cleaned$obs_days)` days.
+Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpatient")` were seen as outpatients and `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` were inpatients. Among inpatients, the median number of days admitted was `r median(linelist_cleaned$obs_days, na.rm = TRUE)`, 
+with a range between `r min(linelist_cleaned$obs_days, na.rm = TRUE)` and `r max(linelist_cleaned$obs_days, na.rm = TRUE)` days.
 
 
 Cases by illness severity at visit/admission
