@@ -134,6 +134,7 @@ linelist_raw <- gen_data("AJS")
 ## Use the excel.link package 
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
+# library(askpass)
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
