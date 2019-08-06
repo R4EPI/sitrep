@@ -93,7 +93,7 @@ aweek::set_week_start("Monday")
 # This will generally be one week in the past from when you write your report
 
 # define current week 
-reporting_week <- "2019-W10"
+reporting_week <- "2019-W25"
 
 ```
 
@@ -761,10 +761,9 @@ obs_end   <- week2date(sprintf("%s-7", reporting_week))
 
 
 ```{r save_cleaned_data, eval = FALSE}
-## OPTIONAL: save your cleaned dataset as an excel file! 
+## OPTIONAL: save your cleaned dataset! 
 ## put the current date in the name so you know!
-rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"), 
-            format = xlsx)
+rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
 ```
 
 
