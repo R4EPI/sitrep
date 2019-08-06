@@ -1485,7 +1485,7 @@ ggplot() +
   # color the scale to be perceptually uniform 
   # drop FALSE keeps all levels 
   # name allows you to change the legend title 
-  scale_fill_viridis_d(drop = FALSE, option = "C", name = "AR (per 10,000)") + 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") + 
   geom_sf_text(data = mapsub, aes(label = name), colour = "grey50") + # label polygons
   theme_void() # remove coordinates and axes
 
@@ -1500,7 +1500,7 @@ ggplot() +
 #   geom_sf(data = mapsub, aes(fill = categories), shape = 21, size = 5, color = "black") + 
 #   coord_sf(datum = NA) + # needed to avoid gridlines being drawn
 #   annotation_scale() + # add a scalebar
-#   scale_fill_viridis_d(drop = FALSE, option = "C") + # color the scale to be perceptually uniform
+#    scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") + color the scale to be perceptually uniform
 #   theme_void() # remove coordinates and axes
 
 ```
@@ -1562,11 +1562,14 @@ for (i in unique(cases$epiweek)) {
   
   # choropleth 
   map_plot <- ggplot() +
-    geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + # shapefile as polygon
+    geom_sf(data = mapsub, 
+            aes(fill = categories), 
+            col = "grey50") + # shapefile as polygon
     coord_sf(datum = NA) + # needed to avoid gridlines being drawn
     annotation_scale() + # add a scalebar
-    scale_fill_viridis_d(drop = FALSE, option = "C", 
-                         name = "AR (per 10,000)") + # color the scale to be perceptually uniform (keep levels)
+    scale_fill_brewer(drop = FALSE, 
+                      palette = "OrRd", 
+                      name = "AR (per 10,000)") + # color the scale to be perceptually uniform (keep levels)
     theme_void() # remove coordinates and axes
   
   # plot with the region on the x axis sorted by increasing ar
