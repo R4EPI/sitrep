@@ -87,6 +87,8 @@ aweek::set_week_start("Monday")
 ```
 
 
+
+
 ```{r define_current_week}
 
 # In order to automate your report you need define week of interest (reporting_week)
@@ -96,6 +98,9 @@ aweek::set_week_start("Monday")
 reporting_week <- "2019-W25"
 
 ```
+
+
+
 
 ```{r read_fake_data, warning = FALSE, message = FALSE}
 # This chunk creates fake data for to use as an example in this template.
@@ -192,7 +197,8 @@ linelist_cleaned <- linelist_raw
 ## sex coded as M or F. This line uses the MSF dictionary to recode these values
 ## back to a human-readable format.
 linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
-                                            wordlists = filter(linelist_dict, !is.na(option_code)),
+                                            wordlists = filter(linelist_dict,
+                                                               !is.na(option_code)),
                                             spelling_vars = "data_element_shortname",
                                             sort_by = "option_order_in_set"
                                            )
@@ -273,8 +279,9 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # 
 # For password protected Excel file 
 # use the excel.link package 
-# install.packages(excel.link)
+# install.packages(c("excel.link", "askpass"))
 # library(excel.link)
+# library(askpass)
 # linelist_raw <- xl.read.file("linelist.xlsx",
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass("please enter file password"))
