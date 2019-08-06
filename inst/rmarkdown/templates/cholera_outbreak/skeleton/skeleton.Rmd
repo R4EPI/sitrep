@@ -190,7 +190,7 @@ linelist_cleaned <- linelist_raw
 ## and their column number using: names(linelist_cleaned) this example keeps
 ## the first three columns as well as age_years and sex variables
 
-# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
+# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 
 ## Standardising values --------------------------------------------
 ## 
@@ -336,7 +336,7 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ## and their column number using: names(linelist_cleaned) this example keeps
 ## the first three columns as well as age_years and sex variables
 
-# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
+# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 ```
 
 
@@ -784,6 +784,8 @@ plot_age_pyramid(linelist_cleaned,
 #        )
 ```
 
+
+
 ```{r treatment_plans, warning = FALSE}
 # summarize the number of patients admitted to treatment plans for printing in
 # the report. 
@@ -817,8 +819,8 @@ descriptive(linelist_cleaned,
 ```
 
 
-The median number of days admitted was `r median(linelist_cleaned$obs_days)`, 
-with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_cleaned$obs_days)` days. 
+The median number of days admitted was `r median(linelist_cleaned$obs_days, na.rm = T)`, 
+with a range between `r min(linelist_cleaned$obs_days, na.rm = T)` and `r max(linelist_cleaned$obs_days, na.rm = T)` days. 
 A total of `r fmt_count(linelist_cleaned, readmission == "Yes")` patients were readmitted to the CTC. 
 
 
