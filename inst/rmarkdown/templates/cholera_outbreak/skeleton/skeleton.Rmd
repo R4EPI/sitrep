@@ -546,10 +546,14 @@ linelist_cleaned <- mutate(linelist_cleaned,
 ## OPTIONAL: add under 2 years to the age_years variable
 ## data dictionary defines that under 2s dont have year filled in (but months/days instead)
 linelist_cleaned <- linelist_cleaned %>% 
-  mutate(age_years = case_when(
-    is.na(age_years) & is.na(age_months) ~ as.integer(age_days / 365.25),
-    is.na(age_years)                     ~ as.integer(age_months / 12),
-    TRUE                                 ~ as.integer(age_years)
+  mutate(age_months = case_when(
+    is.na(age_years) & is.na(age_months) ~ as.numeric(age_days / 30), 
+    TRUE                                 ~ as.numeric(age_months)
+  ),
+  age_years = case_when(
+    is.na(age_years) & is.na(age_months) ~ as.numeric(age_days / 365.25),
+    is.na(age_years)                     ~ as.numeric(age_months / 12),
+    TRUE                                 ~ as.numeric(age_years)
   ))
 
 ## OPTIONAL: change those who are above or below a certain age to NA
@@ -622,7 +626,7 @@ linelist_cleaned <- linelist_cleaned %>%
   ))
 
 
-## recode a factor character variable
+## recode a character variable
 ## fix any misspellings in the manually entered geographic region variables
 ## you can choose any geographic region which you have available to you 
 ## ideally this variable would fit your shapefile and population data! 
@@ -634,6 +638,27 @@ linelist_cleaned <- linelist_cleaned %>%
 #     "Village D" = "Villiage D"
 #   ))
 
+## sometimes, coding is inconsistent across variables -- for example, "Yes" / "No"
+## may be coded as Y, y, yes, 1 / N, n, no, 0. You can change them all at once!
+## Create a list of the variables you want to change, and run the following.
+## You may need to edit this code if options are different in your data.
+
+# # create list of variables
+# change_yn <- c("headache", "fever", "vomiting")
+# 
+# # standardize options
+# linelist_cleaned <- linelist_cleaned %>%
+#   mutate_at(vars(change_yn), ~case_when(
+#     . == "Yes" ~ "Yes",
+#     . == "y"   ~ "Yes",
+#     . == "Y"   ~ "Yes",
+#     . == "No"  ~ "No",
+#     . == "N"   ~ "No",
+#     . == "n"   ~ "No",
+#     . == 1     ~ "Yes",
+#     . == 0     ~ "No",
+#     TRUE       ~ "Unknown"
+#     ))
 
 # Force missing values to be explicit
 linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
@@ -656,7 +681,7 @@ linelist_cleaned <- linelist_cleaned %>%
             "None", "Some", "Severe", "Unknown" # Sets order of levels
            )
 
-# Create a factor variable based on rules from other simple character variables
+# Create a variable based on rules from other simple character variables
 # create a case definition variable 
 # the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
 # starting from the specific to the general
