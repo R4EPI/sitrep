@@ -461,12 +461,12 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   # rearrange them so that they are grouped by variable/value
 
   if (flip_it) {
-    res <- flipper(x, res, transpose, pretty = pretty, stra = stra, var = var)    
+    res <- flipper(x, res, transpose, pretty = pretty, stra = stra)
   }
   res
 }
 
-flipper <- function(x, res, transpose = c("variable", "value", "both"), pretty = TRUE, stra, var) {
+flipper <- function(x, res, transpose = c("variable", "value", "both"), pretty = TRUE, stra) {
 
   transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
   if (transpose == "both") {
