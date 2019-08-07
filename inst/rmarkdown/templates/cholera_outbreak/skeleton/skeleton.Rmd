@@ -103,7 +103,7 @@ reporting_week <- "2019-W25"
 
 ```{r read_fake_data, warning = FALSE, message = FALSE}
 # This chunk creates fake data for to use as an example in this template.
-# Comment out if you have your own data.
+# Comment out if you are using real data.
 linelist_raw <- gen_data("Cholera")
 ```
 
@@ -185,7 +185,7 @@ linelist_cleaned <- linelist_raw
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME)
 
 # linelist_cleaned <- rename(linelist_cleaned, 
-#                            gender    = sex, 
+#                            sex       = gender, 
 #                            age_years = age)
 
 
@@ -224,7 +224,8 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # linelist_raw <- rio::import("linelist.csv")
 
 ## get MSF data dictionary for cholera 
-# linelist_dict <- msf_dict("Cholera")
+# linelist_dict <- msf_dict("Cholera", compact = FALSE) %>%
+#   select(option_code, option_name, everything())
 
 ## Fixing variable names ----------------------
 ## make a copy of your original dataset and name it linelist_cleaned
@@ -284,8 +285,10 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ## Where code has the shortened values and name has the full text values. 
 ##
 ## - [ ] run this to look at the data dictionary: 
-# linelist_dict <- msf_dict("Cholera")
+# linelist_dict <- msf_dict("Cholera", compact = FALSE) %>%
+#   select(option_code, option_name, everything())
 # View(linelist_dict) 
+
 
 
 ## Read data ------------------------------------
@@ -297,10 +300,14 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
 
 
-# For password protected Excel file 
-## Use the excel.link package
-## The askpass package will prompt you to enter the password
+# Excel file -- Specific range
+# You can specify a range in an excel sheet where your data are.
+# linelist_raw <- rio::import("linelist.xlsx", range = "B2:J102")
 
+
+# Excel file -- password protected
+# Use the excel.link package to load the file.
+#   The askpass package will prompt you to enter the password every time.
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
 # 
@@ -311,9 +318,13 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 
 # CSV file
 # linelist_raw <- rio::import("linelist.csv")
-# 
+
+
 # Stata data file
 # linelist_raw <- rio::import("linelist.dat")
+
+
+
 
 ## Fixing variable names ----------------------
 
@@ -336,7 +347,7 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 
 # linelist_cleaned <- rename(linelist_cleaned, 
-#                            gender    = sex, # TEXT
+#                            sex       = gender, # TEXT
 #                            age_years = age  # INTEGER_POSITIVE
 # )
 
