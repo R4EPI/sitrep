@@ -1223,6 +1223,12 @@ basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = 
 
 # show your plot (stored for later use) 
 basic_curve
+
+## if the outbreak has been going on for a while, your x-axis might look messy.
+# to reduce the number of labels, uncomment the below.
+# you can customize the number of breaks by changing n_breaks.
+#
+# basic_curve + scale_x_incidence(inc_week_7, n_breaks = 6)
 ```
 
 
