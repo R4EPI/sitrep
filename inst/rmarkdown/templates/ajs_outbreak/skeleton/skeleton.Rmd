@@ -548,22 +548,32 @@ unique(linelist_cleaned$sex)
 ##
 
 
+# Drop unused rows  ---------------------------------
+# Your data might have rows that are blank besides ID number.
+# The below keeps variables only with a case ID and an admission date.
+linelist_cleaned <- linelist_cleaned %>% 
+  filter(!is.na(case_number) & !is.na(date_of_admission)) 
+
+
 # Date variables ---------------------------------
 # IF YOU ARE USING THE DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
 # make sure all date variables are formatted as dates 
 DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>% 
   select(data_element_shortname) # select date vars
+
 # change to dates 
 linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(DATEVARS$data_element_shortname, as.Date)
+  mutate_at(DATEVARS$data_element_shortname, linelist::guess_dates,
+            error_tolerance = 0.5)
 
 # if you dont have a data dictionary you could do it this way too
 # linelist_cleaned <- linelist_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), as.Date)
+#   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
+#           error_tolerance = 0.5)
 
 # set unrealistic dates to NA, based on having browsed dates in the previous chunk
 # linelist_cleaned <- mutate(linelist_cleaned,
-#                            date_of_onset < as.Date("2017-11-01") ~ NA, 
+#                            date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA), 
 #                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
   
 # create an epiweek variable
@@ -772,11 +782,6 @@ LABS <- c("hep_b_rdt",
           )
 
 # Dropping observations (rows) and variables (columns)--------------------------
-
-# only keep variables with a case ID and a date of consultation
-linelist_cleaned <- linelist_cleaned %>% 
-  filter(!is.na(case_number) & !is.na(date_of_admission)) 
-
 
 # drop cases after reporting week
 linelist_cleaned <- linelist_cleaned %>% 

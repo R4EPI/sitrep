@@ -283,8 +283,8 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ##   This is to understand which variables are being used later in the script
 ##   So that you can adapt those later code chunks to fit your dataset.
 ## The data dictionary has variable names in the data_element_shortname column. 
-## Possible values for each variable are specified in the Code and Name columns.
-## Where code has the shortened values and name has the full text values. 
+##   Possible values for each variable are specified in the option_code (short
+##   values) and option_name (full text) columns.
 ##
 ## - [ ] run this to look at the data dictionary: 
 # linelist_dict <- msf_dict("Meningitis")
@@ -561,6 +561,13 @@ unique(linelist_cleaned$sex)
 ##
 
 
+# Drop unused rows  ---------------------------------
+# Your data might have rows that are blank besides ID number.
+# The below keeps variables only with a case ID and an admission date.
+linelist_cleaned <- linelist_cleaned %>% 
+  filter(!is.na(case_number) & !is.na(date_of_admission)) 
+
+
 # Date variables ---------------------------------
 # IF YOU ARE USING THE DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
 # make sure all date variables are formatted as dates 
@@ -568,15 +575,17 @@ DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
   select(data_element_shortname) # select date vars
 # change to dates 
 linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(DATEVARS$data_element_shortname, as.Date)
+  mutate_at(DATEVARS$data_element_shortname, linelist::guess_dates,
+            error_tolerance = 0.5)
 
 # if you dont have a data dictionary you could do it this way too
 # linelist_cleaned <- linelist_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), as.Date)
+#   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
+#            error_tolerance = 0.5)
 
 # set unrealistic dates to NA, based on having browsed dates in the previous chunk
 # linelist_cleaned <- mutate(linelist_cleaned,
-#                            date_of_onset < as.Date("2017-11-01") ~ NA, 
+#                            date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA), 
 #                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
   
 # create an epiweek variable
@@ -781,11 +790,6 @@ LABS <- c("ti_result_pcr",
           )
 
 # Dropping observations (rows) and variables (columns)--------------------------
-
-# only keep variables with a case ID and a date of consultation
-linelist_cleaned <- linelist_cleaned %>% 
-  filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
-
 
 # drop cases after current week
 # you will probably have cases in your dataset if case finding continues
