@@ -136,6 +136,8 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
 
   # Widen grouping data --------------------------------------------------------
 
+  # TODO: remove this section because then we can have some nice long data that
+  # we can widen later with the tools in tabulate_survey 
   if (length(grouper) == 1) {
     # change to wide format, to have "grouper" var levels as columns
     count_data <- tidyr::gather(count_data, 
