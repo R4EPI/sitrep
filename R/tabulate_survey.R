@@ -466,7 +466,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   res
 }
 
-flipper <- function(x, res, transpose = ,c("variable", "value", "both"), pretty = TRUE, stra, var) {
+flipper <- function(x, res, transpose = c("variable", "value", "both"), pretty = TRUE, stra, var) {
 
   transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
   if (transpose == "both") {

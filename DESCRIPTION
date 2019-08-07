@@ -85,6 +85,7 @@ Collate:
     'survey.R'
     'tabulate_survey.R'
     'template_data_frame.R'
+    'transpose_pretty.R'
     'unite_ci.R'
     'univariate-analysis.R'
     'zcurve.R'
