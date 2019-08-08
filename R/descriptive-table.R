@@ -105,7 +105,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
     df[[counter]] <- forcats::fct_explicit_na(df[[counter]], "Missing")
   } else {
     nas <- is.na(df[[counter]])
-    warning(sprintf("Removing %d missing values", sum(nas)))
+    if (sum(nas) > 0) warning(sprintf("Removing %d missing values", sum(nas)))
     df  <- df[!nas, , drop = FALSE]
   }
 

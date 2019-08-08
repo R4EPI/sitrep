@@ -207,6 +207,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   xx      <- srvyr::ungroup(x)
   # get the column with all the values of the counter
   ycod    <- dplyr::pull(y, !! cod)
+  codl    <- levels(ycod)
   if (!null_strata && proptotal) {
     # Calculate the survey proportion for both the stratifier and counter
     # @param xx a tbl_svy object
@@ -240,6 +241,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   if (!null_strata) {
     # get the column with all the unique values of the stratifier
     yst <- dplyr::pull(y, !!  st)
+    stl <- levels(yst)
     if (proptotal) {
       # map both the counter and stratifier to sprop
       props <- purrr::map2_dfr(ycod, yst, ~s_prop_strat(xx, .x, .y, !! cod, !! st))
@@ -250,23 +252,21 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
       props <- purrr::map_dfr(g, ~s_prop(xx, .x, !! cod))
     }
     # Make sure that the resulting columns are factors
-    codl  <- levels(ycod)
-     stl  <- levels(yst)
-    props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
-    props <- dplyr::mutate(props, !!  st := factor(!!  st, levels =  stl))
+    props <- dplyr::mutate(props, !! cod := forcats::fct_relevel(!! cod, codl))
+    props <- dplyr::mutate(props, !!  st := forcats::fct_relevel(!!  st, stl))
 
   } else {
     # no stratifier, just map the counter to sprop and make sure it's a factor
     xx    <- srvyr::ungroup(x)
     v     <- as.character(y[[1]])
     props <- purrr::map_dfr(ycod, ~s_prop(xx, .x, !! cod))
-    codl  <- levels(dplyr::pull(y, !! cod))
-    props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
+    props <- dplyr::mutate(props, !! cod := forcats::fct_relevel(!! cod, codl))
   }
 
   # Join the data together
   y       <- y[!colnames(y) %in% "n_se"]
   join_by <- if (null_strata) names(y)[[1]] else names(y)[1:2]
+  y       <- dplyr::mutate(y, !! cod := forcats::fct_relevel(!! cod, codl))
   y       <- dplyr::left_join(y, props, by = join_by)
 
   if (coltotals) {
