@@ -128,16 +128,16 @@ s <- srvyr::as_survey_design(d, weights = weights)
 
 md_expect_symptom <- tibble::tribble(
     ~variable,     ~value,  ~n, ~prop,
-       "itch",      "Yes",  60,    60,
-      "fever",      "Yes",  55,    55,
-   "bleeding",      "Yes",  47,    47
+       "itch",      "Yes",  40,    40,
+      "fever",      "Yes",  45,    45,
+   "bleeding",      "Yes",  53,    53
   )
 
 md_expect_choice <- tibble::tribble(
      ~variable,     ~value,  ~n, ~prop,
   "CHOICE_001",     "itch",  23,    23,
   "CHOICE_002",    "fever",  24,    24,
-  "CHOICE_003", "bleeding",  30,    30
+  "CHOICE_003", "bleeding",  20,    20
   )
 
 
@@ -166,7 +166,6 @@ SYMPTOMS <- c("itch", "fever", "bleeding")
 # same types of data and will return tables sensibly. 
 test_that("tab_survey can give results similar to the old tabulate_binary_survey", {
 
-  skip("function still needs to be written")
   res_choice  <- tab_survey(s, tidyselect::starts_with("CHOICE"), drop = "")
   res_symptom <- tab_survey(s, SYMPTOMS, keep = "Yes")
 
@@ -177,7 +176,6 @@ test_that("tab_survey can give results similar to the old tabulate_binary_survey
 
 test_that("tab_linelist can give results similar to the old multi_descriptive", {
   
-  skip("function still needs to be written")
   res_choice  <- tab_linelist(d, tidyselect::starts_with("CHOICE"), drop = "")
   res_symptom <- tab_linelist(d, SYMPTOMS, keep = "Yes")
 
