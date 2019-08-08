@@ -1,6 +1,8 @@
 #' Tabulate counts and proportions
 #'
 #' @param x a [data.frame()] or [tbl_svy][srvyr::as_survey_design] object
+#' 
+#' @param ... categorical variables to tabulate
 #'
 #' @param strata a stratifier to split the data
 #'

@@ -18,6 +18,8 @@ tab_survey(x, ..., strata = NULL, keep = TRUE, drop = NULL,
 \arguments{
 \item{x}{a \code{\link[=data.frame]{data.frame()}} or \link[srvyr:as_survey_design]{tbl_svy} object}
 
+\item{...}{categorical variables to tabulate}
+
 \item{strata}{a stratifier to split the data}
 
 \item{keep}{a character vector specifying which values to retain in the
