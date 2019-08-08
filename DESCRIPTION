@@ -83,6 +83,7 @@ Collate:
     'relabel_proportions.R'
     'sample-size.R'
     'survey.R'
+    'tab_descriptive.R'
     'tabulate_survey.R'
     'template_data_frame.R'
     'transpose_pretty.R'
