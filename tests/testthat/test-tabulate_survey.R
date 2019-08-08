@@ -1,5 +1,4 @@
 # Setup data -------------------------------------------------------------------
-
 data('api', package = 'survey')
 
 
@@ -7,7 +6,7 @@ data('api', package = 'survey')
 # 
 # This shows the manual calculation to make sure things are running
 # smoothly
-`%<%` <- dplyr::`%>%`
+`%>%` <- dplyr::`%>%`
 
 counts <- apistrat %>%
   dplyr::group_by(stype) %>%                       # stratify data
@@ -22,7 +21,7 @@ counts <- apistrat %>%
 # Default workflow
 s <- srvyr::as_survey_design(apistrat, strata = stype, weights = pw)
 rs <- apistrat %>%
-  mutate(stype = forcats::fct_rev(stype)) %>%
+  srvyr::mutate(stype = forcats::fct_rev(stype)) %>%
   srvyr::as_survey_design(strata = stype, weights = pw)
 
 # Adding in missing data
