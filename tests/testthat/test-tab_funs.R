@@ -1,7 +1,7 @@
 # vim foldmethod:marker
 `%>%` <- dplyr::`%>%`
 
-# Data setup {{{
+# Data setup (type :zo to unroll and :zm to roll up) {{{
 #
 # tf <- function(n) sample(c("Yes", "No"), n, replace = TRUE) 
 # i  <- function(x, n) sample(c("", x), n, replace = TRUE, prob = c(0.75, 0.25))
@@ -162,6 +162,8 @@ tbs_expect_symptom <- tibble::tribble(
 SYMPTOMS <- c("itch", "fever", "bleeding")
 
 
+# These tests will check that tab_survey and tab_linelist can both handle the
+# same types of data and will return tables sensibly. 
 test_that("tab_survey can give results similar to the old tabulate_binary_survey", {
 
   skip("function still needs to be written")
