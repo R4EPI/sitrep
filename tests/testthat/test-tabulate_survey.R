@@ -269,16 +269,16 @@ test_that("tabulate_binary_survey returns complementary proportions", {
 
 test_that("transposition can happen without strata", {
 
-  bin_trn <- tabulate_binary_survey(s,
-                                    awards,
-                                    yr.rnd,
-                                    sch.wide,
-                                    proptotal = TRUE,
-                                    pretty    = FALSE,
-                                    deff      = TRUE,
-                                    wide      = TRUE,
-                                    transpose = "variable",
-                                    keep      = "Yes")
+            bin_trn <- tab_survey(s,
+                                  awards,
+                                  yr.rnd,
+                                  sch.wide,
+                                  prop_total = TRUE,
+                                  pretty    = FALSE,
+                                  deff      = TRUE,
+                                  wide      = TRUE,
+                                  transpose = "variable",
+                                  keep      = "Yes")
   
   # has one row
   expect_equal(nrow(bin_trn), 1L)
@@ -293,12 +293,12 @@ test_that("transposition can happen without strata", {
 test_that("values are sensible in a transposition", {
 
   
-  bin_trn <- tabulate_binary_survey(s,
+  bin_trn <- tab_survey(s,
                                     awards,
                                     yr.rnd,
                                     sch.wide,
                                     strata    = stype,
-                                    proptotal = TRUE,
+                                    prop_total = TRUE,
                                     pretty    = FALSE,
                                     deff      = TRUE,
                                     wide      = TRUE,
@@ -317,12 +317,12 @@ test_that("values are sensible in a transposition", {
                                     keep      = "Yes")
 
   # with reverse strata levels
-  rbin_trn <- tabulate_binary_survey(rs,
+  rbin_trn <- tab_survey(rs,
                                     awards,
                                     yr.rnd,
                                     sch.wide,
                                     strata    = stype,
-                                    proptotal = TRUE,
+                                    prop_total = TRUE,
                                     pretty    = FALSE,
                                     deff      = TRUE,
                                     wide      = TRUE,

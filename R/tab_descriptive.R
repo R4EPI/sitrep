@@ -282,17 +282,23 @@ tab_general <-  function(x,
   if (!isTRUE(keep) && !is.null(drop)) {
     stop('you can only choose to keep values or drop values. Specifying both is not allowed')
   }
+  filtered <- TRUE
   if (!isTRUE(keep)) {
     res <- res[res$value %in% keep, , drop = FALSE]
   } else if (!is.null(drop)) {
     res <- res[!res$value %in% drop, , drop = FALSE]
+  } else {
+    filtered <- FALSE
+    if (flip_it) warning("Cannot transpose data that hasn't been filtered with keep or drop")
   }
   # If the user wants to transpose the data, then we need to do this for each
   # level of data available into separate tables, combine the columns, and then
   # rearrange them so that they are grouped by variable/value
 
-  if (flip_it) {
-    res <- flipper(x, res, transpose, pretty = pretty, stra = stra)
+
+  if (flip_it && filtered) {
+    res <- flipper(if (is_survey) x$variables else x, 
+                   res, transpose, pretty = pretty, stra = stra)
   }
   res
 

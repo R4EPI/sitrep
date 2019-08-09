@@ -126,11 +126,11 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
 
   if (proptotal) {
     count_data <- dplyr::mutate(count_data,
-                                prop = .data$n / nrow(df) * multiplier,
+                                proportion = .data$n / nrow(df) * multiplier,
                                 )
   } else {
     count_data <- dplyr::mutate(count_data,
-                                prop = .data$n / sum(.data$n) * multiplier,
+                                proportion = .data$n / sum(.data$n) * multiplier,
                                 )
   }
 
@@ -139,22 +139,10 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   # TODO: remove this section because then we can have some nice long data that
   # we can widen later with the tools in tabulate_survey 
   if (length(grouper) == 1) {
-    # change to wide format, to have "grouper" var levels as columns
-    count_data <- tidyr::gather(count_data, 
-                                key = "variable", 
-                                value = "value", 
-                                c(.data$n, .data$prop))
-    count_data <- tidyr::unite(count_data, 
-                               col = "temp", 
-                               !! sym_group, .data$variable, 
-                               sep = "_")
-
-    if (is.factor(df[[grouper]])) {
-      lvls            <- rep(levels(df[[grouper]]), each = 2)
-      lvls            <- paste0(lvls, c("_n", "_prop"))
-      count_data$temp <- factor(count_data$temp, levels = lvls)
-    }
-    count_data <- tidyr::spread(count_data, .data$temp, .data$value)
+    count_data <- widen_tabulation(count_data, 
+                                   cod    = !!sym_count,
+                                   st     = !!sym_group,
+                                   pretty = FALSE)
   }
 
   # fill in the counting data that didn't make it

@@ -119,7 +119,11 @@ d <- tibble::tribble(
   "Yes",  "Yes",      "No",          "",          "",          "",        3
   )
 
-s <- srvyr::as_survey_design(d, weights = weights)
+d$strata <- factor(rep(letters[1:3], length.out = 100))
+# with strata
+s <- srvyr::as_survey_design(d, weights = weights, strata = strata)
+# without strata
+nss <- srvyr::as_survey_design(d, weights = weights)
 
 # }}}
 
@@ -127,14 +131,14 @@ s <- srvyr::as_survey_design(d, weights = weights)
 
 
 md_expect_symptom <- tibble::tribble(
-    ~variable,     ~value,  ~n, ~prop,
+    ~variable,     ~value,  ~n, ~proportion,
        "itch",      "Yes",  40,    40,
       "fever",      "Yes",  45,    45,
    "bleeding",      "Yes",  53,    53
   )
 
 md_expect_choice <- tibble::tribble(
-     ~variable,     ~value,  ~n, ~prop,
+     ~variable,     ~value,  ~n, ~proportion,
   "CHOICE_001",     "itch",  23,    23,
   "CHOICE_002",    "fever",  24,    24,
   "CHOICE_003", "bleeding",  20,    20
@@ -162,15 +166,32 @@ tbs_expect_symptom <- tibble::tribble(
 SYMPTOMS <- c("itch", "fever", "bleeding")
 
 
+# Basic tests---no strata {{{
+
 # These tests will check that tab_survey and tab_linelist can both handle the
 # same types of data and will return tables sensibly. 
+
 test_that("tab_survey can give results similar to the old tabulate_binary_survey", {
 
-  res_choice  <- tab_survey(s, tidyselect::starts_with("CHOICE"), drop = "")
-  res_symptom <- tab_survey(s, SYMPTOMS, keep = "Yes")
+  res_choice  <- tab_survey(nss, tidyselect::starts_with("CHOICE"), drop = "")
+  res_symptom <- tab_survey(nss, SYMPTOMS, keep = "Yes")
 
   expect_identical(res_choice, tbs_expect_choice)
   expect_identical(res_symptom, tbs_expect_symptom)
+
+})
+
+test_that("survey---transposition without strata will give the same order and values", {
+
+  n_choice  <- tab_survey(s, tidyselect::starts_with("CHOICE"), drop = "", transpose = "value") %>%
+    dplyr::select(dplyr::ends_with(" n")) %>%
+    unlist(use.names = FALSE)
+  n_symptom <- tab_survey(s, SYMPTOMS, keep = "Yes", transpose = "variable") %>%
+    dplyr::select(dplyr::ends_with(" n")) %>%
+    unlist(use.names = FALSE)
+
+  expect_equal(n_choice,  tbs_expect_choice$n)
+  expect_equal(n_symptom, tbs_expect_symptom$n)
 
 })
 
@@ -183,3 +204,54 @@ test_that("tab_linelist can give results similar to the old multi_descriptive", 
   expect_identical(res_symptom, md_expect_symptom)
 
 })
+
+test_that("linelist---transposition without strata will give the same order and values", {
+
+  n_choice  <- tab_linelist(d, tidyselect::starts_with("CHOICE"), drop = "", transpose = "value") %>%
+    dplyr::select(dplyr::ends_with(" n")) %>%
+    unlist(use.names = FALSE)
+  n_symptom <- tab_linelist(d, SYMPTOMS, keep = "Yes", transpose = "variable") %>%
+    dplyr::select(dplyr::ends_with(" n")) %>%
+    unlist(use.names = FALSE)
+
+  expect_equal(n_choice,  md_expect_choice$n)
+  expect_equal(n_symptom, md_expect_symptom$n)
+
+})
+# }}}
+
+# Tests with strata {{{
+
+test_that("survey---adding strata works", {
+
+  s_res_choice  <- tab_survey(s, tidyselect::starts_with("CHOICE"), strata = strata, drop = "")
+  s_res_symptom <- tab_survey(s, SYMPTOMS, strata = strata, keep = "Yes")
+
+  expect_equal(ncol(s_res_choice), 8L)
+  expect_equal(ncol(s_res_symptom), 8L)
+
+  sum_choice  <- s_res_choice %>% dplyr::select(dplyr::ends_with(" n")) %>% rowSums()
+  sum_symptom <- s_res_symptom %>% dplyr::select(dplyr::ends_with(" n")) %>% rowSums()
+
+  expect_equal(sum_choice, tbs_expect_choice$n)
+  expect_equal(sum_symptom, tbs_expect_symptom$n)
+  
+})
+
+test_that("linelist---adding strata works", {
+
+  s_res_choice  <- tab_linelist(d, tidyselect::starts_with("CHOICE"), strata = strata, drop = "")
+  s_res_symptom <- tab_linelist(d, SYMPTOMS, strata = strata, keep = "Yes")
+
+  expect_equal(ncol(s_res_choice), 8L)
+  expect_equal(ncol(s_res_symptom), 8L)
+
+  sum_choice  <- s_res_choice %>% dplyr::select(dplyr::ends_with(" n")) %>% rowSums()
+  sum_symptom <- s_res_symptom %>% dplyr::select(dplyr::ends_with(" n")) %>% rowSums()
+
+  expect_equal(sum_choice, md_expect_choice$n)
+  expect_equal(sum_symptom, md_expect_symptom$n)
+  
+})
+
+# }}}
