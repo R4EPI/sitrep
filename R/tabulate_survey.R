@@ -345,38 +345,53 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
   cod <- rlang::enquo(cod)
   st  <- rlang::enquo(st)
 
-  # getting all the labels for the stratifier
-  l   <- levels(dplyr::pull(y, !! st))
 
   #  1 Only select the necessary columns. n, deff, and prop are all numeric
   #    columns that need to be gathered
   #
   #  2 Gather "n", "deff", and "prop" into a single column
   #
-  #  3 Make sure that everything is arranged in the correct order
+  #  3 Make sure that everything is arranged in the correct order. This will be
+  #    arranged so that the rows are by the counter and then the stratifier.
   #
   #  4 Combine the stratifier and the n/prop signifier
   #
-  #  5 Make sure the factors are in the correct order
+  #  5 Make sure the factors are in the correct order as "strata signifier"
   #
   #  6 Spread out the combined stratifier and signifier to columns
+  #
+  #  7 make sure the column arrangement matches the initial arrangement of the
+  #    stratifier
   #  
-  #  7 Run through the stratified columns with map, and make them pretty
+  #  8 Run through the stratified columns with map, and make them pretty
+
+  # getting all the labels for the stratifier
+  l <- levels(dplyr::pull(y, !! st))
+  # 1
   y <- dplyr::select(y, !! cod, !! st, "n",
-                     # deff, ci, and prop are all columns that _might_ exist
-                     dplyr::matches("prop"), 
-                     dplyr::starts_with("ci"), 
-                     dplyr::starts_with("deff"))
+                     # proportion and deff are all columns that _might_ exist
+                     dplyr::matches("^proportion_?"), 
+                     dplyr::matches("^deff$"))
+  # 2
+  y <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
 
-  y     <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
-  
-  y     <- dplyr::arrange(y, !! cod, !! st)
+  # 3
+  y <- dplyr::arrange(y, !! cod, !! st)
 
-  y     <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
+  # 4
+  y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
 
-  y$tmp <- forcats::fct_inorder(y$tmp)
+  # 5
+  y <- mutate(y, .data$tmp := forcats::fct_inorder(.data$tmp))
 
-  y     <- tidyr::spread(y, "tmp", "value")
+  # 6
+  y <- tidyr::spread(y, "tmp", "value")
+
+  # 7
+  levels_in_order <- glue::glue("^{l} (n|deff|proportion|ci)")
+  col_arrangement <- lapply(levels_in_order, grep, names(y))
+  col_arrangement <- unlist(col_arrangement, use.names = FALSE)
+  y               <- y[c(1, col_arrangement)]
 
   if (pretty) {
     # map through all the levels of l and pull out the matching columns

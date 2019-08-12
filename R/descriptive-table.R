@@ -87,7 +87,9 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   # translate the variable names to character
   counter   <- tidyselect::vars_select(colnames(df), !!enquo(counter))
   grouper   <- tidyselect::vars_select(colnames(df), !!enquo(grouper))
-  sym_count <- rlang::sym(counter)
+
+  has_grouper <- length(grouper) == 1
+  sym_count   <- rlang::sym(counter)
 
   # Check if counter is an integer and force factor ----------------------------
 
@@ -99,6 +101,10 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   if (is.logical(df[[counter]])) {
     df[[counter]] <- factor(df[[counter]], levels = c("TRUE", "FALSE"))
   }
+
+  df[[counter]] <- factor(df[[counter]])
+  if (has_grouper) df[[grouper]] <- factor(df[[grouper]])
+
   # Filter missing data --------------------------------------------------------
 
   if (explicit_missing) {
@@ -111,7 +117,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
 
   # Apply grouping -------------------------------------------------------------
 
-  if (length(grouper) == 1) {
+  if (has_grouper) {
     # This grouper var will always have explicit missing.
     sym_group     <- rlang::sym(grouper)
     df[[grouper]] <- forcats::fct_explicit_na(df[[grouper]], "Missing")
@@ -136,9 +142,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
 
   # Widen grouping data --------------------------------------------------------
 
-  # TODO: remove this section because then we can have some nice long data that
-  # we can widen later with the tools in tabulate_survey 
-  if (length(grouper) == 1) {
+  if (has_grouper) {
     count_data <- widen_tabulation(count_data, 
                                    cod    = !!sym_count,
                                    st     = !!sym_group,
@@ -165,7 +169,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   if (rowtotals == TRUE) {
     # add columns which have "_n" in the name
     count_data <- mutate(count_data,
-             Total = rowSums(count_data[, grep("(_n$|^n$)", colnames(count_data))], na.rm = TRUE))
+             Total = rowSums(count_data[, grep("( n$|^n$)", colnames(count_data))], na.rm = TRUE))
   }
 
   if (single_row){

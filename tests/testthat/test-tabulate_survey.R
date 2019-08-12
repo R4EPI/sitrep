@@ -2,7 +2,7 @@
 data('api', package = 'survey')
 
 
-# Expected values for yr.rnd stratified by stype from Alex Spina. 
+# Expected values for yr.rnd stratified by stype from Alex Spina. {{{
 # 
 # This shows the manual calculation to make sure things are running
 # smoothly
@@ -51,7 +51,7 @@ sa_pcrd_p <- tabulate_survey(s,
                              rowtotals = TRUE,
                              deff      = TRUE)
 
-
+# }}}
 
 # Testing ----------------------------------------------------------------------
 
@@ -220,7 +220,30 @@ test_that("Proportions are correct", {
 
 # tabulate_binary_survey tests -------------------------------------------------
 
+# Binary total and inverted data setup {{{
 
+bin_tot <- tab_survey(s,
+                      awards,
+                      yr.rnd,
+                      sch.wide,
+                      prop_total = TRUE,
+                      pretty     = FALSE,
+                      deff       = TRUE,
+                      wide       = FALSE,
+                      keep       = "Yes")
+
+
+bin_inv <- tab_survey(s,
+                      awards,
+                      yr.rnd,
+                      sch.wide,
+                      prop_total = TRUE,
+                      pretty     = FALSE,
+                      deff       = TRUE,
+                      wide       = FALSE,
+                      drop       = "Yes")
+
+# }}}
 
 test_that("tabulate_binary_survey needs a 'keep' argument", {
 
@@ -236,28 +259,6 @@ test_that("tabulate_binary_survey needs a 'keep' argument", {
 
 })
 
-bin_tot <- tabulate_binary_survey(s,
-                                  awards,
-                                  yr.rnd,
-                                  sch.wide,
-                                  proptotal = TRUE,
-                                  pretty    = FALSE,
-                                  deff      = TRUE,
-                                  wide      = FALSE,
-                                  keep      = "Yes")
-
-
-bin_inv <- tabulate_binary_survey(s,
-                                  awards,
-                                  yr.rnd,
-                                  sch.wide,
-                                  proptotal = TRUE,
-                                  pretty    = FALSE,
-                                  deff      = TRUE,
-                                  wide      = FALSE,
-                                  invert    = TRUE,
-                                  keep      = "Yes")
-
 test_that("tabulate_binary_survey returns complementary proportions", {
 
   expect_equal(bin_tot$proportion + bin_inv$proportion, c(1,    1,    1))
@@ -269,16 +270,16 @@ test_that("tabulate_binary_survey returns complementary proportions", {
 
 test_that("transposition can happen without strata", {
 
-            bin_trn <- tab_survey(s,
-                                  awards,
-                                  yr.rnd,
-                                  sch.wide,
-                                  prop_total = TRUE,
-                                  pretty    = FALSE,
-                                  deff      = TRUE,
-                                  wide      = TRUE,
-                                  transpose = "variable",
-                                  keep      = "Yes")
+  bin_trn <- tab_survey(s,
+                        awards,
+                        yr.rnd,
+                        sch.wide,
+                        prop_total = TRUE,
+                        pretty    = FALSE,
+                        deff      = TRUE,
+                        wide      = TRUE,
+                        transpose = "variable",
+                        keep      = "Yes")
   
   # has one row
   expect_equal(nrow(bin_trn), 1L)
@@ -293,41 +294,47 @@ test_that("transposition can happen without strata", {
 test_that("values are sensible in a transposition", {
 
   
+  # stratified data setup {{{
+
+  # stratified, but not transposed
+  bin_str <- tab_survey(s,
+                        awards,
+                        yr.rnd,
+                        sch.wide,
+                        strata     = stype,
+                        prop_total = TRUE,
+                        pretty     = FALSE,
+                        deff       = TRUE,
+                        wide       = TRUE,
+                        transpose  = NULL,
+                        keep       = "Yes")
+
+  # transposed and stratified
   bin_trn <- tab_survey(s,
-                                    awards,
-                                    yr.rnd,
-                                    sch.wide,
-                                    strata    = stype,
-                                    prop_total = TRUE,
-                                    pretty    = FALSE,
-                                    deff      = TRUE,
-                                    wide      = TRUE,
-                                    transpose = "variable",
-                                    keep      = "Yes")
-  bin_str <- tabulate_binary_survey(s,
-                                    awards,
-                                    yr.rnd,
-                                    sch.wide,
-                                    strata    = stype,
-                                    proptotal = TRUE,
-                                    pretty    = FALSE,
-                                    deff      = TRUE,
-                                    wide      = TRUE,
-                                    transpose = NULL,
-                                    keep      = "Yes")
+                        awards,
+                        yr.rnd,
+                        sch.wide,
+                        strata     = stype,
+                        prop_total = TRUE,
+                        pretty     = FALSE,
+                        deff       = TRUE,
+                        wide       = TRUE,
+                        transpose  = "variable",
+                        keep       = "Yes")
 
   # with reverse strata levels
   rbin_trn <- tab_survey(rs,
-                                    awards,
-                                    yr.rnd,
-                                    sch.wide,
-                                    strata    = stype,
-                                    prop_total = TRUE,
-                                    pretty    = FALSE,
-                                    deff      = TRUE,
-                                    wide      = TRUE,
-                                    transpose = "variable",
-                                    keep      = "Yes")
+                         awards,
+                         yr.rnd,
+                         sch.wide,
+                         strata     = stype,
+                         prop_total = TRUE,
+                         pretty     = FALSE,
+                         deff       = TRUE,
+                         wide       = TRUE,
+                         transpose  = "variable",
+                         keep       = "Yes")
+  # }}}
 
   # factor levels of strata are preserved
   expect_failure(expect_equal(rbin_trn, bin_trn))

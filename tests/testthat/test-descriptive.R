@@ -4,13 +4,17 @@ context('descriptive table tests')
 
 humans     <- dplyr::filter(dplyr::starwars, species == "Human")
 # table of hair color
-hair_table <- descriptive(humans, hair_color)
+hair_table <- dplyr::select(tab_linelist(humans, hair_color), -variable)
+hair_table <- dplyr::rename(hair_table, hair_color = value)
 # table of homeworld X eye color (homeworld is missing for 5 characters)
-home_eye   <- descriptive(humans, homeworld, eye_color)
+home_eye   <- tab_linelist(humans, homeworld, strata = eye_color, na.rm = FALSE)
+home_eye   <- dplyr::select(home_eye, -variable)
+home_eye   <- dplyr::rename(home_eye, homeworld = value)
+
 
 # as above, but percentages are proportional to whole data set
-phair_table <- descriptive(humans, hair_color, proptotal = TRUE)
-phome_eye   <- descriptive(humans, homeworld, eye_color, proptotal = TRUE)
+phair_table <- tab_linelist(humans, hair_color, prop_total = TRUE, na.rm = FALSE)
+phome_eye   <- tab_linelist(humans, homeworld, strata = eye_color, prop_total = TRUE, na.rm = FALSE)
 
 test_that("descriptive doesn't force zero counts to missing for binary", {
 
@@ -49,7 +53,10 @@ test_that("descriptive returns a table of counts and proportions that sum to 100
 
   # can do NSE and quoted
   hc <- "hair_color"
-  expect_identical(hair_table, descriptive(humans, hc))
+  ht <- dplyr::select(tab_linelist(humans, hc), -variable)
+  ht <- dplyr::rename(ht, hair_color = value)
+
+  expect_identical(hair_table, ht) 
 
 })
 

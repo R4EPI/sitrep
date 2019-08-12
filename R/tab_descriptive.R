@@ -91,7 +91,7 @@
 #' tab_linelist(linelist_clean, trimester, na.rm = TRUE)
 #' 
 #' # describe prenancy statistics, stratifying by vitamin A perscription
-#' tab_linelist(linelist_clean, trimester, strata = prescribed_vitamin_a, na.rm = TRUE)
+#' tab_linelist(linelist_clean, trimester, sex, strata = prescribed_vitamin_a, na.rm = TRUE, row_total = TRUE)
 #' 
 #'
 #' }) }
@@ -289,7 +289,7 @@ tab_general <-  function(x,
     res <- res[!res$value %in% drop, , drop = FALSE]
   } else {
     filtered <- FALSE
-    if (flip_it) warning("Cannot transpose data that hasn't been filtered with keep or drop")
+    if (flip_it) warning("Cannot transpose data that hasn't been filtered with keep or drop", call. = FALSE)
   }
   # If the user wants to transpose the data, then we need to do this for each
   # level of data available into separate tables, combine the columns, and then
