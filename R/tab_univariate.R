@@ -582,13 +582,8 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   }
 
 
-  # fix digits and turn things to numeric
-  if (length(strata_var) == 0) {
-    nums <- mutate_at(nums, vars(-variable), ~round(as.numeric(.), digits = digits))
-  }
-  if (length(strata_var) != 0) {
-    nums <- mutate_at(nums, vars(-variable, -est_type), ~round(as.numeric(.), digits = digits))
-  }
+  # turn things to numeric
+  nums <- mutate_at(nums, vars(-tidyselect::one_of("variable", "est_type")), as.numeric)
 
   # drop columns if specified
   # use numbers because names will be different according to measure, but place is always same
@@ -601,12 +596,12 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   # drop woolf-test pvalue
   if (length(strata_var != 0) & measure != "IRR" & woolf_test == FALSE) {
-    nums <- select(nums, -woolf_pval)
+    nums <- select(nums, -tidyselect::one_of("woolf_pval"))
   }
 
   # merge upper and lower CIs
   if (mergeCI) {
-    nums <- unite_ci(nums, col = "est_ci", est, lower, upper, m100 = FALSE, digits = digits)
+    nums <- unite_ci(nums, col = "est_ci", "est", "lower", "upper", m100 = FALSE, digits = digits)
   }
 
   # change output table to a tibble
