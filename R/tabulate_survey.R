@@ -382,7 +382,7 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
   y <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
 
   # 5
-  y <- mutate(y, .data$tmp := forcats::fct_inorder(.data$tmp))
+  y <- dplyr::mutate(y, "tmp" := forcats::fct_inorder(.data$tmp))
 
   # 6
   y <- tidyr::spread(y, "tmp", "value")
