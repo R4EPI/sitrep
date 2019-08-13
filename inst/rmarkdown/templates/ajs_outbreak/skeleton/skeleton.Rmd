@@ -552,7 +552,7 @@ unique(linelist_cleaned$sex)
 # Your data might have rows that are blank besides ID number.
 # The below keeps variables only with a case ID and an admission date.
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(!is.na(case_number) & !is.na(date_of_admission)) 
+  filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
 
 
 # Date variables ---------------------------------
@@ -587,7 +587,7 @@ linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset,
 # Numeric variables --------------------------------- 
 # create number of days under observation
 linelist_cleaned <- mutate(linelist_cleaned, 
-                           obs_days = as.numeric(date_of_exit - date_of_admission))
+                           obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
 
 
 # Age group variables ---------------------------------

@@ -565,7 +565,7 @@ unique(linelist_cleaned$sex)
 # Your data might have rows that are blank besides ID number.
 # The below keeps variables only with a case ID and an admission date.
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(!is.na(case_number) & !is.na(date_of_admission)) 
+  filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
 
 
 # Date variables ---------------------------------
