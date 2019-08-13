@@ -511,11 +511,14 @@ linelist_cleaned <- linelist_cleaned %>%
 # Date variables ---------------------------------
 # IF YOU ARE USING THE DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
 # make sure all date variables are formatted as dates 
-DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>% 
-  select(data_element_shortname) # select date vars
+DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
+  filter(data_element_shortname %in% names(linelist_cleaned)) %>% 
+  # filter to match the column names of your data
+  pull(data_element_shortname) 
+
 # change to dates 
 linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(DATEVARS$data_element_shortname, linelist::guess_dates,
+  mutate_at(DATEVARS, linelist::guess_dates,
             error_tolerance = 0.5)
 
 # if you dont have a data dictionary you could do it this way too
