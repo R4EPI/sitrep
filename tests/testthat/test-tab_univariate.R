@@ -8,6 +8,8 @@ a       <- tibble::tibble(case_def   = samp_tf(),
                           perstime   = sample(150:250, 2000, replace = TRUE)
 )
 
+# get the results from tab_univariate function
+func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6)
 ## read this article for details of calculations
 # http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704-ep713_confounding-em/BS704-EP713_Confounding-EM7.html
 
@@ -55,8 +57,6 @@ or_mh <- (((counts_strat[8] * counts_strat[5]) / sum_strat_true) +
        ((counts_strat[2] * counts_strat[3]) / sum_strat_false) )
 
 
-# get the results from tab_univariate function
-func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6)
 
 
 # Tests ------------------------------------------------------------------------
