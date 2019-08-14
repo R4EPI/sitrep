@@ -5,7 +5,7 @@ get_epitable_ci <- function(epitable, measure = "OR", type = "strata") {
                     exp    = numeric(1),
                     lower  = numeric(1),
                     upper  = numeric(1),
-                    pvalue = numeric(1),
+                    pvalue = numeric(1)
                    )
   var              <- glue::glue("{measure}.{type}.wald")
   chi              <- glue::glue("chisq.{type}")

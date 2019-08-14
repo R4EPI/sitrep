@@ -277,6 +277,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
         crude <- cbind(exposure_var,                  # name of the exposure variable
                        "crude",                       # type of estimate
                     get_epitable_values(epitable, measure), # extract the values from the table
+                    # get_epitable_ci(epitable, measure, "crude"),
                        epitable$massoc$OR.crude.wald, # pull the the OR and CIs
                        epitable$massoc$chisq.crude[3], # pull the p-value
                        NA                              # Leave space for wolf-test of homogeneity in strata rows
