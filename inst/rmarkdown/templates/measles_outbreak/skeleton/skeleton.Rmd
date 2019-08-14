@@ -695,18 +695,17 @@ linelist_cleaned <- linelist_cleaned %>%
 # change_yn <- c("headache", "fever", "vomiting")
 # 
 # # standardize options
-# linelist_cleaned <- linelist_cleaned %>%
-#   mutate_at(vars(change_yn), ~case_when(
-#     . == "Yes" ~ "Yes",
-#     . == "y"   ~ "Yes",
-#     . == "Y"   ~ "Yes",
-#     . == "No"  ~ "No",
-#     . == "N"   ~ "No",
-#     . == "n"   ~ "No",
-#     . == 1     ~ "Yes",
-#     . == 0     ~ "No",
-#     TRUE       ~ "Unknown"
-#     ))
+# linelist_cleaned <- linelist_cleaned %>%  
+#      mutate_at(vars(change_yn), forcats::fct_recode,   
+#      Yes = "y",  
+#      Yes = "Y",  
+#      Yes = "yes",  
+#      Yes = "1",   
+#      No  = "n",  
+#      No  = "N",  
+#      No  = "no",  
+#      No  = "0",  
+#    )     
 
 
 # Force missing values to be explicit
