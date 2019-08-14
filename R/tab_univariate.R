@@ -92,7 +92,7 @@ tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
   }
 
   # check that strata variable is logical
-  if (length(strata_var) != 0 && !is.logical(x[[strata_var]])) {
+  if (length(strata_var) > 0 && !is.logical(x[[strata_var]])) {
     stop("strata variable must be a TRUE/FALSE variable")
   }
 
@@ -167,7 +167,8 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   # select the var in the strata column
   strata_var <- strata
-  strata     <- if (length(strata_var) > 0) rlang::sym(strata_var) else NULL
+  has_strata <- length(strata_var) > 0
+  strata     <- if (has_strata) rlang::sym(strata_var) else NULL
 
 
 
@@ -205,47 +206,39 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   }
 
-
   # for "IRR" return counts and person time by exposure
   if (measure == "IRR") {
 
-    # if no stratifier then simple table
-      if ((length(strata_var) == 0)) {
-        # sum outcome and obstime by exposure
-        the_table <- group_by(temp, {{exposure}})
-        the_table <- summarise(the_table,
-                            otcm = sum({{outcome}} == TRUE),
-                            tme = sum({{perstime}}))
-
-        # drop the first column and change to a table (for use in epi.2by2)
-        the_table <- as.table(data.matrix(the_table[,2:3]))
-      }
-
     # if stratifier specified then do by each group
-      if ((length(strata_var) != 0)) {
-        # sum outcome and obstime by exposure and strata
-        temp_table <- group_by(temp, {{exposure}}, {{strata}})
-        temp_table <- summarise(temp_table,
-                               otcm = sum({{outcome}} == TRUE, na.rm = TRUE),
-                               tme = sum({{perstime}}, na.rm = TRUE))
+    if (has_strata) {
+      # sum outcome and obstime by exposure and strata
+      temp_table <- group_by(temp, {{exposure}}, {{strata}})
+      temp_table <- summarise(temp_table,
+                              otcm = sum({{outcome}} == TRUE, na.rm = TRUE),
+                              tme  = sum({{perstime}}, na.rm = TRUE))
 
-        arr <- tidyr::gather(temp_table, variable, value, -{{exposure}}, -{{strata}})
-        arr <- dplyr::arrange(arr, {{strata}}, variable, {{exposure}})
+      arr <- tidyr::gather(temp_table, variable, value, -{{exposure}}, -{{strata}})
+      arr <- dplyr::arrange(arr, {{strata}}, variable, {{exposure}})
 
-        the_table <- array(arr$value,
-                           dim = c(2, 2, 2),
-                           dimnames = list(
-                             unique(arr[[exposure_var]]),
-                             unique(arr$variable),
-                             unique(arr[[strata_var]])
-                             )
-                           )
-      }
+      the_table <- array(arr$value,
+                         dim = c(2, 2, 2),
+                         dimnames = list(
+                                         unique(arr[[exposure_var]]),
+                                         unique(arr$variable),
+                                         unique(arr[[strata_var]])
+                         )
+      )
+    } else { # if no stratifier then simple table
+      # sum outcome and obstime by exposure
+      the_table <- group_by(temp, {{exposure}})
+      the_table <- summarise(the_table,
+                             otcm = sum({{outcome}} == TRUE, na.rm = TRUE),
+                             tme  = sum({{perstime}}, na.rm = TRUE))
 
-
-
+      # drop the first column and change to a table (for use in epi.2by2)
+      the_table <- as.table(data.matrix(the_table[,2:3]))
     }
-
+  } 
 
 
 
@@ -260,7 +253,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = "case.control"))
 
     # for non stratified results, simply pull together one liners
-    if (length(strata_var) == 0) {
+    if (!has_strata) {
       # pull outputs together
       nums <- cbind(exposure_var,                   # name of the exposure variable
                     epitable$tab[1L, c(1L, 2L)],    # pull counts of exposed among cases (REMEMBER IS FLIPPED!)
@@ -282,7 +275,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     }
 
     # if strata specified then pull together four rows (crude, strataTRUE, strataFALSE and MH estimates)
-    if (length(strata_var) != 0) {
+    if (has_strata) {
 
         # crude counts and estimates
         crude <- cbind(exposure_var,                  # name of the exposure variable
@@ -368,7 +361,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = "cohort.count"))
 
     # for non stratified results, simply pull together one liners
-    if (length(strata_var) == 0) {
+    if (!has_strata) {
       # pull outputs together
       nums <- cbind(exposure_var,                   # name of the exposure variable
                     epitable$tab[1L, c(1L, 3L)],    # pull counts of cases on among exposed and total exposed
@@ -390,7 +383,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     }
 
     # if strata specified then pull together four rows (crude, strataTRUE, strataFALSE and MH estimates)
-    if (length(strata_var) != 0) {
+    if (has_strata) {
 
       # crude counts and estimates
       crude <- cbind(exposure_var,                   # name of the exposure variable
@@ -481,7 +474,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = "cohort.time"))
 
     # for non stratified results, simply pull together one liners
-    if (length(strata_var) == 0) {
+    if (!has_strata) {
 
       # pull outputs together
       nums <- cbind(exposure_var,                    # name of the exposure variable
@@ -503,7 +496,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     }
 
     # if strata specified then pull together four rows (crude, strataTRUE, strataFALSE and MH estimates)
-    if (length(strata_var) != 0) {
+    if (has_strata) {
 
       # crude counts and estimates
       crude <- cbind(exposure_var,               # name of the exposure variable
@@ -587,10 +580,10 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   # drop columns if specified
   # use numbers because names will be different according to measure, but place is always same
-  if (!extend_output & length(strata_var) == 0) {
+  if (!extend_output & !has_strata) {
     nums <- select(nums, -4, -7, -11)
   }
-  if (!extend_output & length(strata_var) != 0) {
+  if (!extend_output & has_strata) {
     nums <- select(nums, -5, -8, -12)
   }
 
