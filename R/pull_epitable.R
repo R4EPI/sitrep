@@ -134,41 +134,44 @@ get_epitable_ci <- function(epitable, measure = "OR") {
 }
 
 get_epitable_values <- function(epitable, measure = "OR") {
-  res <- data.frame(
-                    exp_cases      = character(1),
-                    unexp_cases    = character(1),
-                    cases_odds     = character(1),
-                    exp_noncases   = character(1),
-                    unexp_noncases = character(1),
-                    noncases_odds  = character(1),
-                    exp            = character(1),
-                    lower          = character(1),
-                    upper          = character(1),
-                    pvalue         = character(1),
-                    stringsAsFactors = FALSE
-  )
 
-  case    <- 1L # column for cases (Outcome +)
-  noncase <- 2L # column for non-cases (Outcome -)
-  odds    <- 5L # column for the odds ratio (Odds)
+  res        <- vector(mode = "character", length = 6L)
+  names(res) <- 1:6
+  res        <- as.data.frame(as.list(res), stringsAsFactors = FALSE)
 
+  # row indices for extraction. These will always be the same.
   exposed   <- 1L # exposed row (Exposed +)
   unexposed <- 2L # unexposed row (Exposed -)
 
+  # Setting up the columns for extraction. This is weird because the positions
+  # of the values we need jump around based on the statistic. I pieced this
+  # together from Alex's original code. It appears that the columns for the
+  # case/noncase and ratio measure differ
+
+  case <- 1L # column for cases (Outcome +)
+
+  if (measure == "OR") {
+    noncase   <- 2L # column for non-cases (Outcome -)
+    the_ratio <- 5L # column for the odds ratio (Odds)
+  } else if (measure == "RR") {
+    noncase   <- 3L # column for non-cases (Outcome -)
+    the_ratio <- 4L # column for the risk ratio
+  } else if (measure == "IRR") {
+    noncase   <- 2L 
+    the_ratio <- 3L
+  } else {
+    stop(glue::glue("the measure {measure} is not recognised"), call. = FALSE)
+  }
+
   # cases
-  res[["exp_cases"]]      <- epitable$tab[[case]][[exposed]]
-  res[["unexp_cases"]]    <- epitable$tab[[case]][[unexposed]]
-  res[["cases_odds"]]     <- epitable$tab[[odds]][[exposed]]
+  res[[1L]] <- epitable$tab[[case]][[exposed]]
+  res[[2L]] <- epitable$tab[[case]][[unexposed]]
+  res[[3L]] <- epitable$tab[[the_ratio]][[exposed]]
 
   # noncases
-  res[["exp_noncases"]]   <- epitable$tab[[noncase]][[exposed]]
-  res[["unexp_noncases"]] <- epitable$tab[[noncase]][[unexposed]]
-  res[["noncases_odds"]]  <- epitable$tab[[odds]][[unexposed]]
-
-  res[["exp"]]     <- epitable$massoc$OR.strata.wald[["exp"]]
-  res[["lower"]]   <- epitable$massoc$OR.strata.wald[["lower"]]
-  res[["upper"]]   <- epitable$massoc$OR.strata.wald[["upper"]]
-  res[["p.value"]] <- epitable$massoc$chisq.strata[["p.value"]]
+  res[[4L]] <- epitable$tab[[noncase]][[exposed]]
+  res[[5L]] <- epitable$tab[[noncase]][[unexposed]]
+  res[[6L]] <- epitable$tab[[the_ratio]][[unexposed]]
 
   res
 }

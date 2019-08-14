@@ -255,13 +255,9 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     # for non stratified results, simply pull together one liners
     if (!has_strata) {
       # pull outputs together
-      nums <- cbind(exposure_var,                   # name of the exposure variable
-                    epitable$tab[1L, c(1L, 2L)],    # pull counts of exposed among cases (REMEMBER IS FLIPPED!)
-                    epitable$tab[1L, 5L],           # pull odds of exposure among cases
-                    epitable$tab[2L, c(1L, 2L)],    # pull counts of exposed among among controls
-                    epitable$tab[2L, 5L],           # pull odds of exposure among controls
-
-                    get_epitable_ci(epitable, measure) # pull the estimate, CIs, and p-value
+      nums <- cbind(exposure_var,                           # name of the exposure variable
+                    get_epitable_values(epitable, measure), # extract the values from the table
+                    get_epitable_ci(epitable, measure)      # pull the estimate, CIs, and p-value
       )
       # set correct column names
       colnames(nums) <- c("variable",
@@ -363,15 +359,10 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     # for non stratified results, simply pull together one liners
     if (!has_strata) {
       # pull outputs together
-      nums <- cbind(exposure_var,                   # name of the exposure variable
-                    epitable$tab[1L, c(1L, 3L)],    # pull counts of cases on among exposed and total exposed
-                    epitable$tab[1L, 4L],           # pull risk of being case among exposed (as proportion)
-                    epitable$tab[2L, c(1L, 3L)],    # pull counts of cases on among exposed and total exposed
-                    epitable$tab[2L, 4L],           # pull risk of being case among exposed (as proportion)
-
-                    get_epitable_ci(epitable, measure) # pull the estimate, CIs, and p-value
-                    )
-
+      nums <- cbind(exposure_var,                           # name of the exposure variable
+                    get_epitable_values(epitable, measure), # extract the values from the table
+                    get_epitable_ci(epitable, measure)      # pull the estimate, CIs, and p-value
+      )
       # set correct column names
       colnames(nums) <- c("variable",
                           "exp_cases", "exp_total", "exp_risk",
@@ -477,12 +468,11 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     if (!has_strata) {
 
       # pull outputs together
-      nums <- cbind(exposure_var,                    # name of the exposure variable
-                    epitable$tab[1L, 1L:3L],         # pull counts of cases on among exposed, total person-time among exp and incidence per 100 pers-time
-                    epitable$tab[2L, 1L:3L],         # pull counts of cases on among unexposed, total person-time among unexp and incidence per 100 pers-time
-
-                    get_epitable_ci(epitable, measure) # pull the estimate, CIs, and p-value
+      nums <- cbind(exposure_var,                           # name of the exposure variable
+                    get_epitable_values(epitable, measure), # extract the values from the table
+                    get_epitable_ci(epitable, measure)      # pull the estimate, CIs, and p-value
       )
+
 
       # set correct column names
       colnames(nums) <- c("variable",
