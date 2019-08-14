@@ -1,123 +1,5 @@
-# This is supposed to
-# Odds Ratios, no strata:
-#
-# nums <- cbind(exposure_var,                   # name of the exposure variable
-#               epitable$tab[1L, c(1L, 2L)],    # pull counts of exposed among cases (REMEMBER IS FLIPPED!)
-#               epitable$tab[1L, 5L],           # pull odds of exposure among cases
-#               epitable$tab[2L, c(1L, 2L)],    # pull counts of exposed among among controls
-#               epitable$tab[2L, 5L],           # pull odds of exposure among controls
-#               epitable$massoc$OR.strata.wald, # pull the the OR and CIs
-#               epitable$massoc$chisq.strata[3] # pull the p-value
-# )
-# # set correct column names
-# colnames(nums) <- c("variable",
-#                     "exp_cases", "unexp_cases", "cases_odds",
-#                     "exp_controls", "unexp_controls", "controls_odds",
-#                     "est", "lower", "upper", "pval"
-# )
-#
-# Odds Ratios with strata:
-#
-#                epitable$tab[1L, c(1L, 2L)],   # pull counts of exposed among cases (REMEMBER IS FLIPPED!)
-#                epitable$tab[1L, 5L],          # pull odds of exposure among cases
-#                epitable$tab[2L, c(1L, 2L)],   # pull counts of exposed among controls
-#                epitable$tab[2L, 5L],          # pull odds of exposure among controls
-#                epitable$massoc$OR.crude.wald, # pull the the OR and CIs
-#                epitable$massoc$chisq.crude[3], # pull the p-value
-#                NA                              # Leave space for wolf-test of homogeneity in strata rows
-#                )
 
-# # stratified counts and estimates
-# stratified <- cbind(rep(exposure_var, 2),    # name of the exposure variable repeated for each strata
-#         c("strata_TRUE", "strata_FALSE"),    # type of estimate
-#         rbind(                               # row bind strata counts and odds together
-#           cbind(                                  # cbind strata_true counts together seperately
-#             t(the_table[TRUE][c(1,3)]),             # pull counts of exposed among cases
-#             the_table[TRUE][1] /
-#               the_table[TRUE][3],                   # calculate odds of exposure among cases
-#             t(the_table[TRUE][c(2,4)]),             # pull counts of exposed among controls
-#             the_table[TRUE][2] /
-#               the_table[TRUE][4]                    # calculate odds of exposure among cases
-#             ),
-#           cbind(                                  # cbind strata_false outcomes counts together seperately
-#             t(the_table[TRUE][c(5,7)]),             # pull counts of exposure among cases
-#             the_table[TRUE][5] /
-#               the_table[TRUE][7],                   # calculate odds of exposure among cases
-#             t(the_table[TRUE][c(6,8)]),             # pull counts of exposure among controls
-#             the_table[TRUE][6] /
-#               the_table[TRUE][8]                    # calculate odds of exposure among controls
-#           )
-#           ),
-#         epitable$massoc$OR.strata.wald,       # pull the OR and CIs for each strata
-#         data.frame(                           # pull the p-values for each strata as a dataframe
-#           epitable$massoc$chisq.strata[,3]
-#           ),
-#         rbind(epitable$massoc$OR.homog.woolf[,3], NA)    # pull the woolf test of homogeneity p-value
-#         )
-
-
-#   # mantel-haenszel counts (NAs) and estimates
-#   mh <- cbind(exposure_var,                    # name of exposure variable
-#         "mh",                                  # type of estimate
-#         t(rep(NA, 6)),                         # make all the counts and odds NAs
-#         epitable$massoc$OR.mh.wald,            # pull the mh OR and CIS
-#         epitable$massoc$chisq.mh$p.value,      # pull the mh pvalue
-#         NA                                     # Leave space for wolf-test of homogeneity in strata rows
-#         )
-
-
-or_names <- function() {
-  c("variable",
-
-    "exp_cases",
-    "unexp_cases",
-    "cases_odds",
-
-    "exp_controls",
-    "unexp_controls",
-    "controls_odds",
-
-    "est",
-    "lower",
-    "upper",
-    "pval")
-}
-
-rr_names <- function() {
-  c("variable",
-
-    "exp_cases",
-    "exp_total",
-    "exp_risk",
-
-    "unexp_cases",
-    "unexp_total",
-    "unexp_risk",
-
-    "est",
-    "lower",
-    "upper",
-    "pval")
-}
-
-irr_names <- function() {
-  c("variable",
-
-    "exp_cases",
-    "exp_perstime",
-    "exp_incidence",
-
-    "unexp_cases",
-    "unexp_perstime",
-    "unexp_incidence",
-
-    "est",
-    "lower",
-    "upper",
-    "pval")
-}
-
-get_epitable_ci <- function(epitable, measure = "OR") {
+get_epitable_ci <- function(epitable, measure = "OR", type = "strata") {
 
   res <- data.frame(
                     exp    = numeric(1),
@@ -125,12 +7,129 @@ get_epitable_ci <- function(epitable, measure = "OR") {
                     upper  = numeric(1),
                     pvalue = numeric(1),
                    )
-  var              <- glue::glue("{measure}.strata.wald")
-  res[["exp"]]     <- epitable$massoc[[measure]][["exp"]]
-  res[["lower"]]   <- epitable$massoc[[measure]][["lower"]]
-  res[["upper"]]   <- epitable$massoc[[measure]][["upper"]]
-  res[["p.value"]] <- epitable$massoc$chisq.strata[["p.value"]]
+  var              <- glue::glue("{measure}.{type}.wald")
+  chi              <- glue::glue("chisq.{type}")
+  res[["exp"]]     <- epitable$massoc[[var]][["exp"]]
+  res[["lower"]]   <- epitable$massoc[[var]][["lower"]]
+  res[["upper"]]   <- epitable$massoc[[var]][["upper"]]
+  res[["p.value"]] <- epitable$massoc[[chi]][["p.value"]]
   res
+}
+
+strata_ratio_table <- function(x, measure = "OR") {
+
+  # The incoming table will be a 3D array that has this pattern:
+  # x <- array(1:8, 
+  #       dim = c(2, 2, 2), 
+  #       dimnames = list(exposure = 1:2, outcome = 1:2, strata = 1:2)
+  #      )
+  # x
+  # , , strata = 1
+  # 
+  #         outcome
+  # exposure 1 2
+  #        1 1 3
+  #        2 2 4
+  # 
+  # , , strata = 2
+  # 
+  #         outcome
+  # exposure 1 2
+  #        1 5 7
+  #        2 6 8
+  #
+  # ---------------------------------------------------------------------------
+  # # One of the big gotchas about 3D arrays is the fact that you can subset
+  # # them both as matrices and as vectors.  
+  #
+  # # EXPOSURE is the first dimension. If you drop that deminsion, the resulting
+  # # matrix will have OUTCOME as the first dimension
+  # x[1, , ]
+  #        strata
+  # outcome 1 2
+  #       1 1 5
+  #       2 3 7
+  # 
+  # ---------------------------------------------------------------------------
+  if (measure == "OR") {
+    # NOTE: The table input for epiR::epi.2by2 calculates ORs wrong, so we have
+    # to assume that the table is flipped around
+    # DIM 1: outcome (case, control)
+    # DIM 2: exposure
+    # DIM 3: strata 
+    cases_exp     <- x[1, 1, , drop = TRUE] # x[c(1, 5)]
+    cases_unexp   <- x[1, 2, , drop = TRUE] # x[c(3, 7)]
+
+    controls_exp   <- x[2, 1, , drop = TRUE] # x[c(2, 6)]
+    controls_unexp <- x[2, 2, , drop = TRUE] # x[c(4, 8)]
+
+    # NOTE: ZNK: This is the part I don't particularly understand. Why are the
+    # strata spread across columns here? This is correct in terms of the
+    # calculations, but I am really unsure of how to read this. 
+    data.frame(
+      exp_cases      = x[1, , 1, drop = TRUE], # x[c(1, 3)]
+      unexp_cases    = x[1, , 2, drop = TRUE], # x[c(5, 7)]
+      cases_odds     = cases_exp / cases_unexp,
+
+      exp_controls   = x[2, , 1, drop = TRUE], # x[c(2, 4)]
+      unexp_controls = x[2, , 2, drop = TRUE], # x[c(6, 8)]
+      controls_odds  = controls_exp / controls_unexp
+    )
+  } else if (measure == "RR") {
+    # DIM 1: exposure 
+    # DIM 2: outcome (case, control)
+    # DIM 3: strata 
+    
+    # NOTE: Here, I'm aligning the subsetting so that it's easier to see how I'm
+    # obtaining each value. The exposed cases include both of the values in the
+    # stratifier. The exposed total uses the colSums because the strata variable
+    # is now in the columns as it moved down a dimension after dropping the 
+    # exposure.
+      exp_cases <-         x[1, 1, , drop = TRUE]
+      exp_total <- colSums(x[1,  , , drop = TRUE])
+    unexp_cases <-         x[2, 1, , drop = TRUE]
+    unexp_total <- colSums(x[2,  , , drop = TRUE])
+
+    data.frame(
+      exp_cases   = exp_cases,
+      exp_total   = exp_total,
+      exp_risk    = (exp_cases / exp_total) * 100,
+
+      unexp_cases = unexp_cases,
+      unexp_total = unexp_total,
+      unexp_risk  = (unexp_cases / unexp_total) * 100
+    )
+
+  } else if (measure == "IRR") {
+    # sigma(a_i * PTo / PTt) / sigma(c_i * PTe / PTt)
+    # where PTt is the sum of respective strata
+    # and the table is set out as follows:
+    #           outcome+   | person time
+    # exposure+     a      |      PTe
+    # exposure-     c      |      PTo
+    # Total                |      PTt
+    # DIM 1: exposure 
+    # DIM 2: outcome (outcome, person time)
+    # DIM 3: strata 
+      exp_cases    <- x[1, 1, , drop = TRUE]
+      exp_perstime <- x[1, 2, , drop = TRUE]
+
+    unexp_cases    <- x[2, 1, , drop = TRUE]
+    unexp_perstime <- x[2, 2, , drop = TRUE]
+
+    data.frame(
+      exp_cases       = exp_cases,
+      exp_perstime    = exp_perstime,
+      exp_incidence   = (exp_cases / exp_perstime) * 100,
+
+      unexp_cases     = unexp_cases,
+      unexp_perstime  = unexp_perstime,
+      unexp_incidence = (unexp_cases / unexp_perstime) * 100
+    )
+
+  } else {
+    stop(glue::glue("the measure {measure} is not recognised"), call. = FALSE)
+  }
 }
 
 get_epitable_values <- function(epitable, measure = "OR") {
