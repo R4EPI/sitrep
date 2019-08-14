@@ -285,24 +285,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
         # stratified counts and estimates
         stratified <- cbind(rep(exposure_var, 2),    # name of the exposure variable repeated for each strata
                 c("strata_TRUE", "strata_FALSE"),    # type of estimate
-                rbind(                               # row bind strata counts and odds together
-                  cbind(                                  # cbind strata_true counts together seperately
-                    t(the_table[TRUE][c(1,3)]),             # pull counts of exposed among cases
-                    the_table[TRUE][1] /
-                      the_table[TRUE][3],                   # calculate odds of exposure among cases
-                    t(the_table[TRUE][c(2,4)]),             # pull counts of exposed among controls
-                    the_table[TRUE][2] /
-                      the_table[TRUE][4]                    # calculate odds of exposure among cases
-                    ),
-                  cbind(                                  # cbind strata_false outcomes counts together seperately
-                    t(the_table[TRUE][c(5,7)]),             # pull counts of exposure among cases
-                    the_table[TRUE][5] /
-                      the_table[TRUE][7],                   # calculate odds of exposure among cases
-                    t(the_table[TRUE][c(6,8)]),             # pull counts of exposure among controls
-                    the_table[TRUE][6] /
-                      the_table[TRUE][8]                    # calculate odds of exposure among controls
-                  )
-                  ),
+                strata_ratio_table(the_table, measure),
                 epitable$massoc$OR.strata.wald,       # pull the OR and CIs for each strata
                 data.frame(                           # pull the p-values for each strata as a dataframe
                   epitable$massoc$chisq.strata[,3]
@@ -385,29 +368,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
       # stratified counts and estimates
       stratified <- cbind(rep(exposure_var, 2),                # name of the exposure variable repeated for each strata
                           c("strata_TRUE", "strata_FALSE"),    # type of estimate
-                          rbind(                               # row bind strata counts and risks together
-                            cbind(                                  # cbind strata_true counts together seperately
-                              the_table[TRUE][1L],                     # counts of cases among exposed
-                              sum(the_table[TRUE][c(1L,3L)]),          # total exposed
-                              the_table[TRUE][1L] /
-                                sum(the_table[TRUE][c(1L,3L)]) * 100,  # risk among the exposed
-                              the_table[TRUE][2L],                     # counts of cases among unexposed
-                              sum(the_table[TRUE][c(2L,4L)]),          # total unexposed
-                              the_table[TRUE][2L] /
-                                sum(the_table[TRUE][c(2L,4L)]) * 100  # risk among the unexposed
-                            ),
-                            cbind(                                   # cbind strata_false counts together seperately
-                              the_table[TRUE][5L],                     # counts of cases among exposed
-                              sum(the_table[TRUE][c(5L,7L)]),          # total exposed
-                              the_table[TRUE][5L] /
-                                sum(the_table[TRUE][c(5L,7L)]) * 100,  # risk among the exposed
-                              the_table[TRUE][6L],                     # counts of cases among unexposed
-                              sum(the_table[TRUE][c(6L,8L)]),          # total unexposed
-                              the_table[TRUE][6L] /
-                                sum(the_table[TRUE][c(6L,8L)]) * 100  # risk among the unexposed
-
-                            )
-                          ),
+                          strata_ratio_table(the_table, measure),
                           epitable$massoc$RR.strata.wald,       # pull the RR and CIs for each strata
                           data.frame(                           # pull the p-values for each strata as a dataframe
                             epitable$massoc$chisq.strata[,3]
@@ -493,29 +454,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
       # stratified counts and estimates
       stratified <- cbind(rep(exposure_var, 2),                # name of the exposure variable repeated for each strata
                           c("strata_TRUE", "strata_FALSE"),    # type of estimate
-                          rbind(                               # row bind strata counts and risks together
-                            cbind(                                  # cbind strata_true counts together seperately
-                              the_table[TRUE][1L],                     # counts of cases among exposed
-                              the_table[TRUE][3L],                     # person time among exposed
-                              the_table[TRUE][1L] /
-                                the_table[TRUE][3L] * 100,             # incidence among the exposed
-                              the_table[TRUE][2L],                     # counts of cases among unexposed
-                              the_table[TRUE][4L],                     # person time among unexposed
-                              the_table[TRUE][2L] /
-                                the_table[TRUE][4L] * 100              # incidence among the unexposed
-                            ),
-                            cbind(                                  # cbind strata_false counts together seperately
-                              the_table[TRUE][5L],                     # counts of cases among exposed
-                              the_table[TRUE][7L],                     # person time among exposed
-                              the_table[TRUE][5L] /
-                                the_table[TRUE][7L] * 100,             # incidence among the exposed
-                              the_table[TRUE][6L],                     # counts of cases among unexposed
-                              the_table[TRUE][8L],                     # person time among unexposed
-                              the_table[TRUE][6L] /
-                                the_table[TRUE][8L] * 100              # incidence among the unexposed
-
-                            )
-                          ),
+                          strata_ratio_table(the_table, measure = measure),
                           epitable$massoc$IRR.strata.wald,       # pull the RR and CIs for each strata
                           data.frame(                            # pull the p-values for each strata as a dataframe
                             epitable$massoc$chisq.strata[,3]
