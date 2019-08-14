@@ -276,10 +276,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
         # crude counts and estimates
         crude <- cbind(exposure_var,                  # name of the exposure variable
                        "crude",                       # type of estimate
-                       epitable$tab[1L, c(1L, 2L)],   # pull counts of exposed among cases (REMEMBER IS FLIPPED!)
-                       epitable$tab[1L, 5L],          # pull odds of exposure among cases
-                       epitable$tab[2L, c(1L, 2L)],   # pull counts of exposed among controls
-                       epitable$tab[2L, 5L],          # pull odds of exposure among controls
+                    get_epitable_values(epitable, measure), # extract the values from the table
                        epitable$massoc$OR.crude.wald, # pull the the OR and CIs
                        epitable$massoc$chisq.crude[3], # pull the p-value
                        NA                              # Leave space for wolf-test of homogeneity in strata rows
@@ -379,10 +376,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
       # crude counts and estimates
       crude <- cbind(exposure_var,                   # name of the exposure variable
                      "crude",                        # type of estimate
-                     epitable$tab[1L, c(1L, 3L)],    # pull counts of cases on among exposed and total exposed
-                     epitable$tab[1L, 4L],           # pull risk of being case among exposed (as proportion)
-                     epitable$tab[2L, c(1L, 3L)],    # pull counts of cases on among unexposed and total unexposed
-                     epitable$tab[2L, 4L],           # pull risk of being case among unexposed (as proportion)
+                    get_epitable_values(epitable, measure), # extract the values from the table
                      epitable$massoc$RR.crude.wald,  # pull the the RR and CIs
                      epitable$massoc$chisq.crude[3], # pull the p-value
                      NA                              # Leave space for wolf-test of homogeneity in strata rows
@@ -491,8 +485,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
       # crude counts and estimates
       crude <- cbind(exposure_var,               # name of the exposure variable
                      "crude",                    # type of estimate
-                     epitable$tab[1L, 1L:3L],    # pull counts of cases on among exposed, total person-time among exp and incidence per 100 pers-time
-                     epitable$tab[2L, 1L:3L],    # pull counts of cases on among unexposed, total person-time among unexp and incidence per 100 pers-time
+                    get_epitable_values(epitable, measure), # extract the values from the table
                      epitable$massoc$IRR.crude.wald, # pull the the IRR and CIs
                      epitable$massoc$chisq.crude[3] # pull the p-value
       )
