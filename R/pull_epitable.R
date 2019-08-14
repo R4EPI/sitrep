@@ -64,7 +64,76 @@
 #         epitable$massoc$chisq.mh$p.value,      # pull the mh pvalue
 #         NA                                     # Leave space for wolf-test of homogeneity in strata rows
 #         )
-widen_epitable <- function(epitable) {
+
+
+or_names <- function() {
+  c("variable",
+
+    "exp_cases",
+    "unexp_cases",
+    "cases_odds",
+
+    "exp_controls",
+    "unexp_controls",
+    "controls_odds",
+
+    "est",
+    "lower",
+    "upper",
+    "pval")
+}
+
+rr_names <- function() {
+  c("variable",
+
+    "exp_cases",
+    "exp_total",
+    "exp_risk",
+
+    "unexp_cases",
+    "unexp_total",
+    "unexp_risk",
+
+    "est",
+    "lower",
+    "upper",
+    "pval")
+}
+
+irr_names <- function() {
+  c("variable",
+
+    "exp_cases",
+    "exp_perstime",
+    "exp_incidence",
+
+    "unexp_cases",
+    "unexp_perstime",
+    "unexp_incidence",
+
+    "est",
+    "lower",
+    "upper",
+    "pval")
+}
+
+get_epitable_ci <- function(epitable, measure = "OR") {
+
+  res <- data.frame(
+                    exp    = numeric(1),
+                    lower  = numeric(1),
+                    upper  = numeric(1),
+                    pvalue = numeric(1),
+                   )
+  var              <- glue::glue("{measure}.strata.wald")
+  res[["exp"]]     <- epitable$massoc[[measure]][["exp"]]
+  res[["lower"]]   <- epitable$massoc[[measure]][["lower"]]
+  res[["upper"]]   <- epitable$massoc[[measure]][["upper"]]
+  res[["p.value"]] <- epitable$massoc$chisq.strata[["p.value"]]
+  res
+}
+
+get_epitable_values <- function(epitable, measure = "OR") {
   res <- data.frame(
                     exp_cases      = character(1),
                     unexp_cases    = character(1),
