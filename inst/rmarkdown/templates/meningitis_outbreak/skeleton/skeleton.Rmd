@@ -1140,7 +1140,7 @@ To give attack rate by age group, with appropriate population denominators, use 
 
 ```{r attack_rate_by_agegroup, warning = FALSE}
 cases <- count(linelist_cleaned, age_group) %>%   # cases for each week
-  left_join(population_data_age_categories, by = "age_group")    # merge population data 
+  left_join(population_data_age, by = "age_group")    # merge population data 
 
 # attack rate for each week
 attack_rate(cases$n, cases$population, multiplier = 10000, mergeCI = TRUE) %>% 
@@ -1473,6 +1473,7 @@ tab_linelist(linelist_cleaned, epiweek, strata = case_def,
              col_total = TRUE,
              row_total = TRUE) %>% 
   select(-variable) %>%
+  rename("Week" = value) %>%
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
   kable(digits = 2)
@@ -1485,8 +1486,8 @@ The exits are among inpatients only.
 # include column and row totals 
 linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>% 
-tab_linelist(epiweek, strata = exit_status2, 
-            col_total = TRUE, row_total = TRUE) %>% 
+  tab_linelist(epiweek, strata = exit_status2, 
+               col_total = TRUE, row_total = TRUE) %>% 
   select(-variable) %>%
   rename("Week" = value) %>%
   rename_redundant("%" = prop) %>%
@@ -1780,7 +1781,7 @@ for (i in unique(cases$epiweek)) {
   # combine the barplot and map plot into one
   print(
     cowplot::plot_grid(
-      barplot + labs(title = paste0("Epiweek:", i)),
+      barplot + labs(title = paste0("Epiweek: ", i)),
       map_plot,
       nrow = 1,
       align = "h",
