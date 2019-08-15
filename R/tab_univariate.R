@@ -154,8 +154,6 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     stop("exposure variable must be a TRUE/FALSE variable")
   }
 
-
-
   # select the var in the outcome column
   outcome_var <- outcome
   outcome     <- if (length(outcome_var) > 0) rlang::sym(outcome_var) else NULL
@@ -179,7 +177,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   # swap the factor levels so TRUE comes first (required by epiR::epi2by2 function)
   temp <- mutate_at(temp, vars(outcome_var, exposure_var),
-                 ~factor(., levels = c(TRUE, FALSE)))
+                    ~factor(., levels = c(TRUE, FALSE)))
 
   # swap factor levels for strata if not null
   if (!is.null(strata_var)) {
@@ -228,6 +226,8 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
                                          unique(arr[[strata_var]])
                          )
       )
+      names(dimnames(the_table)) <- c(exposure_var, outcome_var, strata_var)
+
     } else { # if no stratifier then simple table
       # sum outcome and obstime by exposure
       the_table <- group_by(temp, {{exposure}})
@@ -277,9 +277,9 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
         crude <- cbind(exposure_var,                  # name of the exposure variable
                        "crude",                       # type of estimate
                     get_epitable_values(epitable, measure), # extract the values from the table
-                    # get_epitable_ci(epitable, measure, "crude"),
-                       epitable$massoc$OR.crude.wald, # pull the the OR and CIs
-                       epitable$massoc$chisq.crude[3], # pull the p-value
+                    get_epitable_ci(epitable, measure, "crude"),
+                       # epitable$massoc$OR.crude.wald, # pull the the OR and CIs
+                       # epitable$massoc$chisq.crude[3], # pull the p-value
                        NA                              # Leave space for wolf-test of homogeneity in strata rows
                        )
 
@@ -297,7 +297,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
           # mantel-haenszel counts (NAs) and estimates
           mh <- cbind(exposure_var,                    # name of exposure variable
-                "mh",                                  # type of estimate
+               "mh",                                  # type of estimate
                 t(rep(NA, 6)),                         # make all the counts and odds NAs
                 epitable$massoc$OR.mh.wald,            # pull the mh OR and CIS
                 epitable$massoc$chisq.mh$p.value,      # pull the mh pvalue
