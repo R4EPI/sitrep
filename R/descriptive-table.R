@@ -87,7 +87,9 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   # translate the variable names to character
   counter   <- tidyselect::vars_select(colnames(df), !!enquo(counter))
   grouper   <- tidyselect::vars_select(colnames(df), !!enquo(grouper))
-  sym_count <- rlang::sym(counter)
+
+  has_grouper <- length(grouper) == 1
+  sym_count   <- rlang::sym(counter)
 
   # Check if counter is an integer and force factor ----------------------------
 
@@ -99,19 +101,23 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   if (is.logical(df[[counter]])) {
     df[[counter]] <- factor(df[[counter]], levels = c("TRUE", "FALSE"))
   }
+
+  df[[counter]] <- factor(df[[counter]])
+  if (has_grouper) df[[grouper]] <- factor(df[[grouper]])
+
   # Filter missing data --------------------------------------------------------
 
   if (explicit_missing) {
     df[[counter]] <- forcats::fct_explicit_na(df[[counter]], "Missing")
   } else {
     nas <- is.na(df[[counter]])
-    warning(sprintf("Removing %d missing values", sum(nas)))
+    if (sum(nas) > 0) warning(sprintf("Removing %d missing values", sum(nas)))
     df  <- df[!nas, , drop = FALSE]
   }
 
   # Apply grouping -------------------------------------------------------------
 
-  if (length(grouper) == 1) {
+  if (has_grouper) {
     # This grouper var will always have explicit missing.
     sym_group     <- rlang::sym(grouper)
     df[[grouper]] <- forcats::fct_explicit_na(df[[grouper]], "Missing")
@@ -126,33 +132,21 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
 
   if (proptotal) {
     count_data <- dplyr::mutate(count_data,
-                                prop = .data$n / nrow(df) * multiplier,
+                                proportion = .data$n / nrow(df) * multiplier,
                                 )
   } else {
     count_data <- dplyr::mutate(count_data,
-                                prop = .data$n / sum(.data$n) * multiplier,
+                                proportion = .data$n / sum(.data$n) * multiplier,
                                 )
   }
 
   # Widen grouping data --------------------------------------------------------
 
-  if (length(grouper) == 1) {
-    # change to wide format, to have "grouper" var levels as columns
-    count_data <- tidyr::gather(count_data, 
-                                key = "variable", 
-                                value = "value", 
-                                c(.data$n, .data$prop))
-    count_data <- tidyr::unite(count_data, 
-                               col = "temp", 
-                               !! sym_group, .data$variable, 
-                               sep = "_")
-
-    if (is.factor(df[[grouper]])) {
-      lvls            <- rep(levels(df[[grouper]]), each = 2)
-      lvls            <- paste0(lvls, c("_n", "_prop"))
-      count_data$temp <- factor(count_data$temp, levels = lvls)
-    }
-    count_data <- tidyr::spread(count_data, .data$temp, .data$value)
+  if (has_grouper) {
+    count_data <- widen_tabulation(count_data, 
+                                   cod    = !!sym_count,
+                                   st     = !!sym_group,
+                                   pretty = FALSE)
   }
 
   # fill in the counting data that didn't make it
@@ -175,7 +169,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   if (rowtotals == TRUE) {
     # add columns which have "_n" in the name
     count_data <- mutate(count_data,
-             Total = rowSums(count_data[, grep("(_n$|^n$)", colnames(count_data))], na.rm = TRUE))
+             Total = rowSums(count_data[, grep("( n$|^n$)", colnames(count_data))], na.rm = TRUE))
   }
 
   if (single_row){

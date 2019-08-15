@@ -114,7 +114,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 
   cod  <- rlang::enquo(var)
   st   <- rlang::enquo(strata)
-  vars <- tidyselect::vars_select(colnames(x), !! cod, !! st)
+  vars <- tidyselect::vars_select(colnames(x), !!cod, !! st)
   cod  <- rlang::sym(vars[1])
 
   null_strata <- is.na(vars[2])
@@ -135,17 +135,17 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     st <- rlang::sym(vars[2])
   }
 
-  x <- srvyr::select(x, !! cod, !!st)
+  x <- srvyr::select(x, !!cod, !!st)
 
   # If the counter variable is numeric or logical, we need to convert it to a
   # factor. For logical variables, this is trivial, so we just do it.
   if (is.logical(x$variables[[vars[1]]])) {
-    x <- srvyr::mutate(x, !! cod := factor(!! cod, levels = c("TRUE", "FALSE")))
+    x <- srvyr::mutate(x, !!cod := factor(!! cod, levels = c("TRUE", "FALSE")))
   }
   # For numeric data, however, we need to warn the user
   if (is.numeric(x$variables[[vars[1]]])) {
     warning(glue::glue("converting `{vars[1]}` to a factor"))
-    x <- srvyr::mutate(x, !! cod := fac_from_num(!! cod))
+    x <- srvyr::mutate(x, !!cod := fac_from_num(!! cod))
   }
 
   # if there is missing data, we should treat it by either removing the rows
@@ -154,22 +154,22 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     nas <- sum(is.na(x$variables[[vars[1]]]))
     if (nas > 0) {
       warning(glue::glue("removing {nas} missing value(s) from `{vars[1]}`"))
-      x <- srvyr::filter(x, !is.na(!! cod))
+      x <- srvyr::filter(x, !is.na(!!cod))
     }
   } else {
-    x <- srvyr::mutate(x, !! cod := forcats::fct_explicit_na(!! cod, na_level = "(Missing)"))
+    x <- srvyr::mutate(x, !!cod := forcats::fct_explicit_na(!! cod, na_level = "(Missing)"))
   }
 
   # here we are creating a dummy variable that is either the var or the
   # combination of var and strata so that we can get the right proportions from
   # the survey package in a loop below
   if (null_strata) {
-    x <- srvyr::group_by(x, !! cod, .drop = FALSE)
+    x <- srvyr::group_by(x, !!cod, .drop = FALSE)
   } else {
     # if there is a strata, create a unique, parseable dummy var by inserting
     # the timestamp in between the vars
     tim <- as.character(Sys.time())
-    x <- srvyr::group_by(x, !! cod, !!st, .drop = FALSE)
+    x <- srvyr::group_by(x, !!cod, !!st, .drop = FALSE)
   }
 
   # Calculating the survey total will also give us zero counts
@@ -206,7 +206,8 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   # make sure the survey is ungrouped
   xx      <- srvyr::ungroup(x)
   # get the column with all the values of the counter
-  ycod    <- dplyr::pull(y, !! cod)
+  ycod    <- dplyr::pull(y, !!cod)
+  codl    <- levels(ycod)
   if (!null_strata && proptotal) {
     # Calculate the survey proportion for both the stratifier and counter
     # @param xx a tbl_svy object
@@ -220,53 +221,52 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
       st  <- rlang::enquo(st)
       cod <- rlang::enquo(cod)
       res <- srvyr::summarise(xx, 
-                              proportion = srvyr::survey_mean(!! cod == .x & !! st == .y,
+                              proportion = srvyr::survey_mean(!!cod == .x & !! st == .y,
                                                               proportion = TRUE,
                                                               vartype = "ci"))
-      res <- dplyr::bind_cols(!! cod := .x, res)
-      dplyr::bind_cols(!! st := .y, res)
+      res <- dplyr::bind_cols(!!cod := .x, res)
+      dplyr::bind_cols(!!st := .y, res)
     }
   } else {
     s_prop <- function(xx, .x, cod) {
       cod <- rlang::enquo(cod)
       res <- srvyr::summarise(xx, 
-                              proportion = srvyr::survey_mean(!! cod == .x,
+                              proportion = srvyr::survey_mean(!!cod == .x,
                                                               proportion = TRUE,
                                                               vartype = "ci"))
-      dplyr::bind_cols(!! cod := rep(.x, nrow(res)), res)
+      dplyr::bind_cols(!!cod := rep(.x, nrow(res)), res)
     }
   }
 
   if (!null_strata) {
     # get the column with all the unique values of the stratifier
-    yst <- dplyr::pull(y, !!  st)
+    yst <- dplyr::pull(y, !! st)
+    stl <- levels(yst)
     if (proptotal) {
       # map both the counter and stratifier to sprop
-      props <- purrr::map2_dfr(ycod, yst, ~s_prop_strat(xx, .x, .y, !! cod, !! st))
+      props <- purrr::map2_dfr(ycod, yst, ~s_prop_strat(xx, .x, .y, !!cod, !! st))
     } else {
       # group by the stratifier and then map the counter
-      xx    <- srvyr::group_by(xx, !! st, .drop = FALSE)
+      xx    <- srvyr::group_by(xx, !!st, .drop = FALSE)
       g     <- unique(ycod)
-      props <- purrr::map_dfr(g, ~s_prop(xx, .x, !! cod))
+      props <- purrr::map_dfr(g, ~s_prop(xx, .x, !!cod))
     }
     # Make sure that the resulting columns are factors
-    codl  <- levels(ycod)
-     stl  <- levels(yst)
-    props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
-    props <- dplyr::mutate(props, !!  st := factor(!!  st, levels =  stl))
+    props <- dplyr::mutate(props, !!cod := forcats::fct_relevel(!! cod, codl))
+    props <- dplyr::mutate(props, !! st := forcats::fct_relevel(!!  st, stl))
 
   } else {
     # no stratifier, just map the counter to sprop and make sure it's a factor
     xx    <- srvyr::ungroup(x)
     v     <- as.character(y[[1]])
-    props <- purrr::map_dfr(ycod, ~s_prop(xx, .x, !! cod))
-    codl  <- levels(dplyr::pull(y, !! cod))
-    props <- dplyr::mutate(props, !! cod := factor(!! cod, levels = codl))
+    props <- purrr::map_dfr(ycod, ~s_prop(xx, .x, !!cod))
+    props <- dplyr::mutate(props, !!cod := forcats::fct_relevel(!! cod, codl))
   }
 
   # Join the data together
   y       <- y[!colnames(y) %in% "n_se"]
   join_by <- if (null_strata) names(y)[[1]] else names(y)[1:2]
+  y       <- dplyr::mutate(y, !!cod := forcats::fct_relevel(!! cod, codl))
   y       <- dplyr::left_join(y, props, by = join_by)
 
   if (coltotals) {
@@ -274,33 +274,33 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
       tot <- data.frame(n = sum(y$n, na.rm = TRUE))
     } else {
       # group by stratifier
-      y   <- dplyr::group_by(y, !! st, .drop = FALSE)
+      y   <- dplyr::group_by(y, !!st, .drop = FALSE)
       # tally up the Ns
-      tot <- dplyr::tally(y, !! rlang::sym("n"))
+      tot <- dplyr::tally(y, !!rlang::sym("n"))
       # bind to the long data frame
       y   <- dplyr::ungroup(y)
     }
     suppressMessages(y <- dplyr::bind_rows(y, tot))
 
     # replace any NAs in the cause of death with "Total"
-    y <- dplyr::mutate(y, !! cod := forcats::fct_explicit_na(!! cod, "Total"))  
+    y <- dplyr::mutate(y, !!cod := forcats::fct_explicit_na(!! cod, "Total"))  
   }
 
   if (rowtotals && !null_strata) {
     # group by cause of death
-    y   <- dplyr::group_by(y, !! cod, .drop = FALSE)
+    y   <- dplyr::group_by(y, !!cod, .drop = FALSE)
     # tally up the Ns
-    tot <- dplyr::tally(y, !! rlang::sym("n"))
+    tot <- dplyr::tally(y, !!rlang::sym("n"))
     # bind to the long data frame
     y   <- dplyr::ungroup(y)
     suppressMessages(y <- dplyr::bind_rows(y, tot))
     # replace any NAs in the stratifier with "Total"
-    y <- dplyr::mutate(y, !! st := forcats::fct_explicit_na(!! st, "Total"))
+    y <- dplyr::mutate(y, !!st := forcats::fct_explicit_na(!! st, "Total"))
   }
 
 
   if (wide && !null_strata) {
-    y <- widen_tabulation(y, !! cod, !! st, pretty = pretty, digits = digits)
+    y <- widen_tabulation(y, !!cod, !! st, pretty = pretty, digits = digits)
   } else if (pretty) {
     y <- prettify_tabulation(y, digits = digits)
   }
@@ -334,64 +334,6 @@ prettify_tabulation <- function(y, digits = 1, ci_prefix = "") {
 }
 
 
-#' Convert the table to wide format consistently
-#'
-#' @param y a data frame
-#' @param cod variable of interest
-#' @param st stratifying variable
-#' @noRd
-widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
-
-  cod <- rlang::enquo(cod)
-  st  <- rlang::enquo(st)
-
-  # getting all the labels for the stratifier
-  l   <- levels(dplyr::pull(y, !! st))
-
-  #  1 Only select the necessary columns. n, deff, and prop are all numeric
-  #    columns that need to be gathered
-  #
-  #  2 Gather "n", "deff", and "prop" into a single column
-  #
-  #  3 Make sure that everything is arranged in the correct order
-  #
-  #  4 Combine the stratifier and the n/prop signifier
-  #
-  #  5 Make sure the factors are in the correct order
-  #
-  #  6 Spread out the combined stratifier and signifier to columns
-  #  
-  #  7 Run through the stratified columns with map, and make them pretty
-  y <- dplyr::select(y, !! cod, !! st, "n",
-                     # deff, ci, and prop are all columns that _might_ exist
-                     dplyr::matches("prop"), 
-                     dplyr::starts_with("ci"), 
-                     dplyr::starts_with("deff"))
-
-  y     <- tidyr::gather(y, key = "variable", value = "value", -(1:2))
-  
-  y     <- dplyr::arrange(y, !! cod, !! st)
-
-  y     <- tidyr::unite(y, "tmp", !! st, "variable", sep = " ")
-
-  y$tmp <- forcats::fct_inorder(y$tmp)
-
-  y     <- tidyr::spread(y, "tmp", "value")
-
-  if (pretty) {
-    # map through all the levels of l and pull out the matching columns
-    tmp <- purrr::map(l, ~dplyr::select(y, dplyr::starts_with(paste0(., " "))))
-    # pretty up those columns and bind them all together
-    tmp <- purrr::map2_dfc(tmp, l, ~prettify_tabulation(.x, digits = digits, ci_prefix = .y))
-
-    # names(tmp)[grepl("ci\\d*", names(tmp))] <- sprintf("%s ci", l)
-    # glue the result to the first column of the data
-    y   <- dplyr::bind_cols(y[1], tmp)
-  }
-  
-  return(y)
-
-}
 
 #' @export
 #' @rdname tabulate_survey
@@ -424,14 +366,8 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   vars <- tidyselect::vars_select(colnames(x), ...)
   stra <- rlang::enquo(strata)
 
-  strata_exists <- tidyselect::vars_select(colnames(x), !! stra)
-  strata_exists <- length(strata_exists) > 0
 
   flip_it <- wide && !is.null(transpose)
-
-  if (flip_it) {
-    transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
-  }
 
   # Create list for results to go into that will eventually be bound together
   res <- vector(mode = "list", length = length(vars))
@@ -442,8 +378,8 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   for (i in names(res)) {
     i        <- rlang::ensym(i)
     res[[i]] <- tabulate_survey(x,
-                                var       = !! i,
-                                strata    = !! stra,
+                                var       = !!i,
+                                strata    = !!stra,
                                 proptotal = proptotal,
                                 pretty    = pretty,
                                 digits    = digits,
@@ -467,81 +403,9 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
   # rearrange them so that they are grouped by variable/value
 
   if (flip_it) {
-    if (transpose == "both") {
-      # if the user wants to keep both columns, then we unite them and then
-      res <- tidyr::unite(res, col = "both", "variable", "value", remove = TRUE)
-    }
-    # number of rows in the original table
-    nr   <- seq_len(nrow(res))
-    # number of new columns based on the number of rows
-    nc   <- 1L + deff + if (pretty) 1L else 3L
-    # the variable column to be transposed
-    var  <- rlang::ensym(transpose)
-    # when there is no strata, we have to come up with a dummy variable
-    if (!strata_exists) {
-      stra      <- paste0("__", as.integer(Sys.time()))
-      stra      <- rlang::ensym(stra)
-      old_names <- names(res)[names(res) != transpose]
-      names(res)[names(res) != transpose] <- paste0(" ", old_names)
-      slevels   <- NULL
-    } else {
-      slevels   <- dplyr::pull(x$variables, !! stra)
-      slevels   <- if (is.factor(slevels)) levels(slevels) else sort(slevels)
-    }
-
-    # transposing the count variable, which is always there.
-    tres <- transpose_pretty(res, !! stra, !! var, !! rlang::sym("n"), slevels)
-
-    # determining the list of suffixes to run through when appending the columns
-    suffix <- c(
-      if (deff) "deff" else NULL,
-      if (pretty) "ci" else c("proportion", "proportion_low", "proportion_upp")
-    )
-
-    # transposing and appending the columns
-    for (i in suffix) {
-      suff <- rlang::ensym(i)
-      tmp  <- transpose_pretty(res, !! stra, !! var, !! suff, slevels)
-      tres <- dplyr::bind_cols(tres, tmp[-1])
-    }
-
-    # re-ordering the columns so that they are grouped by the original row order
-    res <- tres[c(1, order(rep(nr, nc)) + 1)]
-  }
-  if (flip_it && !strata_exists) {
-    res <- dplyr::select(res, - !! stra)
+    res <- flipper(x, res, transpose, pretty = pretty, stra = stra)
   }
   res
 }
 
-#' transpose the output of tabulate_binary_survey
-#'
-#' @param x a transposable data frame with a suffix for columns
-#' @param columns the new name for the column in which to place the columns
-#' @param rows the name of the rows
-#' @param suffix the suffix of the columns to transpose
-#'
-#' @noRd
-#'
-transpose_pretty <- function(x, columns, rows, suffix, clev = NULL) {
-  col      <- rlang::enquo(columns)
-  var      <- rlang::enquo(rows)
-  sfx      <- rlang::enquo(suffix)
-  sfx_char <- paste0(" ", rlang::as_name(sfx))
 
-  # Strategy: 
-  #   1. select only the variables that matter
-  #   2. gather in the long format
-  #   3. remove the suffix
-  #   4. spread out the data so that the rows are now the columns
-
-  res <- dplyr::select(x,   !! var, dplyr::ends_with(sfx_char))
-  res <- tidyr::gather(res, !! col, !! sfx, - !! var)
-  res <- dplyr::mutate(res, !! col := gsub(sfx_char, "", !! col))
-  if (!is.null(clev)) {
-    res <- dplyr::mutate(res, !! col := factor(!! col, clev))
-  }
-  res <- tidyr::spread(res, !! var, !! sfx)
-  names(res)[-1] <- paste0(names(res)[-1], sfx_char)
-  res
-}
