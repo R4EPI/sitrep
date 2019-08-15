@@ -54,15 +54,14 @@ the rows, which is useful when you stratify by age group. Default is
 \code{NULL}, which will not transpose anything. You have three options for
 transpose:
 \itemize{
-\item \code{transpose = "variable"}: uses the variable column, dropping values.
+\item \code{transpose = "variable"}: uses the variable column, (dropping values if strata exists).
 Use this if you know that your values are all identical or at least
 identifiable by the variable name.
-\item \code{transpose = "value"}   : uses the value column, dropping variables.
+\item \code{transpose = "value"}   : uses the value column, (dropping variables if strata exists).
 Use this if your values are important and the variable names are
 generic placeholders.
 \item \code{transpose = "both"}    : combines the variable and value columns.
 Use this if both the variables and values are important.
-If there is no stratification, the results will produce a single-row table
 }}
 
 \item{digits}{(survey only) if \code{pretty = FALSE}, this indicates the number
@@ -109,9 +108,14 @@ tab_linelist(linelist_clean, sex)
 # describe prenancy statistics, but remove missing data from the tally
 tab_linelist(linelist_clean, trimester, na.rm = TRUE)
 
-# describe prenancy statistics, stratifying by vitamin A perscription
-tab_linelist(linelist_clean, trimester, strata = prescribed_vitamin_a, na.rm = TRUE)
+# describe by symptom
 
+tab_linelist(linelist_clean, 
+             cough, nasal_discharge, severe_oral_lesions,
+             transpose = "value")
+# describe prenancy statistics, stratifying by vitamin A perscription
+tab_linelist(linelist_clean, trimester, sex, strata = prescribed_vitamin_a, 
+             na.rm = TRUE, row_total = TRUE)
 
 }) }
 

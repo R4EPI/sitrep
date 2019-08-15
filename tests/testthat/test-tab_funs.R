@@ -199,9 +199,28 @@ test_that("tab_linelist can give results similar to the old multi_descriptive", 
   
   res_choice  <- tab_linelist(d, tidyselect::starts_with("CHOICE"), drop = "")
   res_symptom <- tab_linelist(d, SYMPTOMS, keep = "Yes")
+  res_symptom_transpose <- tab_linelist(d, SYMPTOMS, transpose = "value")
 
   expect_identical(res_choice, md_expect_choice)
   expect_identical(res_symptom, md_expect_symptom)
+
+})
+
+
+test_that("transposition can happen without strata by value", {
+  
+  res_symptom_transpose <- tab_linelist(d, SYMPTOMS, transpose = "value")
+
+  expect_identical(md_expect_symptom$n,          res_symptom_transpose[["Yes n"]])
+  expect_identical(md_expect_symptom$proportion, res_symptom_transpose[["Yes proportion"]])
+
+})
+
+test_that("transposition can happen without strata by variable", {
+  
+  res_symptom_transpose <- tab_linelist(d, SYMPTOMS, transpose = "variable")
+  expect_equivalent(md_expect_symptom$n, unlist(res_symptom_transpose[2, c(2, 4, 6)]))
+  expect_equivalent(md_expect_symptom$proportion, unlist(res_symptom_transpose[2, c(3, 5, 7)]))
 
 })
 

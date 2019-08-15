@@ -51,7 +51,6 @@ transpose_pretty <- function(x, columns, rows, suffix, clev = NULL) {
 #' 
 flipper <- function(x, res, transpose = c("variable", "value", "both"), pretty = TRUE, stra, is_survey = TRUE) {
 
-  transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
 
   if (transpose == "both") {
     # if the user wants to keep both columns, then we unite them and then
@@ -121,5 +120,77 @@ flipper <- function(x, res, transpose = c("variable", "value", "both"), pretty =
 include_suffix <- function(x, suffix) {
 
   if (any(grepl(glue::glue("(. | ?){suffix}$"), x))) suffix else NULL
+
+}
+
+#' Convert the table to wide format consistently
+#'
+#' @param y a data frame
+#' @param cod variable of interest
+#' @param st stratifying variable
+#' @noRd
+widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
+
+  # Setting up variables needed. Lower case are user-supplied
+  cod   <- rlang::enquo(cod)
+  st    <- rlang::enquo(st)
+
+  # UPPER case variables are ones I create and destroy
+  TIM   <- as.integer(Sys.time())
+  KEY   <- rlang::sym(paste0("__key__",   TIM))
+  VALUE <- rlang::sym(paste0("__value__", TIM))
+  TMP   <- rlang::sym(paste0("__tmp__",   TIM))
+
+
+  #  1 Only select the necessary columns. n, deff, and prop are all numeric
+  #    columns that need to be gathered
+  #
+  #  2 Gather "n", "deff", and "prop" into a single column
+  #
+  #  3 Make sure that everything is arranged in the correct order. This will be
+  #    arranged so that the rows are by the counter and then the stratifier.
+  #
+  #  4 Combine the stratifier and the n/prop signifier
+  #
+  #  5 Make sure the factors are in the correct order as "strata signifier"
+  #
+  #  6 Spread out the combined stratifier and signifier to columns
+  #
+  #  7 make sure the column arrangement matches the initial arrangement of the
+  #    stratifier
+  #  
+  #  8 Run through the stratified columns with map, and make them pretty
+
+  # getting all the labels for the stratifier
+  l <- levels(dplyr::pull(y, !!st))
+  # 1
+  y <- dplyr::select(y, !!cod, !! st, "n",
+                     # proportion and deff are all columns that _might_ exist
+                     dplyr::matches("^proportion_?"), 
+                     dplyr::matches("^deff$"))
+
+  y <- tidyr::gather(y, key = !!KEY, value = !!VALUE, -(1:2))                 # 2
+  y <- dplyr::arrange(y, !!cod, !! st)                                        # 3
+  y <- tidyr::unite(y, !!TMP, !!st, !!KEY, sep = " ")                         # 4
+  y <- dplyr::mutate(y, !!TMP := forcats::fct_inorder(dplyr::pull(y, !!TMP))) # 5
+  y <- tidyr::spread(y, !!TMP, !!VALUE)                                       # 6
+
+  # 7
+  levels_in_order <- glue::glue("^{l} (n|deff|proportion|ci)")
+  col_arrangement <- lapply(levels_in_order, grep, names(y))
+  col_arrangement <- unlist(col_arrangement, use.names = FALSE)
+  y               <- y[c(1, col_arrangement)]
+
+  if (pretty) {
+    # map through all the levels of l and pull out the matching columns
+    tmp <- purrr::map(l, ~dplyr::select(y, dplyr::starts_with(paste0(., " "))))
+    # pretty up those columns and bind them all together
+    tmp <- purrr::map2_dfc(tmp, l, ~prettify_tabulation(.x, digits = digits, ci_prefix = .y))
+
+    # glue the result to the first column of the data
+    y   <- dplyr::bind_cols(y[1], tmp)
+  }
+  
+  return(y)
 
 }

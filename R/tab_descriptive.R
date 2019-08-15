@@ -37,15 +37,14 @@
 #'   the rows, which is useful when you stratify by age group. Default is
 #'   `NULL`, which will not transpose anything. You have three options for
 #'   transpose:
-#'    - `transpose = "variable"`: uses the variable column, dropping values.
+#'    - `transpose = "variable"`: uses the variable column, (dropping values if strata exists).
 #'       Use this if you know that your values are all identical or at least
 #'       identifiable by the variable name.
-#'    - `transpose = "value"`   : uses the value column, dropping variables.
+#'    - `transpose = "value"`   : uses the value column, (dropping variables if strata exists).
 #'       Use this if your values are important and the variable names are
 #'       generic placeholders.
 #'    - `transpose = "both"`    : combines the variable and value columns.
 #'       Use this if both the variables and values are important.
-#'    If there is no stratification, the results will produce a single-row table
 #'
 #' @param pretty (survey only) if `TRUE`, default, the proportion and CI are merged
 #'
@@ -90,9 +89,14 @@
 #' # describe prenancy statistics, but remove missing data from the tally
 #' tab_linelist(linelist_clean, trimester, na.rm = TRUE)
 #' 
+#' # describe by symptom
+#'
+#' tab_linelist(linelist_clean, 
+#'              cough, nasal_discharge, severe_oral_lesions,
+#'              transpose = "value")
 #' # describe prenancy statistics, stratifying by vitamin A perscription
-#' tab_linelist(linelist_clean, trimester, sex, strata = prescribed_vitamin_a, na.rm = TRUE, row_total = TRUE)
-#' 
+#' tab_linelist(linelist_clean, trimester, sex, strata = prescribed_vitamin_a, 
+#'              na.rm = TRUE, row_total = TRUE)
 #'
 #' }) }
 #' 
@@ -231,9 +235,12 @@ tab_general <-  function(x,
   is_survey <- inherits(x, "tbl_svy")
   stopifnot(is_survey || is.data.frame(x))
 
-  vars    <- tidyselect::vars_select(colnames(x), ...)
-  stra    <- rlang::enquo(strata)
-  flip_it <- wide && !is.null(transpose)
+  vars      <- tidyselect::vars_select(colnames(x), ...)
+  stra      <- rlang::enquo(strata)
+  flip_it   <- wide && !is.null(transpose)
+  if (flip_it) {
+    transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
+  }
 
   # Create list for results to go into that will eventually be bound together
   res        <- vector(mode = "list", length = length(vars))
@@ -242,7 +249,7 @@ tab_general <-  function(x,
 
   # loop over each name in the list and tabulate the survey for that variable
   for (i in names(res)) {
-    i        <- rlang::ensym(i)
+    i <- rlang::ensym(i)
     if (is_survey) {
       res[[i]] <- tabulate_survey(x,
                                   var       = !!i,
@@ -278,25 +285,47 @@ tab_general <-  function(x,
   suppressWarnings(res <- dplyr::bind_rows(res, .id = "variable"))
 
   # return the results with only the selected values
-  # res <- res[if (invert) !res$value %in% keep else res$value %in% keep, ]
   if (!isTRUE(keep) && !is.null(drop)) {
     stop('you can only choose to keep values or drop values. Specifying both is not allowed')
   }
-  filtered <- TRUE
+
+  strata_exists <- tidyselect::vars_select(colnames(x), !! stra)
+  strata_exists <- length(strata_exists) > 0
+
   if (!isTRUE(keep)) {
+    
     res <- res[res$value %in% keep, , drop = FALSE]
+    
   } else if (!is.null(drop)) {
+    
     res <- res[!res$value %in% drop, , drop = FALSE]
+    
+  } else if (flip_it && !strata_exists && transpose != "both") {
+
+    # This is the situation where the user doesn't have a stratafying variable,
+    # but they want to transpose either the variable or value.
+    the_column <- if (transpose == "variable") "value" else "variable"
+    res[[the_column]] <- forcats::fct_inorder(res[[the_column]])
+    res[[transpose]]  <- forcats::fct_inorder(res[[transpose]])
+    res <- widen_tabulation(res, 
+                            !!rlang::sym(the_column), 
+                            !!rlang::sym(transpose),
+                            pretty = if (is_survey) pretty else FALSE,
+                            digits = digits)
+    flip_it <- FALSE
+
   } else {
-    filtered <- FALSE
-    if (flip_it) warning("Cannot transpose data that hasn't been filtered with keep or drop", call. = FALSE)
+
+    if (flip_it) { 
+      warning("Cannot transpose data that hasn't been filtered with keep or drop", call. = FALSE)
+    }
+    flip_it <- FALSE
+    
   }
   # If the user wants to transpose the data, then we need to do this for each
   # level of data available into separate tables, combine the columns, and then
   # rearrange them so that they are grouped by variable/value
-
-
-  if (flip_it && filtered) {
+  if (flip_it) {
     res <- flipper(if (is_survey) x$variables else x, 
                    res, transpose, pretty = pretty, stra = stra)
   }
