@@ -53,9 +53,9 @@ summarize_epitable <- function(epitable, contingency_table, exposure_var = NULL,
 
 
   vars <- list(
-               OR =  c("exp_cases",    "unexp_cases",    "cases_odds",
+               OR  = c("exp_cases",    "unexp_cases",    "cases_odds",
                        "exp_controls", "unexp_controls", "controls_odds"),
-               RR =  c("exp_cases",    "exp_total",      "exp_risk",
+               RR  = c("exp_cases",    "exp_total",      "exp_risk",
                        "unexp_cases",  "unexp_total",    "unexp_risk"),
                IRR = c("exp_cases",    "exp_perstime",   "exp_incidence",
                        "unexp_cases",  "unexp_perstime", "unexp_incidence"),
@@ -88,11 +88,6 @@ get_epitable_ci <- function(epitable, measure = "OR", type = "strata") {
   res[["upper"]]   <- tab[[var]][["upper"]]
   res[["p.value"]] <- tab[[chi]][["p.value"]]
   res
-}
-
-get_epitable_woolf <- function(epitable, measure = "OR") {
-  var <- glue::glue("{measure}.homog.woolf")
-  data.frame(p.value = epitable$massoc[[var]][[3]])
 }
 
 strata_ratio_table <- function(x, measure = "OR") {
