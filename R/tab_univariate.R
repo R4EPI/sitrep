@@ -170,19 +170,13 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
 
 
-  ### backing data and fixing variable levels
-  # create a temp dataset so we dont overwrite the users dataset with factors
-  temp <- x
-
-
   # swap the factor levels so TRUE comes first (required by epiR::epi2by2 function)
-  temp <- mutate_at(temp, vars(outcome_var, exposure_var),
-                    ~factor(., levels = c(TRUE, FALSE)))
+  x[[outcome_var]]  <- factor(x[[outcome_var]], levels = c("TRUE", "FALSE"))
+  x[[exposure_var]] <- factor(x[[exposure_var]], levels = c("TRUE", "FALSE"))
 
   # swap factor levels for strata if not null
-  if (!is.null(strata_var)) {
-    temp <- mutate_at(temp, vars(strata_var),
-                      ~factor(., levels = c(TRUE, FALSE)))
+  if (has_strata) {
+    x[[strata_var]] <- factor(x[[strata_var]], levels = c("TRUE", "FALSE"))
   }
 
 
@@ -192,7 +186,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   # NOTE that this is flipped the wrong way (cases/controls as rows) - because epi2by2 calculates ORs WRONG!!
   if (measure == "OR") {
 
-    the_table <- table(temp[c(outcome_var, exposure_var, strata_var)])
+    the_table <- table(x[c(outcome_var, exposure_var, strata_var)])
 
   }
 
@@ -200,7 +194,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   # NOTE for RRs - having cases as columns for input is fine for using epi2by2
   if (measure == "RR") {
 
-    the_table <- table(temp[c(exposure_var, outcome_var, strata_var)])
+    the_table <- table(x[c(exposure_var, outcome_var, strata_var)])
 
   }
 
@@ -210,12 +204,12 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
     # if stratifier specified then do by each group
     if (has_strata) {
       # sum outcome and obstime by exposure and strata
-      temp_table <- group_by(temp, {{exposure}}, {{strata}})
-      temp_table <- summarise(temp_table,
-                              otcm = sum({{outcome}} == TRUE, na.rm = TRUE),
-                              tme  = sum({{perstime}}, na.rm = TRUE))
+      x_table <- group_by(x, {{exposure}}, {{strata}})
+      x_table <- summarise(x_table,
+                           otcm = sum({{outcome}} == TRUE, na.rm = TRUE),
+                           tme  = sum({{perstime}}, na.rm = TRUE))
 
-      arr <- tidyr::gather(temp_table, variable, value, -{{exposure}}, -{{strata}})
+      arr <- tidyr::gather(x_table, variable, value, -{{exposure}}, -{{strata}})
       arr <- dplyr::arrange(arr, {{strata}}, variable, {{exposure}})
 
       the_table <- array(arr$value,
@@ -230,7 +224,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
     } else { # if no stratifier then simple table
       # sum outcome and obstime by exposure
-      the_table <- group_by(temp, {{exposure}})
+      the_table <- group_by(x, {{exposure}})
       the_table <- summarise(the_table,
                              otcm = sum({{outcome}} == TRUE, na.rm = TRUE),
                              tme  = sum({{perstime}}, na.rm = TRUE))
@@ -245,21 +239,20 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
                    OR  = "case.control",
                    RR  = "cohort.count",
                    IRR = "cohort.time")
+
   epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = METHOD))
 
   ### Summarize the results of the calcualtion
-  nums <- summarize_epitable(epitable, the_table, exposure_var, measure, has_strata)
+  nums <- summarize_epitable(epitable, the_table, exposure_var, measure, has_strata, strata_var)
 
   # turn things to numeric
   nums <- mutate_at(nums, vars(-tidyselect::one_of("variable", "est_type")), as.numeric)
 
   # drop columns if specified
   # use numbers because names will be different according to measure, but place is always same
-  if (!extend_output & !has_strata) {
-    nums <- select(nums, -4, -7, -11)
-  }
-  if (!extend_output & has_strata) {
-    nums <- select(nums, -5, -8, -12)
+  if (!extend_output) {
+    to_drop <- if (has_strata) c(-5, -8, -12) else c(-4, -7, -11)
+    nums    <- nums[to_drop]
   }
 
   # drop woolf-test pvalue

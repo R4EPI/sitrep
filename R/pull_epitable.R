@@ -1,4 +1,4 @@
-summarize_epitable <- function(epitable, contingency_table, exposure_var = NULL, measure = "OR", has_strata = FALSE) {
+summarize_epitable <- function(epitable, contingency_table, exposure_var = NULL, measure = "OR", has_strata = FALSE, strata_var = NULL) {
 
   
   # if strata specified then pull together four rows (crude, strataTRUE, strataFALSE and MH estimates)
@@ -14,7 +14,7 @@ summarize_epitable <- function(epitable, contingency_table, exposure_var = NULL,
 
     # stratified counts and estimates
     stratified <- cbind(rep(exposure_var, 2),    # name of the exposure variable repeated for each strata
-                        c("strata_TRUE", "strata_FALSE"),    # type of estimate
+                        paste(strata_var, c("TRUE", "FALSE")),
                         strata_ratio_table(contingency_table, measure),
                         get_epitable_ci(epitable, measure, "strata"),
                         rbind(epitable$massoc$RR.homog.woolf[,3], NA)    # pull the woolf test of homogeneity p-value
