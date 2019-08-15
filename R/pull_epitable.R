@@ -1,19 +1,26 @@
 
 get_epitable_ci <- function(epitable, measure = "OR", type = "strata") {
 
+  var <- glue::glue("{measure}.{type}.wald")
+  chi <- glue::glue("chisq.{type}")
+  tab <- summary(epitable)
+  n   <- nrow(tab[[var]])
   res <- data.frame(
-                    est    = numeric(1),
-                    lower  = numeric(1),
-                    upper  = numeric(1),
-                    p.value = numeric(1)
+                    est     = numeric(n),
+                    lower   = numeric(n),
+                    upper   = numeric(n),
+                    p.value = numeric(n)
                    )
-  var              <- glue::glue("{measure}.{type}.wald")
-  chi              <- glue::glue("chisq.{type}")
-  res[["est"]]     <- epitable$massoc[[var]][["est"]]
-  res[["lower"]]   <- epitable$massoc[[var]][["lower"]]
-  res[["upper"]]   <- epitable$massoc[[var]][["upper"]]
-  res[["p.value"]] <- epitable$massoc[[chi]][["p.value"]]
+  res[["est"]]     <- tab[[var]][["est"]]
+  res[["lower"]]   <- tab[[var]][["lower"]]
+  res[["upper"]]   <- tab[[var]][["upper"]]
+  res[["p.value"]] <- tab[[chi]][["p.value"]]
   res
+}
+
+get_epitable_woolf <- function(epitable, measure = "OR") {
+  var <- glue::glue("{measure}.homog.woolf")
+  data.frame(p.value = epitable$massoc[[var]][[3]])
 }
 
 strata_ratio_table <- function(x, measure = "OR") {
