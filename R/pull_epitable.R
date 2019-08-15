@@ -1,3 +1,75 @@
+summarize_epitable <- function(epitable, contingency_table, exposure_var = NULL, measure = "OR", has_strata = FALSE) {
+
+  
+  # if strata specified then pull together four rows (crude, strataTRUE, strataFALSE and MH estimates)
+  if (has_strata) {
+
+    # crude counts and estimates
+    crude <- cbind(exposure_var,                  # name of the exposure variable
+                   "crude",                       # type of estimate
+                   get_epitable_values(epitable, measure), # extract the values from the table
+                   get_epitable_ci(epitable, measure, "crude"),
+                   NA                              # Leave space for wolf-test of homogeneity in strata rows
+    )
+
+    # stratified counts and estimates
+    stratified <- cbind(rep(exposure_var, 2),    # name of the exposure variable repeated for each strata
+                        c("strata_TRUE", "strata_FALSE"),    # type of estimate
+                        strata_ratio_table(contingency_table, measure),
+                        get_epitable_ci(epitable, measure, "strata"),
+                        rbind(epitable$massoc$RR.homog.woolf[,3], NA)    # pull the woolf test of homogeneity p-value
+    )
+
+
+    # mantel-haenszel counts (NAs) and estimates
+    mh <- cbind(exposure_var,                    # name of exposure variable
+                "mh",                                  # type of estimate
+                t(rep(NA, 6)),                         # make all the counts and odds NAs
+                get_epitable_ci(epitable, measure, "mh"),
+                NA                                     # Leave space for wolf-test of homogeneity in strata rows
+    )
+
+    # remove all the colnames and column names
+    colnames(crude)      <- NA
+    colnames(stratified) <- NA
+    colnames(mh)         <- NA
+    rownames(crude)      <- NULL
+    rownames(stratified) <- NULL
+    rownames(mh)         <- NULL
+
+
+    # bind the four rows together (each cbinded together seperately below)
+    nums <- rbind(crude, stratified, mh)
+
+
+  } else {
+    # for non stratified results, simply pull together one liners
+    # pull outputs together
+    nums <- cbind(exposure_var,                           # name of the exposure variable
+                  get_epitable_values(epitable, measure), # extract the values from the table
+                  get_epitable_ci(epitable, measure)      # pull the estimate, CIs, and p-value
+    )
+  }
+
+
+  vars <- list(
+               OR =  c("exp_cases",    "unexp_cases",    "cases_odds",
+                       "exp_controls", "unexp_controls", "controls_odds"),
+               RR =  c("exp_cases",    "exp_total",      "exp_risk",
+                       "unexp_cases",  "unexp_total",    "unexp_risk"),
+               IRR = c("exp_cases",    "exp_perstime",   "exp_incidence",
+                       "unexp_cases",  "unexp_perstime", "unexp_incidence"),
+               NULL
+  )
+  colnames(nums) <- c("variable",
+                      "est_type",
+                      vars[[measure]], 
+                      "est", "lower", "upper", "pval", 
+                      if (has_strata) "woolf_pval" else NULL
+  )
+  rownames(nums) <- NULL
+  nums
+}
 
 get_epitable_ci <- function(epitable, measure = "OR", type = "strata") {
 

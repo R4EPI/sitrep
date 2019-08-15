@@ -313,7 +313,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
         # set correct column names
         colnames(nums) <- c("variable",
                             "est_type",
-                            "exp_cases", "unexp_cases", "cases_odds",
+                           "exp_cases", "unexp_cases", "cases_odds",
                             "exp_controls", "unexp_controls", "controls_odds",
                             "est", "lower", "upper", "pval", "woolf_pval"
                             )
@@ -409,56 +409,57 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   if (measure == "IRR") {
     # get a contingency table with lots of stats in it
     epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = "cohort.time"))
+    nums     <- summarize_epitable(epitable, the_table, exposure_var, measure, has_strata)
 
     # for non stratified results, simply pull together one liners
-    if (has_strata) {
+    # if (has_strata) {
 
-        # crude counts and estimates
-      crude <- cbind(exposure_var,                  # name of the exposure variable
-                     "crude",                       # type of estimate
-                     get_epitable_values(epitable, measure), # extract the values from the table
-                     get_epitable_ci(epitable, measure, "crude")
-      )
+    #     # crude counts and estimates
+    #   crude <- cbind(exposure_var,                  # name of the exposure variable
+    #                  "crude",                       # type of estimate
+    #                  get_epitable_values(epitable, measure), # extract the values from the table
+    #                  get_epitable_ci(epitable, measure, "crude")
+    #   )
 
-        # stratified counts and estimates
-    stratified <- cbind(rep(exposure_var, 2),    # name of the exposure variable repeated for each strata
-                        c("strata_TRUE", "strata_FALSE"),    # type of estimate
-                        strata_ratio_table(the_table, measure),
-                        get_epitable_ci(epitable, measure, "strata")
-    )
-
-
-          # mantel-haenszel counts (NAs) and estimates
-        mh <- cbind(exposure_var,                    # name of exposure variable
-                    "mh",                                  # type of estimate
-                    t(rep(NA, 6)),                         # make all the counts and odds NAs
-                    get_epitable_ci(epitable, measure, "mh")
-        )
-
-          # remove all the colnames and column names
-          colnames(crude)      <- NA
-          colnames(stratified) <- NA
-          colnames(mh)         <- NA
-          rownames(crude)      <- NULL
-          rownames(stratified) <- NULL
-          rownames(mh)         <- NULL
+    #     # stratified counts and estimates
+    # stratified <- cbind(rep(exposure_var, 2),    # name of the exposure variable repeated for each strata
+    #                     c("strata_TRUE", "strata_FALSE"),    # type of estimate
+    #                     strata_ratio_table(the_table, measure),
+    #                     get_epitable_ci(epitable, measure, "strata")
+    # )
 
 
-        # bind the four rows together (each cbinded together seperately below)
-        nums <- rbind(crude, stratified, mh)
+    #       # mantel-haenszel counts (NAs) and estimates
+    #     mh <- cbind(exposure_var,                    # name of exposure variable
+    #                 "mh",                                  # type of estimate
+    #                 t(rep(NA, 6)),                         # make all the counts and odds NAs
+    #                 get_epitable_ci(epitable, measure, "mh")
+    #     )
 
-      # set correct column names
-      colnames(nums) <- c("variable",
-                          "est_type",
-                          "exp_cases", "exp_perstime", "exp_incidence",
-                          "unexp_cases", "unexp_perstime", "unexp_incidence",
-                          "est", "lower", "upper", "pval"
-                          )
-      # remove row names
-      rownames(nums) <- NULL
+    #       # remove all the colnames and column names
+    #       colnames(crude)      <- NA
+    #       colnames(stratified) <- NA
+    #       colnames(mh)         <- NA
+    #       rownames(crude)      <- NULL
+    #       rownames(stratified) <- NULL
+    #       rownames(mh)         <- NULL
 
 
-    }
+    #     # bind the four rows together (each cbinded together seperately below)
+    #     nums <- rbind(crude, stratified, mh)
+
+    #   # set correct column names
+    #   colnames(nums) <- c("variable",
+    #                       "est_type",
+    #                       "exp_cases", "exp_perstime", "exp_incidence",
+    #                       "unexp_cases", "unexp_perstime", "unexp_incidence",
+    #                       "est", "lower", "upper", "pval"
+    #                       )
+    #   # remove row names
+    #   rownames(nums) <- NULL
+
+
+    # }
 
   }
 
