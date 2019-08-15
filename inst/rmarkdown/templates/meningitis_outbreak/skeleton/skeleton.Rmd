@@ -51,6 +51,7 @@ options(knitr.kable.NA = "-")
 required_packages <- c("knitr",       # create output docs
                        "dplyr",       # clean/shape data
                        "forcats",     # clean/shape data
+                       "stringr",     # clean text
                        "rio",         # read in data
                        "ggplot2",     # create plots and charts
                        "sitrep",      # MSF field epi functions
@@ -461,7 +462,7 @@ population_data_age_categories <- gen_population(total_pop = 5000,
              "3-14 years", "15-29 years", "30-44 years", "45+ years"),
   proportions = c(0.278, 0.11, 0.18, 0.26, 0.278, 0.26, 0.11, 0.07),
   strata = NULL) %>%
-  rename(age_category = groups,
+  rename(age_group = groups,
     population = n)
 ```
 
@@ -846,10 +847,8 @@ obs_end   <- week2date(sprintf("%s-7", reporting_week))
 ```{r save_cleaned_data, eval = FALSE}
 ## OPTIONAL: save your cleaned dataset as an excel file! 
 ## put the current date in the name so you know!
-rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
+# rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
 ```
-
-
 
 
 ### Person
@@ -862,7 +861,7 @@ total of `r nrow(linelist_cleaned)` cases. There were
 `r fmt_count(linelist_cleaned, sex == "Female")` females and
 `r fmt_count(linelist_cleaned, sex == "Male")` males. 
 
-The most affected age group was `r tab_linelist(linelist_cleaned, age_group) %>% slice(which.max(n)) %>% pull(age_group)` years. 
+The most affected age group was `r tab_linelist(linelist_cleaned, age_group) %>% slice(which.max(n)) %>% pull(value)` years. 
 
 
 #### Demographics 
@@ -876,7 +875,7 @@ Cases by age group and definition
 # get counts and props of age groups by case definition 
 # include column and row totals 
 tab_linelist(linelist_cleaned, 
-             age_category, strata = case_def, 
+             age_group, strata = case_def, 
              col_total = TRUE, row_total = TRUE) %>%
   select(-variable) %>%
   rename("Age group" = value) %>%
@@ -890,7 +889,7 @@ Cases by age group and sex
 
 ```{r describe_by_age_group_and_sex}
 tab_linelist(linelist_cleaned, 
-             age_category, strata = sex, 
+             age_group, strata = sex, 
              col_total = TRUE, row_total = TRUE) %>% 
   select(-variable) %>%
   rename("Age group" = value) %>%
@@ -903,7 +902,7 @@ Alternatively if you would like proportions to be of the total population, use t
 
 ```{r total_props_agegroup_sex}
 tab_linelist(linelist_cleaned, 
-             age_category, strata = sex,
+             age_group, strata = sex,
              col_total = TRUE, row_total = TRUE, prop_total = TRUE) %>% 
   select(-variable) %>%
   rename("Age group" = value) %>%
@@ -916,13 +915,13 @@ tab_linelist(linelist_cleaned,
 Age pyramid 
 
 There were `r fmt_count(linelist_cleaned, is.na(sex))` cases missing information on sex and 
-`r fmt_count(linelist_cleaned, is.na(age_category))` missing age group.
+`r fmt_count(linelist_cleaned, is.na(age_group))` missing age group.
 
 ```{r age_pyramid, warning=FALSE}
 # plot age pyramid 
  
 plot_age_pyramid(linelist_cleaned, 
-                 age_group = "age_category", 
+                 age_group = "age_group", 
                  split_by = "sex") + 
   labs(y = "Cases (n)", x = "Age group") + # change axis  labels (nb. x/y flip)
   theme(legend.position = "bottom",     # move legend to bottom
@@ -976,6 +975,8 @@ Cases by symptoms.
 tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
   # re-order columns (drop total_prop too)
   select(-value) %>%
+  # fix the way symptom names are displayed
+  mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
   # rename accordingly
   rename("Symptom"   = variable,
          "Cases (n)" = n,
@@ -987,15 +988,15 @@ tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>%
 If available, you can also describe the cases by lab results 
 
 ```{r describe_by_labs}
-# FIXTHIS
+
 # get counts and proportions for all variables named in LABS
-tab_linelist(linelist_cleaned, LABS) %>% 
-  # re-order columns (drop total_prop too)
-  select("Lab test", Positive_n, Positive_prop, Negative_n, Negative_prop, 
-         Unknown_n, Unknown_prop, Total_n) %>% 
+tab_linelist(linelist_cleaned, LABS, 
+             transpose = "value") %>% 
+  # fix the way lab test names are displayed
+  mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
   # rename accordingly
-  rename_redundant("%" = prop) %>%
-  augment_redundant(" (n)" = "_n$") %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -1024,6 +1025,7 @@ Among inpatients who died, the time to death is shown below.
 ```{r describe_time_to_death, warning = FALSE, message = FALSE}
 filter(linelist_cleaned, DIED, patient_facility_type == "Inpatient") %>% 
   tab_linelist(time_to_death, col_total = TRUE) %>% 
+  select(-variable) %>%
   rename("Time (hours)" = value, 
          "Deaths (n)" = n, 
          "%" = proportion) %>% 
@@ -1071,15 +1073,15 @@ CFR by age group among inpatients with known outcomes
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
   case_fatality_rate_df(deaths = DIED, 
-                        group = age_category, 
+                        group = age_group, 
                         mergeCI = TRUE, 
                         add_total = TRUE) %>%
-  tidyr::complete(age_category, 
+  tidyr::complete(age_group, 
                   fill = list(deaths = 0, 
                               population = 0, 
                               cfr = 0, 
                               ci = 0)) %>% # Ensure all levels are represented
-  rename("Age Group" = age_category, 
+  rename("Age group" = age_group, 
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
@@ -1137,14 +1139,14 @@ Here, we can see that the Attack Rate for a population of `r format(population, 
 To give attack rate by age group, with appropriate population denominators, use the following code. 
 
 ```{r attack_rate_by_agegroup, warning = FALSE}
-cases <- count(linelist_cleaned, age_category) %>%   # cases for each week
-  left_join(population_data_age_categories, by = "age_category")    # merge population data 
+cases <- count(linelist_cleaned, age_group) %>%   # cases for each week
+  left_join(population_data_age_categories, by = "age_group")    # merge population data 
 
 # attack rate for each week
 attack_rate(cases$n, cases$population, multiplier = 10000, mergeCI = TRUE) %>% 
   # add the epiweek column to table
-  bind_cols(select(cases, age_category), .) %>% 
-  rename("Age group" = age_category, 
+  bind_cols(select(cases, age_group), .) %>% 
+  rename("Age group" = age_group, 
          "Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 10,000)" = ar, 
