@@ -1676,7 +1676,7 @@ for (i in unique(cases$epiweek)) {
   # combine the barplot and map plot into one
   print(
     cowplot::plot_grid(
-      barplot + labs(title = paste0("Epiweek:", i)),
+      barplot + labs(title = paste0("Epiweek: ", i)),
       map_plot,
       nrow = 1,
       align = "h",

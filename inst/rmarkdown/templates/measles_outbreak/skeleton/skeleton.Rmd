@@ -52,6 +52,7 @@ options(knitr.kable.NA = "-")
 required_packages <- c("knitr",       # create output docs
                        "dplyr",       # clean/shape data
                        "forcats",     # clean/shape data
+                       "stringr",     # clean text
                        "rio",         # read in data
                        "ggplot2",     # create plots and charts
                        "sitrep",      # MSF field epi functions
@@ -806,7 +807,7 @@ obs_end   <- week2date(sprintf("%s-7", reporting_week))
 ```{r save_cleaned_data, eval = FALSE}
 ## OPTIONAL: save your cleaned dataset as an excel file! 
 ## put the current date in the name so you know!
-rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
+# rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
 ```
 
 
@@ -824,7 +825,7 @@ total of `r nrow(linelist_cleaned)` cases. There were
 `r fmt_count(linelist_cleaned, sex == "Female")` females and
 `r fmt_count(linelist_cleaned, sex == "Male")` males. 
 
-The most affected age group was `r descriptive(linelist_cleaned, "age_category") %>% slice(which.max(n)) %>% pull(age_category)` years. 
+The most affected age group was `r tab_linelist(linelist_cleaned, age_group) %>% slice(which.max(n)) %>% pull(value)` years. 
 
 
 #### Demographics 
@@ -837,10 +838,13 @@ Cases by age group and definition
 # use if you have lab results in your data
 # get counts and props of age groups by case definition 
 # include column and row totals 
-# descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-#   rename("Age group" = age_category) %>%
-#   rename_redundant("%" = prop) %>%
-#   augment_redundant(" cases (n)" = "_n$") %>%
+# tab_linelist(linelist_cleaned, 
+#              age_category, strata = case_def, 
+#              col_total = TRUE, row_total = TRUE) %>%
+#   select(-variable) %>%
+#   rename("Age group" = value) %>%
+#   rename_redundant("%" = proportion) %>%
+#   augment_redundant(" cases (n)" = " n$") %>%
 #   kable(digits = 2)
 ```
 
@@ -850,21 +854,26 @@ Cases by age group and definition
 Cases by age group and sex 
 
 ```{r describe_by_age_group_and_sex}
-descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group" = age_category) %>%
-  rename_redundant("%" = prop) %>%
-  augment_redundant(" cases (n)" = "_n$") %>%
+tab_linelist(linelist_cleaned, 
+             age_category, strata = sex, 
+             col_total = TRUE, row_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Age group" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" cases (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
 Alternatively if you would like proportions to be of the total population, use the following. 
 
 ```{r total_props_agegroup_sex}
-descriptive(linelist_cleaned, "age_category", "sex", 
-            coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group" = age_category) %>%
-  rename_redundant("%" = prop) %>%
-  augment_redundant(" cases (n)" = "_n$") %>%
+tab_linelist(linelist_cleaned, 
+             age_category, strata = sex,
+             col_total = TRUE, row_total = TRUE, prop_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Age group" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" cases (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -910,12 +919,12 @@ with a range between `r min(linelist_cleaned$obs_days, na.rm = TRUE)` and `r max
 Cases by illness severity at visit/admission
 
 ```{r describe_by_illness_severity_admission}
-descriptive(linelist_cleaned, 
-            counter = "severity_of_illness", 
-            coltotals = TRUE) %>% 
-  rename("Illness severity" = severity_of_illness, 
+tab_linelist(linelist_cleaned, severity_of_illness,
+             col_total = TRUE) %>%
+  select(-variable) %>%
+  rename("Illness severity" = value, 
          "Cases (n)" = n, 
-         "%" = prop) %>% 
+         "%" = proportion) %>% 
   kable(digits = 2)
 ```
 
@@ -925,12 +934,13 @@ You could also look at the details of cases by symptoms.
 
 ```{r describe_by_symptoms}
 # get counts and proportions for all variables named in SYMPTOMS
-multi_descriptive(linelist_cleaned, SYMPTOMS) %>% 
-  # re-order columns (drop total_prop too)
-  select(symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
+tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
+  select(-value) %>%
   # rename accordingly
-  rename_redundant("%" = prop) %>%
-  augment_redundant(" (n)" = "_n$") %>%
+  mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
+  rename("Symptom" = variable,
+         "Cases (n)" = n,
+         "%" = proportion) %>%
   kable(digits = 2)
 
 ```
@@ -939,12 +949,13 @@ multi_descriptive(linelist_cleaned, SYMPTOMS) %>%
 Cases by vaccination status
 
 ```{r describe_by_vaccination_status}
-descriptive(linelist_cleaned, 
-            counter = "previously_vaccinated", 
-            coltotals = TRUE) %>% 
-  rename("Vaccination status" = previously_vaccinated, 
-         "Cases (n)" = n, 
-         "%" = prop) %>% 
+tab_linelist(linelist_cleaned, 
+            previously_vaccinated, 
+            col_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Vaccination status" = value,
+         "Cases (n)" = n,
+         "%" = proportion) %>%
   kable(digits = 2)
 ```
 
@@ -960,10 +971,11 @@ Among inpatients who died, the time to death is shown below.
 
 ```{r describe_time_to_death, warning = FALSE, message = FALSE}
 filter(linelist_cleaned, DIED, patient_facility_type == "Inpatient") %>% 
-  descriptive(counter = "time_to_death", coltotals = TRUE) %>% 
-  rename("Time (hours)" = time_to_death, 
+  tab_linelist(time_to_death, col_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Time (hours)" = value, 
          "Deaths (n)" = n, 
-         "%" = prop) %>% 
+         "%" = proportion) %>% 
   kable(digits = 2)
 ```
 
@@ -1007,10 +1019,12 @@ CFR by age group among inpatients with known outcomes
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, group = age_category, mergeCI = TRUE, add_total = TRUE) %>%
+  case_fatality_rate_df(deaths = DIED, group = age_category, 
+                        mergeCI = TRUE, add_total = TRUE) %>%
   tidyr::complete(age_category, 
-                  fill = list(deaths = 0, population = 0, cfr = 0, ci = 0)) %>% # Ensure all levels are represented
-  rename("Age Group" = age_category, 
+                  fill = list(deaths = 0, population = 0, 
+                              cfr = 0, ci = 0)) %>% # Ensure all levels are represented
+  rename("Age group" = age_category, 
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
@@ -1026,7 +1040,7 @@ linelist_cleaned %>%
 # linelist_cleaned %>%
 #   filter(patient_facility_type == "Inpatient") %>%
 #   case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
-#   rename("Case Definition" = case_def, 
+#   rename("Case definition" = case_def, 
 #          "Deaths" = deaths, 
 #          "Cases" = population, 
 #          "CFR (%)" = cfr, 
@@ -1394,9 +1408,12 @@ We could then also look at admissions and exits among inpatients by epiweek for 
 ```{r describe_admissions_by_epiweek, warning = FALSE}
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
-descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename_redundant("%" = prop) %>%
-  augment_redundant(" (n)" = "_n$") %>%
+tab_linelist(linelist_cleaned, epiweek,
+             col_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Week" = value,
+         "Cases (n)" = n,
+         "%" = proportion) %>%
   kable(digits = 2)
 ```
 
@@ -1406,12 +1423,13 @@ The exits are among inpatients only.
 # get counts and props of admissions by epiweek among inpatients
 # include column and row totals 
 linelist_cleaned %>% 
-  filter(patient_facility_type == "Inpatient") %>% 
-descriptive("epiweek", "exit_status2", 
-            coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Week" = "epiweek") %>%
-  rename_redundant("%" = prop) %>%
-  augment_redundant(" (n)" = "_n$") %>%
+  filter(patient_facility_type == "Inpatient") %>%
+  tab_linelist(epiweek, strata = exit_status2, 
+               col_total = TRUE, row_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Week" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -1433,12 +1451,13 @@ To get a basic descriptive table of cases by region and facility, as well as by 
 # get counts and props of region by facility 
 # include column and row totals 
 
-descriptive(linelist_cleaned, "patient_origin", 
-            "patient_facility_type",
-            coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin") %>%
-  rename_redundant("%" = prop) %>%
-  augment_redundant(" (n)" = "_n$") %>%
+tab_linelist(linelist_cleaned, patient_origin, 
+             strata = patient_facility_type,
+             col_total = TRUE, row_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Region" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -1449,13 +1468,14 @@ descriptive(linelist_cleaned, "patient_origin",
 # get counts and props of region by outcome among inpatients
 # include column and row totals 
 
-descriptive(filter(linelist_cleaned, 
+tab_linelist(filter(linelist_cleaned, 
                    patient_facility_type == "Inpatient"),
-            "patient_origin", "exit_status2",
-            coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin") %>%
-  rename_redundant("%" = prop) %>%
-  augment_redundant(" (n)" = "_n$") %>%
+             patient_origin, strata = exit_status2,
+             col_total = TRUE, row_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Region" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -1703,7 +1723,7 @@ for (i in unique(cases$epiweek)) {
   # combine the barplot and map plot into one
   print(
     cowplot::plot_grid(
-      barplot + labs(title = paste0("Epiweek:", i)),
+      barplot + labs(title = paste0("Epiweek: ", i)),
       map_plot,
       nrow = 1,
       align = "h",
