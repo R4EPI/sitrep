@@ -953,7 +953,7 @@ You could also look at the details of cases by symptoms.
 # get counts and proportions for all variables named in SYMPTOMS
 tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
   select(-value) %>%
-  # rename accordingly
+# fix the way symptom names are displayed - remove the _ and make the first letter uppercase
   mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
   rename("Symptom" = variable,
          "Cases (n)" = n,

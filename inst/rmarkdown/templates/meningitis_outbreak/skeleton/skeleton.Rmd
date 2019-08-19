@@ -993,7 +993,7 @@ Cases by symptoms.
 tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
   # re-order columns (drop total_prop too)
   select(-value) %>%
-  # fix the way symptom names are displayed
+  # fix the way symptom names are displayed - remove the _ and make the first letter uppercase
   mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
   # rename accordingly
   rename("Symptom"   = variable,

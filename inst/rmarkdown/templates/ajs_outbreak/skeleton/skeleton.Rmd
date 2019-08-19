@@ -949,7 +949,7 @@ Cases by symptoms.
 # get counts and proportions for all variables named in SYMPTOMS
 tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
   select(-value) %>%
-  # fix the way symptom names are displayed
+  # fix the way symptom names are displayed - remove the _ and make the first letter uppercase
   mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
   # rename accordingly
   rename_redundant("%" = proportion) %>%
