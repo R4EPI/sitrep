@@ -737,7 +737,7 @@ LABS <- c("cholera_culture_result",
 
 # drop cases after reporting week
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_onset <= week2date(sprintf("%s-7", reporting_week)))
+  filter(date_of_consultation_admission <= week2date(sprintf("%s-7", reporting_week)))
 
 # define the first week of outbreak (date of first case)
 first_week <- levels(linelist_cleaned$epiweek)[1]
