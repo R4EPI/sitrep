@@ -589,8 +589,11 @@ linelist_cleaned <- linelist_cleaned %>%
 
 # set unrealistic dates to NA, based on having browsed dates in the previous chunk
 # linelist_cleaned <- mutate(linelist_cleaned,
-#                            date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA), 
-#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+#                            date_of_onset = case_when(
+#                              date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA),
+#                              date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
+#                              TRUE                                   ~ date_of_onset
+#                            ))
   
 # create an epiweek variable
 # floor_day shortens to only give you the week number (rather than including day as well) 
