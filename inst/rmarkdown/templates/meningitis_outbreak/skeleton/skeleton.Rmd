@@ -260,19 +260,18 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 
 ```{r read_nonDHIS_data, warning = FALSE, message = FALSE}
 
-## IF YOUR LINELIST NOT AN EXPORT OF DATA FROM DHIS2 USE THIS CODE CHUNK ------
-##
-## This assumes your data does not fit the standardised MSF data dictionary for
-## this disease. If you are using this section, be aware that this template may
-## take more effort due to the unpredictable nature of non-standardized data.
-##
+## If your linelist is not from DHIS2, use this code chunk.
+## This assumes your data does NOT fit the standardized MSF data dictionary.
+## The template is going to take more effort, since your data is non-standardized.
+## You can do it! It will just take some work.
+
 ## Your data must be in an Excel or CSV file. If your data is in Excel, make
 ## sure that the Excel sheet is not protected. Many of the old MSF Excel
 ## templates are in protected sheets.
 ## If you have a protected sheet, you can save the sheet as a new file.
 ## This will unprotect the sheet.
-##
-##
+
+
 ## Checklist to clean and update this script to match your data ---------------
 ## 
 ## - [ ] Recode your variable names to match this analysis 
@@ -288,30 +287,30 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ##   values) and option_name (full text) columns.
 ##
 ## - [ ] run this to look at the data dictionary: 
-# linelist_dict <- msf_dict("Meningitis")
+# linelist_dict <- msf_dict("Meningitis", compact = FALSE) %>%
+#   select(option_code, option_name, everything())
 # View(linelist_dict) 
+## you can view variable names in the standard data dictionary uncommenting the line below
+# linelist_dict$data_element_shortname
 
 
-## Read data ------------------------------------
+
+
+## Read data -------------------------------------------------------------------
 ## When you copy and paste file paths, you need to change \ to /.
 ##
 
-
-## Read data ------------------------------------
-## When you copy and paste file paths, you need to change \ to /.
-##
-
-# Excel file
+# Excel file ------------------------------------
 # to read in a specific sheet use "which"
 # linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
 
 
-# Excel file -- Specific range
+# Excel file -- Specific range -------------------
 # You can specify a range in an excel sheet where your data are.
 # linelist_raw <- rio::import("linelist.xlsx", range = "B2:J102")
 
 
-# Excel file -- password protected
+# Excel file -- password protected ----------------
 # Use the excel.link package to load the file.
 #   The askpass package will prompt you to enter the password every time.
 # install.packages(c("excel.link", "askpass"))
@@ -322,30 +321,38 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
 
-# CSV file
+# CSV file ----------------------------------------
 # linelist_raw <- rio::import("linelist.csv")
 
 
-# Stata data file
+# Stata data file ---------------------------------
 # linelist_raw <- rio::import("linelist.dat")
 
 
 
 
-## Fixing variable names ----------------------
+## Clean column names ---------------------------------------------------------
+
+## a good first step is to assign standard column names so that subsequent code
+## uses stable column names. In case the input data changes, you just need to
+## fix the column mapping.
+
 
 ## make a copy of your orginal dataset and name it linelist_cleaned
 # linelist_cleaned <- linelist_raw
 
-# define clean variable names using clean_labels from the epitrix package
-# this function is preset rules for variable naming 
-# for example it changes spaces and dots to "_" and characters to lowercase
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+## define clean variable nams using clean_labels from the epitrix package. This
+## function defines rules for variable naming; for example, it changes spaces
+## and dots to "_" and sets all characters to lowercase.
 
-# overwrite variable names with defined clean names
+# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+## overwrite variable names with defined clean names
 # colnames(linelist_cleaned) <- cleaned_colnames
 
-## Renaming variables to match the template -------------------------------
+
+
+
+## Renaming variables to match the template -----------------------------------
 ## OPTIONAL: below is just an example in case you want to specifically change a
 ## few names you can also change specific var names using the *rename*
 ## function. In this example, we have the columns "gender" and "age" that we
@@ -353,33 +360,22 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 
 # linelist_cleaned <- rename(linelist_cleaned, 
-#                            gender    = sex, # TEXT
+#                            sex       = gender, # TEXT
 #                            age_years = age  # INTEGER_POSITIVE
 # )
 
 ## You can use the function msf_dict_rename_helper() to create a template based
-## on the meningitis dictionary. 
-## This will copy a rename command like the one above ## to your clipboard.
+## on the meningitis dictionary. This will copy a rename command like the one 
+## above to your clipboard.
 # msf_dict_rename_helper("Meningitis")
 ## Paste the result here and add add the column names from linelist_cleaned
 ## to the appropriate variables. PLEASE NOTE: this is not a foolproof solution;
 ## you still need to be aware of what each variable means and what values it
 ## takes. 
-## 
+
 ## If there are any variables that are in the MSF dictionary that are not in
 ## your data set, then you should comment them out, but be aware that some
 ## analyses may not run because of this. 
-
-
-## OPTIONAL: 
-## If you only want to keep certain variables - 
-## you can select these by name or column number view the names of your vars
-## and their column number using: names(linelist_cleaned) this example keeps
-## the first three columns as well as age_years and sex variables.
-##
-## You can also use this to create temporary datasets to review.
-
-# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 ```
 
 
@@ -567,6 +563,21 @@ unique(linelist_cleaned$sex)
 # The below keeps variables only with a case ID and an admission date.
 linelist_cleaned <- linelist_cleaned %>% 
   filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
+
+
+# Drop columns  -------------------------------------
+
+# OPTIONAL: drop several variables you might not want
+# the negative sign before the "c"" in select drops those variables
+# without the negative you would only keep the named variables
+# linelist_cleaned <- linelist_cleaned %>%
+#   select(-c(msf_involvement, treatment_facility_site))
+
+## OPTIONAL: if you want to expect certain variables,
+## you can select these by name or column number using names(linelist_cleaned).
+## this example keeps the first three columns as well as age_years and sex.
+
+# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 
 
 # Date variables ---------------------------------
@@ -820,7 +831,7 @@ LABS <- c("ti_result_pcr",
           "ti_result_culture"
           )
 
-# Dropping observations (rows) and variables (columns)--------------------------
+# Set up for report ------------------------------------------------------------
 
 # drop cases after current week
 # you will probably have cases in your dataset if case finding continues
@@ -837,14 +848,6 @@ obs_start <- week2date(sprintf("%s-1", first_week))
 
 # return last day of reporting week 
 obs_end   <- week2date(sprintf("%s-7", reporting_week))
-
-
-
-# OPTIONAL: drop several variables you might not want
-# the negative sign before the "c"" in select drops those variabels 
-# without the negative you would only keep the names variables
-# linelist_cleaned <- linelist_cleaned %>% 
-#   select(-c(msf_involvement, treatment_facility_name))
 
 ```
 
