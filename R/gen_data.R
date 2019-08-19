@@ -318,10 +318,6 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
                                  second = "date_of_exit",
                                  20)
 
-    dis_output <- enforce_timing(dis_output,
-                                 first  = "date_of_admission",
-                                 second = "date_of_exit",
-                                 20)
     # lab sample dates before admission
     # add 2 to admission....
     dis_output <- enforce_timing(dis_output,
