@@ -14,8 +14,16 @@ arr <- c(10, 35, 90, 465, 36, 25, 164, 175)
 arr <- array(arr, dim = c(2, 2, 2),
              dimnames = list(risk = c(TRUE, FALSE),
                              outcome = c(TRUE, FALSE),
-                             young = c(TRUE, FALSE)))
-arrt <- as.data.frame.table(arr)
+                             old = c(FALSE, TRUE))
+       )
+arrt <- as.data.frame.table(arr) %>%
+  summarise(res = list(data.frame(
+    risk    = rep(risk, Freq),
+    outcome = rep(outcome, Freq),
+    old = rep(old, Freq)
+  ))) %>%
+  unnest() %>%
+  as_tibble()
 
 b <- tibble::tribble(
   ~strata, ~exposure, ~outcome, ~n,
