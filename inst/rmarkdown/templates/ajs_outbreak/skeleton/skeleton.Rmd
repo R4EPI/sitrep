@@ -574,10 +574,15 @@ linelist_cleaned <- linelist_cleaned %>%
 #   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
 #           error_tolerance = 0.5)
 
+
 # set unrealistic dates to NA, based on having browsed dates in the previous chunk
+# these are just examples -- examine your data and edit as needed
 # linelist_cleaned <- mutate(linelist_cleaned,
-#                            date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA), 
-#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+#                            date_of_onset = case_when(
+#                              date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA),
+#                              date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
+#                              TRUE                                   ~ date_of_onset
+#                            ))
   
 # create an epiweek variable
 # floor_day shortens to only give you the week number (rather than including day as well) 
@@ -724,8 +729,10 @@ linelist_cleaned <- linelist_cleaned %>%
   
 
 
-# Force missing values to be explicit
-# linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
+# Force missing values to NA
+# important for sex to generate age pyramids
+linelist_cleaned$sex <- fct_recode(linelist_cleaned$sex, 
+                                   NULL = "Unknown/unspecified")
 
 
 # change the order of levels in a single categorical variable 
@@ -910,10 +917,9 @@ There were `r fmt_count(linelist_cleaned, is.na(sex))` cases missing information
 
 ```{r age_pyramid, warning=FALSE}
 # plot age pyramid 
- 
-plot_age_pyramid(linelist_cleaned, 
-                 age_group = "age_group", 
-                 split_by = "sex") + 
+ plot_age_pyramid(linelist_cleaned,
+                  age_group = "age_group", 
+                  split_by = "sex") + 
   labs(y = "Cases (n)", x = "Age group") + # change axis  labels (nb. x/y flip)
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title

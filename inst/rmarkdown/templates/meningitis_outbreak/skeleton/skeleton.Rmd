@@ -732,8 +732,11 @@ linelist_cleaned <- linelist_cleaned %>%
 #    )     
 
 
-# Force missing values to be explicit
-linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
+
+# Force missing values to be NA
+# important for sex to generate age pyramids
+linelist_cleaned$sex <- fct_recode(linelist_cleaned$sex, 
+                                   NULL = "Unknown/unspecified")
 
 
 # change the order of levels in a single categorical variable 
