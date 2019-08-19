@@ -7,12 +7,59 @@ a       <- tibble::tibble(case_def   = samp_tf(),
                           stratifier = samp_tf(),
                           perstime   = sample(150:250, 2000, replace = TRUE)
 )
+# generate a real data set from 
+# http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704-ep713_confounding-em/BS704-EP713_Confounding-EM7.html
+
+arr <- c(10, 35, 90, 465, 36, 25, 164, 175)
+arr <- array(arr, dim = c(2, 2, 2),
+             dimnames = list(risk = c(TRUE, FALSE),
+                             outcome = c(TRUE, FALSE),
+                             young = c(TRUE, FALSE)))
+arrt <- as.data.frame.table(arr)
+
+b <- tibble::tribble(
+  ~strata, ~exposure, ~outcome, ~n,
+   TRUE,    TRUE,   TRUE, 2L,
+   TRUE,    TRUE,  FALSE, 2L,
+   TRUE,   FALSE,   TRUE, 6L,
+   TRUE,   FALSE,  FALSE, 6L,
+  FALSE,    TRUE,   TRUE, 1L,
+  FALSE,    TRUE,  FALSE, 1L,
+  FALSE,   FALSE,   TRUE, 3L,
+  FALSE,   FALSE,  FALSE, 3L
+  ) %>%
+  summarise(res = list(data.frame(
+    strata   = rep(strata, n),
+    exposure = rep(exposure, n),
+    outcome  = rep(outcome, n)
+  ))) %>%
+  unnest()
+
+ab <- tibble::tribble(
+  ~strata, ~exposure, ~outcome, ~n,
+   TRUE,    TRUE,   TRUE, 21L, # 2L,
+   TRUE,    TRUE,  FALSE, 19L, # 2L,
+   TRUE,   FALSE,   TRUE, 63L, # 6L,
+   TRUE,   FALSE,  FALSE, 57L, # 6L,
+  FALSE,    TRUE,   TRUE, 9L, # 1L,
+  FALSE,    TRUE,  FALSE, 11L, # 1L,
+  FALSE,   FALSE,   TRUE, 32L, # 3L,
+  FALSE,   FALSE,  FALSE, 28L# 3L
+  ) %>%
+  summarise(res = list(data.frame(
+    strata   = rep(strata, n),
+    exposure = rep(exposure, n),
+    outcome  = rep(outcome, n)
+  ))) %>%
+  unnest()
+
 
 # get the results from tab_univariate function
 func_res <- tab_univariate(a, case_def, riskA, strata = stratifier, digits = 6)
 ## read this article for details of calculations
 # http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704-ep713_confounding-em/BS704-EP713_Confounding-EM7.html
 
+# a <- dplyr::mutate_if(a, is.factor, factor, levels = c("TRUE", "FALSE"))
 
 # Odds Ratios ------------------------------------------------------------------
 # get counts table crude
@@ -23,7 +70,6 @@ counts_strat <- table(a[c("case_def", "riskA", "stratifier")])
 
 ## For odds ratios
 
-# get odds of exposure among cases
 expo_cases_odds             <- counts[4]/counts[2]
 expo_cases_odds_strat_true  <- counts_strat[8]/counts_strat[6]
 expo_cases_odds_strat_false <- counts_strat[4]/counts_strat[2]
@@ -47,7 +93,7 @@ or_from_cross_strat_false <- (counts_strat[4] * counts_strat[1]) / (counts_strat
 # calculate mantel-haeszel ORs
 
 # get sums of strata
-sum_strat_true  <- sum(counts_strat[ , ,2])
+sum_strat_true  <- sum(counts_strat[ , , 2])
 sum_strat_false <- sum(counts_strat[ , , 1])
 
 # sigma(a_i * d_i / n_i) / sigma(b_i * c_i / n_i) where n_i is the sum of respective strata
@@ -207,6 +253,7 @@ counts_strat <- aggregate(
 
 ## For incidence rate ratios
 # get incidence of being a case among exposed
+
 expo_cases_inc             <- counts$case_def[2]/counts$perstime[2] * 100
 expo_cases_inc_strat_true  <- counts_strat$case_def[counts_strat$riskA == TRUE &
                                                       counts_strat$stratifier == TRUE] /

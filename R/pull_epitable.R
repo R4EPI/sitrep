@@ -141,12 +141,12 @@ strata_ratio_table <- function(x, measure = "OR") {
     # strata spread across columns here? This is correct in terms of the
     # calculations, but I am really unsure of how to read this. 
     data.frame(
-      exp_cases      = x[1, , 1, drop = TRUE], # x[c(1, 3)]
-      unexp_cases    = x[1, , 2, drop = TRUE], # x[c(5, 7)]
+      exp_cases      = cases_exp, #x[1, , 1, drop = TRUE], # x[c(1, 3)]
+      unexp_cases    = cases_unexp, #x[1, , 2, drop = TRUE], # x[c(5, 7)]
       cases_odds     = cases_exp / cases_unexp,
 
-      exp_controls   = x[2, , 1, drop = TRUE], # x[c(2, 4)]
-      unexp_controls = x[2, , 2, drop = TRUE], # x[c(6, 8)]
+      exp_controls   = controls_exp, #x[2, , 1, drop = TRUE], # x[c(2, 4)]
+      unexp_controls = controls_unexp, # x[2, , 2, drop = TRUE], # x[c(6, 8)]
       controls_odds  = controls_exp / controls_unexp
     )
   } else if (measure == "RR") {
