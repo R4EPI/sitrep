@@ -878,15 +878,27 @@ Cases by age group and definition
 
 ```{r describe_by_age_group_and_def}
 # use if you have lab results in your data
-# get counts and props of age groups by case definition 
-# include column and row totals 
+# creates table of cases by age group and case definition
+
 tab_linelist(linelist_cleaned, 
+             # rows as age groups, with case_def as strata (columns)
              age_group, strata = case_def, 
+             # we want row totals and column totals
              col_total = TRUE, row_total = TRUE) %>%
+  
+  # removes the column called variable (which just says "age_group" in this case)
   select(-variable) %>%
+  
+  # renames the column called value to Age group
   rename("Age group" = value) %>%
+  
+  # there are several columns called "proportion" - renames them to %
   rename_redundant("%" = proportion) %>%
+  
+  # any time there is a column that says n, we replace that with "cases (n)"
   augment_redundant(" cases (n)" = " n$") %>%
+  
+  # makes the table easy to read with only 2 decimal places
   kable(digits = 2)
 ```
 
