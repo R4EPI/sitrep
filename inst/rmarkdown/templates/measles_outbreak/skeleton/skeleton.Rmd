@@ -556,7 +556,7 @@ linelist_cleaned <- linelist_cleaned %>%
   filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
 
 
-# Drop  columns  -------------------------------------
+# Drop columns  -------------------------------------
 
 # OPTIONAL: drop several variables you might not want
 # the negative sign before the "c"" in select drops those variables
