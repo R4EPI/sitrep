@@ -206,6 +206,43 @@ strata_ratio_table <- function(x, measure = "OR") {
   }
 }
 
+# get odds of exposure among cases
+get_expo_cases_odds <- function(x, measure = "RR") { 
+
+  if (measure == "OR") {
+    A <- x[1, 1, ]
+    B <- x[1, 2, ]
+    C <- x[2, 1, ]
+    D <- x[2, 2, ] 
+  } else {
+    A <- x[1, 1, ]
+    B <- x[2, 1, ]
+    C <- x[1, 2, ]
+    D <- x[2, 2, ] 
+  }
+  N <- sum(x)
+
+  exposed_cases_odds    <- c(sum(A)/sum(B), A / B)
+  exposed_noncases_odds <- c(sum(C)/sum(D), C / D)
+
+
+  # sigma(a_i * d_i / n_i) / sigma(b_i * c_i / n_i) where n_i is the sum of respective strata
+  MH <- mantelhaen.test(x)
+
+  list( 
+       odds_ratios = data.frame(exposed_cases= exposed_cases_odds,
+                           exposed_non_cases = exposed_noncases_odds,
+                           odds_ratio        = exposed_cases_odds / exposed_noncases_odds,
+                           stringsAsFactors  = FALSE
+                           ),
+       MH = data.frame(est     = MH$estimate,
+                       lower   = MH$conf.int[1],
+                       upper   = MH$conf.int[2],
+                       p.value = MH$p.value
+       )
+  )
+}
+
 get_epitable_values <- function(epitable, measure = "OR") {
 
   res        <- vector(mode = "character", length = 6L)
@@ -222,6 +259,7 @@ get_epitable_values <- function(epitable, measure = "OR") {
   # case/noncase and ratio measure differ
 
   case <- 1L # column for cases (Outcome +)
+
 
   if (measure == "OR") {
     noncase   <- 2L # column for non-cases (Outcome -)
@@ -247,4 +285,24 @@ get_epitable_values <- function(epitable, measure = "OR") {
   res[[6L]] <- epitable$tab[[the_ratio]][[unexposed]]
 
   res
+}
+
+
+odds_ratio <- function() {
+  ## Crude odds in exposed (based on Ederer F and Mantel N (1974) Confidence limits on the ratio of two Poisson variables.
+  ## American Journal of Epidemiology 100: 165 - 167.
+  ## Cited in Altman, Machin, Bryant, and Gardner (2000) Statistics with Confidence, British Medical Journal, page 69).
+  ## Added 160609
+  Al <- (qbinom(1 - N., size = sa + sb, prob = (sa / (sa + sb)))) / (sa + sb)
+  u <- (qbinom(N., size = sa + sb, prob = (sa / (sa + sb)))) / (sa + sb)
+  cOe.p <- sa / sb
+  cOe.l <- Al / (1 - Al)
+  cOe.u <- Au / (1 - Au)
+  
+  ## Crude odds in unexposed:
+  Al <- (qbinom(1 - N., size = sc + sd, prob = (sc / (sc + sd)))) / (sc + sd)
+  u <- (qbinom(N., size = sc + sd, prob = (sc / (sc + sd)))) / (sc + sd)
+  cOo.p <- sc / sd
+  cOo.l <- Al / (1 - Al)
+  cOo.u <- Au / (1 - Au)
 }
