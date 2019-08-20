@@ -50,6 +50,7 @@ options(knitr.kable.NA = "-")
 
 # Installing required packages for this template
 required_packages <- c("knitr",       # create output docs
+                       "here",        # find your files
                        "dplyr",       # clean/shape data
                        "forcats",     # clean/shape data
                        "stringr",     # clean text
@@ -128,7 +129,7 @@ linelist_raw <- gen_data("Measles")
 ## Excel file ---------------------------
 #
 ## To read in a specific sheet use "which"
-# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
+# linelist_raw <- rio::import(here("linelist.xlsx"), which = "Sheet1")
 
 ## Excel file (password-protected) ------
 #
@@ -138,7 +139,7 @@ linelist_raw <- gen_data("Measles")
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
 # 
-# linelist_raw <- xl.read.file("linelist.xlsx",
+# linelist_raw <- xl.read.file(here("linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
@@ -222,7 +223,7 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ##
 
 # CSV file
-# linelist_raw <- rio::import("linelist.csv")
+# linelist_raw <- rio::import(here("linelist.csv"))
 
 ## get MSF data dictionary for measles 
 # linelist_dict <- msf_dict("Measles", compact = FALSE) %>%
@@ -299,12 +300,12 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 
 # Excel file ------------------------------------
 # to read in a specific sheet use "which"
-# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
+# linelist_raw <- rio::import(here("linelist.xlsx"), which = "Sheet1")
 
 
 # Excel file -- Specific range -------------------
 # You can specify a range in an excel sheet where your data are.
-# linelist_raw <- rio::import("linelist.xlsx", range = "B2:J102")
+# linelist_raw <- rio::import(here("linelist.xlsx"), range = "B2:J102")
 
 
 # Excel file -- password protected ----------------
@@ -313,17 +314,17 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
 # 
-# linelist_raw <- xl.read.file("linelist.xlsx",
+# linelist_raw <- xl.read.file(here("linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
 
 # CSV file ----------------------------------------
-# linelist_raw <- rio::import("linelist.csv")
+# linelist_raw <- rio::import(here("linelist.csv"))
 
 
 # Stata data file ---------------------------------
-# linelist_raw <- rio::import("linelist.dat")
+# linelist_raw <- rio::import(here("linelist.dat"))
 
 
 
@@ -415,14 +416,13 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 
 ## Excel file
 ## to read in a specific sheet use "which"
-# population_data <- rio::import("population.xlsx", which = "Sheet1")
+# population_data <- rio::import(here("population.xlsx"), which = "Sheet1")
 
 ## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
 ## make sure your place variable name matches!
 
 ## Counts from population proportions ------------------------------------ 
 ## if you only know the total population and the proportions in each age group, use this function 
-
 
 # generate population data by region 
 population_data_region <- gen_population(total_pop = 5000,         # set the total population 
@@ -433,9 +433,11 @@ population_data_region <- gen_population(total_pop = 5000,         # set the tot
          population = n)
 
 # generate population data by age groups in years 
+## uses proportions from the OCBA population denominators tool v1
+## modify to fit your population or known parameters
 population_data_age <- gen_population(total_pop = 5000,
   groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
-  proportions = c(0.182, 0.278, 0.26, 0.11, 0.07),
+  proportions = c(0.068, 0.3622, 0.276, 0.1616, 0.1321),
   strata = NULL) %>%
   rename(age_group = groups,
     population = n)
@@ -443,20 +445,21 @@ population_data_age <- gen_population(total_pop = 5000,
 # generate population data by age group in months (under 2 years) 
 population_data_age_months <- gen_population(total_pop = 5000,
   groups = c("0-5", "6-8", "9-11","12-24"),
-  proportions = c(0.278, 0.11, 0.18, 0.26),
+  proportions = c(0.0164, 0.088, 0.088, 0.034),
   strata = NULL) %>%
   rename(age_group_mon = groups,
     population = n)
 
 
 # generate population data by age categories in months and years 
-population_data_age_categories <- gen_population(total_pop = 5000,
-  groups = c("0-5 months", "6-8 months", "9-11 months","12-24 months",
-             "3-14 years", "15-29 years", "30-44 years", "45+ years"),
-  proportions = c(0.278, 0.11, 0.18, 0.26, 0.278, 0.26, 0.11, 0.07),
-  strata = NULL) %>%
-  rename(age_category = groups,
-    population = n)
+# population_data_age_categories <- gen_population(total_pop = 5000,
+#   groups = c("0-5 months", "6-8 months", "9-11 months","12-24 months",
+#              "3-14 years", "15-29 years", "30-44 years", "45+ years"),
+#   proportions = c(0.0164, 0.088, 0.088, 0.034, 
+#                   0.3622, 0.276, 0.1616, 0.1321),
+#   strata = NULL) %>%
+#   rename(age_category = groups,
+#     population = n)
 ```
 
 
@@ -471,7 +474,7 @@ population_data_age_categories <- gen_population(total_pop = 5000,
 
 ## Excel file
 ## to read in a specific sheet use "which"
-# lab_data <- rio::import("labresults.xlsx", which = "Sheet1")
+# lab_data <- rio::import(here("labresults.xlsx"), which = "Sheet1")
 
 ## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
 ## make sure your unique ID variable name matches!
