@@ -6,22 +6,24 @@
 #' @param total_pop The overal population count of interest - the default is
 #'   1000 people
 #' @param groups A character vector of groups - the default is set for age
-#' groups: c("0-4","5-14","15-24","25-34","35-44","45+")
+#' groups: c("0-4","5-14","15-29","30-44","45+")
 #' @param strata A character vector for stratifying groups -
 #'   the default is set for gender: c("Male", "Female")
 #' @param proportions A numeric vector specifying the proportions (as decimals)
-#'   for each age group - the default repeats c(0.182, 0.278, 0.26, 0.11, 0.07,
-#'   0.10) for genders.  However you can change this manually, make sure to
+#'   for each age group - the default repeats c(0.158, 0.268, 0.277, 0.163, 0.133)
+#'   for genders.  However you can change this manually, make sure to
 #'   have the length equal to groups times strata.
+#'   These defaults are based of MSF general emergency intervention standard
+#'   values.
 #' @param tibble Return data as a tidyverse tibble (default is TRUE)
 #' @importFrom dplyr bind_cols
 #' @export
 
 
 gen_population <- function(total_pop = 1000,
-                           groups = c("0-4","5-14","15-24","25-34","35-44","45+"),
+                           groups = c("0-4","5-14","15-29","30-44","45+"),
                            strata = c("Male", "Female"),
-                           proportions = c(0.182, 0.278, 0.26, 0.11, 0.07, 0.10),
+                           proportions = c(0.158, 0.268, 0.277, 0.163, 0.133),
                            tibble = TRUE) {
 
   if (length(proportions) != length(groups) & is.null(strata)) {
