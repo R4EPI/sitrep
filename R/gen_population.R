@@ -50,49 +50,54 @@ gen_population <- function(total_pop = 1000,
                            counts = NULL,
                            tibble = TRUE) {
 
-  # measure <- ifelse(is.null(counts), proportions, counts)
+  # pick counts if not empty
+  measure <- ifelse(is.null(counts), proportions, counts)
 
-  # # check length of given input measure and groups match without strata
-  # if (is.null(strata) & length(measure) != length(groups)) {
-  #   differences <- abs(length(groups) - length(measure))
-  #
-  #   stop(glue::glue("Given proportions (or counts) and groups lengths
-  #                   do not match and there were no strata\n",
-  #                   "The difference in length was {differences}"))
-  # }
-  #
-  # # check length of given input measure and groups match with strata
-  # if (!is.null(strata) &
-  #     (length(measure) != length(groups) & length(measure) != length(groups) * length(strata))) {
-  #
-  #   differences <- abs(length(groups) - length(measure))
-  #   differences2 <- abs(length(groups)*length(strata) - length(measure))
-  #
-  #   stop(glue::glue("Given proportions (or counts) and groups lengths
-  #                   do not match, nor are they a multiple of strata\n",
-  #                   "The difference in length was {differences}\n",
-  #                   "The difference in multiplied length was {differences2}"))
-  # }
-  #
-  #
-  # # give warning if repeating input measures for strata
-  # if (!is.null(strata) &
-  #     length(measure) != length(groups) * length(strata)) {
-  #   warning(glue::glue("Given proportions (or counts) is not the same as \n",
-  #           "groups multiplied by strata length, they will be repeated to match"))
-  # }
+
+  ngroups <- length(groups)
+  nstrata <- length(strata)
+  nmeasure <- length(measure)
 
 
 
+  # check length of given input measure and groups match without strata
+  if (is.null(strata) & nmeasure != ngroups) {
+    differences <- abs(ngroups - nmeasure)
+
+    stop(glue::glue("Given proportions (or counts) and groups lengths
+                    do not match and there were no strata\n",
+                    "The difference in length was {differences}"))
+  }
+
+  # check length of given input measure and groups match with strata
+  if (!is.null(strata) &
+      (nmeasure != ngroups & nmeasure != ngroups * nstrata)) {
+
+    differences <- abs(ngroups - nmeasure)
+    differences2 <- abs(ngroups * nstrata - nmeasure)
+
+    stop(glue::glue("Given proportions (or counts) and groups lengths
+                    do not match, nor are they a multiple of strata\n",
+                    "The difference in length was {differences}\n",
+                    "The difference in multiplied length was {differences2}"))
+  }
+
+
+  # give warning if repeating input measures for strata
+  if (!is.null(strata) &
+      nmeasure != ngroups * nstrata) {
+    warning(glue::glue("Given proportions (or counts) is not the same as \n",
+            "groups multiplied by strata length, they will be repeated to match"))
+  }
+
+
+  # define a dataframe based on groups only
   output <- data.frame(groups)
 
   # if strata specified then make a dataframe from combining groups*strata
   if (!is.null(strata)) {
   # create data frame with groups and strata
-  output <- expand.grid(groups, strata)
-
-  # rename columns appropriately
-  colnames(output) <- c("groups", "strata")
+  output <- expand.grid(groups = groups, strata = strata)
   }
 
 
@@ -111,6 +116,7 @@ gen_population <- function(total_pop = 1000,
     }
 
   } else {
+    # for counts
     output$n <- counts
     output$proportions <- output$n / sum(output$n)
 
@@ -120,102 +126,6 @@ gen_population <- function(total_pop = 1000,
       output <- output[ , c("groups", "proportions", "n")]
     }
   }
-
-
-  # # using proportions (where counts not specified)
-  # if (is.null(counts)) {
-  #
-  #   if (length(proportions) != length(groups) & is.null(strata)) {
-  #     difference <- abs(length(groups) - length(proportions))
-  #
-  #     stop(sprintf("Proporitons and groups do not match, without specifying strata.
-  #                     The difference in length was %d (proportions may have been dropped)",
-  #                     difference))
-  #
-  #     proportions <- proportions[1:length(groups)]
-  #
-  #   }
-  #
-  #   if (sum(proportions) != 1) {
-  #     warning(sprintf("Proportions do not add up to 1. Consider checking these"))
-  #   }
-  #
-  #
-  #   if (!is.null(strata)) {
-  #
-  #     strata2 <- factor(
-  #                       rep.int(strata, length(groups)),
-  #                       levels = strata
-  #                       )
-  #     strata2 <- sort(strata2)
-  #
-  #
-  #     groups2 <-  factor(
-  #                        rep.int(groups, length(strata)),
-  #                        levels = groups
-  #                        )
-  #
-  #     if (length(proportions) < length(groups2)) {
-  #       proportions2 <- rep.int(proportions, length(strata))
-  #     }
-  #
-  #     output <- bind_cols(groups = groups2,
-  #                         strata = strata2,
-  #                         proportions = proportions2,
-  #                         n = proportions2 * total_pop)
-  #
-  #   } else {
-  #     output <- bind_cols(groups = groups,
-  #                         proportions = proportions,
-  #                         n = proportions * total_pop)
-  #   }
-  # } else {
-  #   # using counts
-  #
-  #   if (length(counts) != length(groups) & is.null(strata)) {
-  #     difference <- abs(length(groups) - length(counts))
-  #
-  #     stop(sprintf("Counts and groups do not match, without specifying strata.
-  #                     The difference in length was %d (counts may have been dropped)",
-  #                     difference))
-  #
-  #     counts <- counts[1:length(groups)]
-  #   }
-  #
-  #
-  #
-  #
-  #
-  #
-  #   if (!is.null(strata)) {
-  #
-  #     strata2 <- factor(
-  #       rep.int(strata, length(groups)),
-  #       levels = strata
-  #     )
-  #     strata2 <- sort(strata2)
-  #
-  #
-  #     groups2 <-  factor(
-  #       rep.int(groups, length(strata)),
-  #       levels = groups
-  #     )
-  #
-  #     if (length(counts) < length(groups2)) {
-  #       counts2 <- rep.int(counts, length(strata))
-  #     }
-  #
-  #     output <- bind_cols(groups = groups2,
-  #                         strata = strata2,
-  #                         proportions = counts2 / sum(counts2),
-  #                         n = counts2)
-  #
-  #   } else {
-  #     output <- bind_cols(groups = groups,
-  #                         proportions = counts / sum(counts),
-  #                         n = counts)
-  #   }
-  # }
 
   # if (tibble) {
   #   output <- tibble::tibble(output)
