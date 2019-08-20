@@ -10,11 +10,19 @@
 #' @param strata A character vector for stratifying groups -
 #'   the default is set for gender: c("Male", "Female")
 #' @param proportions A numeric vector specifying the proportions (as decimals)
-#'   for each age group - the default repeats c(0.158, 0.268, 0.277, 0.163, 0.133)
+#'   for each group - the default repeats c(0.079, 0.134, 0.139, 0.082, 0.067)
 #'   for genders.  However you can change this manually, make sure to
-#'   have the length equal to groups times strata.
+#'   have the length equal to groups times strata (or half thereof).
 #'   These defaults are based of MSF general emergency intervention standard
 #'   values.
+#' @param counts A numeric vector specifying the counts for each group.
+#'   The default is NULL - as most often proportions above will be used.
+#'   If is not NULL then total_pop and proportions will be ignored.
+#'   Make sure the length of this vector is equal to groups time strata (or if it
+#'   is half then it will repeat for each strata).
+#'   For reference, the MSF general emergency intervention standard values
+#'   are c(7945, 13391, 13861, 8138, 6665) based on above
+#'   groups for a 100,000 person population.
 #' @param tibble Return data as a tidyverse tibble (default is TRUE)
 #' @importFrom dplyr bind_cols
 #' @export
@@ -23,48 +31,105 @@
 gen_population <- function(total_pop = 1000,
                            groups = c("0-4","5-14","15-29","30-44","45+"),
                            strata = c("Male", "Female"),
-                           proportions = c(0.158, 0.268, 0.277, 0.163, 0.133),
+                           proportions = c(0.079, 0.134, 0.139, 0.082, 0.066),
+                           counts = NULL,
                            tibble = TRUE) {
 
-  if (length(proportions) != length(groups) & is.null(strata)) {
-    difference <- abs(length(groups) - length(proportions))
+  # using proportions (where counts not specified)
+  if (is.null(counts)) {
 
-    warning(sprintf("Proporitons and groups do not match, without specifying strata.
-                    The difference in length was %d (proportions may have been dropped)",
-                    difference))
+    if (length(proportions) != length(groups) & is.null(strata)) {
+      difference <- abs(length(groups) - length(proportions))
 
-    proportions <- proportions[1:length(groups)]
-  }
+      stop(sprintf("Proporitons and groups do not match, without specifying strata.
+                      The difference in length was %d (proportions may have been dropped)",
+                      difference))
 
+      proportions <- proportions[1:length(groups)]
 
-  if (!is.null(strata)) {
-
-    strata2 <- factor(
-                      rep.int(strata, length(groups)),
-                      levels = strata
-                      )
-    strata2 <- sort(strata2)
-
-
-    groups2 <-  factor(
-                       rep.int(groups, length(strata)),
-                       levels = groups
-                       )
-
-    if (length(proportions) < length(groups2)) {
-      proportions2 <- rep.int(proportions, length(strata))
     }
 
-    output <- bind_cols(groups = groups2,
-                        strata = strata2,
-                        proportions = proportions2,
-                        n = proportions2 * total_pop)
+    if (sum(proportions) != 1) {
+      warning(sprintf("Proportions do not add up to 1. Consider checking these"))
+    }
 
+
+    if (!is.null(strata)) {
+
+      strata2 <- factor(
+                        rep.int(strata, length(groups)),
+                        levels = strata
+                        )
+      strata2 <- sort(strata2)
+
+
+      groups2 <-  factor(
+                         rep.int(groups, length(strata)),
+                         levels = groups
+                         )
+
+      if (length(proportions) < length(groups2)) {
+        proportions2 <- rep.int(proportions, length(strata))
+      }
+
+      output <- bind_cols(groups = groups2,
+                          strata = strata2,
+                          proportions = proportions2,
+                          n = proportions2 * total_pop)
+
+    } else {
+      output <- bind_cols(groups = groups,
+                          proportions = proportions,
+                          n = proportions * total_pop)
+    }
   } else {
-    output <- bind_cols(groups = groups,
-                        proportions = proportions,
-                        n = proportions * total_pop)
+    # using counts
+
+    if (length(counts) != length(groups) & is.null(strata)) {
+      difference <- abs(length(groups) - length(counts))
+
+      stop(sprintf("Counts and groups do not match, without specifying strata.
+                      The difference in length was %d (counts may have been dropped)",
+                      difference))
+
+      counts <- counts[1:length(groups)]
+    }
+
+
+
+
+
+
+    if (!is.null(strata)) {
+
+      strata2 <- factor(
+        rep.int(strata, length(groups)),
+        levels = strata
+      )
+      strata2 <- sort(strata2)
+
+
+      groups2 <-  factor(
+        rep.int(groups, length(strata)),
+        levels = groups
+      )
+
+      if (length(counts) < length(groups2)) {
+        counts2 <- rep.int(counts, length(strata))
+      }
+
+      output <- bind_cols(groups = groups2,
+                          strata = strata2,
+                          proportions = counts2 / sum(counts2),
+                          n = counts2)
+
+    } else {
+      output <- bind_cols(groups = groups,
+                          proportions = counts / sum(counts),
+                          n = counts)
+    }
   }
+
 
   if (tibble == FALSE) {
     output <- data.frame(output)
