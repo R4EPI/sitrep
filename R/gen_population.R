@@ -26,6 +26,20 @@
 #' @param tibble Return data as a tidyverse tibble (default is TRUE)
 #' @importFrom dplyr bind_cols
 #' @export
+#'
+#' @examples
+#' # get population counts based on proportion, unstratified
+#' gen_population(groups = c(1, 2, 3, 4), strata = NULL, proportions = c(0.3, 0.2, 0.4, 0.1))
+#'
+#' # get population counts based on proportion, stratified
+#' gen_population(groups = c(1, 2, 3, 4), strata = c("a", "b"), proportions = c(0.3, 0.2, 0.4, 0.1))
+#'
+#' # get population counts based on counts, unstratified
+#' gen_population(groups = c(1, 2, 3, 4), strata = NULL, counts = c(20, 10, 30, 40))
+#'
+#' # get population counts based on counts, stratified
+#' gen_population(groups = c(1, 2, 3, 4), strata = c("a", "b"), counts = c(20, 10, 30, 40))
+#'
 
 
 gen_population <- function(total_pop = 1000,
