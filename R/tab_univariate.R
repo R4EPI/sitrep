@@ -124,7 +124,8 @@ tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
 
 
 # the single exposure variable version of the above function
-#' @noRd
+#' Backend for tab_univariate
+#'
 #' This is an internal function that does the work of tab_univariate over
 #' several exposure variables
 #'
@@ -138,6 +139,7 @@ tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
 #' @param digits an integer
 #' @param mergeCI logical
 #' @param woolf_test logical
+#' @noRd
 #'
 #' @return a data frame
 backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata = NULL,

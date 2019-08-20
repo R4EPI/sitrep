@@ -9,7 +9,7 @@ a       <- tibble::tibble(case_def   = samp_tf(),
 )
 # generate a real data set from 
 # http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704-ep713_confounding-em/BS704-EP713_Confounding-EM7.html
-
+`%>%` <- dplyr::`%>%`
 arr <- c(10, 35, 90, 465, 36, 25, 164, 175)
 arr <- array(arr, dim = c(2, 2, 2),
              dimnames = list(risk = c(TRUE, FALSE),
@@ -17,13 +17,14 @@ arr <- array(arr, dim = c(2, 2, 2),
                              old = c(FALSE, TRUE))
        )
 arrt <- as.data.frame.table(arr) %>%
-  summarise(res = list(data.frame(
+  dplyr::summarise(res = list(data.frame(
     risk    = rep(risk, Freq),
     outcome = rep(outcome, Freq),
     old = rep(old, Freq)
   ))) %>%
-  unnest() %>%
-  as_tibble()
+  tidyr::unnest() %>%
+  lapply(as.logical) %>%
+  tibble::as_tibble()
 
 b <- tibble::tribble(
   ~strata, ~exposure, ~outcome, ~n,
@@ -36,12 +37,12 @@ b <- tibble::tribble(
   FALSE,   FALSE,   TRUE, 3L,
   FALSE,   FALSE,  FALSE, 3L
   ) %>%
-  summarise(res = list(data.frame(
+  dplyr::summarise(res = list(data.frame(
     strata   = rep(strata, n),
     exposure = rep(exposure, n),
     outcome  = rep(outcome, n)
   ))) %>%
-  unnest()
+  tidyr::unnest()
 
 ab <- tibble::tribble(
   ~strata, ~exposure, ~outcome, ~n,
@@ -54,12 +55,12 @@ ab <- tibble::tribble(
   FALSE,   FALSE,   TRUE, 32L, # 3L,
   FALSE,   FALSE,  FALSE, 28L# 3L
   ) %>%
-  summarise(res = list(data.frame(
+  dplyr::summarise(res = list(data.frame(
     strata   = rep(strata, n),
     exposure = rep(exposure, n),
     outcome  = rep(outcome, n)
   ))) %>%
-  unnest()
+  tidyr::unnest()
 
 
 # get the results from tab_univariate function

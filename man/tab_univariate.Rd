@@ -56,11 +56,11 @@ a <- data.frame(case_def = sample(c(TRUE, FALSE), 2000, replace = TRUE),
            )
 
 # get the results from tab_univariate function
-func_res <- tab_univariate(a, case_def, riskA, 
+func_res <- tab_univariate(a, case_def, riskA,
                            strata = stratifier, digits = 6, measure = "OR")
 
 # get risk ratios
-func_res <- tab_univariate(a, case_def, riskA, 
+func_res <- tab_univariate(a, case_def, riskA,
                            strata = stratifier, digits = 6, measure = "RR")
 
 
