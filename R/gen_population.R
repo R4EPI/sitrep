@@ -10,15 +10,16 @@
 #' @param strata A character vector for stratifying groups -
 #'   the default is set for gender: c("Male", "Female")
 #' @param proportions A numeric vector specifying the proportions (as decimals)
-#'   for each group - the default repeats c(0.079, 0.134, 0.139, 0.082, 0.067)
-#'   for genders.  However you can change this manually, make sure to
+#'   for each group of the total_pop.
+#'   The default repeats c(0.079, 0.134, 0.139, 0.082, 0.067)
+#'   for strata.  However you can change this manually, make sure to
 #'   have the length equal to groups times strata (or half thereof).
 #'   These defaults are based of MSF general emergency intervention standard
 #'   values.
 #' @param counts A numeric vector specifying the counts for each group.
 #'   The default is NULL - as most often proportions above will be used.
 #'   If is not NULL then total_pop and proportions will be ignored.
-#'   Make sure the length of this vector is equal to groups time strata (or if it
+#'   Make sure the length of this vector is equal to groups times strata (or if it
 #'   is half then it will repeat for each strata).
 #'   For reference, the MSF general emergency intervention standard values
 #'   are c(7945, 13391, 13861, 8138, 6665) based on above
