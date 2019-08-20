@@ -51,7 +51,7 @@ gen_population <- function(total_pop = 1000,
                            tibble = TRUE) {
 
   # pick counts if not empty
-  measure <- ifelse(is.null(counts), proportions, counts)
+  measure <- if (is.null(counts)) proportions else counts
 
 
   ngroups <- length(groups)
@@ -76,8 +76,8 @@ gen_population <- function(total_pop = 1000,
     differences <- abs(ngroups - nmeasure)
     differences2 <- abs(ngroups * nstrata - nmeasure)
 
-    stop(glue::glue("Given proportions (or counts) and groups lengths
-                    do not match, nor are they a multiple of strata\n",
+    stop(glue::glue("Given proportions (or counts) and groups lengths",
+                    "do not match, nor are they a multiple of strata\n",
                     "The difference in length was {differences}\n",
                     "The difference in multiplied length was {differences2}"))
   }
@@ -86,7 +86,7 @@ gen_population <- function(total_pop = 1000,
   # give warning if repeating input measures for strata
   if (!is.null(strata) &
       nmeasure != ngroups * nstrata) {
-    warning(glue::glue("Given proportions (or counts) is not the same as \n",
+    warning(glue::glue("Given proportions (or counts) is not the same as",
             "groups multiplied by strata length, they will be repeated to match"))
   }
 
