@@ -34,52 +34,65 @@
 #'
 #'
 #' @param x a data frame of survey data
+#' 
 #' @param p a data frame containing popuplation data for groups in `...`
+#' 
 #' @param cz a data frame containing a list of clusters and the number of
-#' households in each. Default is NULL as the default `method` is "stratified".
+#'   households in each. Default is NULL as the default `method` is "stratified".
+#' 
 #' @param ... shared grouping columns across both `x` and `p`. These are used
 #'   to match the weights to the correct subset of the pouplation.
 #'   Used only when `method` is "stratified".
+#' 
 #' @param population the column in `p` that defines the pouplation numbers
+#' 
 #' @param cluster_cz the column in `cz` that lists all possible clusters.
-#' Ignored if `method` is not "cluster" or if `ignore_cluster`
-#' is TRUE.
+#'   Ignored if `method` is not "cluster" or if `ignore_cluster` is TRUE.
+#' 
 #' @param household_cz the column in `cz` that lists the number of households per cluster.
-#' Ignored if `method` is not "cluster" or if `ignore_household`
-#' is TRUE.
+#'   Ignored if `method` is not "cluster" or if `ignore_household` is TRUE.
+#' 
 #' @param cluster_x the column in `x` that indicates which cluster rows belong to.
-#' Ignored if `method` is not "cluster" or if `ignore_cluster`
-#' is TRUE.
+#'   Ignored if `method` is not "cluster" or if `ignore_cluster` is TRUE.
+#' 
 #' @param household_x the column in `x` that indicates a unique household identifier.
-#' Ignored if `method` is not "cluster or if `ignore_household` is TRUE.
+#'   Ignored if `method` is not "cluster or if `ignore_household` is TRUE.
+#' 
 #' @param individuals_eligible_x the column in `x` which specifies the number of people
-#' eligible for being interviewed in that household. (e.g. the total number of children)
+#'   eligible for being interviewed in that household. (e.g. the total number of children)
+#' 
 #' @param individuals_interviewed_x the column in `x` which specifies the number of people
-#' actually interviewed in that household.
+#'   actually interviewed in that household.
+#' 
 #' @param method what type of survey method you would like to use. Options are
-#' "stratified" (default) and "cluster".
-#' Stratified: takes variables grouped population counts from `p` and divides
-#' the corresponding groups by counts of variables in `...` in `x`, to create a weight.
-#' Cluster: Will multiply the inverse chances of a cluster being selected, a household
-#' being selected within a cluster, and an individual being selected within a household.
+#'   "stratified" (default) and "cluster".
+#'   - Stratified: takes variables grouped population counts from `p` and divides
+#'     the corresponding groups by counts of variables in `...` in `x`, to create a weight.
+#'   - Cluster: Will multiply the inverse chances of a cluster being selected, a household
+#'     being selected within a cluster, and an individual being selected within a household.
 #' As follows:
 #' unique(cluster_cz) / unique(cluster_x) *
 #' unique(household_cz) / unique(household_x) *
 #' individuals_eligible_x / individuals_interviewed_x
 #' In the case where ignore_cluster and ignore_household are TRUE, this will simply be:
 #' 1 * 1 * individuals_eligible_x / inidivudals_interviewed_x
-#' @param ignore_cluster If TRUE, set the weight for clusters to be 1. This assumes that
-#' your sample was taken in a way which is a close approximation of a simple random sample.
-#' Ignores inputs from `cluster_cz` as well as `cluster_x`.
-#' Default is TRUE, as the default `method` is "stratified".
-#' @param ignore_household If TRUE, set the weight for households to be 1. This assumes that
-#' your sample of households was takenin a way which is a close approximation
-#' of a simple random sample. Ignores inputs from `household_cz` and `household_x`.
-#' Default is TRUE, as the default `method` is "stratified".
+#' 
+#' @param ignore_cluster If TRUE, set the weight for clusters to be 1. This
+#'   assumes that your sample was taken in a way which is a close approximation
+#'   of a simple random sample.  Ignores inputs from `cluster_cz` as well as
+#'   `cluster_x`.  Default is TRUE, as the default `method` is "stratified".
+#' 
+#' @param ignore_household If TRUE, set the weight for households to be 1. This
+#'   assumes that your sample of households was takenin a way which is a close
+#'   approximation of a simple random sample. Ignores inputs from `household_cz`
+#'   and `household_x`.  Default is TRUE, as the default `method` is "stratified".
+#' 
 #' @param surv_weight the name of the new column to store the weights. Defaults to
 #'   "surv_weight".
+#' 
 #' @param surv_weight_ID the name of the new ID column to be created. Defaults to
 #'   "surv_weight_ID"
+#' 
 #' @author Zhian N. Kamvar Alex Spina Lukas Richter
 #' @export
 #' @examples
