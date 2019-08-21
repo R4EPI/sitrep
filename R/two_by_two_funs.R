@@ -172,25 +172,50 @@ case_matrix <- function(x, total = FALSE) {
 
   # Dimension 1: exposure (exposed, unexposed)
   # Dimension 2: outcome (case, controls)
-  # Dimension 3: stratifier (e.g. age group)
-  A <- x[1, 1, ]
-  B <- x[1, 2, ]
-  C <- x[2, 1, ]
-  D <- x[2, 2, ] 
-  res <- matrix(c(c(sum(A), A), 
-                  c(sum(B), B), 
-                  c(sum(C), C), 
-                  c(sum(D), D)
-                 ), 
-                nrow = 3,
-                dimnames = list(strata = c("crude", dimnames(x)[[3]]),
+  # Dimension 3 (optional): stratifier (e.g. age group)
+
+  # we subset things differently if we have a cube (3D) or square (2D).
+  #
+  # For the cube, we result in 3 rows because we take the sum of all the strata
+  # to create the crude.
+  #
+  # For the square, we only need to produce one row.
+  ndim <- length(dim(x))
+  if (ndim == 3L) { 
+    A <- x[1, 1, ]
+    B <- x[1, 2, ]
+    C <- x[2, 1, ]
+    D <- x[2, 2, ] 
+    res <- c(c(sum(A), A), 
+             c(sum(B), B), 
+             c(sum(C), C), 
+             c(sum(D), D)
+            ) 
+    nr     <- dim(x)[ndim] + 1L
+    rnames <- dimnames(x)[[3]]
+  } else {
+    A <- x[1, 1]
+    B <- x[1, 2]
+    C <- x[2, 1]
+    D <- x[2, 2] 
+    res    <- c(A, B, C, D)
+    nr     <- 1L
+    rnames <- NULL
+  }
+  res <- matrix(res, 
+                nrow = nr,
+                dimnames = list(strata = c("crude", rnames),
                                 c(A = "exp_cases",    
                                   B = "unexp_cases",
                                   C = "exp_controls", 
                                   D = "unexp_controls")
                 )
   )
-  res[if (total) 1:3 else 2:3, ]
+  if (ndim == 3) {
+    res[if (total) 1:3 else 2:3, ]
+  } else {
+    res
+  }
 }
 
 #' create a data frame from a 2x2x2 matrix
@@ -263,7 +288,7 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
 
   # Risk ratio:
   # A / (A + B)      exposed cases / all cases
-  # ----------- = ------------------------------
+    # ----------- = ------------------------------
   # C / (C + D)   exposed controls / all controls
   ratio   <- switch(measure, 
                     RR = ratio_est(d$A_exp_cases, 
@@ -301,7 +326,31 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
   
 }
 
-#' calculate ratio estimates for odds, risk, and incidence risk ratios
+get_chisq_pval <- function(x) {
+  ndim   <- length(dim(x))
+  n      <- if (ndim == 3L) dim(x)[ndim] + 1L else 1L
+  rnames <- if (n == 3L) dimnames(x)[[3]] else NULL
+
+  res <- matrix(ncol = 2, nrow = n,
+                dimnames = list(c("crude", rnames),
+                                c("statistic", "p.value")))
+
+  # No matter the dimensions, we can always get the crude p-value 
+  crude          <- stats::chisq.test(apply(x, MARGIN = 1:2, FUN = sum), correct = FALSE)
+  res["crude", ] <- c(crude$statistic, crude$p.value)
+
+  # if there are strata, we can apply over that dimension and get the statistic
+  # for each. 
+  if (ndim == 3) {
+    strat <- apply(x, MARGIN = 3, FUN = chisq.test, correct = FALSE)
+    for (i in seq_along(strat)) {
+      res[i + 1, ] <- c(strat[[i]]$statistic, strat[[i]]$p.value)
+    }
+  }
+  res
+}
+
+#' calculate ratio estimates for odds, risk, and incidence rate ratios
 #'
 #' @param N1 first numerator
 #' @param D1 first denominator
@@ -311,6 +360,17 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
 #' @param conf confidence level
 #'
 #' @return a vector containing the ratio estimate, lower bound, and upper bound
+#' 
+#' @note This was adapted from the code in the epiR::epi.2by2 version 1.0-2. 
+#'
+#' OR is from .funORwald (294--308)
+#' RR is from .funRRwald (156--171)
+#' IRR is from lines 787--797 (no specific function)
+#' 
+#' @details This function produces odds ratio, risk ratio, and incidence rate
+#' ratio estimates with confidence intervals. I have generalized the methods to 
+#' use as little code duplication as possible. 
+#'
 #' @noRd
 ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
 
@@ -323,8 +383,8 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
   iN2 <- 1 / N2
   iD2 <- 1 / D2
 
-  case      <- N1 / D1
-  control   <- N2 / D2
+  case      <-   N1 / D1
+  control   <-   N2 / D2
   ratio     <- case / control
   log_ratio <- log(ratio)
   
@@ -360,50 +420,4 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
          ncol = 3, 
          dimnames = list(NULL, c("ratio", "lower", "upper")))
 
-}
-
-
-
-cstest <- function(dat) {
-  dat <- case_matrix(dat)
-  a <- dat[, 1]; b <- dat[, 3]; c <- dat[, 2]; d <- dat[, 4]
-  M1 <- a + c
-  sa <- sum(a)
-  sb <- sum(b)
-  sc <- sum(c)
-  sd <- sum(d)
-
-  sM1 <- sum(M1)
-  ## Total within strata non-cases:
-  M0 <- b + d
-  sM0 <- sum(M0)
-  ## Total within strata exposed:
-  N1 <- a + b
-  sN1 <- sum(N1)
-  ## Total within strata unexposed:
-  N0 <- c + d
-  sN0 <- sum(N0)
-  total <- a + b + c + d
-  stotal <- sum(total)
-  ## ===========================================
-  ## CHI-SQUARED TESTS OF HOMOGENEITY AND EFFECT
-  ## ===========================================
-
-  ## Chi-squared test statistic for individual strata. See Dawson Saunders and Trapp page 151:
-  exp.a <- (N1 * M1) / total
-  exp.b <- (N1 * M0) / total
-  exp.c <- (N0 * M1) / total
-  exp.d <- (N0 * M0) / total
-  chi2 <- (((a - exp.a)^2)/ exp.a) + (((b - exp.b)^2)/ exp.b) + (((c - exp.c)^2)/ exp.c) + (((d - exp.d)^2)/ exp.d)
-  p.chi2 <- 1 - pchisq(chi2, df = 1)
-
-  ## Crude summary chi-squared test statistic with 1 degree of freedom:
-  exp.sa <- (sN1 * sM1) / stotal
-  exp.sb <- (sN1 * sM0) / stotal
-  exp.sc <- (sN0 * sM1) / stotal
-  exp.sd <- (sN0 * sM0) / stotal
-  chi2s <- (((sa - exp.sa)^2)/ exp.sa) + (((sb - exp.sb)^2)/ exp.sb) + (((sc - exp.sc)^2)/ exp.sc) + (((sd - exp.sd)^2)/ exp.sd)
-  p.chi2s <- 1 - pchisq(chi2s, df = 1)
-
-  c(chi2, p.chi2, chi2s, p.chi2s)
 }
