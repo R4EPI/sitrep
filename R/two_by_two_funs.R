@@ -90,12 +90,14 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
 
   d  <- data_frame_from_2x2(x)
   CS <- get_chisq_pval(x)[, 2, drop = FALSE]
-  MH <- mantelhaen.test(x)
-  MH <- data.frame(ratio   = MH$estimate,
-                   lower   = MH$conf.int[1],
-                   upper   = MH$conf.int[2],
-                   p.value = MH$p.value
-  )
+  if (nrow(d) > 1) {
+    MH <- mantelhaen.test(x)
+    MH <- data.frame(ratio   = MH$estimate,
+                     lower   = MH$conf.int[1],
+                     upper   = MH$conf.int[2],
+                     p.value = MH$p.value
+    )
+  }
 
   # Risk ratio:
   # A / (A + B)      exposed cases / all cases
@@ -134,8 +136,12 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
   )
 
   ratio           <- cbind(ratio, p.value = CS)
-  ratio           <- rbind(ratio, MH)
-  rownames(ratio) <- c(rownames(d), "MH")
+  if (nrow(d) > 1) {
+    ratio           <- rbind(ratio, MH)
+    rownames(ratio) <- c(rownames(d), "MH")
+  } else {
+    rownames(ratio) <- rownames(d)
+  }
   ratio
   
 }

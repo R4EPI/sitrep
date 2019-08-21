@@ -98,9 +98,9 @@ tab_univariate <- function(x, outcome, ... , perstime = NULL, strata = NULL,
 
   # check person time is not missing for incidence rate ratio
   if (length(perstime_var) == 0 && measure == "IRR") {
-    stop("You have selected IRR as a measure but not specified a perstime variable.
-         To calculate an incidence rate ratio please specify a variable which indicates
-         observation time for each individual")
+    stop(glue::glue("You have selected IRR as a measure but not specified a perstime variable.",
+         "To calculate an incidence rate ratio please specify a variable which indicates",
+         "observation time for each individual"))
   }
 
   # lapply to each of the vars
@@ -184,22 +184,6 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   ### pulling together counts for to feed epi function
 
-  # for "OR" get basic counts table to pass to the epiR::epi2by2 function
-  # NOTE that this is flipped the wrong way (cases/controls as rows) - because epi2by2 calculates ORs WRONG!!
-  # if (measure == "OR") {
-
-  #   the_table <- table(x[c(outcome_var, exposure_var, strata_var)])
-
-  # }
-
-  # # for "RR" get basic counts table to pass to the epiR::epi2by2 function
-  # # NOTE for RRs - having cases as columns for input is fine for using epi2by2
-  # if (measure == "RR") {
-
-  #   the_table <- table(x[c(exposure_var, outcome_var, strata_var)])
-
-  # }
-
   # for "IRR" return counts and person time by exposure
   if (measure == "IRR") {
 
@@ -241,25 +225,20 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   }
 
   
-  # ### Run the epiR::epi2by2 function on the counts data to get appropriate outputs
-  # METHOD <- switch(measure,
-  #                  OR  = "case.control",
-  #                  RR  = "cohort.count",
-  #                  IRR = "cohort.time")
-
-  # epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = METHOD))
-
-  # ### Summarize the results of the calcualtion
-  # nums <- summarize_epitable(epitable, the_table, exposure_var, measure, has_strata, strata_var)
-  vals <- rbind(strata_ratio_table(the_table, measure), NA)
-  est  <- as.data.frame(get_ratio_est(the_table, measure))
-  nums <- dplyr::bind_cols(variable = rep(exposure_var, nrow(est)), 
-                           level = matrix(rownames(est)), 
-                           vals, 
-                           est)
-
-  # # turn things to numeric
-  # nums <- mutate_at(nums, vars(-tidyselect::one_of("variable", "est_type")), as.numeric)
+  if (has_strata) {
+    vals <- rbind(strata_ratio_table(the_table, measure), NA)
+    est  <- as.data.frame(get_ratio_est(the_table, measure))
+    nums <- dplyr::bind_cols(variable = rep(exposure_var, nrow(est)), 
+                             level = matrix(rownames(est)), 
+                             vals, 
+                             est)
+  } else {
+    nums <- dplyr::bind_cols(variable = exposure_var,
+                             level = "crude",
+                             strata_ratio_table(the_table, measure),
+                             as.data.frame(get_ratio_est(the_table, measure))
+    )
+  }
 
   # drop columns if specified
   # use numbers because names will be different according to measure, but place is always same
@@ -275,7 +254,7 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   # merge upper and lower CIs
   if (mergeCI) {
-    nums <- unite_ci(nums, col = "est_ci", "est", "lower", "upper", m100 = FALSE, digits = digits)
+    nums <- unite_ci(nums, col = "est_ci", "ratio", "lower", "upper", m100 = FALSE, digits = digits)
   }
 
   # change output table to a tibble
