@@ -61,8 +61,6 @@ gen_population <- function(total_pop = 1000,
   nstrata <- length(strata)
   nmeasure <- length(measure)
 
-  # define a dataframe based on groups only
-  output <- data.frame(groups)
 
   # if strata specified then make a dataframe from combining groups*strata
   if (!is.null(strata)) {
@@ -96,6 +94,9 @@ gen_population <- function(total_pop = 1000,
                     do not match and there were no strata\n",
                       "The difference in length was {differences}"))
     }
+
+    # define a dataframe based on groups only
+    output <- data.frame(groups)
   }
 
 
