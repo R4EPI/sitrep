@@ -72,7 +72,7 @@ strata_ratio_table <- function(x, measure = "OR") {
 #' @param conf the confidence level
 #'
 #' @return a matrix with three columns, ratio, lower, and upper
-#' @export
+#' @noRd
 #'
 #' @examples
 #' arr <- c(10, 35, 90, 465, 36, 25, 164, 175)

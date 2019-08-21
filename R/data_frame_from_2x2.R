@@ -81,9 +81,10 @@ case_matrix <- function(x, total = FALSE) {
   }
 }
 
-#' create a data frame from a 2x2x2 matrix
+#' create a data frame from a 2x2 matrix
 #'
-#' @param x a 2x2x2 matrix
+#' @param x a 2x2 matrix or 3D array with exposure variable in rows and outcome
+#'   in columns
 #'
 #' @return a data frame with the important combinations:
 #'  - A_exp_cases
@@ -95,7 +96,16 @@ case_matrix <- function(x, total = FALSE) {
 #'  - total_exposed (A + C)
 #'  - total_unexposed (B + D)
 #'  - total (A + B + C + D)
-#' @noRd
+#' @export
+#' @examples
+#' arr <- c(10, 35, 90, 465, 36, 25, 164, 175)
+#' arr <- array(arr, dim = c(2, 2, 2),
+#'              dimnames = list(risk = c(TRUE, FALSE),
+#'                              outcome = c(TRUE, FALSE),
+#'                              old = c(FALSE, TRUE))
+#'        )
+#' arr
+#' data_frame_from_2x2(arr)
 data_frame_from_2x2 <- function(x) {
 
   cmat <- case_matrix(x, total = TRUE)

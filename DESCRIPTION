@@ -70,6 +70,7 @@ Collate:
     'age-pyramid.R'
     'cfr.R'
     'check_templates.R'
+    'data_frame_from_2x2.R'
     'descriptive-table.R'
     'find_breaks.R'
     'find_date_cause.R'
