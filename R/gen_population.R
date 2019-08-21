@@ -68,7 +68,7 @@ gen_population <- function(total_pop = 1000,
   if (!is.null(strata)) {
 
     # give error - check length of given input measure and groups match with strata
-    if (nmeasure != ngroups & nmeasure != ngroups * nstrata) {
+    if (nmeasure != ngroups && nmeasure != ngroups * nstrata) {
 
       differences <- abs(ngroups - nmeasure)
       differences2 <- abs(ngroups * nstrata - nmeasure)
