@@ -801,7 +801,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 linelist_cleaned <- linelist_cleaned %>%
   mutate(date_of_last_vaccination = ifelse(
-    previously_vaccinated == "Yes", 
+    previously_vaccinated != "Yes", 
     (date_of_last_vaccination), as.Date(NA)
   ))
 
