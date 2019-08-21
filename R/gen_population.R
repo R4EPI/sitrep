@@ -25,7 +25,8 @@
 #'   are c(7945, 13391, 13861, 8138, 6665) based on above
 #'   groups for a 100,000 person population.
 #' @param tibble Return data as a tidyverse tibble (default is TRUE)
-#' @importFrom dplyr bind_cols
+#' @importFrom glue glue
+#' @importFrom tibble as_tibble
 #' @export
 #'
 #' @examples
@@ -41,6 +42,8 @@
 #' # get population counts based on counts, stratified
 #' gen_population(groups = c(1, 2, 3, 4), strata = c("a", "b"), counts = c(20, 10, 30, 40))
 #'
+#' # get population counts based on counts, stratified - type out counts for each group and strata
+#' gen_population(groups = c(1, 2, 3, 4), strata = c("a", "b"), counts = c(20, 10, 30, 40, 40, 30, 20, 20))
 
 
 gen_population <- function(total_pop = 1000,
@@ -53,51 +56,46 @@ gen_population <- function(total_pop = 1000,
   # pick counts if not empty
   measure <- if (is.null(counts)) proportions else counts
 
-
+  # define lengths of inputs for checks
   ngroups <- length(groups)
   nstrata <- length(strata)
   nmeasure <- length(measure)
-
-
-
-  # check length of given input measure and groups match without strata
-  if (is.null(strata) & nmeasure != ngroups) {
-    differences <- abs(ngroups - nmeasure)
-
-    stop(glue::glue("Given proportions (or counts) and groups lengths
-                    do not match and there were no strata\n",
-                    "The difference in length was {differences}"))
-  }
-
-  # check length of given input measure and groups match with strata
-  if (!is.null(strata) &
-      (nmeasure != ngroups & nmeasure != ngroups * nstrata)) {
-
-    differences <- abs(ngroups - nmeasure)
-    differences2 <- abs(ngroups * nstrata - nmeasure)
-
-    stop(glue::glue("Given proportions (or counts) and groups lengths",
-                    "do not match, nor are they a multiple of strata\n",
-                    "The difference in length was {differences}\n",
-                    "The difference in multiplied length was {differences2}"))
-  }
-
-
-  # give warning if repeating input measures for strata
-  if (!is.null(strata) &
-      nmeasure != ngroups * nstrata) {
-    warning(glue::glue("Given proportions (or counts) is not the same as",
-            "groups multiplied by strata length, they will be repeated to match"))
-  }
-
 
   # define a dataframe based on groups only
   output <- data.frame(groups)
 
   # if strata specified then make a dataframe from combining groups*strata
   if (!is.null(strata)) {
-  # create data frame with groups and strata
-  output <- expand.grid(groups = groups, strata = strata)
+
+    # give error - check length of given input measure and groups match with strata
+    if (nmeasure != ngroups & nmeasure != ngroups * nstrata) {
+
+      differences <- abs(ngroups - nmeasure)
+      differences2 <- abs(ngroups * nstrata - nmeasure)
+
+      stop(glue::glue("Given proportions (or counts) and groups lengths",
+                      "do not match, nor are they a multiple of strata\n",
+                      "The difference in length was {differences}\n",
+                      "The difference in multiplied length was {differences2}"))
+    }
+
+    # give warning if repeating input measures for strata
+    if (nmeasure != ngroups * nstrata) {
+      warning(glue::glue("Given proportions (or counts) is not the same as\n",
+                         "groups multiplied by strata length, they will be repeated to match"))
+    }
+
+    # create data frame with groups and strata
+    output <- expand.grid(groups = groups, strata = strata)
+  } else {
+    # check length of given input measure and groups match without strata
+    if (nmeasure != ngroups) {
+      differences <- abs(ngroups - nmeasure)
+
+      stop(glue::glue("Given proportions (or counts) and groups lengths
+                    do not match and there were no strata\n",
+                      "The difference in length was {differences}"))
+    }
   }
 
 
@@ -127,9 +125,10 @@ gen_population <- function(total_pop = 1000,
     }
   }
 
-  # if (tibble) {
-  #   output <- tibble::tibble(output)
-  # }
+
+  if (tibble) {
+    output <- tibble::as_tibble(output)
+  }
 
   output
 
