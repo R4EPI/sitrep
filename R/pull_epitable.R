@@ -51,6 +51,9 @@ summarize_epitable <- function(epitable, contingency_table, exposure_var = NULL,
     )
   }
 
+                get_ratio_est(contingency_table, measure),
+                get_chisq_pval(arr)[, 2, drop = FALSE]
+                )
 
   vars <- list(
                OR  = c("exp_cases",    "unexp_cases",    "cases_odds",

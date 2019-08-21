@@ -186,19 +186,19 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   # for "OR" get basic counts table to pass to the epiR::epi2by2 function
   # NOTE that this is flipped the wrong way (cases/controls as rows) - because epi2by2 calculates ORs WRONG!!
-  if (measure == "OR") {
+  # if (measure == "OR") {
 
-    the_table <- table(x[c(outcome_var, exposure_var, strata_var)])
+  #   the_table <- table(x[c(outcome_var, exposure_var, strata_var)])
 
-  }
+  # }
 
-  # for "RR" get basic counts table to pass to the epiR::epi2by2 function
-  # NOTE for RRs - having cases as columns for input is fine for using epi2by2
-  if (measure == "RR") {
+  # # for "RR" get basic counts table to pass to the epiR::epi2by2 function
+  # # NOTE for RRs - having cases as columns for input is fine for using epi2by2
+  # if (measure == "RR") {
 
-    the_table <- table(x[c(exposure_var, outcome_var, strata_var)])
+  #   the_table <- table(x[c(exposure_var, outcome_var, strata_var)])
 
-  }
+  # }
 
   # for "IRR" return counts and person time by exposure
   if (measure == "IRR") {
@@ -234,21 +234,32 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
       # drop the first column and change to a table (for use in epi.2by2)
       the_table <- as.table(data.matrix(the_table[,2:3]))
     }
-  } 
+  } else {
+  
+    the_table <- table(x[c(exposure_var, outcome_var, strata_var)])
 
-  ### Run the epiR::epi2by2 function on the counts data to get appropriate outputs
-  METHOD <- switch(measure,
-                   OR  = "case.control",
-                   RR  = "cohort.count",
-                   IRR = "cohort.time")
+  }
 
-  epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = METHOD))
+  
+  # ### Run the epiR::epi2by2 function on the counts data to get appropriate outputs
+  # METHOD <- switch(measure,
+  #                  OR  = "case.control",
+  #                  RR  = "cohort.count",
+  #                  IRR = "cohort.time")
 
-  ### Summarize the results of the calcualtion
-  nums <- summarize_epitable(epitable, the_table, exposure_var, measure, has_strata, strata_var)
+  # epitable <- suppressWarnings(epiR::epi.2by2(the_table, method = METHOD))
 
-  # turn things to numeric
-  nums <- mutate_at(nums, vars(-tidyselect::one_of("variable", "est_type")), as.numeric)
+  # ### Summarize the results of the calcualtion
+  # nums <- summarize_epitable(epitable, the_table, exposure_var, measure, has_strata, strata_var)
+  vals <- rbind(strata_ratio_table(the_table, measure), NA)
+  est  <- as.data.frame(get_ratio_est(the_table, measure))
+  nums <- dplyr::bind_cols(variable = rep(exposure_var, nrow(est)), 
+                           level = matrix(rownames(est)), 
+                           vals, 
+                           est)
+
+  # # turn things to numeric
+  # nums <- mutate_at(nums, vars(-tidyselect::one_of("variable", "est_type")), as.numeric)
 
   # drop columns if specified
   # use numbers because names will be different according to measure, but place is always same

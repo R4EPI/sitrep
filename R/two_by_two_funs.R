@@ -17,84 +17,18 @@
 #' strata_ratio_table(arr)
 strata_ratio_table <- function(x, measure = "OR") {
 
-  # The incoming table will be a 3D array that has this pattern:
-  # x <- array(1:8, 
-  #       dim = c(2, 2, 2), 
-  #       dimnames = list(exposure = 1:2, outcome = 1:2, strata = 1:2)
-  #      )
-  # x
-  # , , strata = 1
-  # 
-  #         outcome
-  # exposure 1 2
-  #        1 1 3
-  #        2 2 4
-  # 
-  # , , strata = 2
-  # 
-  #         outcome
-  # exposure 1 2
-  #        1 5 7
-  #        2 6 8
-  #
-  # ---------------------------------------------------------------------------
-  # # One of the big gotchas about 3D arrays is the fact that you can subset
-  # # them both as matrices and as vectors.  
-  #
-  # # EXPOSURE is the first dimension. If you drop that deminsion, the resulting
-  # # matrix will have OUTCOME as the first dimension
-  # x[1, , ]
-  #        strata
-  # outcome 1 2
-  #       1 1 5
-  #       2 3 7
-  # 
-  # ---------------------------------------------------------------------------
-  cmat <- case_matrix(x)
-
-  # Because we want to get both the crude and the stratified results, we place
-  # the crude result at the top of the vector.
-  index <- 2:3
-  A_exp_cases      <- c(sum(cmat[, "exp_cases"]),      cmat[, "exp_cases"])[index]
-  B_unexp_cases    <- c(sum(cmat[, "unexp_cases"]),    cmat[, "unexp_cases"])[index]
-  C_exp_controls   <- c(sum(cmat[, "exp_controls"]),   cmat[, "exp_controls"])[index]
-  D_unexp_controls <- c(sum(cmat[, "unexp_controls"]), cmat[, "unexp_controls"])[index]
-
-  total_cases     <- A_exp_cases    + B_unexp_cases
-  total_controls  <- C_exp_controls + D_unexp_controls
-
-  total_exposed   <- A_exp_cases    + C_exp_controls
-  total_unexposed <- B_unexp_cases  + D_unexp_controls
+  d <- data_frame_from_2x2(x)
 
   if (measure == "OR") {
-    # NOTE: The table input for epiR::epi.2by2 calculates ORs wrong, so we have
-    # to assume that the table is flipped around
-    # DIM 1: outcome (case, control)
-    # DIM 2: exposure
-    # DIM 3: strata 
-    # cases_exp     <- x[1, 1, , drop = TRUE] # x[c(1, 5)]
-    # cases_unexp   <- x[1, 2, , drop = TRUE] # x[c(3, 7)]
 
-    # controls_exp   <- x[2, 1, , drop = TRUE] # x[c(2, 6)]
-    # controls_unexp <- x[2, 2, , drop = TRUE] # x[c(4, 8)]
-
-    # data.frame(
-    #   exp_cases      = cases_exp, #x[1, , 1, drop = TRUE], # x[c(1, 3)]
-    #   unexp_cases    = cases_unexp, #x[1, , 2, drop = TRUE], # x[c(5, 7)]
-    #   cases_odds     = cases_exp / cases_unexp,
-
-    #   exp_controls   = controls_exp, #x[2, , 1, drop = TRUE], # x[c(2, 4)]
-    #   unexp_controls = controls_unexp, # x[2, , 2, drop = TRUE], # x[c(6, 8)]
-    #   controls_odds  = controls_exp / controls_unexp
-    # )
     data.frame(
-      exp_cases      = A_exp_cases, #cases_exp, #x[1, , 1, drop = TRUE], # x[c(1, 3)]
-      unexp_cases    = B_unexp_cases, #x[1, , 2, drop = TRUE], # x[c(5, 7)]
-      cases_odds     = A_exp_cases / B_unexp_cases,
+      exp_cases      = d$A_exp_cases,
+      unexp_cases    = d$C_unexp_cases,
+      cases_odds     = d$A_exp_cases / d$C_unexp_cases,
 
-      exp_controls   = C_exp_controls, #x[2, , 1, drop = TRUE], # x[c(2, 4)]
-      unexp_controls = D_unexp_controls, # x[2, , 2, drop = TRUE], # x[c(6, 8)]
-      controls_odds  = C_exp_controls / D_unexp_controls
+      exp_controls   = d$B_exp_controls,
+      unexp_controls = d$D_unexp_controls,
+      controls_odds  = d$B_exp_controls / d$D_unexp_controls
     )
 
   } else if (measure == "RR") {
@@ -102,164 +36,34 @@ strata_ratio_table <- function(x, measure = "OR") {
     # DIM 2: outcome (case, control)
     # DIM 3: strata 
 
-    # NOTE: Here, I'm aligning the subsetting so that it's easier to see how I'm
-    # obtaining each value. The exposed cases include both of the values in the
-    # stratifier. The exposed total uses the colSums because the strata variable
-    # is now in the columns as it moved down a dimension after dropping the 
-    # exposure.
-      # exp_cases <-         x[1, 1, , drop = TRUE]
-      # exp_total <- colSums(x[1,  , , drop = TRUE])
-    # unexp_cases <-         x[2, 1, , drop = TRUE]
-    # unexp_total <- colSums(x[2,  , , drop = TRUE])
-
     data.frame(
-      exp_cases   = A_exp_cases,
-      exp_total   = total_exposed,
-      exp_risk    = (A_exp_cases / total_exposed) * 100,
+      exp_cases   = d$A_exp_cases,
+      exp_total   = d$total_exposed,
+      exp_risk    = (d$A_exp_cases / d$total_exposed) * 100,
 
-      unexp_cases = B_unexp_cases,
-      unexp_total = total_unexposed,
-      unexp_risk  = (B_unexp_cases / total_unexposed) * 100
+      unexp_cases = d$C_unexp_cases,
+      unexp_total = d$total_unexposed,
+      unexp_risk  = (d$C_unexp_cases / d$total_unexposed) * 100
     )
 
   } else if (measure == "IRR") {
-    # sigma(a_i * PTo / PTt) / sigma(c_i * PTe / PTt)
-    # where PTt is the sum of respective strata
-    # and the table is set out as follows:
-    #           outcome+   | person time
-    # exposure+     a      |      PTe
-    # exposure-     c      |      PTo
-    # Total                |      PTt
     # DIM 1: exposure 
     # DIM 2: outcome (outcome, person time)
     # DIM 3: strata 
-      # exp_cases    <- x[1, 1, , drop = TRUE]
-      # exp_perstime <- x[1, 2, , drop = TRUE]
-
-    # unexp_cases    <- x[2, 1, , drop = TRUE]
-    # unexp_perstime <- x[2, 2, , drop = TRUE]
-
     data.frame(
-      exp_cases       = A_exp_cases,
-      exp_perstime    = C_exp_controls,
-      exp_incidence   = (A_exp_cases / C_exp_controls) * 100,
+      exp_cases       = d$A_exp_cases,
+      exp_perstime    = d$B_exp_controls,
+      exp_incidence   = (d$A_exp_cases / d$B_exp_controls) * 100,
 
-      unexp_cases     = B_unexp_cases,
-      unexp_perstime  = D_unexp_controls,
-      unexp_incidence = (B_unexp_cases / D_unexp_controls) * 100
+      unexp_cases     = d$C_unexp_cases,
+      unexp_perstime  = d$D_unexp_controls,
+      unexp_incidence = (d$C_unexp_cases / d$D_unexp_controls) * 100
     )
 
   } else {
     stop(glue::glue("the measure {measure} is not recognised"), call. = FALSE)
   }
 }
-
-
-#' create a 2x4 matrix from a 2x2x2 array
-#'
-#' Here, we are assuming the following:
-#'
-#' 1. the array has three dimensions
-#' 2. the first value for any dimension is TRUE and the second value is FALSE
-#' 3. there are a total of 8 cells whose contents represent counts.
-#' 4. the dimensions are orderd as exposure, outcome, and stratifier
-#'
-#' @param x a 2x2x2 array
-#'
-#' @return a 2x4 matrix with the third dimension of the array in rows.
-#' @noRd
-case_matrix <- function(x, total = FALSE) {
-
-  # Dimension 1: exposure (exposed, unexposed)
-  # Dimension 2: outcome (case, controls)
-  # Dimension 3 (optional): stratifier (e.g. age group)
-
-  # we subset things differently if we have a cube (3D) or square (2D).
-  #
-  # For the cube, we result in 3 rows because we take the sum of all the strata
-  # to create the crude.
-  #
-  # For the square, we only need to produce one row.
-  ndim <- length(dim(x))
-  if (ndim == 3L) { 
-    A <- x[1, 1, ]
-    B <- x[1, 2, ]
-    C <- x[2, 1, ]
-    D <- x[2, 2, ] 
-    res <- c(c(sum(A), A), 
-             c(sum(B), B), 
-             c(sum(C), C), 
-             c(sum(D), D)
-            ) 
-    nr     <- dim(x)[ndim] + 1L
-    rnames <- dimnames(x)[[3]]
-  } else {
-    A <- x[1, 1]
-    B <- x[1, 2]
-    C <- x[2, 1]
-    D <- x[2, 2] 
-    res    <- c(A, B, C, D)
-    nr     <- 1L
-    rnames <- NULL
-  }
-  res <- matrix(res, 
-                nrow = nr,
-                dimnames = list(strata = c("crude", rnames),
-                                c(A = "exp_cases",    
-                                  B = "unexp_cases",
-                                  C = "exp_controls", 
-                                  D = "unexp_controls")
-                )
-  )
-  if (ndim == 3) {
-    res[if (total) 1:3 else 2:3, ]
-  } else {
-    res
-  }
-}
-
-#' create a data frame from a 2x2x2 matrix
-#'
-#' @param x a 2x2x2 matrix
-#'
-#' @return a data frame with the important combinations:
-#'  - A_exp_cases
-#'  - B_unexp_cases
-#'  - C_exp_controls
-#'  - D_unexp_controls
-#'  - total_cases (A + B)
-#'  - total_controls (C + D)
-#'  - total_exposed (A + C)
-#'  - total_unexposed (B + D)
-#'  - total (A + B + C + D)
-#' @noRd
-case_data_frame <- function(x) {
-
-  cmat <- case_matrix(x, total = TRUE)
-  A_exp_cases      <- cmat[, "exp_cases"]
-  B_unexp_cases    <- cmat[, "unexp_cases"]
-  C_exp_controls   <- cmat[, "exp_controls"]
-  D_unexp_controls <- cmat[, "unexp_controls"]
-
-  data.frame(
-    A_exp_cases      = A_exp_cases,
-    B_unexp_cases    = B_unexp_cases,
-    C_exp_controls   = C_exp_controls,
-    D_unexp_controls = D_unexp_controls,
-
-    total_cases      = A_exp_cases    + B_unexp_cases,
-    total_controls   = C_exp_controls + D_unexp_controls,
-
-    total_exposed    = A_exp_cases    + C_exp_controls,
-    total_unexposed  = B_unexp_cases  + D_unexp_controls,
-
-    total            = A_exp_cases + B_unexp_cases +
-                       C_exp_controls + D_unexp_controls
-  )
-
-}
-
-
 
 #' get ratio estimates from a 2x2x2 array
 #'
@@ -277,24 +81,31 @@ case_data_frame <- function(x) {
 #'                              outcome = c(TRUE, FALSE),
 #'                              old = c(FALSE, TRUE))
 #'        )
-#' get_ratio_est(arr, "OR") # works
-#' get_ratio_est(arr, "RR") # doesn't work
-#' get_ratio_est(arr, "IRR") # estimate works
+#' get_ratio_est(arr, "OR") 
+#' get_ratio_est(arr, "RR") 
+#' get_ratio_est(arr, "IRR")
 #'
 get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
 
 
-  d <- case_data_frame(arr)
+  d  <- data_frame_from_2x2(x)
+  CS <- get_chisq_pval(x)[, 2, drop = FALSE]
+  MH <- mantelhaen.test(x)
+  MH <- data.frame(ratio   = MH$estimate,
+                   lower   = MH$conf.int[1],
+                   upper   = MH$conf.int[2],
+                   p.value = MH$p.value
+  )
 
   # Risk ratio:
   # A / (A + B)      exposed cases / all cases
-    # ----------- = ------------------------------
+  # ----------- = ------------------------------
   # C / (C + D)   exposed controls / all controls
   ratio   <- switch(measure, 
                     RR = ratio_est(d$A_exp_cases, 
-                                   d$total_cases,
-                                   d$C_exp_controls, 
-                                   d$total_controls,
+                                   d$total_exposed,
+                                   d$C_unexp_cases,
+                                   d$total_unexposed,
                                    measure = "RR",
                                    conf = conf),
   # Odds ratio:
@@ -303,8 +114,8 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
   # C / D   exposed controls / unexposed controls
 
                     OR = ratio_est(d$A_exp_cases, 
-                                   d$B_unexp_cases,
-                                   d$C_exp_controls, 
+                                   d$C_unexp_cases,
+                                   d$B_exp_controls, 
                                    d$D_unexp_controls,
                                    measure = "OR",
                                    conf = conf),
@@ -314,18 +125,29 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
   # ----- = ----------------------------------------
   # C / D   exposed controls / unexposed person-time
                     IRR = ratio_est(d$A_exp_cases, 
-                                    d$B_unexp_cases,
-                                    d$C_exp_controls, 
+                                    d$B_exp_controls, 
+                                    d$C_unexp_cases,
                                     d$D_unexp_controls,
                                     measure = "IRR",
                                     conf = conf),
 
   )
-  rownames(ratio) <- rownames(d)
+
+  ratio           <- cbind(ratio, p.value = CS)
+  ratio           <- rbind(ratio, MH)
+  rownames(ratio) <- c(rownames(d), "MH")
   ratio
   
 }
 
+#' get chi square p-value from a 2D or 3D array
+#'
+#' @param x a 2x2 or 2x2x2 table
+#'
+#' @return a 1 or 3x2 matrix with chi square statistics and p-values
+#' @noRd
+#'
+#' @examples
 get_chisq_pval <- function(x) {
   ndim   <- length(dim(x))
   n      <- if (ndim == 3L) dim(x)[ndim] + 1L else 1L
@@ -420,4 +242,31 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
          ncol = 3, 
          dimnames = list(NULL, c("ratio", "lower", "upper")))
 
+}
+
+
+pwoolf <- function(x, measure = "OR") {
+  # This is taken from lines 1320--1340 of epiR::epi.2by2
+  #
+  ## Test of homogeneity of risk ratios (Jewell 2004, page 154). First work out the Woolf estimate of the adjusted risk ratio (labelled lnRR.s. here) based on Jewell (2004, page 134):
+  lnRR. <- log((a / (a + b)) / (c / (c + d)))
+  lnRR.var. <- (b / (a * (a + b))) + (d / (c * (c + d)))
+  wRR. <- 1 / lnRR.var.
+  lnRR.s. <- sum(wRR. * lnRR.) / sum(wRR.)
+
+  ## Equation 10.3 from Jewell (2004):
+  RR.homogeneity <- sum(wRR. * (lnRR. - lnRR.s.)^2)
+  RR.homogeneity.p <- 1 - pchisq(RR.homogeneity, df = n.strata - 1)
+  RR.homog <- data.frame(test.statistic = RR.homogeneity, df = n.strata - 1, p.value = RR.homogeneity.p)
+
+  ## Test of homogeneity of odds ratios (Jewell 2004, page 154). First work out the Woolf estimate of the adjusted odds ratio (labelled lnOR.s. here) based on Jewell (2004, page 129):
+  lnOR. <- log(((a + 0.5) * (d + 0.5)) / ((b + 0.5) * (c + 0.5)))
+  lnOR.var. <- (1 / (a + 0.5)) + (1 / (b + 0.5)) + (1 / (c + 0.5)) + (1 / (d + 0.5))
+  wOR. <- 1 / lnOR.var.
+  lnOR.s. <- sum((wOR. * lnOR.)) / sum(wOR.)
+
+  ## Equation 10.3 from Jewell (2004):
+  OR.homogeneity   <- sum(wOR. * (lnOR. - lnOR.s.)^2)
+  OR.homogeneity.p <- 1 - pchisq(OR.homogeneity, df = n.strata - 1)
+  OR.homog <- data.frame(test.statistic = OR.homogeneity, df = n.strata - 1, p.value = OR.homogeneity.p)
 }

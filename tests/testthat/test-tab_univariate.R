@@ -59,48 +59,12 @@ arrt <- as.data.frame.table(arr) %>%
 
 test_that("internal estimate functions works", {
 
-  expect_equal(get_ratio_est(arr, "OR"),  or_expect)
-  expect_equal(get_ratio_est(arr, "RR"),  rr_expect)
-  expect_equal(get_ratio_est(arr, "IRR"), irr_expect)
-
+  expect_equal(get_ratio_est(arr, "OR")[1:3, 1:3],  or_expect)
+  expect_equal(get_ratio_est(arr, "RR")[1:3, 1:3],  rr_expect)
+  expect_equal(get_ratio_est(arr, "IRR")[1:3, 1:3], irr_expect)
 
 })
 
-b <- tibble::tribble(
-  ~strata, ~exposure, ~outcome, ~n,
-   TRUE,    TRUE,   TRUE, 2L,
-   TRUE,    TRUE,  FALSE, 2L,
-   TRUE,   FALSE,   TRUE, 6L,
-   TRUE,   FALSE,  FALSE, 6L,
-  FALSE,    TRUE,   TRUE, 1L,
-  FALSE,    TRUE,  FALSE, 1L,
-  FALSE,   FALSE,   TRUE, 3L,
-  FALSE,   FALSE,  FALSE, 3L
-  ) %>%
-  dplyr::summarise(res = list(data.frame(
-    strata   = rep(strata, n),
-    exposure = rep(exposure, n),
-    outcome  = rep(outcome, n)
-  ))) %>%
-  tidyr::unnest()
-
-ab <- tibble::tribble(
-  ~strata, ~exposure, ~outcome, ~n,
-   TRUE,    TRUE,   TRUE, 21L, # 2L,
-   TRUE,    TRUE,  FALSE, 19L, # 2L,
-   TRUE,   FALSE,   TRUE, 63L, # 6L,
-   TRUE,   FALSE,  FALSE, 57L, # 6L,
-  FALSE,    TRUE,   TRUE, 9L, # 1L,
-  FALSE,    TRUE,  FALSE, 11L, # 1L,
-  FALSE,   FALSE,   TRUE, 32L, # 3L,
-  FALSE,   FALSE,  FALSE, 28L# 3L
-  ) %>%
-  dplyr::summarise(res = list(data.frame(
-    strata   = rep(strata, n),
-    exposure = rep(exposure, n),
-    outcome  = rep(outcome, n)
-  ))) %>%
-  tidyr::unnest()
 
 
 # get the results from tab_univariate function
