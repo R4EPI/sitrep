@@ -11,7 +11,7 @@
 #'   "surv_weight_ID"
 #' @author Zhian N. Kamvar Alex Spina Lukas Richter
 #' @export
-add_weights <- function(x, p, ..., population = population, surv_weight = surv_weight, surv_weight_ID = surv_weight_ID) {
+old_add_weights <- function(x, p, ..., population = population, surv_weight = surv_weight, surv_weight_ID = surv_weight_ID) {
 
   .dots      <- rlang::enquos(...)
   population <- rlang::enquo(population)

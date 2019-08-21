@@ -60,8 +60,8 @@
 #' "stratified" (default) and "cluster".
 #' Stratified: takes variables grouped population counts from `p` and divides
 #' the corresponding groups by counts of variables in `...` in `x`, to create a weight.
-#' Cluster: Will multiple the inverse chances of a cluster being selected, a household
-#' being selected within a cluster, an individual being selected within a household.
+#' Cluster: Will multiply the inverse chances of a cluster being selected, a household
+#' being selected within a cluster, and an individual being selected within a household.
 #' As follows:
 #' unique(cluster_c) / unique(cluster_x) *
 #' unique(household_c) / unique(household_x) *
@@ -83,8 +83,38 @@
 #' @export
 
 
-add_weights(x, p, c = NULL, ..., population, cluster_c, household_c,
+add_weights <- function(x, p, c = NULL, ... , population, cluster_c, household_c,
             cluster_x, household_x, individuals_eligible_x = NULL, individuals_interviewed_x = NULL,
             method = "stratified", ignore_cluster = TRUE, ignore_household = TRUE,
-            surv_weight = "surv_weight", surv_weight_ID =  "surv_weight_ID")
+            surv_weight = "surv_weight", surv_weight_ID =  "surv_weight_ID") {
+
+  # stratified method is straight forward - lifted directly from old function version
+    .dots      <- rlang::enquos(...)
+    population <- rlang::enquo(population)
+    surv_weight_ID  <- rlang::enquo(surv_weight_ID)
+    surv_weight     <- rlang::enquo(surv_weight)
+
+    # create a merger ID by age group and sex
+    p <- tidyr::unite(p, "ID", !!! .dots)
+
+    # get study sample counts
+    counts <- dplyr::count(x, !!! .dots)
+    counts <- tidyr::unite(counts, "ID", !!! .dots)
+    counts <- dplyr::select(counts, .data$ID, .data$n)
+
+    # merge counts to population data
+    p <- dplyr::left_join(p, counts, by = "ID")
+
+    # create weight variable
+    p <- dplyr::mutate(p, !! surv_weight := !! population / .data$n)
+    p <- dplyr::select(p, .data$ID, !! surv_weight)
+
+
+    # merge to study sample
+    merge_by <- "ID"
+    names(merge_by) <- as.character(rlang::expr(surv_weight_ID))
+    d <- tidyr::unite(x, !! surv_weight_ID, !!! .dots, remove = FALSE)
+    d <- dplyr::left_join(d, p, by = merge_by)
+    d
+}
 
