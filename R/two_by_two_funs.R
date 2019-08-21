@@ -174,8 +174,8 @@ case_matrix <- function(x, total = FALSE) {
   # Dimension 2: outcome (case, controls)
   # Dimension 3: stratifier (e.g. age group)
   A <- x[1, 1, ]
-  B <- x[2, 1, ]
-  C <- x[1, 2, ]
+  B <- x[1, 2, ]
+  C <- x[2, 1, ]
   D <- x[2, 2, ] 
   res <- matrix(c(c(sum(A), A), 
                   c(sum(B), B), 
@@ -261,6 +261,10 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
 
   d <- case_data_frame(arr)
 
+  # Risk ratio:
+  # A / (A + B)      exposed cases / all cases
+  # ----------- = ------------------------------
+  # C / (C + D)   exposed controls / all controls
   ratio   <- switch(measure, 
                     RR = ratio_est(d$A_exp_cases, 
                                    d$total_cases,
@@ -268,6 +272,10 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
                                    d$total_controls,
                                    measure = "RR",
                                    conf = conf),
+  # Odds ratio:
+  # A / B      exposed cases / unexposed cases
+  # ----- = -------------------------------------
+  # C / D   exposed controls / unexposed controls
 
                     OR = ratio_est(d$A_exp_cases, 
                                    d$B_unexp_cases,
@@ -276,6 +284,10 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
                                    measure = "OR",
                                    conf = conf),
 
+  # Incidence Rate Ratio:
+  # A / B      exposed cases / exposed person-time
+  # ----- = ----------------------------------------
+  # C / D   exposed controls / unexposed person-time
                     IRR = ratio_est(d$A_exp_cases, 
                                     d$B_unexp_cases,
                                     d$C_exp_controls, 
@@ -316,23 +328,29 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
   ratio     <- case / control
   log_ratio <- log(ratio)
   
-  if (measure == "RR") {
-    log_ratio_var <- iN1 - iD1 + iN2 - iD2
-  } else if (measure == "OR") {
-    log_ratio_var <- iN1 + iD1 + iN2 + iD2
-  } else {
-    log_ratio_var <- iN1 + iN2
-  }
+  log_ratio_var <- switch(measure,
+      RR = (iN1 - iD1) + (iN2 - iD2),
+      OR = (iN1 + iD1) + (iN2 + iD2),
+      IRR = iN1 + iN2
+  )
 
   log_ratio_se  <- sqrt(log_ratio_var)
 
   if (measure == "IRR") {
-    iconf <- 1 - conf
-    pl    <- N1 / (N1 + (N2 + 1) * (1 / qf(iconf, 2 * N1 , 2 * N2 + 2)))
-    ph    <- (N1 + 1) / (N1 + 1 + N2 / (1 / qf(iconf, 2 * N2, 2 * N1 + 2)))
+    N1_quantile <- 1 / qf(p = 1 - alpha,
+                          df1 = 2 * N1,
+                          df2 = 2 * N2 + 2)
+
+    N2_quantile <- 1 / qf(p = 1 - alpha,
+                          df1 = 2 * N2,
+                          df2 = 2 * N1 + 2)
+
+    pl <-       N1 / ( N1      + ((N2 + 1) * N1_quantile))
+    ph <- (N1 + 1) / ((N1 + 1) + (N2 / N2_quantile))
 
     lower_limit <- pl * D2 / ((1 - pl) * D1)
     upper_limit <- ph * D2 / ((1 - ph) * D1)
+
   } else {
     lower_limit   <- exp(log_ratio - (z * log_ratio_se))
     upper_limit   <- exp(log_ratio + (z * log_ratio_se))
@@ -344,54 +362,7 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
 
 }
 
-.funRRwald <- function(dat, conf.level){
-  N. <- 1 - ((1 - conf.level) / 2)
-  z <- qnorm(N., mean = 0, sd = 1)
 
-  a <- dat[1]; b <- dat[3]; c <- dat[2]; d <- dat[4]
-  N1 <- a + b; N0 <- c + d
-
-  wRR.p      <- (a / N1) / (c / N0)
-  lnwRR      <- log(wRR.p)
-  lnwRR.var  <-      (1 / a) - (1 / N1) + (1 / c) - (1 / N0)
-  lnwRR.se   <- sqrt((1 / a) - (1 / N1) + (1 / c) - (1 / N0))
-  wRR.se     <- exp(lnwRR.se)
-  ll      <- exp(lnwRR - (z * lnwRR.se))
-  ul      <- exp(lnwRR + (z * lnwRR.se))
-  c(wRR.p, ll, ul)
-}
-
-
-.funORwald <- function(dat, conf.level){
-  N. <- 1 - ((1 - conf.level) / 2)
-  z <- qnorm(N., mean = 0, sd = 1)
-
-  a <- dat[1]; b <- dat[3]; c <- dat[2]; d <- dat[4]
-  N1 <- a + b; N0 <- c + d
-
-  wOR.p <- (a / b) / (c / d)
-  lnwOR <- log(wOR.p)
-  lnwOR.var <- 1/a + 1/b + 1/c + 1/d
-  lnwOR.se <- sqrt(lnwOR.var)
-  ll <- exp(lnwOR - (z * lnwOR.se))
-  ul <- exp(lnwOR + (z * lnwOR.se))
-  c(wOR.p, ll, ul)
-}
-
-.funIRR <- function(dat, conf.level) {
-  N. <- 1 - ((1 - conf.level) / 2)
-  a <- dat[1]; b <- dat[3]; c <- dat[2]; d <- dat[4]
-  IRR.p     <- (a / b) / (c / d)
-  lnIRR     <- log(IRR.p)
-  lnIRR.var <- (1 / a) + (1 / c)
-  lnIRR.se  <- sqrt((1 / a) + (1 / c))
-  IRR.se    <- exp(lnIRR.se)
-  pl        <- a / (a + (c + 1) * (1 / qf(1 - N., 2 * a, 2 * c + 2)))
-  ph        <- (a + 1) / (a + 1 + c / (1 / qf(1 - N., 2 * c, 2 * a + 2)))
-  IRR.l     <- pl * d / ((1 - pl) * b)
-  IRR.u     <- ph * d / ((1 - ph) * b)
-  c(IRR.p, IRR.l, IRR.u)
-}
 
 cstest <- function(dat) {
   dat <- case_matrix(dat)
