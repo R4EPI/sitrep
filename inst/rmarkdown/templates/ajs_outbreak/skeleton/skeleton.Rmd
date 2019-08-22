@@ -318,6 +318,7 @@ colnames(linelist_cleaned) <- cleaned_colnames
 ## Use the function msf_dict_rename_helper() to create a template based on the
 ## AJS dictionary. This will copy a rename command like the one above to your
 ## clipboard.
+
 # msf_dict_rename_helper("AJS")
 
 ## Paste the result below and your column names to the matching variable.
@@ -326,6 +327,7 @@ colnames(linelist_cleaned) <- cleaned_colnames
 ## If there are any variables that are in the MSF dictionary that are not in
 ## your data set, then you should comment them out, but be aware that some
 ## analyses may not run because of this. 
+
 
 
 ## Here is an EXAMPLE for changing a few specific names. function. In this
@@ -490,51 +492,60 @@ unique(linelist_cleaned$patient_origin)
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+remove_unused
 
-```{r standardise_clean_data}
-
-## USE THIS TO CREATE AND CLEAN VARIABLES IN YOUR DATA  -----------------------
-##
-## All your data cleaning and new variable creation should happen in this chunk. 
-## This way, if you mess up all you have to do is push the small arrow at the
-## top of this chunk between the cogg and the play buttons, to run all the 
-## code chunks up to the current one, then continue your cleaning from where you
-## started. 
-## 
-## YOU WILL NEED TO ADAPT THIS SECTION ACCORDING TO YOUR DATA!
-## 
-## currently there are examples of cleaning for: 
-##    - Date variables 
-##    - Numeric variables 
-##    - Categorical variables from numerics (e.g. age groups) 
-##    - Factor variables (for creating/manipulating categorical variables)
-##
-
-
-# Drop unused rows  ---------------------------------
-# Your data might have rows that are blank besides ID number.
-# The below keeps variables only with a case ID and an admission date.
+Your data might have empty rows or columns you want to remove.
+You can also use this section to create temporary datasets so you can review
+specific variables or rows.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r remove_unused}
+## Drop unused rows  -----------------------------------------------------------
+# This step removes blank rows that don't have both a date of admission and ID
+# number.
 linelist_cleaned <- linelist_cleaned %>% 
   filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
 
 
-# Drop columns  -------------------------------------
+## Drop columns ----------------------------------------------------------------
+## OPTIONAL: This step shows you how you can remove certain variables.
 
-# OPTIONAL: drop several variables you might not want
-# the negative sign before the "c"" in select drops those variables
-# without the negative you would only keep the named variables
 # linelist_cleaned <- linelist_cleaned %>%
 #   select(-c(msf_involvement, treatment_facility_site))
 
-## OPTIONAL: if you want to inspect certain variables,
-## you can select these by name or column number using names(linelist_cleaned).
-## this example keeps the first three columns as well as age_years and sex.
+
+## OPTIONAL: if you want to inspect certain variables, you can select these by
+## name or column number. This example creates a reduced dataset for the first
+## three columns, age_years, and sex.
 
 # linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 
+```
 
-# Date variables ---------------------------------
-# IF YOU ARE USING THE DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This part of the script will create and clean variables in your data.
+
+All your cleaning and variable creation should happen in these chunks.
+That way, in case something goes wrong, you can push the small arrow at the top
+of the chunk to re-run all the code chunks up to the current one.
+
+
+You must adapt this section according to your data!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+standardise_dates
+
+This chunk will help you set up and clean your date variables.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r standardise_dates}
+## DHIS2 standard data ---------------------------------------------------------
+## If you got your data from DHIS2, use this portion of the code.
+## If not, comment this section out and use the below.
+
 # make sure all date variables are formatted as dates 
 DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
   filter(data_element_shortname %in% names(linelist_cleaned)) %>% 
@@ -546,14 +557,24 @@ linelist_cleaned <- linelist_cleaned %>%
   mutate_at(DATEVARS, linelist::guess_dates,
             error_tolerance = 0.5)
 
-# if you dont have a data dictionary you could do it this way too
+
+
+## Non-standard data -----------------------------------------------------------
+## Use this section if you did not have DHIS2 data. 
+
+# use the guess_dates() function to make a first pass at date variables.
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
 #           error_tolerance = 0.5)
 
+# Once you have run guess_dates(), take a look at your date variables.
+# Here is an example:
+# table(linelist_cleaned$date_of_consultation_admission)
 
-# set unrealistic dates to NA, based on having browsed dates in the previous chunk
-# these are just examples -- examine your data and edit as needed
+
+# Some dates will be unrealistic. 
+# Here is an example of how to manually fix dates. 
+# Look at your data and edit as needed.
 # linelist_cleaned <- mutate(linelist_cleaned,
 #                            date_of_onset = case_when(
 #                              date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA),
@@ -561,21 +582,29 @@ linelist_cleaned <- linelist_cleaned %>%
 #                              TRUE                                   ~ date_of_onset
 #                            ))
   
-# create an epiweek variable
-# floor_day shortens to only give you the week number (rather than including day as well) 
-# factor includes all weeks between the min and max as levels (useful for zero count weeks)
+
+
+## Create epiweek variable -----------------------------------------------------
+# This step creates an epiweek variable from the date of onset.
+# You can use date_of_consultation_admission if you are missing many date_of_onset.
+
 linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
                                              floor_day = TRUE, 
                                              factor = TRUE)
 
-
-# Numeric variables --------------------------------- 
-# create number of days under observation
-linelist_cleaned <- mutate(linelist_cleaned, 
-                           obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
+```
 
 
-# Age group variables ---------------------------------
+
+
+```{r create_age_group}
+
+
+
+## Age group variables ----------------------------------------------------------
+# This step shows you how to create categorical variables from numeric variables.
+# We have some intermediate steps on the way.
+
 
 ## OPTIONAL: add under 2 years to the age_years variable
 ## data dictionary defines that under 2s dont have year filled in (but months/days instead)
@@ -648,6 +677,16 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 #                                            "15-29 years",
 #                                            "30-44 years", 
 #                                            "45+ years")))
+
+
+## Numeric variables -----------------------------------------------------------
+# This step creates a variable for number of days under observation.
+# You can adapt this step to create other calculated variables
+
+# create number of days under observation
+linelist_cleaned <- mutate(linelist_cleaned, 
+                           obs_days = as.numeric(date_of_exit - 
+                                                   date_of_consultation_admission))
 
 # Factor (categorical) variables ---------------------------------
 
