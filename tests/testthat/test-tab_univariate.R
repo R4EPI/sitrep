@@ -1,5 +1,7 @@
 # generate a real data set from 
 # http://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704-ep713_confounding-em/BS704-EP713_Confounding-EM7.html
+context("univariate tests")
+
 `%>%` <- dplyr::`%>%`
 arr <- c(10, 35, 90, 465, 36, 25, 164, 175)
 arr <- array(arr, dim = c(2, 2, 2),
@@ -8,6 +10,7 @@ arr <- array(arr, dim = c(2, 2, 2),
                              old     = c(FALSE, TRUE))
        )
 
+iarr <- arr
 # testing incidence rate
 iarr[, 2, ] <- c(2, 10, 4, 4) * 100 # equivalent of a person time column of 2
 
