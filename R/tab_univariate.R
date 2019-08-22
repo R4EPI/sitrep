@@ -33,7 +33,6 @@
 #'   p-value. Tests whether there is a significant difference in the estimates
 #'   between strata.
 #'
-#' @importFrom epiR epi.2by2
 #' @importFrom dplyr select mutate_at group_by summarise
 #'
 #' @references Inspired by Daniel Gardiner,
