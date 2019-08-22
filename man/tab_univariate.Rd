@@ -67,5 +67,5 @@ func_res <- tab_univariate(a, case_def, riskA,
 }
 \references{
 Inspired by Daniel Gardiner,
-see \href{https://github.com/DanielGardiner/UsefulFunctions/single.variable.analysis.v0.3.R}{github repo}
+see \href{https://github.com/DanielGardiner/UsefulFunctions/tree/master/single.variable.analysis.v0.3.R}{github repo}
 }

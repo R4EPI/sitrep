@@ -68,9 +68,9 @@ fmt_ci_df(cfr)
 if (require("outbreaks")) {
 
   e <- outbreaks::ebola_sim$linelist
-  case_fatality_rate_df(e, 
-                        outcome == "Death", 
-                        group = gender, 
+  case_fatality_rate_df(e,
+                        outcome == "Death",
+                        group = gender,
                         add_total = TRUE,
                         mergeCI = TRUE)
 
