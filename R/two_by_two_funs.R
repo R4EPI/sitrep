@@ -91,12 +91,7 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
   d  <- data_frame_from_2x2(x)
   CS <- get_chisq_pval(x)[, 2, drop = FALSE]
   if (nrow(d) > 1) {
-    MH <- mantelhaen.test(x)
-    MH <- data.frame(ratio   = MH$estimate,
-                     lower   = MH$conf.int[1],
-                     upper   = MH$conf.int[2],
-                     p.value = MH$p.value
-    )
+    MH <- get_mh(x, measure, conf)
   }
 
   # Risk ratio:
@@ -135,12 +130,13 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
 
   )
 
-  ratio           <- cbind(ratio, p.value = CS)
   if (nrow(d) > 1) {
     ratio           <- rbind(ratio, MH)
     rownames(ratio) <- c(rownames(d), "MH")
+    ratio           <- cbind(ratio, p.value = c(CS, NA))
   } else {
     rownames(ratio) <- rownames(d)
+    ratio           <- cbind(ratio, p.value = CS)
   }
   ratio
   
@@ -202,8 +198,7 @@ get_chisq_pval <- function(x) {
 #' @noRd
 ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
 
-  alpha <- 1 - ((1 - conf) / 2)
-  z     <- qnorm(alpha, mean = 0, sd = 1)
+  z <- get_z(conf)
 
   # inverse numbers for the harmonic
   iN1 <- 1 / N1
@@ -222,9 +217,10 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
       IRR = iN1 + iN2
   )
 
-  log_ratio_se  <- sqrt(log_ratio_var)
-
   if (measure == "IRR") {
+
+    alpha       <- 1 - ((1 - conf) / 2)
+
     N1_quantile <- 1 / qf(p = 1 - alpha,
                           df1 = 2 * N1,
                           df2 = 2 * N2 + 2)
@@ -240,9 +236,13 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
     upper_limit <- ph * D2 / ((1 - ph) * D1)
 
   } else {
-    lower_limit   <- exp(log_ratio - (z * log_ratio_se))
-    upper_limit   <- exp(log_ratio + (z * log_ratio_se))
+
+    se_limits   <- get_ci_from_var(log_ratio, log_ratio_var, z)
+    lower_limit <- se_limits[["ll"]]
+    upper_limit <- se_limits[["ul"]]
+
   }
+
 
   matrix(c(ratio, lower_limit, upper_limit), 
          ncol = 3, 
@@ -250,29 +250,133 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
 
 }
 
+get_z <- function(conf) {
+  alpha <- 1 - ((1 - conf) / 2)
+  z     <- qnorm(alpha, mean = 0, sd = 1)
+  z
+}
 
-pwoolf <- function(x, measure = "OR") {
+get_ci_from_var <- function(log_ratio, log_ratio_var, z) {
+
+  log_ratio_se  <- sqrt(log_ratio_var)
+  lower_limit   <- exp(log_ratio - (z * log_ratio_se))
+  upper_limit   <- exp(log_ratio + (z * log_ratio_se))
+
+  data.frame(se = log_ratio_se, ll = lower_limit, ul = upper_limit)
+
+}
+
+# Mantel-Haenszel tests (no p-values)
+
+get_mh <- function(arr, measure = "OR", conf = 0.95) {
+
+  switch(measure,
+         OR  = mh_or(arr,  conf),
+         RR  = mh_rr(arr,  conf),
+         IRR = mh_irr(arr, conf)
+  )
+
+}
+
+
+# These functions are adapted from epiR::epi.2by2 lines 1185--1204
+mh_rr <- function(arr, conf = 0.95) {
+
+  d <- data_frame_from_2x2(arr)[-1, ] # remove crude estimates
+  z <- get_z(conf)
+
+  ## Summary incidence risk ratio (Rothman 2002 p 148 and 152, equation 8-2):
+  A    <- d$A_exp_cases
+  C    <- d$C_unexp_cases
+  N    <- d$total
+  A_TU <- A * d$total_unexposed
+  C_TE <- C * d$total_exposed
+
+  MH_risk_ratio <- sum(A_TU / N) / sum(C_TE / N)
+
+  total_prod      <- d$total_cases * d$total_exposed * d$total_unexposed
+  var_numerator   <- sum((total_prod / N^2) - ((A * C)/ N))
+  var_denominator <- sum(A_TU / N) * sum(C_TE / N)
+
+  MH_risk_ratio_var <- var_numerator / var_denominator
+    
+  se_limits <- get_ci_from_var(log(MH_risk_ratio), MH_risk_ratio_var, z)
+
+  c(MH_risk_ratio, se_limits[["ll"]], se_limits[["ul"]])
+  
+}
+
+mh_irr <- function(arr, conf = 0.95) {
+  
+  d <- data_frame_from_2x2(arr)[-1, ]
+  ## Summary incidence rate ratio (Rothman 2002 p 153, equation 8-5):
+  A     <- d$A_exp_cases
+  B     <- d$B_exp_controls
+  C     <- d$C_unexp_cases
+  D     <- d$D_unexp_controls
+  cases <- d$total_cases # M1
+
+  person_time <- d$total_controls #M0
+
+  numerator   <- sum((A * D) / person_time)
+  denominator <- sum((C * B) / person_time)
+  MH_IRR      <- numerator / denominator
+
+  MH_IRR_var <- sum((cases * B * D) / (person_time^2)) / (numerator * denominator)
+
+  se_limits <- get_ci_from_var(log(MH_IRR), MH_IRR_var, get_z(conf))
+
+  c(MH_IRR, se_limits[["ll"]], se_limits[["ul"]])
+}
+
+# The M-H statistic for odds ratios already exist in R, so it's just a matter of
+# pulling out the correct values
+mh_or <- function(arr, conf = 0.95) {
+
+    MH <- mantelhaen.test(arr, conf.level = conf)
+    c(MH$estimate, MH$conf.int)
+
+}
+
+
+get_woolf_pval <- function(x, measure = "OR") {
+
+  d       <- data_frame_from_2x2(x)[-1, ]
+  nstrata <- dim(x)[[3]]
+
+  A         <- d$A_exp_cases
+  B         <- d$B_exp_controls
+  C         <- d$C_unexp_cases
+  D         <- d$D_unexp_controls
+
+  exposed   <- d$total_exposed
+  unexposed <- d$total_unexposed
+
   # This is taken from lines 1320--1340 of epiR::epi.2by2
-  #
-  ## Test of homogeneity of risk ratios (Jewell 2004, page 154). First work out the Woolf estimate of the adjusted risk ratio (labelled lnRR.s. here) based on Jewell (2004, page 134):
-  lnRR. <- log((a / (a + b)) / (c / (c + d)))
-  lnRR.var. <- (b / (a * (a + b))) + (d / (c * (c + d)))
-  wRR. <- 1 / lnRR.var.
-  lnRR.s. <- sum(wRR. * lnRR.) / sum(wRR.)
+  # 
+  # I have isolated the necessary elements and combined them into one function
+  if (measure == "RR") {
+    ## Test of homogeneity of risk ratios (Jewell 2004, page 154). First work
+    ## out the Woolf estimate of the adjusted risk ratio (labelled adj_log_est
+    ## here) based on Jewell (2004, page 134):
+
+    log_est         <- log((A / exposed) / (C / unexposed))
+    log_est_var     <- (B / (A * exposed)) + (D / (C * unexposed))
+
+  } else {
+    ## Test of homogeneity of odds ratios (Jewell 2004, page 154). First work
+    ## out the Woolf estimate of the adjusted odds ratio (labelled adj_log_est
+    ## here) based on Jewell (2004, page 129):
+    log_est     <- log(((A + 0.5) * (D + 0.5)) / ((B + 0.5) * (C + 0.5)))
+    log_est_var <- (1 / (A + 0.5)) + (1 / (B + 0.5)) + (1 / (C + 0.5)) + (1 / (D + 0.5))
+  }
+
+  inv_log_est_var <- 1 / log_est_var
+  adj_log_est     <- sum(inv_log_est_var * log_est) / sum(inv_log_est_var)
 
   ## Equation 10.3 from Jewell (2004):
-  RR.homogeneity <- sum(wRR. * (lnRR. - lnRR.s.)^2)
-  RR.homogeneity.p <- 1 - pchisq(RR.homogeneity, df = n.strata - 1)
-  RR.homog <- data.frame(test.statistic = RR.homogeneity, df = n.strata - 1, p.value = RR.homogeneity.p)
+  res     <- sum(inv_log_est_var * (log_est - adj_log_est)^2)
+  p_value <- 1 - stats::pchisq(res, df = nstrata - 1)
 
-  ## Test of homogeneity of odds ratios (Jewell 2004, page 154). First work out the Woolf estimate of the adjusted odds ratio (labelled lnOR.s. here) based on Jewell (2004, page 129):
-  lnOR. <- log(((a + 0.5) * (d + 0.5)) / ((b + 0.5) * (c + 0.5)))
-  lnOR.var. <- (1 / (a + 0.5)) + (1 / (b + 0.5)) + (1 / (c + 0.5)) + (1 / (d + 0.5))
-  wOR. <- 1 / lnOR.var.
-  lnOR.s. <- sum((wOR. * lnOR.)) / sum(wOR.)
-
-  ## Equation 10.3 from Jewell (2004):
-  OR.homogeneity   <- sum(wOR. * (lnOR. - lnOR.s.)^2)
-  OR.homogeneity.p <- 1 - pchisq(OR.homogeneity, df = n.strata - 1)
-  OR.homog <- data.frame(test.statistic = OR.homogeneity, df = n.strata - 1, p.value = OR.homogeneity.p)
+  data.frame(statistic = res, df = nstrata - 1, p.vaule = p_value)
 }

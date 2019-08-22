@@ -59,9 +59,34 @@ arrt <- as.data.frame.table(arr) %>%
 
 test_that("internal estimate functions works", {
 
-  expect_equal(get_ratio_est(arr, "OR")[1:3, 1:3],  or_expect)
-  expect_equal(get_ratio_est(arr, "RR")[1:3, 1:3],  rr_expect)
-  expect_equal(get_ratio_est(arr, "IRR")[1:3, 1:3], irr_expect)
+  expect_equivalent(get_ratio_est(arr, "OR")[1:3, 1:3],  (or_expect))
+  expect_equivalent(get_ratio_est(arr, "RR")[1:3, 1:3],  (rr_expect))
+  expect_equivalent(get_ratio_est(arr, "IRR")[1:3, 1:3], (irr_expect))
+
+})
+
+test_that("MH estimate works" , {
+
+  MH_OR <- c(est = 1.51612903225806, lower = 0.973921554763186, upper = 2.3601975243424)
+  MH_IRR <- c(est = 1.51729552694154, lower = 1.00321956498486, upper = 2.2947974665063)
+
+  expect_equivalent(mh_rr(arr), c(1.43636363636364, 0.97698703277564, 2.11173784979146))
+  expect_equivalent(mh_or(arr), MH_OR)
+  expect_equivalent(mh_irr(arr), MH_IRR)
+
+})
+
+test_that("woolf p-values work", {
+
+  RR_woolf <- data.frame(test.statistic = 0.000364164132934994, 
+                         df = 1, 
+                         p.value = 0.984774825192526)
+  OR_woolf <- data.frame(
+                         test.statistic = c(6.56694874232559e-05),
+                         df = c(1),
+                         p.value = c(0.993534276605677))
+  expect_equivalent(get_woolf_pval(arr, "RR"), RR_woolf)
+  expect_equivalent(get_woolf_pval(arr, "OR"), OR_woolf)
 
 })
 
