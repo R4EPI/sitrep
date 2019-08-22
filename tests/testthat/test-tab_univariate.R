@@ -9,8 +9,7 @@ arr <- array(arr, dim = c(2, 2, 2),
        )
 
 # testing incidence rate
-iarr[, 2, ] <- c(4, 4, 2, 10) * 100
-
+iarr[, 2, ] <- c(2, 10, 4, 4) * 100 # equivalent of a person time column of 2
 
 or_expect <- data.frame(
        ratio = c(1.93175853018373, 1.47619047619048, 1.53658536585366),
@@ -25,14 +24,17 @@ rr_expect <- data.frame(
 )
 
 irr_expect <- data.frame(
-       ratio = c(1.93175853018373, 1.47619047619048, 1.53658536585366),
-       lower = c(1.2863352909086, 0.651952666109562, 0.89726180699843),
-       upper = c(2.88430390374334, 3.04596159719188, 2.67042872585681)
+       ratio = c(1.78888888888889, 1.42857142857143, 1.44, 1.43636363636364),
+       lower = c(1.19120007668515, 0.630921934944737, 0.840862493415672,
+                 0.949805681292558),
+       upper = c(2.67098559419565, 2.94770477147601, 2.50257320594582,
+                 2.17217114669193)
 )
+
 
 MH_RR  <- data.frame(est = 1.43636363636364, lower = 0.97698703277564,  upper = 2.11173784979146)
 MH_OR  <- data.frame(est = 1.51612903225806, lower = 0.973921554763186, upper = 2.3601975243424)
-MH_IRR <- data.frame(est = 1.51729552694154, lower = 1.00321956498486,  upper = 2.2947974665063)
+MH_IRR <- irr_expect[4, , drop = FALSE]
 
 RR_woolf <- data.frame(test.statistic = 0.000364164132934994, 
                        df = 1, 
@@ -60,16 +62,15 @@ test_that("internal estimate functions works", {
 
   expect_equivalent(get_ratio_est(arr, "OR")[1:3, 1:3],  (or_expect))
   expect_equivalent(get_ratio_est(arr, "RR")[1:3, 1:3],  (rr_expect))
-  expect_equivalent(get_ratio_est(arr, "IRR")[1:3, 1:3], (irr_expect))
+  expect_equivalent(get_ratio_est(iarr, "IRR")[1:4, 1:3], (irr_expect))
 
 })
 
 test_that("MH estimate works" , {
 
-
   expect_equivalent(mh_rr(arr),  MH_RR)
   expect_equivalent(mh_or(arr),  MH_OR)
-  expect_equivalent(mh_irr(arr), MH_IRR)
+  expect_equivalent(mh_irr(iarr), MH_IRR)
 
 })
 
@@ -148,5 +149,10 @@ test_that("tab_univariate works with IRR strata", {
   expect_equal(IRR_strata$unexp_cases    , c(25 + 35  , 25      , 35       , NA))
   expect_equal(IRR_strata$unexp_perstime , c(1400     , 400     , 1000     , NA))
   expect_equal(IRR_strata$unexp_incidence, c(60 / 1400, 25 / 400, 35 / 1000, NA) * 100)
+
+  expected <- irr_expect[c(1, 3, 2, 4), ]
+  expect_equal(IRR_strata$ratio, expected$ratio)
+  expect_equal(IRR_strata$lower, expected$lower)
+  expect_equal(IRR_strata$upper, expected$upper)
 
 })

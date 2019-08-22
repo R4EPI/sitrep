@@ -256,21 +256,21 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
 
   if (measure == "IRR") {
 
-    alpha       <- 1 - ((1 - conf) / 2)
+    A <- N1
+    B <- D1
+    C <- N2
+    D <- D2
 
-    N1_quantile <- 1 / qf(p = 1 - alpha,
-                          df1 = 2 * N1,
-                          df2 = 2 * N2 + 2)
+    alpha <- 1 - ((1 - conf) / 2)
 
-    N2_quantile <- 1 / qf(p = 1 - alpha,
-                          df1 = 2 * N2,
-                          df2 = 2 * N1 + 2)
+    A_quantile <- stats::qf(1 - alpha, 2 * A, 2 * C + 2)
+    pl <- A / (A + (C + 1) * (1 / A_quantile))
 
-    pl <-       N1 / ( N1      + ((N2 + 1) * N1_quantile))
-    ph <- (N1 + 1) / ((N1 + 1) + (N2 / N2_quantile))
+    C_quantile <- stats::qf(1 - alpha, 2 * C, 2 * A + 2)
+    ph <- (A + 1) / (A + 1 + (C / (1 / C_quantile)))
 
-    lower_limit <- pl * D2 / ((1 - pl) * D1)
-    upper_limit <- ph * D2 / ((1 - ph) * D1)
+    lower_limit <- pl * D / ((1 - pl) * B)
+    upper_limit <- ph * D / ((1 - ph) * B)
 
   } else {
 
