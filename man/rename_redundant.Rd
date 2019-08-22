@@ -37,8 +37,8 @@ df <- data.frame(x = letters[1:10],
                  `b deff` = round(pi*2, 2),
                  check.names = FALSE)
 df
-print(df <- rename_redundant(df, prop = "\%", deff = "Design Effect"))
-print(df <- augment_redundant(df, " n$" = "(n)"))
+print(df <- rename_redundant(df, "\%" = "prop", "Design Effect" = "deff"))
+print(df <- augment_redundant(df, " (n)" = " n$"))
 }
 \author{
 Zhian N. Kamvar

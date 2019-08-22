@@ -38,9 +38,9 @@
 #' if (require("outbreaks")) {
 #'
 #'   e <- outbreaks::ebola_sim$linelist
-#'   case_fatality_rate_df(e, 
-#'                         outcome == "Death", 
-#'                         group = gender, 
+#'   case_fatality_rate_df(e,
+#'                         outcome == "Death",
+#'                         group = gender,
 #'                         add_total = TRUE,
 #'                         mergeCI = TRUE)
 #'
@@ -86,23 +86,23 @@ case_fatality_rate_df <- function(x, deaths, group = NULL, conf_level = 0.95,
   # Summarise the data. Luckily, deaths can be either a column or a logical
   # expression to evaluate :)
   # This creates a list column for the case fatality rate based on the
-  # calculated deaths and population before... so this means that 
+  # calculated deaths and population before... so this means that
   # THE ORDER OF THE STATEMENTS MATTER
   res <- dplyr::summarise(x,
-                          !!quote(deaths) := sum(!!qdeath, na.rm = TRUE), 
+                          !!quote(deaths) := sum(!!qdeath, na.rm = TRUE),
                           !!quote(population) := dplyr::n(),
-                          !!quote(cfr) := list(case_fatality_rate(.data$deaths, 
-                                                                 .data$population, 
-                                                                 conf_level, 
-                                                                 multiplier, 
-                                                                 mergeCI, 
+                          !!quote(cfr) := list(case_fatality_rate(.data$deaths,
+                                                                 .data$population,
+                                                                 conf_level,
+                                                                 multiplier,
+                                                                 mergeCI,
                                                                  digits)[-(1:2)]
                           ))
 
   # unnesting the list column
   res <- tidyr::unnest(res, .data$cfr)
 
-  # adding the total if there was grouping 
+  # adding the total if there was grouping
   if (add_total && wants_grouping) {
     tot <- case_fatality_rate(sum(res$deaths, na.rm = TRUE),
                               sum(res$population, na.rm = TRUE),
@@ -110,7 +110,7 @@ case_fatality_rate_df <- function(x, deaths, group = NULL, conf_level = 0.95,
                               multiplier,
                               mergeCI,
                               digits)
-    res <- tibble::add_row(res, 
+    res <- tibble::add_row(res,
                            !!qgroup := "Total",
                            deaths = tot$deaths,
                            population = tot$population,
@@ -145,7 +145,7 @@ mortality_rate <- function(deaths, population, conf_level = 0.95,
 proportion <- function(x, n, conf_level = 0.95, multiplier = 100) {
   stopifnot(is.numeric(conf_level), conf_level >= 0, conf_level <= 1)
   n <- if (length(n) < length(x)) rep(n, length(x)) else n
-  missing_data <- is.na(x) | is.na(x)
+  missing_data <- is.na(n) | is.na(x)
   x[missing_data] <- 100
   n[missing_data] <- 100
   res <- binom::binom.wilson(x, n, conf.level = conf_level)

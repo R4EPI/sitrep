@@ -36,7 +36,10 @@ install other packages they need to work (called dependencies).
 
 These packages can be quite large and may take a while to download in the
 field. If you have access to a USB key with these packages, it makes sense to
-copy and paste the packages into Program Files/R/R-[version]/library.
+copy and paste the packages into your computer's R package library 
+(run the command .libPaths() to see the folder path). 
+
+For help installing packages, see the [Wiki](https://github.com/R4EPI/sitrep/wiki/1)-Getting-started)
 
 
 ```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -47,14 +50,18 @@ options(knitr.kable.NA = "-")
 
 # Installing required packages for this template
 required_packages <- c("knitr",       # create output docs
+                       "here",        # find your files
                        "dplyr",       # clean/shape data
                        "forcats",     # clean/shape data
-                       "linelist",    # clean data based on a dictionary
+                       "stringr",     # clean text
+                       "rio",         # read in data
                        "ggplot2",     # create plots and charts
                        "sitrep",      # MSF field epi functions
+                       "linelist",    # Functions for cleaning/standardising data
                        "incidence",   # create epicurves
                        "aweek",       # define epi weeks
                        "epitools",    # 2x2 tables and other epi goodness
+                       "epitrix",     # epi helpers and tricks
                        "sf",          # encode spatial vector data
                        "ggspatial")   # plot maps
 
@@ -81,6 +88,24 @@ aweek::set_week_start("Monday")
 
 
 
+```{r define_current_week}
+
+# In order to automate your report you need define week of interest (reporting_week)
+# This will generally be one week in the past from when you write your report
+
+# define current week 
+reporting_week <- "2019-W25"
+
+```
+
+
+
+```{r read_fake_data, warning = FALSE, message = FALSE}
+# This chunk creates fake data for to use as an example in this template.
+# Comment out if you are using real data.
+linelist_raw <- gen_data("Measles")
+```
+
 
 
 
@@ -95,6 +120,8 @@ aweek::set_week_start("Monday")
 
 
 ## Read data ------------------------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
 
 # USE ONE OF THE BELOW TWO OPTIONS TO READ IN YOUR DATA FROM EXCEL
 # one version is for password protected files
@@ -102,18 +129,20 @@ aweek::set_week_start("Monday")
 ## Excel file ---------------------------
 #
 ## To read in a specific sheet use "which"
-# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
+# linelist_raw <- rio::import(here("linelist.xlsx"), which = "Sheet1")
 
 ## Excel file (password-protected) ------
 #
-## Use the excel.link package 
+## Use the excel.link package
+## The askpass package will prompt you to enter the password
+
+# install.packages(c("excel.link", "askpass"))
 # library(excel.link)
-# linelist_raw <- xl.read.file("linelist.xlsx",
+# 
+# linelist_raw <- xl.read.file(here("linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
-## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
-linelist_raw <- gen_data("Measles") # generates a fake dataset for use as an example in this template
 
 ## MSF Measles Dictionary ---------------
 ## The data dictionary has variable names in the data_element_shortname column. 
@@ -158,7 +187,7 @@ linelist_cleaned <- linelist_raw
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME)
 
 # linelist_cleaned <- rename(linelist_cleaned, 
-#                            gender    = sex, 
+#                            sex       = gender, 
 #                            age_years = age)
 
 
@@ -167,7 +196,7 @@ linelist_cleaned <- linelist_raw
 ## and their column number using: names(linelist_cleaned) this example keeps
 ## the first three columns as well as age_years and sex variables
 
-# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
+# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 
 ## Standardising values --------------------------------------------
 ## 
@@ -176,7 +205,8 @@ linelist_cleaned <- linelist_raw
 ## sex coded as M or F. This line uses the MSF dictionary to recode these values
 ## back to a human-readable format.
 linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
-                                            wordlists = filter(linelist_dict, !is.na(option_code)),
+                                            wordlists = filter(linelist_dict,
+                                                               !is.na(option_code)),
                                             spelling_vars = "data_element_shortname",
                                             sort_by = "option_order_in_set"
                                            )
@@ -189,11 +219,15 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 # This assumes your data fits the standardised MSF data dictionary for this disease
 
 ## Read data ------------------------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
+
 # CSV file
-# linelist_raw <- rio::import("linelist.csv")
+# linelist_raw <- rio::import(here("linelist.csv"))
 
 ## get MSF data dictionary for measles 
-# linelist_dict <- msf_dict("Measles")
+# linelist_dict <- msf_dict("Measles", compact = FALSE) %>%
+#   select(option_code, option_name, everything())
 
 ## Fixing variable names ----------------------
 ## make a copy of your original dataset and name it linelist_cleaned
@@ -224,13 +258,18 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 
 
 ```{r read_nonDHIS_data, warning = FALSE, message = FALSE}
+## If your linelist is not from DHIS2, use this code chunk.
+## This assumes your data does NOT fit the standardized MSF data dictionary.
+## The template is going to take more effort, since your data is non-standardized.
+## You can do it! It will just take some work.
 
-## IF YOUR LINELIST NOT AN EXPORT OF DATA FROM DHIS2 USE THIS CODE CHUNK ------
-##
-## This assumes your data does not fit the standardised MSF data dictionary for
-## this disease. If you are using this section, be aware that this template may
-## not work simply due to the unpredictable nature of non-standardized data
-##
+## Your data must be in an Excel or CSV file. If your data is in Excel, make
+## sure that the Excel sheet is not protected. Many of the old MSF Excel
+## templates are in protected sheets.
+## If you have a protected sheet, you can save the sheet as a new file.
+## This will unprotect the sheet.
+
+
 ## Checklist to clean and update this script to match your data ---------------
 ## 
 ## - [ ] Recode your variable names to match this analysis 
@@ -242,45 +281,76 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ##   This is to understand which variables are being used later in the script
 ##   So that you can adapt those later code chunks to fit your dataset.
 ## The data dictionary has variable names in the data_element_shortname column. 
-## Possible values for each variable are specified in the Code and Name columns.
-## Where code has the shortened values and name has the full text values. 
+##   Possible values for each variable are specified in the option_code (short
+##   values) and option_name (full text) columns.
 ##
 ## - [ ] run this to look at the data dictionary: 
-# linelist_dict <- msf_dict("Measles")
+# linelist_dict <- msf_dict("Measles", compact = FALSE) %>%
+#   select(option_code, option_name, everything())
 # View(linelist_dict) 
+## you can view variable names in the standard data dictionary uncommenting the line below
+# linelist_dict$data_element_shortname
 
 
-## Read data ------------------------------------
-# Excel file
+
+
+## Read data -------------------------------------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
+
+# Excel file ------------------------------------
 # to read in a specific sheet use "which"
-# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
-# 
-# For password protected Excel file 
-# use the excel.link package 
-# library(excel.link)
-# linelist_raw <- xl.read.file("linelist.xlsx",
-#                              xl.sheet = "Sheet1",
-#                              password = askpass::askpass("please enter file password"))
-# CSV file
-# linelist_raw <- rio::import("linelist.csv")
-# 
-# Stata data file
-# linelist_raw <- rio::import("linelist.dat")
+# linelist_raw <- rio::import(here("linelist.xlsx"), which = "Sheet1")
 
-## Fixing variable names ----------------------
+
+# Excel file -- Specific range -------------------
+# You can specify a range in an excel sheet where your data are.
+# linelist_raw <- rio::import(here("linelist.xlsx"), range = "B2:J102")
+
+
+# Excel file -- password protected ----------------
+# Use the excel.link package to load the file.
+#   The askpass package will prompt you to enter the password every time.
+# install.packages(c("excel.link", "askpass"))
+# library(excel.link)
+# 
+# linelist_raw <- xl.read.file(here("linelist.xlsx"),
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
+
+# CSV file ----------------------------------------
+# linelist_raw <- rio::import(here("linelist.csv"))
+
+
+# Stata data file ---------------------------------
+# linelist_raw <- rio::import(here("linelist.dat"))
+
+
+
+
+## Clean column names ---------------------------------------------------------
+
+## a good first step is to assign standard column names so that subsequent code
+## uses stable column names. In case the input data changes, you just need to
+## fix the column mapping.
+
 
 ## make a copy of your orginal dataset and name it linelist_cleaned
 # linelist_cleaned <- linelist_raw
 
-# define clean variable names using clean_labels from the epitrix package
-# this function is preset rules for variable naming 
-# for example it changes spaces and dots to "_" and characters to lowercase
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+## define clean variable nams using clean_labels from the epitrix package. This
+## function defines rules for variable naming; for example, it changes spaces
+## and dots to "_" and sets all characters to lowercase.
 
-# overwrite variable names with defined clean names
+# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+## overwrite variable names with defined clean names
 # colnames(linelist_cleaned) <- cleaned_colnames
 
-## Renaming variables to match the template -------------------------------
+
+
+
+## Renaming variables to match the template -----------------------------------
 ## OPTIONAL: below is just an example in case you want to specifically change a
 ## few names you can also change specific var names using the *rename*
 ## function. In this example, we have the columns "gender" and "age" that we
@@ -288,30 +358,22 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 
 # linelist_cleaned <- rename(linelist_cleaned, 
-#                            gender    = sex, # TEXT
+#                            sex       = gender, # TEXT
 #                            age_years = age  # INTEGER_POSITIVE
 # )
 
 ## You can use the function msf_dict_rename_helper() to create a template based
-## on the measles dictionary. 
-# This will copy a rename command like the one above
+## on the measles dictionary. This will copy a rename command like the one above
 ## to your clipboard.
 # msf_dict_rename_helper("Measles")
 ## Paste the result here and add add the column names from linelist_cleaned
 ## to the appropriate variables. PLEASE NOTE: this is not a foolproof solution;
 ## you still need to be aware of what each variable means and what values it
 ## takes. 
-## 
+
 ## If there are any variables that are in the MSF dictionary that are not in
 ## your data set, then you should comment them out, but be aware that some
 ## analyses may not run because of this. 
-
-## OPTIONAL: if you only want to keep certain variables - 
-## you can select these by name or column number view the names of your vars
-## and their column number using: names(linelist_cleaned) this example keeps
-## the first three columns as well as age_years and sex variables
-
-# linelist_cleaned <- select(linelist_cleaned, c(1:3, "age_years", "sex")
 ```
 
 
@@ -349,17 +411,18 @@ linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
 
 
 ## Read data ------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
 
 ## Excel file
 ## to read in a specific sheet use "which"
-# population_data <- rio::import("population.xlsx", which = "Sheet1")
+# population_data <- rio::import(here("population.xlsx"), which = "Sheet1")
 
 ## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
 ## make sure your place variable name matches!
 
 ## Counts from population proportions ------------------------------------ 
 ## if you only know the total population and the proportions in each age group, use this function 
-
 
 # generate population data by region 
 population_data_region <- gen_population(total_pop = 5000,         # set the total population 
@@ -370,9 +433,11 @@ population_data_region <- gen_population(total_pop = 5000,         # set the tot
          population = n)
 
 # generate population data by age groups in years 
+## uses proportions from the OCBA population denominators tool v1
+## modify to fit your population or known parameters
 population_data_age <- gen_population(total_pop = 5000,
   groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
-  proportions = c(0.182, 0.278, 0.26, 0.11, 0.07),
+  proportions = c(0.068, 0.3622, 0.276, 0.1616, 0.1321),
   strata = NULL) %>%
   rename(age_group = groups,
     population = n)
@@ -380,20 +445,21 @@ population_data_age <- gen_population(total_pop = 5000,
 # generate population data by age group in months (under 2 years) 
 population_data_age_months <- gen_population(total_pop = 5000,
   groups = c("0-5", "6-8", "9-11","12-24"),
-  proportions = c(0.278, 0.11, 0.18, 0.26),
+  proportions = c(0.0164, 0.088, 0.088, 0.034),
   strata = NULL) %>%
   rename(age_group_mon = groups,
     population = n)
 
 
 # generate population data by age categories in months and years 
-population_data_age_categories <- gen_population(total_pop = 5000,
-  groups = c("0-5 months", "6-8 months", "9-11 months","12-24 months",
-             "3-14 years", "15-29 years", "30-44 years", "45+ years"),
-  proportions = c(0.278, 0.11, 0.18, 0.26, 0.278, 0.26, 0.11, 0.07),
-  strata = NULL) %>%
-  rename(age_category = groups,
-    population = n)
+# population_data_age_categories <- gen_population(total_pop = 5000,
+#   groups = c("0-5 months", "6-8 months", "9-11 months","12-24 months",
+#              "3-14 years", "15-29 years", "30-44 years", "45+ years"),
+#   proportions = c(0.0164, 0.088, 0.088, 0.034, 
+#                   0.3622, 0.276, 0.1616, 0.1321),
+#   strata = NULL) %>%
+#   rename(age_category = groups,
+#     population = n)
 ```
 
 
@@ -403,10 +469,12 @@ population_data_age_categories <- gen_population(total_pop = 5000,
 ## - [ ] DELETE THE FAKE DATA SECTION!!
 
 ## Read data ------------------------------------
+## When you copy and paste file paths, you need to change \ to /.
+##
 
 ## Excel file
 ## to read in a specific sheet use "which"
-# lab_data <- rio::import("labresults.xlsx", which = "Sheet1")
+# lab_data <- rio::import(here("labresults.xlsx"), which = "Sheet1")
 
 ## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
 ## make sure your unique ID variable name matches!
@@ -484,23 +552,53 @@ unique(linelist_cleaned$sex)
 ##
 
 
+# Drop unused rows  ---------------------------------
+# Your data might have rows that are blank besides ID number.
+# The below keeps variables only with a case ID and an admission date.
+linelist_cleaned <- linelist_cleaned %>% 
+  filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
+
+
+# Drop columns  -------------------------------------
+
+# OPTIONAL: drop several variables you might not want
+# the negative sign before the "c"" in select drops those variables
+# without the negative you would only keep the named variables
+# linelist_cleaned <- linelist_cleaned %>%
+#   select(-c(msf_involvement, treatment_facility_site))
+
+## OPTIONAL: if you want to expect certain variables,
+## you can select these by name or column number using names(linelist_cleaned).
+## this example keeps the first three columns as well as age_years and sex.
+
+# linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
+
+
 # Date variables ---------------------------------
 # IF YOU ARE USING THE DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
 # make sure all date variables are formatted as dates 
-DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>% 
-  select(data_element_shortname) # select date vars
+DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
+  filter(data_element_shortname %in% names(linelist_cleaned)) %>% 
+  # filter to match the column names of your data
+  pull(data_element_shortname) 
+
 # change to dates 
 linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(DATEVARS$data_element_shortname, as.Date)
+  mutate_at(DATEVARS, linelist::guess_dates,
+            error_tolerance = 0.5)
 
 # if you dont have a data dictionary you could do it this way too
 # linelist_cleaned <- linelist_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), as.Date)
+#   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
+#            error_tolerance = 0.5)
 
 # set unrealistic dates to NA, based on having browsed dates in the previous chunk
 # linelist_cleaned <- mutate(linelist_cleaned,
-#                            date_of_onset < as.Date("2017-11-01") ~ NA, 
-#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+#                            date_of_onset = case_when(
+#                              date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA),
+#                              date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
+#                              TRUE                                   ~ date_of_onset
+#                            ))
   
 # create an epiweek variable
 # floor_day shortens to only give you the week number (rather than including day as well) 
@@ -522,8 +620,8 @@ linelist_cleaned <- mutate(linelist_cleaned,
 ## data dictionary defines that under 2s dont have year filled in (but months/days instead)
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(age_months = case_when(
-    is.na(age_years) & is.na(age_months) ~ as.integer(age_days / 30), 
-    TRUE                                 ~ as.integer(age_months)
+    is.na(age_years) & is.na(age_months) ~ as.numeric(age_days / 30), 
+    TRUE                                 ~ as.numeric(age_months)
   ),
   age_years = case_when(
     is.na(age_years) & is.na(age_months) ~ as.integer(age_days / 365.25),
@@ -535,14 +633,16 @@ linelist_cleaned <- linelist_cleaned %>%
 ## OPTIONAL: change those who are above or below a certain age to NA
 # linelist_cleaned <- mutate(linelist_cleaned, 
 #                            age_years = case_when(
-#                              age_years < 0   ~ NA_integer_, 
-#                              age_years > 120 ~ NA_integer_
+#                              is.na(age_years) ~ NA_integer_,
+#                              age_years < 0    ~ NA_integer_, 
+#                              age_years > 120  ~ NA_integer_,
+#                              TRUE             ~ as.integer(age_years) #Preserves other values
 #                            ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
 # linelist_cleaned <- mutate(linelist_cleaned,
 #                            age_months = case_when(
-#                              age_years < 5 ~ age_years * 12
+#                              age_years < 5    ~ age_years * 12
 #                              )) 
 
 
@@ -597,7 +697,7 @@ linelist_cleaned <- linelist_cleaned %>%
     exit_status == "Left against medical advice"              ~ "Left"
   ))
 
-## recode a factor character variable
+## recode a character variable
 ## fix any misspellings in the manually entered geographic region variables
 ## you can choose any geographic region which you have available to you 
 ## ideally this variable would fit your shapefile and population data! 
@@ -609,9 +709,32 @@ linelist_cleaned <- linelist_cleaned %>%
 #     "Village D" = "Villiage D"
 #   ))
 
+## sometimes, coding is inconsistent across variables -- for example, "Yes" / "No"
+## may be coded as Y, y, yes, 1 / N, n, no, 0. You can change them all at once!
+## Create a list of the variables you want to change, and run the following.
+## You may need to edit this code if options are different in your data.
 
-# Force missing values to be explicit
-linelist_cleaned$sex <- fct_explicit_na(linelist_cleaned$sex, "Unknown/unspecified")
+# # create list of variables
+# change_yn <- c("headache", "fever", "vomiting")
+# 
+# # standardize options
+# linelist_cleaned <- linelist_cleaned %>%  
+#      mutate_at(vars(change_yn), forcats::fct_recode,   
+#      Yes = "y",  
+#      Yes = "Y",  
+#      Yes = "yes",  
+#      Yes = "1",   
+#      No  = "n",  
+#      No  = "N",  
+#      No  = "no",  
+#      No  = "0",  
+#    )     
+
+
+# Force missing values to be NA
+# important for sex to generate age pyramids
+linelist_cleaned$sex <- fct_recode(linelist_cleaned$sex, 
+                                   NULL = "Unknown/unspecified")
 
 
 # change the order of levels in a single categorical variable 
@@ -633,7 +756,7 @@ linelist_cleaned <- linelist_cleaned %>%
             "Yes", "No"                        # Sets order of levels
            )
 
-# Create a factor variable based on rules from other simple character variables
+# Create a variable based on rules from other simple character variables
 # If you have access to lab results, you can create a case definition variable 
 # the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
 # starting from the specific to the general
@@ -679,50 +802,11 @@ SYMPTOMS <- c("fever",
               )
 
 
-# Dropping observations (rows) and variables (columns)--------------------------
+# Set up for report ------------------------------------------------------------
 
-# only keep variables with a case ID and a date of consultation
+# drop cases after reporting week
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
-
-# OPTIONAL: drop several variables you might not want
-# the negative sign before the "c"" in select drops those variabels 
-# without the negative you would only keep the names variables
-# linelist_cleaned <- linelist_cleaned %>% 
-#   select(-c(msf_involvement, treatment_facility_name))
-
-```
-
-
-
-```{r save_cleaned_data, eval = FALSE}
-## OPTIONAL: save your cleaned dataset as an excel file! 
-## put the current date in the name so you know!
-writexl::write_xlsx(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
-```
-
-
-
-```{r define_current_week}
-
-# In order to automate your report you need define week of interest (reporting_week)
-# This will generally be one week in the past from when you write your report
-
-# to demonstrate in this template we will take the maximum epiweek
-# however you can define epiweek by hand as below
-
-# define current week 
-# reporting_week <- "2018-W10"
-
-# DELETE THIS LINE (this is just for the purpose of the template)
-reporting_week <- levels(linelist_cleaned$epiweek)[nlevels(linelist_cleaned$epiweek)]
-
-
-# drop cases after current week
-# you will probably have cases in your dataset if case finding continues
-# as these are after the week of reporting, drop them
-linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_onset <= week2date(sprintf("%s-7", reporting_week)))
+  filter(date_of_consultation_admission <= week2date(sprintf("%s-7", reporting_week)))
 
 # define the first week of outbreak (date of first case)
 first_week <- levels(linelist_cleaned$epiweek)[1]
@@ -734,7 +818,17 @@ obs_start <- week2date(sprintf("%s-1", first_week))
 # return last day of reporting week 
 obs_end   <- week2date(sprintf("%s-7", reporting_week))
 
+
 ```
+
+
+
+```{r save_cleaned_data, eval = FALSE}
+## OPTIONAL: save your cleaned dataset as an excel file! 
+## put the current date in the name so you know!
+# rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
+```
+
 
 
 
@@ -750,7 +844,7 @@ total of `r nrow(linelist_cleaned)` cases. There were
 `r fmt_count(linelist_cleaned, sex == "Female")` females and
 `r fmt_count(linelist_cleaned, sex == "Male")` males. 
 
-The most affected age group was `r descriptive(linelist_cleaned, "age_category") %>% slice(which.max(n)) %>% pull(age_category)` years. 
+The most affected age group was `r tab_linelist(linelist_cleaned, age_group) %>% slice(which.max(n)) %>% pull(value)` years. 
 
 
 #### Demographics 
@@ -761,12 +855,27 @@ Cases by age group and definition
 
 ```{r describe_by_age_group_and_def}
 # use if you have lab results in your data
-# get counts and props of age groups by case definition 
-# include column and row totals 
-# descriptive(linelist_cleaned, "age_category", "case_def", coltotals = TRUE, rowtotals = TRUE) %>% 
-#   rename("Age group" = age_category) %>%
-#   rename_redundant(prop = "%") %>%
-#   augment_redundant("_n$" = " cases (n)") %>%
+# creates table of cases by age group and case definition
+
+# tab_linelist(linelist_cleaned, 
+#              # rows as age groups, with case_def as strata (columns)
+#              age_group, strata = case_def, 
+#              # we want row totals and column totals
+#              col_total = TRUE, row_total = TRUE) %>%
+#   
+#   # removes the column called variable (which just says "age_group" in this case)
+#   select(-variable) %>%
+#   
+#   # renames the column called value to Age group
+#   rename("Age group" = value) %>%
+#   
+#   # there are several columns called "proportion" - renames them to %
+#   rename_redundant("%" = proportion) %>%
+#   
+#   # any time there is a column that says n, we replace that with "cases (n)"
+#   augment_redundant(" cases (n)" = " n$") %>%
+#   
+#   # makes the table easy to read with only 2 decimal places
 #   kable(digits = 2)
 ```
 
@@ -776,21 +885,26 @@ Cases by age group and definition
 Cases by age group and sex 
 
 ```{r describe_by_age_group_and_sex}
-descriptive(linelist_cleaned, "age_category", "sex", coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Age group" = age_category) %>%
-  rename_redundant(prop = "%") %>%
-  augment_redundant("_n$" = " cases (n)") %>%
+tab_linelist(linelist_cleaned, 
+             age_category, strata = sex, 
+             col_total = TRUE, row_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Age group" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" cases (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
 Alternatively if you would like proportions to be of the total population, use the following. 
 
 ```{r total_props_agegroup_sex}
-descriptive(linelist_cleaned, "age_category", "sex", 
-            coltotals = TRUE, rowtotals = TRUE, proptotal = TRUE) %>% 
-  rename("Age group" = age_category) %>%
-  rename_redundant(prop = "%") %>%
-  augment_redundant("_n$" = " cases (n)") %>%
+tab_linelist(linelist_cleaned, 
+             age_category, strata = sex,
+             col_total = TRUE, row_total = TRUE, prop_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Age group" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" cases (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -829,19 +943,19 @@ filter(linelist_cleaned, age_years <= 2) %>%
        )
 ```
 
-Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpatient")` were seen as outpatients and `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` were inpatients. Among inpatients, the median number of days admitted was `r median(linelist_cleaned$obs_days)`, 
-with a range between `r min(linelist_cleaned$obs_days)` and `r max(linelist_cleaned$obs_days)` days.
+Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpatient")` were seen as outpatients and `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` were inpatients. Among inpatients, the median number of days admitted was `r median(linelist_cleaned$obs_days, na.rm = TRUE)`, 
+with a range between `r min(linelist_cleaned$obs_days, na.rm = TRUE)` and `r max(linelist_cleaned$obs_days, na.rm = TRUE)` days.
 
 
 Cases by illness severity at visit/admission
 
 ```{r describe_by_illness_severity_admission}
-descriptive(linelist_cleaned, 
-            counter = "severity_of_illness", 
-            coltotals = TRUE) %>% 
-  rename("Illness severity" = severity_of_illness, 
+tab_linelist(linelist_cleaned, severity_of_illness,
+             col_total = TRUE) %>%
+  select(-variable) %>%
+  rename("Illness severity" = value, 
          "Cases (n)" = n, 
-         "%" = prop) %>% 
+         "%" = proportion) %>% 
   kable(digits = 2)
 ```
 
@@ -851,12 +965,13 @@ You could also look at the details of cases by symptoms.
 
 ```{r describe_by_symptoms}
 # get counts and proportions for all variables named in SYMPTOMS
-multi_descriptive(linelist_cleaned, SYMPTOMS) %>% 
-  # re-order columns (drop total_prop too)
-  select(symptom, Yes_n, Yes_prop, No_n, No_prop, Total_n) %>%
-  # rename accordingly
-  rename_redundant("prop" = "%") %>%
-  augment_redundant("_n$" = " (n)") %>%
+tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
+  select(-value) %>%
+# fix the way symptom names are displayed - remove the _ and make the first letter uppercase
+  mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
+  rename("Symptom" = variable,
+         "Cases (n)" = n,
+         "%" = proportion) %>%
   kable(digits = 2)
 
 ```
@@ -865,12 +980,13 @@ multi_descriptive(linelist_cleaned, SYMPTOMS) %>%
 Cases by vaccination status
 
 ```{r describe_by_vaccination_status}
-descriptive(linelist_cleaned, 
-            counter = "previously_vaccinated", 
-            coltotals = TRUE) %>% 
-  rename("Vaccination status" = previously_vaccinated, 
-         "Cases (n)" = n, 
-         "%" = prop) %>% 
+tab_linelist(linelist_cleaned, 
+            previously_vaccinated, 
+            col_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Vaccination status" = value,
+         "Cases (n)" = n,
+         "%" = proportion) %>%
   kable(digits = 2)
 ```
 
@@ -886,10 +1002,11 @@ Among inpatients who died, the time to death is shown below.
 
 ```{r describe_time_to_death, warning = FALSE, message = FALSE}
 filter(linelist_cleaned, DIED, patient_facility_type == "Inpatient") %>% 
-  descriptive(counter = "time_to_death", coltotals = TRUE) %>% 
-  rename("Time (hours)" = time_to_death, 
+  tab_linelist(time_to_death, col_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Time (hours)" = value, 
          "Deaths (n)" = n, 
-         "%" = prop) %>% 
+         "%" = proportion) %>% 
   kable(digits = 2)
 ```
 
@@ -933,10 +1050,12 @@ CFR by age group among inpatients with known outcomes
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, group = age_category, mergeCI = TRUE, add_total = TRUE) %>%
+  case_fatality_rate_df(deaths = DIED, group = age_category, 
+                        mergeCI = TRUE, add_total = TRUE) %>%
   tidyr::complete(age_category, 
-                  fill = list(deaths = 0, population = 0, cfr = 0, ci = 0)) %>% # Ensure all levels are represented
-  rename("Age Group" = age_category, 
+                  fill = list(deaths = 0, population = 0, 
+                              cfr = 0, ci = 0)) %>% # Ensure all levels are represented
+  rename("Age group" = age_category, 
          "Deaths" = deaths, 
          "Cases" = population, 
          "CFR (%)" = cfr, 
@@ -952,7 +1071,7 @@ linelist_cleaned %>%
 # linelist_cleaned %>%
 #   filter(patient_facility_type == "Inpatient") %>%
 #   case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
-#   rename("Case Definition" = case_def, 
+#   rename("Case definition" = case_def, 
 #          "Deaths" = deaths, 
 #          "Cases" = population, 
 #          "CFR (%)" = cfr, 
@@ -980,13 +1099,13 @@ ar %>%
   merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
   rename("Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   select(-Population) %>% # drop the population column as it is not changing
   knitr::kable(digits = 2, align = "r")
 ```
 
-Here, we can see that the Attack Rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
+Here, we can see that the attack rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
 
 To give attack rate by age group, with appropriate population denominators, use the following code. 
 
@@ -995,13 +1114,13 @@ cases <- count(linelist_cleaned, age_category) %>%   # cases for each week
   left_join(population_data_age_categories, by = "age_category")    # merge population data 
 
 # attack rate for each week
-attack_rate(cases$n, cases$population, multiplier = 100000, mergeCI = TRUE) %>% 
+attack_rate(cases$n, cases$population, multiplier = 10000, mergeCI = TRUE) %>% 
   # add the epiweek column to table
   bind_cols(select(cases, age_category), .) %>% 
   rename("Age group" = age_category, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   kable(digits = 2, format.args = list(big.mark = ",")) # set thousands separator
 ```
@@ -1120,6 +1239,14 @@ basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = 
 
 # show your plot (stored for later use) 
 basic_curve
+
+## if the outbreak has been going on for a while, your x-axis might look messy.
+# to reduce the number of labels, uncomment the below.
+# you can customize the number of breaks by changing n_breaks.
+# you can also use months for your break (here in three-month intervals)
+#
+# basic_curve + scale_x_incidence(inc_week_7, n_breaks = 6)
+# basic_curve + scale_x_date(breaks = "3 months", date_labels = "%b %Y")
 ```
 
 
@@ -1211,7 +1338,7 @@ cases <- linelist_cleaned %>%
   mutate(cumulative = cumsum(n))    # add a cumulative sum
 
 # attack rate for each week
-ar <- attack_rate(cases$n, population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$n, population, multiplier = 10000) %>% 
   bind_cols(select(cases, epiweek), .) # add the epiweek column to table
 
 ar %>%
@@ -1219,7 +1346,7 @@ ar %>%
   rename("Epiweek" = epiweek, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   knitr::kable(digits = 2, align = "r")
 ```
@@ -1229,13 +1356,13 @@ The below gives the cumulative attack rate per week.
 
 ```{r cumulative_attack_rate_per_week}
 # cumulative attack rate by week
-attack_rate(cases$cumulative, population, multiplier = 100000) %>% 
+attack_rate(cases$cumulative, population, multiplier = 10000) %>% 
   bind_cols(select(cases, epiweek), .) %>% # add the epiweek column to table
   merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
   rename("Epiweek" = epiweek, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   knitr::kable(digits = 2, align = "r")
 ```
@@ -1270,7 +1397,7 @@ ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   # scale the x axis the same as the incidence curve. Expand forces it to align. 
   incidence::scale_x_incidence(inc_week_7, n_breaks = nrow(inc_week_7), expand = c(0, 7 * 1.5)) +
   # add labels to axes and below chart
-  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 100,000)") + 
+  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 10,000)") + 
   # change visuals of dates and remove legend title
   epicurve_theme
 ```
@@ -1314,9 +1441,12 @@ We could then also look at admissions and exits among inpatients by epiweek for 
 ```{r describe_admissions_by_epiweek, warning = FALSE}
 # get counts and props of admissions by epiweek and case definition 
 # include column and row totals 
-descriptive(linelist_cleaned, "epiweek", "patient_facility_type", coltotals = TRUE, rowtotals = TRUE) %>% 
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+tab_linelist(linelist_cleaned, epiweek,
+             col_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Week" = value,
+         "Cases (n)" = n,
+         "%" = proportion) %>%
   kable(digits = 2)
 ```
 
@@ -1326,12 +1456,13 @@ The exits are among inpatients only.
 # get counts and props of admissions by epiweek among inpatients
 # include column and row totals 
 linelist_cleaned %>% 
-  filter(patient_facility_type == "Inpatient") %>% 
-descriptive("epiweek", "exit_status2", 
-            coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Week" = "epiweek") %>%
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+  filter(patient_facility_type == "Inpatient") %>%
+  tab_linelist(epiweek, strata = exit_status2, 
+               col_total = TRUE, row_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Week" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -1353,12 +1484,13 @@ To get a basic descriptive table of cases by region and facility, as well as by 
 # get counts and props of region by facility 
 # include column and row totals 
 
-descriptive(linelist_cleaned, "patient_origin", 
-            "patient_facility_type",
-            coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin") %>%
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+tab_linelist(linelist_cleaned, patient_origin, 
+             strata = patient_facility_type,
+             col_total = TRUE, row_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Region" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -1369,13 +1501,14 @@ descriptive(linelist_cleaned, "patient_origin",
 # get counts and props of region by outcome among inpatients
 # include column and row totals 
 
-descriptive(filter(linelist_cleaned, 
+tab_linelist(filter(linelist_cleaned, 
                    patient_facility_type == "Inpatient"),
-            "patient_origin", "exit_status2",
-            coltotals = TRUE, rowtotals = TRUE) %>% 
-  rename("Region" = "patient_origin") %>%
-  augment_redundant("_n$" = " (n)") %>% # modify _n to (n)
-  rename_redundant("prop" = "%")    %>% # rename proportions to %
+             patient_origin, strata = exit_status2,
+             col_total = TRUE, row_total = TRUE) %>% 
+  select(-variable) %>%
+  rename("Region" = value) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
   kable(digits = 2)
 ```
 
@@ -1390,13 +1523,13 @@ If you do not have spatial data available, it may also be worth calculating atta
 cases <- count(linelist_cleaned, patient_origin) %>%   # cases for each region
   left_join(population_data_region, by = "patient_origin")    # merge population data 
 # attack rate for region
-ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$n, cases$population, multiplier = 10000) %>% 
   # add the region column to table
   bind_cols(select(cases, patient_origin), .) %>% 
   rename("Region" = patient_origin, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper) 
 
@@ -1411,13 +1544,13 @@ You could then also plot this on a bar chart with confidence intervals.
 ```{r bar_attack_rate_by_region}
 # plot with the region on the x axis sorted by increasing ar
 # ar value on the y axis 
-ggplot(ar, aes(x = reorder(Region, `AR (per 100,000)`),
-               y = `AR (per 100,000)`)) + 
+ggplot(ar, aes(x = reorder(Region, `AR (per 10,000)`),
+               y = `AR (per 10,000)`)) + 
   geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
   geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
-  labs(x = "Region", y = "AR (per 100,000)", 
+  labs(x = "Region", y = "AR (per 10,000)", 
        captions = paste0("Source: MSF data from ", reporting_week)) + 
   epicurve_theme
 ```
@@ -1470,9 +1603,7 @@ map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin))
 
 
 ## reading in a shapefile 
-## shapefiles consist of multiple files
-## so you dont need to specify the file type (reas_sf recognises it for you)
-# map <- read_sf(here("mapfolder", "region"))
+# map <- read_sf(here("mapfolder", "region.shp"))
 
 
 ## check the coordinate reference system (CRS)
@@ -1505,7 +1636,7 @@ breakers <- as.integer(c(0, # include zero as a standalone group
 ## add a categorical variable using the age_categories function 
 ## nb in this case we arent using ages - but it functions the same way!
 ar <- mutate(ar, 
-             categories = age_categories(`AR (per 100,000)`, 
+             categories = age_categories(`AR (per 10,000)`, 
                                          breakers = breakers)
              )
 
@@ -1517,7 +1648,7 @@ mapsub <- left_join(map, ar, by = c("name" = "Region"))
 ## plotting with polygons ------------------------------------------------------
 
 ## choropleth 
-## you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 100,000)`
+## you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 10,000)`
 ggplot() +
   geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + # shapefile as polygon
   coord_sf(datum = NA) + # needed to avoid gridlines being drawn
@@ -1525,7 +1656,7 @@ ggplot() +
   # color the scale to be perceptually uniform 
   # drop FALSE keeps all levels 
   # name allows you to change the legend title 
-  scale_fill_viridis_d(drop = FALSE, option = "C", name = "AR (per 100,000)") + 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") + 
   geom_sf_text(data = mapsub, aes(label = name), colour = "grey50") + # label polygons
   theme_void() # remove coordinates and axes
 
@@ -1540,7 +1671,7 @@ ggplot() +
 #   geom_sf(data = mapsub, aes(fill = categories), shape = 21, size = 5, color = "black") + 
 #   coord_sf(datum = NA) + # needed to avoid gridlines being drawn
 #   annotation_scale() + # add a scalebar
-#   scale_fill_viridis_d(drop = FALSE, option = "C") + # color the scale to be perceptually uniform
+#     scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") +  color the scale to be perceptually uniform
 #   theme_void() # remove coordinates and axes
 
 ```
@@ -1554,7 +1685,7 @@ You could then also throw your bar plot by region and the choropleth map, for ea
 ## Checklist for plotting in for-loop ------------------------------------------
 ## - [ ] decide if you would like to show counts, AR or categories of those
 ## - [ ] define appropriate breaks to ensure legend is uniform by week
-## - [ ] replace `Cases (n)` and `AR (per 100,000)` or "categories", appropriately
+## - [ ] replace `Cases (n)` and `AR (per 10,000)` or "categories", appropriately
 ## - [ ] consider facet wrapping by an overarching unit if have many regions (e.g. by province)
 
 
@@ -1570,13 +1701,13 @@ cases <- linelist_cleaned %>%
   left_join(population_data_region, by = "patient_origin")    # merge population data 
 
 # attack rate for region
-ar <- attack_rate(cases$n, cases$population, multiplier = 100000) %>% 
+ar <- attack_rate(cases$n, cases$population, multiplier = 10000) %>% 
   # add the region column to table
   bind_cols(select(cases, epiweek, patient_origin), .) %>% 
   rename("Region" = patient_origin, 
          "Cases (n)" = cases, 
          "Population" = population, 
-         "AR (per 100,000)" = ar, 
+         "AR (per 10,000)" = ar, 
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper)
 max_cases <- max(cases$n, na.rm = TRUE) # define the maximum number of cases for the color palette 
@@ -1589,7 +1720,7 @@ breakers <- as.integer(c(0, # include zero as a standalone group
 ## add a categorical variable using the age_categories function 
 ## nb in this case we arent using ages - but it functions the same way!
 ar <- mutate(ar, 
-             categories = age_categories(`AR (per 100,000)`, 
+             categories = age_categories(`AR (per 10,000)`, 
                                          breakers = breakers)
              )
 
@@ -1606,25 +1737,26 @@ for (i in unique(cases$epiweek)) {
     geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + # shapefile as polygon
     coord_sf(datum = NA) + # needed to avoid gridlines being drawn
     annotation_scale() + # add a scalebar
-    scale_fill_viridis_d(drop = FALSE, option = "C", 
-                         name = "AR (per 100,000)") + # color the scale to be perceptually uniform (keep levels)
+  scale_fill_brewer(drop = FALSE, 
+                    palette = "OrRd",
+                    name = "AR (per 10,000)") + # color the scale to be perceptually uniform (keep levels)
     theme_void() # remove coordinates and axes
   
   # plot with the region on the x axis sorted by increasing ar
   # ar value on the y axis 
-  barplot <- ggplot(this_ar, aes(x = reorder(Region, `AR (per 100,000)`),
-                                 y = `AR (per 100,000)`)) + 
+  barplot <- ggplot(this_ar, aes(x = reorder(Region, `AR (per 10,000)`),
+                                 y = `AR (per 10,000)`)) + 
     geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
     geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
     scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  # set origin for axes
     # add labels to axes and below chart
-    labs(x = "Region", y = "AR (per 100,000)", 
+    labs(x = "Region", y = "AR (per 10,000)", 
          captions = paste0("Source: MSF data from ", reporting_week)) + 
     epicurve_theme
   # combine the barplot and map plot into one
   print(
     cowplot::plot_grid(
-      barplot + labs(title = paste0("Epiweek:", i)),
+      barplot + labs(title = paste0("Epiweek: ", i)),
       map_plot,
       nrow = 1,
       align = "h",
