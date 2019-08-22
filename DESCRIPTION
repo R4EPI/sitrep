@@ -26,7 +26,6 @@ Imports:
     clipr,
     dplyr (>= 0.7),
     epitools,
-    epiR,
     epitrix,
     forcats,
     ggplot2 (>= 3.0.0),
