@@ -37,7 +37,7 @@
 #' @importFrom dplyr select mutate_at group_by summarise
 #'
 #' @references Inspired by Daniel Gardiner,
-#' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/single.variable.analysis.v0.3.R)
+#' see [github repo](https://github.com/DanielGardiner/UsefulFunctions/tree/master/single.variable.analysis.v0.3.R)
 #' @export
 #' @examples
 #'
@@ -226,17 +226,21 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
 
   
   if (has_strata) {
+
     vals <- rbind(strata_ratio_table(the_table, measure), NA)
-    est  <- as.data.frame(get_ratio_est(the_table, measure))
+    if (measure != "IRR") {
+      vals <- rbind(vals, NA)
+    }
+    est  <- get_ratio_est(the_table, measure, conf = 0.95, strata_name = strata_var)
     nums <- dplyr::bind_cols(variable = rep(exposure_var, nrow(est)), 
-                             level = matrix(rownames(est)), 
+                             est_type = rownames(est), 
                              vals, 
                              est)
   } else {
     nums <- dplyr::bind_cols(variable = exposure_var,
-                             level = "crude",
+                             est_type = "crude",
                              strata_ratio_table(the_table, measure),
-                             as.data.frame(get_ratio_est(the_table, measure))
+                             get_ratio_est(the_table, measure)
     )
   }
 
@@ -248,8 +252,8 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   }
 
   # drop woolf-test pvalue
-  if (length(strata_var != 0) && measure != "IRR" && woolf_test == FALSE) {
-    nums <- select(nums, -tidyselect::one_of("woolf_pval"))
+  if (!woolf_test) {
+    nums <- nums[!nums$est_type == "woolf", ]
   }
 
   # merge upper and lower CIs

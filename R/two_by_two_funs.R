@@ -85,13 +85,30 @@ strata_ratio_table <- function(x, measure = "OR") {
 #' get_ratio_est(arr, "RR") 
 #' get_ratio_est(arr, "IRR")
 #'
-get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
+get_ratio_est <- function(x, measure = "OR", conf = 0.95, strata_name = "strata") {
 
 
   d  <- data_frame_from_2x2(x)
-  CS <- get_chisq_pval(x)[, 2, drop = FALSE]
-  if (nrow(d) > 1) {
+  CS <- get_chisq_pval(x)
+  has_strata <- nrow(d) > 1
+  n  <- 1L
+  
+  rnames <- "crude"
+
+  if (has_strata) {
+    n <- n + dim(x)[[3]] + 1L 
+    rnames <- c(rnames, strata = glue::glue("{strata_name}: {dimnames(x)[[3]]}"), "MH")
+    if (measure != "IRR") {
+      n     <- n + 1L
+      woolf <- get_woolf_pval(x, measure)
+      rnames <- c(rnames, "woolf")
+    } else {
+      woolf <- NULL
+    }
     MH <- get_mh(x, measure, conf)
+  } else {
+    MH       <- NULL
+    woolf    <- NULL
   }
 
   # Risk ratio:
@@ -130,15 +147,31 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95) {
 
   )
 
-  if (nrow(d) > 1) {
-    ratio           <- rbind(ratio, MH)
-    rownames(ratio) <- c(rownames(d), "MH")
-    ratio           <- cbind(ratio, p.value = c(CS, NA))
+
+  if (has_strata) {
+    
+    res <- data.frame(
+      ratio   = numeric(n),
+      lower   = numeric(n),
+      upper   = numeric(n),
+      p.value = numeric(n)
+    )
+
+    na <- function(x, m = measure) if (is.null(x) && m != "IRR") NA else x
+
+    res$ratio   <- c(ratio[["ratio"]], MH[["ratio"]], na(woolf[["ratio"]]))
+    res$lower   <- c(ratio[["lower"]], MH[["lower"]], na(woolf[["lower"]]))
+    res$upper   <- c(ratio[["upper"]], MH[["upper"]], na(woolf[["upper"]]))
+    res$p.value <- c(CS[["p.value"]],  NA_real_     , na(woolf[["p.value"]]))
+    
   } else {
-    rownames(ratio) <- rownames(d)
-    ratio           <- cbind(ratio, p.value = CS)
+    
+    ratio$p.value <- CS$p.value
+    res           <- ratio
+    
   }
-  ratio
+  rownames(res) <- rnames
+  res
   
 }
 
@@ -155,20 +188,24 @@ get_chisq_pval <- function(x) {
   n      <- if (ndim == 3L) dim(x)[ndim] + 1L else 1L
   rnames <- if (n == 3L) dimnames(x)[[3]] else NULL
 
-  res <- matrix(ncol = 2, nrow = n,
-                dimnames = list(c("crude", rnames),
-                                c("statistic", "p.value")))
+  # res <- matrix(ncol = 2, nrow = n,
+  #               dimnames = list(c("crude", rnames),
+  #                               c("statistic", "p.value")))
+  res <- data.frame(statistic = numeric(n), p.value = numeric(n))
 
   # No matter the dimensions, we can always get the crude p-value 
-  crude          <- stats::chisq.test(apply(x, MARGIN = 1:2, FUN = sum), correct = FALSE)
-  res["crude", ] <- c(crude$statistic, crude$p.value)
+  crude <- stats::chisq.test(apply(x, MARGIN = 1:2, FUN = sum), correct = FALSE)
+
+  res$statistic[1] <- crude$statistic
+  res$p.value[1]   <- crude$p.value
 
   # if there are strata, we can apply over that dimension and get the statistic
   # for each. 
   if (ndim == 3) {
     strat <- apply(x, MARGIN = 3, FUN = chisq.test, correct = FALSE)
     for (i in seq_along(strat)) {
-      res[i + 1, ] <- c(strat[[i]]$statistic, strat[[i]]$p.value)
+      res$statistic[i + 1L] <- strat[[i]]$statistic
+      res$p.value[i + 1L]   <- strat[[i]]$p.value
     }
   }
   res
@@ -244,9 +281,7 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
   }
 
 
-  matrix(c(ratio, lower_limit, upper_limit), 
-         ncol = 3, 
-         dimnames = list(NULL, c("ratio", "lower", "upper")))
+  data.frame(ratio, lower = lower_limit, upper = upper_limit)
 
 }
 
@@ -302,7 +337,7 @@ mh_rr <- function(arr, conf = 0.95) {
     
   se_limits <- get_ci_from_var(log(MH_risk_ratio), MH_risk_ratio_var, z)
 
-  c(MH_risk_ratio, se_limits[["ll"]], se_limits[["ul"]])
+  data.frame(ratio = MH_risk_ratio, lower = se_limits[["ll"]], upper = se_limits[["ul"]])
   
 }
 
@@ -326,15 +361,15 @@ mh_irr <- function(arr, conf = 0.95) {
 
   se_limits <- get_ci_from_var(log(MH_IRR), MH_IRR_var, get_z(conf))
 
-  c(MH_IRR, se_limits[["ll"]], se_limits[["ul"]])
+  data.frame(ratio = MH_IRR, lower = se_limits[["ll"]], upper = se_limits[["ul"]])
 }
 
 # The M-H statistic for odds ratios already exist in R, so it's just a matter of
 # pulling out the correct values
 mh_or <- function(arr, conf = 0.95) {
 
-    MH <- mantelhaen.test(arr, conf.level = conf)
-    c(MH$estimate, MH$conf.int)
+  MH <- mantelhaen.test(arr, conf.level = conf)
+  data.frame(ratio = MH$estimate, lower = MH$conf.int[1], upper = MH$conf.int[2])
 
 }
 
@@ -378,5 +413,5 @@ get_woolf_pval <- function(x, measure = "OR") {
   res     <- sum(inv_log_est_var * (log_est - adj_log_est)^2)
   p_value <- 1 - stats::pchisq(res, df = nstrata - 1)
 
-  data.frame(statistic = res, df = nstrata - 1, p.vaule = p_value)
+  data.frame(statistic = res, df = nstrata - 1, p.value = p_value)
 }
