@@ -11,44 +11,44 @@ This is a template which can be used to create an automated outbreak situation
 report for acute jaundice syndrome (AJS). 
 
 - It is organised by time, place and person. 
-- You can type normal text in white spaces (such as here) and r-code in grey
-    spaces (denoted by three backticks and r) (see [Rmarkdown
-    introduction](https://rmarkdown.rstudio.com/articles_intro.html) and
-    [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
-- Introductions and contents of sections are within square brackets "[...]" and
-    can be deleted as appropriate
-- Examples of inline code (to automate updating numbers, e.g. in the "Person
-    section"), can similarly be removed/updated
-- Code itself can be deleted, but as a word of caution: make sure you aren't
-    deleting bits where variables are created/manipulated, or at least update
-    them appropriatley
 - For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
 - Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+All text within <! will not show in your final document. These comments are used
+to explain the template. You can delete them if you want.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 
 ## Installing and loading required packages 
-
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Several packages are required for different aspects of  analysis with *R*. 
 You will need to install these before starting. 
-We will be using the following packages. Some of these packages automatically
-install other packages they need to work (called dependencies).
 
 These packages can be quite large and may take a while to download in the
 field. If you have access to a USB key with these packages, it makes sense to
 copy and paste the packages into your computer's R package library 
 (run the command .libPaths() to see the folder path). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 For help installing packages, see the [Wiki](https://github.com/R4EPI/sitrep/wiki/1)-Getting-started)
 
 ```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
 # hide all code chunks in the output, but show errors
+
+
 knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
                       error = TRUE,       # show errors if they appear, but don't stop
                       fig.width = 6*1.25, # Figure width
                       fig.height = 6      # Figure height
                      )
+
+
+
 # set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
+
+
 
 # Installing required packages for this template
 required_packages <- c("knitr",       # create output docs
@@ -78,359 +78,306 @@ for (pkg in required_packages) {
 }
 
 
+
+
 # set default text size to 16 for plots
 # give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
 
+
+
 # Set the day that defines the beginning of your epiweek.
-# you can start the week on any day of the week
-# (the ISO standard is to start on Monday) 
+# (the standard is to start on Monday)
 aweek::set_week_start("Monday")
 ```
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You need to set the week you want to report on. Generally, this is the previous
+week. Put it below.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r define_current_week}
 
-# In order to automate your report you need define week of interest (reporting_week)
-# This will generally be one week in the past from when you write your report
-
-# define current week 
+# set current week 
 reporting_week <- "2019-W25"
-
 ```
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To play with this template, you can create fake data. Comment out this chunk if
+you are using real data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_fake_data, warning = FALSE, message = FALSE}
-# This chunk creates fake data for to use as an example in this template.
-# Comment out if you are using real data.
+
 linelist_raw <- gen_data("AJS")
 ```
 
 
-```{r read_DHIS_excel_data, warning = FALSE, message = FALSE}
 
-# If your linelist is an excel export of data from DHIS2 use this code chunk
-# This assumes your data fits the standardised MSF data dictionary for this
-# disease (Otherwise use one of the code chunks below for csv DHIS data and for
-# non DHIS data). This script is adapted to fit to DHIS standardised data. 
-# If you don't have lab tests or do not wish to create a case definition, 
-# then you will need to fix code stratified by case definition later in the script
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You should load your data as a linelist, where each row is one case.
+
+There are three options:
+- Your data is from DHIS2: use read_DHIS_excel_data
+- Your data is NOT FROM DHIS2 and in Excel, CSV, or Stata format: 
+use read_nonDHIS_data
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
-## Read data ------------------------------------------------------
-## When you copy and paste file paths, you need to change \ to /.
-##
 
-# USE ONE OF THE BELOW TWO OPTIONS TO READ IN YOUR DATA FROM EXCEL
-# one version is for password protected files
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+read_DHIS_data
 
-## Excel file ---------------------------
-#
-## To read in a specific sheet use "which"
+This section is for data from DHIS2.
+It uses the standardized MSF data dictionary.
+If you didn't use the standardized data dictionary, go to read_nonDHIS_data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_DHIS_data, warning = FALSE, message = FALSE}
+### Read in data ---------------------------------------------------------------
+
+## Excel file ------------------------------------------------------------------
+## For a specific sheet, use "which"
 # linelist_raw <- rio::import(here("linelist.xlsx"), which = "Sheet1")
 
-## Excel file (password-protected) ------
-#
-## Use the excel.link package 
-## The askpass package will prompt you to enter the password
+
+
+## Excel file with password ----------------------------------------------------
+# Use this section if your Excel has a password.
 
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
-# 
+
 # linelist_raw <- xl.read.file(here("linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
-## MSF AJS Dictionary ---------------
-## The data dictionary has variable names in the data_element_shortname column. 
-## Possible values for each variable are specified in the Code and Name columns.
-## Where code has the shortened values and name has the full text values. 
 
-## get MSF data dictionary for AJS 
+## CSV file --------------------------------------------------------------------
+# linelist_raw <- rio::import(here("linelist.csv"))
+
+``` 
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+prep_DHIS_data
+
+This section is for data from DHIS2 that you loaded in read_DHIS_data.
+
+If you didn't use DHIS2 data, go to read_nonDHIS_data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r prep_DHIS_data, warning = FALSE, message = FALSE}
+
+## MSF AJS Dictionary ----------------------------------------------------------
+## This step shows you the data dictionary.
+
+## The data dictionary has variable names in the data_element_shortname column. 
+## Possible values for each variable are specified in code and name columns.
+## Code has the shortened value and Name has the full-text value.
+
+# get MSF standard dictionary for AJS 
 linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
   select(option_code, option_name, everything())
 
-## you can look at the standard dictionary by uncommenting the line below
+## look at the standard dictionary by uncommenting the line below
 # View(linelist_dict) 
 
-## you can view variable names in the standard data dicationry uncommenting the line below
-# linelist_dict$data_element_shortname
 
 
-# Clean column names ---------------------------------------------
+# Clean column names -----------------------------------------------------------
+## This step fixes the column names so they are easy to use in R.
 
-## a good first step is to assign standard column names so that subsequent code
-## uses stable column names. In case the input data changes, you just need to
-## fix the column mapping.
-
-## make a copy of your orginal dataset and name it linelist_cleaned
+# make a copy of your orginal dataset and name it linelist_cleaned
 linelist_cleaned <- linelist_raw
 
-## UNCOMMENT AND RUN TWO LINES OF CODE BELOW!
-##
-## define clean variable names using clean_labels from the epitrix package. This
-## function defines rules for variable naming; for example, it changes spaces
-## and dots to "_" and sets all characters to lowercase.
+# define clean variable names using clean_labels from the epitrix package
+cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
 
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
-# colnames(linelist_cleaned) <- cleaned_colnames # overwrite variable names with defined clean names
-
-## OPTIONAL: below is just an example in case you want to specifically change a
-## few names you can also change specific var names using the *rename*
-## function. In this example, we have the columns "gender" and "age" that we
-## want to rename as "sex" and "age_years".
-## The formula for this is rename(data, NEW_NAME = OLD_NAME)
-
-# linelist_cleaned <- rename(linelist_cleaned, 
-#                            sex       = gender, 
-#                            age_years = age)
+# overwrite variable names with defined clean names
+colnames(linelist_cleaned) <- cleaned_colnames
 
 
 
-## Standardising values --------------------------------------------
-## 
-## Data entered in through software will often code values in a compact format
-## to save space. For example, Yes/No values will often be coded as 1 or 0 and
-## sex coded as M or F. This line uses the MSF dictionary to recode these values
-## back to a human-readable format.
+## Standardising values --------------------------------------------------------
+## This step fixes the values so that you can read them.
+## values like 1/0 will be recoded as "Yes" / "No" based on the dictionary
+
 linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
                                             wordlists = filter(linelist_dict,
                                                                !is.na(option_code)),
                                             spelling_vars = "data_element_shortname",
                                             sort_by = "option_order_in_set"
                                            )
+
 ```
 
 
-```{r read_DHIS_csv_data, warning = FALSE, message = FALSE}
 
-# If your linelist is a csv export of data from DHIS2 use this code chunk
-# This assumes your data fits the standardised MSF data dictionary for this disease
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+read_nonDHIS_data
 
-## Read data ------------------------------------------------------
-## When you copy and paste file paths, you need to change \ to /.
-##
-
-# CSV file
-# linelist_raw <- rio::import(here("linelist.csv"))
-
-## get MSF data dictionary for AJS 
-# linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
-#   select(option_code, option_name, everything())
-
-## Fixing variable names ----------------------
-## make a copy of your original dataset and name it linelist_cleaned
-# linelist_cleaned <- linelist_raw
-
-## define clean variable names using clean_labels from the epitrix package
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
-
-## overwrite variable names with excel version names from data dictionary
-## return which rows in the data dictionary match your column names
-
-# match_cols <- match(cleaned_colnames, linelist_dict$data_element_name, nomatch = 0)
-# cleaned_colnames[match_cols > 0] <- linelist_dict$data_element_shortname[match_cols]
-
-## overwrite variable names with defined clean names
-# colnames(linelist_cleaned) <- cleaned_colnames
-
-
-## Standardising values --------------------------------------------
-## 
-## Data entered in through software will often code values in a compact format
-## to save space. For example, Yes/No values will often be coded as 1 or 0 and
-## sex coded as M or F. This line uses the MSF dictionary to recode these values
-## back to a human-readable format.
-## linelist_cleaned <- switch_vals(df = linelist_cleaned, disease = "AJS")
-```
-
-
+This section is for data not from DHIS2.
+If you have already loaded data from DHIS2, go to read_population_data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_nonDHIS_data, warning = FALSE, message = FALSE}
 
-## If your linelist is not from DHIS2, use this code chunk.
-## This assumes your data does NOT fit the standardized MSF data dictionary.
-## The template is going to take more effort, since your data is non-standardized.
-## You can do it! It will just take some work.
-
-## Your data must be in an Excel or CSV file. If your data is in Excel, make
-## sure that the Excel sheet is not protected. Many of the old MSF Excel
-## templates are in protected sheets.
-## If you have a protected sheet, you can save the sheet as a new file.
-## This will unprotect the sheet.
-
-
-## Checklist to clean and update this script to match your data ---------------
-## 
-## - [ ] Recode your variable names to match this analysis 
-## - [ ] Recode variable contents
-## - [ ] Check the code later in the script and update it to fit your names/contents
-## - [ ] Make sure to comment out all lines in read_DHIS_excel_data chunk
-##
-## You will still need to read in the standardised data dictionary
-##   This is to understand which variables are being used later in the script
-##   So that you can adapt those later code chunks to fit your dataset.
-## The data dictionary has variable names in the data_element_shortname column. 
-##   Possible values for each variable are specified in the option_code (short
-##   values) and option_name (full text) columns.
-##
-## - [ ] run this to look at the data dictionary: 
-# linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
-#   select(option_code, option_name, everything())
-# View(linelist_dict) 
-## you can view variable names in the standard data dictionary uncommenting the line below
-# linelist_dict$data_element_shortname
-
-
-
-
-## Read data -------------------------------------------------------------------
-## When you copy and paste file paths, you need to change \ to /.
-##
-
-# Excel file ------------------------------------
+## Excel file ------------------------------------------------------------------
 # to read in a specific sheet use "which"
 # linelist_raw <- rio::import(here("linelist.xlsx"), which = "Sheet1")
 
 
-# Excel file -- Specific range -------------------
-# You can specify a range in an excel sheet where your data are.
+
+## Excel file -- Specific range ------------------------------------------------
+# You can specify a range in an excel sheet.
 # linelist_raw <- rio::import(here("linelist.xlsx"), range = "B2:J102")
 
 
-# Excel file -- password protected ----------------
-# Use the excel.link package to load the file.
-#   The askpass package will prompt you to enter the password every time.
+
+## Excel file with password ----------------------------------------------------
+# Use this section if your Excel has a password.
+
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
-# 
+
 # linelist_raw <- xl.read.file(here("linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
 
-# CSV file ----------------------------------------
+## CSV file --------------------------------------------------------------------
 # linelist_raw <- rio::import(here("linelist.csv"))
 
 
-# Stata data file ---------------------------------
+
+## Stata data file -------------------------------------------------------------
 # linelist_raw <- rio::import(here("linelist.dat"))
+```
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+prep_nonDHIS_data
 
-## Clean column names ---------------------------------------------------------
+This section is for data not from DHIS2. 
+If you have already loaded data from DHIS2, go to read_population_data.
 
-## a good first step is to assign standard column names so that subsequent code
-## uses stable column names. In case the input data changes, you just need to
-## fix the column mapping.
+It is more difficult to prepare the nonDHIS data. You can do it! It will just
+take a little more work.
+
+Checklist to update this script to match your data:
+[ ] Comment out all lines in read_DHIS_data and prep_DHIS_data
+[ ] Recode your variable names to match the dictionary
+[ ] Recode variable contents to match the dictionary
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r prep_nonDHIS_data, warning = FALSE, message = FALSE}
+## MSF AJS Dictionary ----------------------------------------------------------
+## This step shows you the data dictionary.
+
+## The data dictionary has variable names in the data_element_shortname column. 
+## Possible values for each variable are specified in code and name columns.
+## Code has the shortened value and Name has the full-text value.
+
+# get MSF standard dictionary for AJS 
+linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
+  select(option_code, option_name, everything())
+
+## look at the standard dictionary by uncommenting the line below
+# View(linelist_dict) 
+
+## You will need to recode your variables to match the data dictionary.
 
 
-## make a copy of your orginal dataset and name it linelist_cleaned
-# linelist_cleaned <- linelist_raw
 
-## define clean variable nams using clean_labels from the epitrix package. This
-## function defines rules for variable naming; for example, it changes spaces
-## and dots to "_" and sets all characters to lowercase.
+## Clean column names ----------------------------------------------------------
+## This step fixes the column names so they are easy to use in R.
 
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
-## overwrite variable names with defined clean names
-# colnames(linelist_cleaned) <- cleaned_colnames
+# make a copy of your orginal dataset and name it linelist_cleaned
+linelist_cleaned <- linelist_raw
+
+# define clean variable names using clean_labels from the epitrix package
+cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+
+# overwrite variable names with defined clean names
+colnames(linelist_cleaned) <- cleaned_colnames
 
 
 
+## Match column names ---------------------------------------------------------
+## This step helps you match your variables to the standard variables.
+## This step will require some patience. Courage!
 
-## Renaming variables to match the template -----------------------------------
-## OPTIONAL: below is just an example in case you want to specifically change a
-## few names you can also change specific var names using the *rename*
-## function. In this example, we have the columns "gender" and "age" that we
-## want to rename as "sex" and "age_years".
-## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
-
-# linelist_cleaned <- rename(linelist_cleaned, 
-#                            sex       = gender, # TEXT
-#                            age_years = age  # INTEGER_POSITIVE
-# )
-
-## You can use the function msf_dict_rename_helper() to create a template based
-## on the AJS dictionary. This will copy a rename command like the one above
-## to your clipboard.
+## Use the function msf_dict_rename_helper() to create a template based on the
+## AJS dictionary. This will copy a rename command like the one above to your
+## clipboard.
 # msf_dict_rename_helper("AJS")
-## Paste the result here and add add the column names from linelist_cleaned
-## to the appropriate variables. PLEASE NOTE: this is not a foolproof solution;
-## you still need to be aware of what each variable means and what values it
-## takes. 
 
+## Paste the result below and your column names to the matching variable.
+## Be careful! You still need to be aware of what each variable means and what
+## values it takes.
 ## If there are any variables that are in the MSF dictionary that are not in
 ## your data set, then you should comment them out, but be aware that some
 ## analyses may not run because of this. 
+
+
+## Here is an EXAMPLE for changing a few specific names. function. In this
+## example, we have the columns "gender" and "age" that we want to rename as
+## "sex" and "age_years". 
+## The formula for this is rename(data, NEW_NAME = OLD_NAME).
+
+# linelist_cleaned <- rename(linelist_cleaned, 
+#                            sex       = gender, # TEXT
+#                            age_years = age     # INTEGER_POSITIVE
+# )
 
 ```
 
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+read_population_data
+
+This template uses population data to calculate things like incidence.
+
+There are two options:
+- You can read in a spreadsheet with age group and region data. (You can see an
+example spreadsheet TODO.)
+- If you have the total or regional populations, you can estimate the age group
+from proportions.
 
 
-
+Age group proportions are from the OCBA population denominators tool v1. The
+proportions below are for sub-Saharan Africa in 2019. They are only an estimate!
+If you have more specific proportions, you can use them below.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_population_data, warning = FALSE, message = FALSE}
+## Read data -------------------------------------------------------------------
+## This step reads in your population data from Excel.
+## You may need to rename your columns.
 
-
-## USE THIS TO READ IN POPULATION OR TO CREATE IT FROM PROPORTIONS  -----------
-##
-## There are two options for using population data here. 
-## The first one is where you only know the total population number, and the 
-## proportion breakdown for categories (e.g. by age group, sex or region). 
-## The second option is to read in population from excel. 
-## In both cases you will need to make sure that the respective groups for 
-## population fit the groups in your linelist data set!
-##
-## Checklist for population data ----------------------------------------------
-## 
-## - [ ] Decide if you have stratified population data available as counts or only proportions
-## - [ ] If you have counts available:
-##          - [ ] use View on the fake data generated to make sure your format in excel matches
-##          - [ ] read in and clean data appropriately in the "Read data" section
-##          - [ ] make sure the groups match the appropriate variable in your linelist!
-## - [ ] If have total population and proportion breakdown available: 
-##          - [ ] use the gen_population function in "counts from populaiton proportions" section
-##          - [ ] type in your population, groups, and respective proportions
-##          - [ ] group can be any categorical variable you want
-##          - [ ] make sure the groups match the appropriate variable in your linelist!
-## - [ ] DELETE OR COMMENT OUT THE UNUSED SECTION
-
-
-## Read data ------------------------------------
-## When you copy and paste file paths, you need to change \ to /.
-##
-
-## Excel file
-## to read in a specific sheet use "which"
 # population_data <- rio::import(here("population.xlsx"), which = "Sheet1")
 
-## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
-## make sure your place variable name matches!
-
-## Counts from population proportions ------------------------------------ 
-## if you only know the total population and the proportions in each age group, use this function 
+## repeat preparation steps as appropriate
 
 
-# generate population data by region 
-population_data_region <- gen_population(total_pop = 5000,         # set the total population 
-  groups = c("Village A", "Village B", "Village C", "Village D"),  # set the groups 
-  proportions = c(0.221, 0.174, 0.355, 0.245),                     # set the proportions for each group
-  strata = NULL) %>%               # do not stratify by gender 
-  rename(patient_origin = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
-         population = n)
 
-# generate population data by age groups in years 
-## uses proportions from the OCBA population denominators tool v1
-## modify to fit your population or known parameters
+## Create counts from proportions ----------------------------------------------
+## This step helps you estimate sub-group size with proportions.
+## You need to replace the total_pop and proportions. You can change the groups
+## to fit your needs.
+
+
+# estimate population size by age group in years
 population_data_age <- gen_population(total_pop = 5000,
   groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
   proportions = c(0.068, 0.3622, 0.276, 0.1616, 0.1321),
@@ -438,7 +385,8 @@ population_data_age <- gen_population(total_pop = 5000,
   rename(age_group = groups,
     population = n)
 
-# generate population data by age group in months (under 2 years) 
+
+# estimate population size by age group in months (under 2 years) 
 population_data_age_months <- gen_population(total_pop = 5000,
   groups = c("0-5", "6-8", "9-11","12-24"),
   proportions = c(0.0164, 0.088, 0.088, 0.034),
@@ -447,7 +395,7 @@ population_data_age_months <- gen_population(total_pop = 5000,
     population = n)
 
 
-# generate population data by age categories in months and years 
+# estimate population size by age categories in months and years 
 # population_data_age_categories <- gen_population(total_pop = 5000,
 #   groups = c("0-5 months", "6-8 months", "9-11 months","12-24 months",
 #              "3-14 years", "15-29 years", "30-44 years", "45+ years"),
@@ -456,28 +404,44 @@ population_data_age_months <- gen_population(total_pop = 5000,
 #   strata = NULL) %>%
 #   rename(age_category = groups,
 #     population = n)
+
+
+## estimate population size by region proportion
+# population_data_region <- gen_population(total_pop = 5000,         # set the total population 
+#   groups = c("Village A", "Village B", "Village C", "Village D"),  # set the groups 
+#   proportions = c(0.221, 0.174, 0.355, 0.245),                     # set the proportions for each group
+#   strata = NULL) %>%               # do not stratify by gender 
+#   rename(patient_origin = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
+#          population = n)
+
 ```
 
 
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+lab_data
+
+If you have lab data, you can read it in here.
+You will need to make sure that your identifier (e.g. case_number) matches the
+linelist.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r lab_data}
-## OPTIONAL: this section can be used to read in lab data
-## make sure that your unique identifiers (e.g. case_number) match with the linelist! 
-## - [ ] DELETE THE FAKE DATA SECTION!!
+## Read data -------------------------------------------------------------------
+## This step reads in your lab data from Excel.
+## You may need to rename your columns.
 
-## Read data ------------------------------------
-## When you copy and paste file paths, you need to change \ to /.
-##
-
-## Excel file
 ## to read in a specific sheet use "which"
 # lab_data <- rio::import(here("labresults.xlsx"), which = "Sheet1")
 
-## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
+## repeat preparation steps as appropriate
 ## make sure your unique ID variable name matches!
 
-## Fake data ------------------------------------ 
-## THE BELOW CAN BE DELETED IF YOU HAVE YOUR OWN (REAL) LABORATORY DATA! 
-## its just to be able to demonstrate script in this template
+
+
+## Fake data -------------------------------------------------------------------
+## THE BELOW SHOULD BE DELETED IF YOU HAVE YOUR OWN (REAL) LABORATORY DATA! 
+## We put this here to demonstrate this template
 
 # # generate artificial lab tests results
 # lab_results <- linelist_cleaned %>% 
@@ -486,42 +450,41 @@ population_data_age_months <- gen_population(total_pop = 5000,
 #                                             nrow(linelist_cleaned), 
 #                                             replace = TRUE)
 #                        )
-# 
-# # merging linelist with lab dataset 
+
+
+
+## Merge lab to linelist -------------------------------------------------------
 # linelist_cleaned <- left_join(linelist_cleaned, lab_results, 
 #                               by = "case_number")
 ```
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+browse_data
 
+You'll want to look at your data. Here are a few ways you can explore.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r browse_data, eval = FALSE}
-## Browsing data ---------------------------------
-## here are a few ways to do data explorations 
-
 ## view the first ten rows of data
 head(linelist_cleaned, n = 10)
 
-## view your whole dataset interactivley (in an excel style format)
-## Remember that `View` needs to be written with a capital *V*
+## view your whole dataset interactively (in an excel style format)
 View(linelist_cleaned)
 
 ## overview of variable types and contents
 str(linelist_cleaned)
 
-## gives mean, median and max values of variables
-## gives counts for categorical variables
+## get summary: 
+## mean, median and max values of numeric variables
+## counts for categorical variables
 ## also gives number of NAs
 summary(linelist_cleaned)
 
 ## view unique values contained in variables 
-unique(linelist_cleaned$sex)
+## you can run this for any column -- just replace the column name
+unique(linelist_cleaned$patient_origin) 
 
-## another alternative is with the "summarytools package"
-## use the dfSummary function in combination with view
-## note that view is not capitalised with this package
-# install.packages("summarytools")
-# summarytools::view(summarytools::dfSummary(linelist_cleaned))
 ```
 
 
