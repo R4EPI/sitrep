@@ -98,20 +98,32 @@
 #' @examples
 #'
 #'
-#' # define datasets
+#' # define a fake dataset of survey data
+#' # including household and individual information
 #' x <- tibble::tribble(
 #'   ~cluster, ~household_id, ~eligibile_n, ~surveyed_n, ~individual_id, ~age_grp, ~sex, ~outcome,
-#'   "Village A",             1,            6,           4,              1,   "0-10",  "M",      "Y",
-#'   "Village A",             1,            6,           4,              2,  "20-30",  "F",      "Y",
-#'   "Village A",             1,            6,           4,              3,  "30-40",  "M",      "N",
-#'   "Village A",             1,            6,           4,              4,  "50-60",  "F",      "N",
-#'   "Village A",             2,            6,           4,              4,  "50-60",  "F",      "N",
-#'   "Village B",             2,            3,           3,              1,  "20-30",  "M",      "N",
-#'   "Village B",             2,            3,           3,              2,  "50-60",  "F",      "N",
-#'   "Village B",             2,            3,           3,              3,  "30-40",  "F",      "Y"
+#'   "Village A",             1,            6,           4,              1,   "0-10",  "Male",        "Y",
+#'   "Village A",             1,            6,           4,              2,  "20-30",  "Female",      "Y",
+#'   "Village A",             1,            6,           4,              3,  "30-40",  "Male",        "N",
+#'   "Village A",             1,            6,           4,              4,  "50-60",  "Female",      "N",
+#'   "Village A",             2,            6,           4,              4,  "50-60",  "Female",      "N",
+#'   "Village B",             2,            3,           3,              1,  "20-30",  "Male",        "N",
+#'   "Village B",             2,            3,           3,              2,  "50-60",  "Female",      "N",
+#'   "Village B",             2,            3,           3,              3,  "30-40",  "Female",      "Y"
 #' )
 #'
+#' # define a fake population data set
+#' # including age group, sex, counts and proportions
+#' p <- sitrep::gen_population(total = 10000,
+#'  groups = c("0-10", "10-20", "30-40", "40-50", "50-60"),
+#'  proportions = c(0.1, 0.2, 0.3, 0.2, 0.1)) %>%
+#'  # make sure col names match survey dataset
+#'  dplyr::rename(age_grp = groups,
+#'  sex = strata,
+#'  population = n)
 #'
+#' # define a fake dataset of cluster listings
+#' # including cluster names and number of households
 #' cz <- tibble::tribble(
 #'   ~cluster, ~n_houses,
 #'   "Village A",        23,
@@ -120,10 +132,30 @@
 #'   "Village D",        38
 #' )
 #'
+#'
+#' # add weights to a stratified simple random sample
+#' # weight based on age group and sex
+#' add_weights(x, p = p, age_grp, sex,
+#' population = n, method = "stratified")
+#'
+#' # add weights to a cluster sample
+#' # include weights for cluster, household and individual levels
 #' add_weights(x, cz = cz,
 #' cluster_cz = cluster, household_cz = n_houses,
 #' cluster_x = cluster, household_x = household_id,
 #' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
+#' ignore_cluster = FALSE, ignore_household = FALSE,
+#' method = "cluster")
+#'
+#'
+#' # add weights to a cluster sample
+#' # ignore weights for cluster and household level (set equal to 1)
+#' # only include weights at individual level
+#' add_weights(x, cz = cz,
+#' cluster_cz = cluster, household_cz = n_houses,
+#' cluster_x = cluster, household_x = household_id,
+#' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
+#' ignore_cluster = TRUE, ignore_household = TRUE,
 #' method = "cluster")
 #'
 
