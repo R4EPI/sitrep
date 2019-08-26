@@ -195,8 +195,8 @@ add_weights <- function(x, p, cz = NULL, ... , population,
       ## chance of a household being selected in each cluster
       # number of households chosen in each cluster
       n_households_chosen <- dplyr::summarise(
-        dplyr::group_by(x, clus_id_x),
-        n_hh = sum(!duplicated(hh_id_x))
+        dplyr::group_by(x, {{cluster_x}}),
+        n_hh = sum(!duplicated({{household_x}}))
         )
 
       # join counts of households surveyed to list of clusters
