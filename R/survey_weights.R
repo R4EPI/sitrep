@@ -34,36 +34,36 @@
 #'
 #'
 #' @param x a data frame of survey data
-#' 
+#'
 #' @param p a data frame containing popuplation data for groups in `...`
-#' 
+#'
 #' @param cz a data frame containing a list of clusters and the number of
 #'   households in each. Default is NULL as the default `method` is "stratified".
-#' 
+#'
 #' @param ... shared grouping columns across both `x` and `p`. These are used
 #'   to match the weights to the correct subset of the pouplation.
 #'   Used only when `method` is "stratified".
-#' 
+#'
 #' @param population the column in `p` that defines the pouplation numbers
-#' 
+#'
 #' @param cluster_cz the column in `cz` that lists all possible clusters.
 #'   Ignored if `method` is not "cluster" or if `ignore_cluster` is TRUE.
-#' 
+#'
 #' @param household_cz the column in `cz` that lists the number of households per cluster.
 #'   Ignored if `method` is not "cluster" or if `ignore_household` is TRUE.
-#' 
+#'
 #' @param cluster_x the column in `x` that indicates which cluster rows belong to.
 #'   Ignored if `method` is not "cluster" or if `ignore_cluster` is TRUE.
-#' 
+#'
 #' @param household_x the column in `x` that indicates a unique household identifier.
 #'   Ignored if `method` is not "cluster or if `ignore_household` is TRUE.
-#' 
+#'
 #' @param individuals_eligible_x the column in `x` which specifies the number of people
 #'   eligible for being interviewed in that household. (e.g. the total number of children)
-#' 
+#'
 #' @param individuals_interviewed_x the column in `x` which specifies the number of people
 #'   actually interviewed in that household.
-#' 
+#'
 #' @param method what type of survey method you would like to use. Options are
 #'   "stratified" (default) and "cluster".
 #'   - Stratified: takes variables grouped population counts from `p` and divides
@@ -71,28 +71,28 @@
 #'   - Cluster: Will multiply the inverse chances of a cluster being selected, a household
 #'     being selected within a cluster, and an individual being selected within a household.
 #' As follows:
-#' unique(cluster_cz) / unique(cluster_x) *
-#' unique(household_cz) / unique(household_x) *
-#' individuals_eligible_x / individuals_interviewed_x
+#' (unique(cluster_cz) / unique(cluster_x)) *
+#' (unique(household_cz) / unique(household_x)) *
+#' (individuals_eligible_x / individuals_interviewed_x)
 #' In the case where ignore_cluster and ignore_household are TRUE, this will simply be:
 #' 1 * 1 * individuals_eligible_x / inidivudals_interviewed_x
-#' 
+#'
 #' @param ignore_cluster If TRUE, set the weight for clusters to be 1. This
 #'   assumes that your sample was taken in a way which is a close approximation
 #'   of a simple random sample.  Ignores inputs from `cluster_cz` as well as
 #'   `cluster_x`.  Default is TRUE, as the default `method` is "stratified".
-#' 
+#'
 #' @param ignore_household If TRUE, set the weight for households to be 1. This
 #'   assumes that your sample of households was takenin a way which is a close
 #'   approximation of a simple random sample. Ignores inputs from `household_cz`
 #'   and `household_x`.  Default is TRUE, as the default `method` is "stratified".
-#' 
+#'
 #' @param surv_weight the name of the new column to store the weights. Defaults to
 #'   "surv_weight".
-#' 
+#'
 #' @param surv_weight_ID the name of the new ID column to be created. Defaults to
 #'   "surv_weight_ID"
-#' 
+#'
 #' @author Zhian N. Kamvar Alex Spina Lukas Richter
 #' @export
 #' @examples
@@ -119,6 +119,12 @@
 #'   "Village C",        56,
 #'   "Village D",        38
 #' )
+#'
+#' add_weights(x, cz = cz,
+#' cluster_cz = cluster, household_cz = n_houses,
+#' cluster_x = cluster, household_x = household_id,
+#' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
+#' method = "cluster")
 #'
 
 
@@ -176,48 +182,48 @@ add_weights <- function(x, p, cz = NULL, ... , population,
     } else {
       ## chance of a cluster being selected
       # the total number of clusters in the area
-      n_clusters_total  <- summarise(cz, nclus_tot = sum(!duplicated(clus_id_cz)))
+      n_clusters_total  <- length(unique(cz[[clus_id_cz]]))
       # the number of clusters that were surveyed
-      n_clusters_chosen <- summarise(x, nclus = sum(!duplicated(clus_id_x)))
+      n_clusters_chosen <- length(unique(x[[clus_id_x]]))
       # inverse chance of a cluster being chosen
-      cluster_chance <- as.numeric(n_clusters_total / n_clusters_chosen)
+      cluster_chance <- n_clusters_total / n_clusters_chosen
     }
 
     if (ignore_household) {
-      c$hh_chance <- 1
+      cz$hh_chance <- 1
     } else {
       ## chance of a household being selected in each cluster
       # number of households chosen in each cluster
-      n_households_chosen <- summarise(
-        group_by(x, cluster_id_x),
+      n_households_chosen <- dplyr::summarise(
+        dplyr::group_by(x, clus_id_x),
         n_hh = sum(!duplicated(hh_id_x))
         )
 
       # join counts of households surveyed to list of clusters
-      cz <- left_join(cz, n_households_chosen, by = c(clus_id_cz = clus_id_x))
+      cz <- dplyr::left_join(cz, n_households_chosen, by = setNames(clus_id_x, clus_id_cz))
 
       # inverse chance of a household being chosen in each cluster
-      cz <- mutate(cz, hh_chance = hh_id_cz / n_hh)
+      cz[["hh_chance"]] <- cz[[hh_id_cz]] / cz[["n_hh"]]
     }
 
 
     # multiply cluster chance and household chance
-    cz$clus_hh_chance <- cz$hh_chance * czluster_chance
+    cz$clus_hh_chance <- cz$hh_chance * cluster_chance
 
 
 
     ## chance of an individual being selected in their household
     # create a subset - so we dont merge too many vars in later
-    temp <- select(x, clus_id_x,
+    temp <- dplyr::select(x, clus_id_x,
                    hh_id_x,
                    indiv_eli,
                    indiv_surv)
 
     # inverse chance of individual being chosen in their household
-    temp <- mutate(temp, indiv_chance = indiv_eli / indiv_surv)
+    temp[["indiv_chance"]] <- temp[[indiv_eli]] / temp[[indiv_surv]]
 
     # add in the cluster_household chance
-    temp <- left_join(temp, cz, by = c(clus_id_x = clus_id_cz))
+    temp <- dplyr::left_join(temp, cz, by = setNames(clus_id_cz, clus_id_x))
 
     # create final weight by multiplying indivdual chance by cluster_household chance
     temp[[surv_weight]] <- temp$indiv_chance * temp$clus_hh_chance
@@ -226,10 +232,10 @@ add_weights <- function(x, p, cz = NULL, ... , population,
     temp <- tidyr::unite(temp, {{surv_weight_ID}}, clus_id_x, hh_id_x)
 
     # only keep the weight and the weight id
-    temp <- select(temp, {{surv_weight}}, {{surv_weight_ID}})
+    temp <- dplyr::select(temp, {{surv_weight}}, {{surv_weight_ID}})
 
     # bind weights on to original dataset
-    d <- bind_cols(x, temp)
+    d <- dplyr::bind_cols(x, temp)
 
     # return new dataset with weights
     d
