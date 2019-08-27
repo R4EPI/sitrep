@@ -9,7 +9,7 @@ test_that("Rates work with missing data", {
   pna5 <- attack_rate(c(5, NA, 5), c(NA, 10, 10))
   expect_is(pna5, "data.frame")
 
-  expect_identical(pna5$prop , c(NA, NA, p5$prop))
+  expect_identical(pna5$ar   , c(NA, NA, p5$ar))
   expect_identical(pna5$lower, c(NA, NA, p5$lower))
   expect_identical(pna5$upper, c(NA, NA, p5$upper))
   expect_identical(pna5$ar   , c(NA, NA, p5$ar))
@@ -21,12 +21,15 @@ test_that("CI gets narrower with increasing sample size", {
   expect_is(p5, "data.frame")
   expect_is(p50, "data.frame")
   expect_is(p500, "data.frame")
+
   # Proportions are equal ------
-  expect_identical(p5$prop, p50$prop)
-  expect_identical(p50$prop, p500$prop)
+  expect_identical(p5$ar, p50$cfr)
+  expect_identical(p50$cfr, p500$ar)
+
   # Lower CI increases ------
   expect_lt(p5$lower, p50$lower)
   expect_lt(p50$lower, p500$lower)
+
   # Upper CI decreases ------
   expect_gt(p5$upper, p50$upper)
   expect_gt(p50$upper, p500$upper)
