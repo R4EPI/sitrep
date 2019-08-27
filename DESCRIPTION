@@ -82,6 +82,7 @@ Collate:
     'inline_fun.R'
     'msf_dict_survey.R'
     'nutrition.R'
+    'pull_epitable.R'
     'relabel_proportions.R'
     'sample-size.R'
     'survey.R'

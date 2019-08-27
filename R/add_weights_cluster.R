@@ -163,10 +163,7 @@ add_weights_cluster <- function(x, cz = NULL,
 
     ## chance of an individual being selected in their household
     # create a subset - so we dont merge too many vars in later
-    temp <- dplyr::select(x, clus_id_x,
-                   hh_id_x,
-                   indiv_eli,
-                   indiv_surv)
+    temp <- dplyr::select(x, clus_id_x, hh_id_x, indiv_eli, indiv_surv)
 
     # inverse chance of individual being chosen in their household
     temp[["indiv_chance"]] <- temp[[indiv_eli]] / temp[[indiv_surv]]
