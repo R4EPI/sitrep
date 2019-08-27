@@ -4,6 +4,18 @@ p5   <- attack_rate(5, 10)
 p50  <- case_fatality_rate(50, 100)
 p500 <- attack_rate(500, 1000)
 
+test_that("Rates work with missing data", {
+
+  pna5 <- attack_rate(c(5, NA, 5), c(NA, 10, 10))
+  expect_is(pna5, "data.frame")
+
+  expect_identical(pna5$prop , c(NA, NA, p5$prop))
+  expect_identical(pna5$lower, c(NA, NA, p5$lower))
+  expect_identical(pna5$upper, c(NA, NA, p5$upper))
+  expect_identical(pna5$ar   , c(NA, NA, p5$ar))
+
+})
+
 test_that("CI gets narrower with increasing sample size", {
   # All are data frames ------
   expect_is(p5, "data.frame")
@@ -33,3 +45,4 @@ test_that("mortality rates work", {
   expect_named(mr, c("deaths", "population", "mortality per 100 000", "lower", "upper"))
   expect_equal(mr$"mortality per 100 000", 37.02, tol = 0.01)
 })
+
