@@ -1,81 +1,39 @@
-#' Add a column of survey weights to a data frame.
+#' Add a column of cluster survey weights to a data frame.
 #' For use in surveys where you took a sample population out of a larger
-#' source population.
+#' source population, with a cluster survey design.
 #'
-#' NOTES TO OURSELVES:
-#' We want to have two options for weighting:
+#' Will multiply the inverse chances of a cluster being selected, a household
+#'     being selected within a cluster, and an individual being selected within a household.
+#' As follows:
+#' (unique(cluster_cz) / unique(cluster_x)) *
+#' (unique(household_cz) / unique(household_x)) *
+#' (individuals_eligible_x / individuals_interviewed_x)
 #'
-#' - Strata: What we already have in previous version.
-#'           Just want to weight each person based on the source population.
-#'           E.g. if we want to stratify our analysis based on age and sex in two
-#'           different camps. Then we need the population breakdown by age and sex
-#'           in those two camps. Then the function just creates a multiplier,
-#'           by divding the number from the source population by the number in
-#'           the sample population.
-#'
-#' - Cluster: This is more complex. Cluster sampling involves first choosing a
-#'           number of clusters from a list of all clusters (e.g. pick a few villages
-#'           out of all villages in an area),
-#'           then within those villages choosing houses (theres several methods for this),
-#'           and finally at the household level you either interview one person
-#'           or everyone in that household.
-#'           So the population no longer matters,
-#'           instead of being population counts as in the above stratified example,
-#'           you have a list of all clusters in the area with the number of houses
-#'           within each cluster.
-#'           Your survey dataset is collected with two levels, one for household
-#'           and one for individual. But those two levels are merged, so for
-#'           each individual there are two variables included: number of people in
-#'           household, and number of people surveyed.
-#'           To calculate the weight for each individual, you multiply the inverses
-#'           (i.e. 1 over) the probability of: a cluster being chosen,
-#'           a household being chosen in that cluster, an individual being chosen
-#'           in their household.
-#'
+#' In the case where ignore_cluster and ignore_household are TRUE, this will simply be:
+#' 1 * 1 * individuals_eligible_x / inidivudals_interviewed_x
 #'
 #' @param x a data frame of survey data
-#'
-#' @param p a data frame containing popuplation data for groups in `...`
 #'
 #' @param cz a data frame containing a list of clusters and the number of
 #'   households in each. Default is NULL as the default `method` is "stratified".
 #'
-#' @param ... shared grouping columns across both `x` and `p`. These are used
-#'   to match the weights to the correct subset of the pouplation.
-#'   Used only when `method` is "stratified".
-#'
-#' @param population the column in `p` that defines the pouplation numbers
-#'
 #' @param cluster_cz the column in `cz` that lists all possible clusters.
-#'   Ignored if `method` is not "cluster" or if `ignore_cluster` is TRUE.
+#'   Ignored if `ignore_cluster` is TRUE.
 #'
 #' @param household_cz the column in `cz` that lists the number of households per cluster.
-#'   Ignored if `method` is not "cluster" or if `ignore_household` is TRUE.
+#'   Ignored if `ignore_household` is TRUE.
 #'
 #' @param cluster_x the column in `x` that indicates which cluster rows belong to.
-#'   Ignored if `method` is not "cluster" or if `ignore_cluster` is TRUE.
+#'   Ignored if `ignore_cluster` is TRUE.
 #'
 #' @param household_x the column in `x` that indicates a unique household identifier.
-#'   Ignored if `method` is not "cluster or if `ignore_household` is TRUE.
+#'   Ignored if `ignore_household` is TRUE.
 #'
 #' @param individuals_eligible_x the column in `x` which specifies the number of people
 #'   eligible for being interviewed in that household. (e.g. the total number of children)
 #'
 #' @param individuals_interviewed_x the column in `x` which specifies the number of people
 #'   actually interviewed in that household.
-#'
-#' @param method what type of survey method you would like to use. Options are
-#'   "stratified" (default) and "cluster".
-#'   - Stratified: takes variables grouped population counts from `p` and divides
-#'     the corresponding groups by counts of variables in `...` in `x`, to create a weight.
-#'   - Cluster: Will multiply the inverse chances of a cluster being selected, a household
-#'     being selected within a cluster, and an individual being selected within a household.
-#' As follows:
-#' (unique(cluster_cz) / unique(cluster_x)) *
-#' (unique(household_cz) / unique(household_x)) *
-#' (individuals_eligible_x / individuals_interviewed_x)
-#' In the case where ignore_cluster and ignore_household are TRUE, this will simply be:
-#' 1 * 1 * individuals_eligible_x / inidivudals_interviewed_x
 #'
 #' @param ignore_cluster If TRUE, set the weight for clusters to be 1. This
 #'   assumes that your sample was taken in a way which is a close approximation
@@ -112,15 +70,6 @@
 #'   "Village B",             2,            3,           3,              3,  "30-40",  "Female",      "Y"
 #' )
 #'
-#' # define a fake population data set
-#' # including age group, sex, counts and proportions
-#' p <- sitrep::gen_population(total = 10000,
-#'  groups = c("0-10", "10-20", "20-30", "30-40", "40-50", "50-60"),
-#'  proportions = c(0.1, 0.2, 0.3, 0.4, 0.2, 0.1)) %>%
-#'  # make sure col names match survey dataset
-#'  dplyr::rename(age_grp = groups,
-#'  sex = strata,
-#'  population = n)
 #'
 #' # define a fake dataset of cluster listings
 #' # including cluster names and number of households
@@ -133,69 +82,31 @@
 #' )
 #'
 #'
-#' # add weights to a stratified simple random sample
-#' # weight based on age group and sex
-#' add_weights(x, p = p, age_grp, sex,
-#' population = population, method = "stratified")
-#'
 #' # add weights to a cluster sample
 #' # include weights for cluster, household and individual levels
-#' add_weights(x, cz = cz,
+#' add_cluster_weights(x, cz = cz,
 #' cluster_cz = cluster, household_cz = n_houses,
 #' cluster_x = cluster, household_x = household_id,
 #' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
-#' ignore_cluster = FALSE, ignore_household = FALSE,
-#' method = "cluster")
+#' ignore_cluster = FALSE, ignore_household = FALSE)
 #'
 #'
 #' # add weights to a cluster sample
 #' # ignore weights for cluster and household level (set equal to 1)
 #' # only include weights at individual level
-#' add_weights(x, cz = cz,
+#' add_cluster_weights(x, cz = cz,
 #' cluster_cz = cluster, household_cz = n_houses,
 #' cluster_x = cluster, household_x = household_id,
 #' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
-#' ignore_cluster = TRUE, ignore_household = TRUE,
-#' method = "cluster")
+#' ignore_cluster = TRUE, ignore_household = TRUE)
 #'
 
 
-add_weights <- function(x, p, cz = NULL, ... , population,
+add_cluster_weights <- function(x, cz = NULL,
                         cluster_cz, household_cz,
                         cluster_x, household_x, individuals_eligible_x, individuals_interviewed_x,
-                        method = "stratified",
                         ignore_cluster = TRUE, ignore_household = TRUE,
                         surv_weight = "surv_weight", surv_weight_ID =  "surv_weight_ID") {
-
-  # stratified method is straight forward - lifted directly from old function version
-  if (method == "stratified") {
-    .dots      <- rlang::enquos(...)
-    population <- rlang::enquo(population)
-    surv_weight_ID  <- rlang::enquo(surv_weight_ID)
-    surv_weight     <- rlang::enquo(surv_weight)
-
-    # create a merger ID by age group and sex
-    p <- tidyr::unite(p, "ID", !!! .dots)
-
-    # get study sample counts
-    counts <- dplyr::count(x, !!! .dots)
-    counts <- tidyr::unite(counts, "ID", !!! .dots)
-    counts <- dplyr::select(counts, .data$ID, .data$n)
-
-    # merge counts to population data
-    p <- dplyr::left_join(p, counts, by = "ID")
-
-    # create weight variable
-    p <- dplyr::mutate(p, !! surv_weight := !! population / .data$n)
-    p <- dplyr::select(p, .data$ID, !! surv_weight)
-
-
-    # merge to study sample
-    merge_by <- "ID"
-    names(merge_by) <- as.character(rlang::expr(surv_weight_ID))
-    d <- tidyr::unite(x, !! surv_weight_ID, !!! .dots, remove = FALSE)
-    d <- dplyr::left_join(d, p, by = merge_by)
-  }  else {
 
     # cluster method
 
@@ -268,10 +179,8 @@ add_weights <- function(x, p, cz = NULL, ... , population,
     # bind weights on to original dataset
     d <- dplyr::bind_cols(x, temp)
 
-  }
-
-  # return new dataset with weights
-  d
+    # return new dataset with weights
+    d
 
 }
 

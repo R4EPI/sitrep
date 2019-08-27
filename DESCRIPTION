@@ -65,6 +65,8 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.1
 Collate: 
+    'add_cluster_weights.R'
+    'add_weights.R'
     'age-categories.R'
     'age-pyramid.R'
     'cfr.R'
@@ -79,11 +81,9 @@ Collate:
     'inline_fun.R'
     'msf_dict_survey.R'
     'nutrition.R'
-    'population_weights.R'
     'relabel_proportions.R'
     'sample-size.R'
     'survey.R'
-    'survey_weights.R'
     'tabulate_survey.R'
     'template_data_frame.R'
     'unite_ci.R'
