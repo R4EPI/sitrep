@@ -193,6 +193,8 @@ proportion <- function(x, n, conf_level = 0.95, multiplier = 100) {
   res[missing_data, ] <- NA_real_
 
   colnames(res) <- c("x", "n", "prop", "lower", "upper")
+  res$x     <- x
+  res$n     <- n
   res$prop  <- (x / n)   * multiplier
   res$lower <- res$lower * multiplier
   res$upper <- res$upper * multiplier

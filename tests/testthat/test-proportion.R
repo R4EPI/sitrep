@@ -9,10 +9,11 @@ test_that("Rates work with missing data", {
   pna5 <- attack_rate(c(5, NA, 5), c(NA, 10, 10))
   expect_is(pna5, "data.frame")
 
-  expect_identical(pna5$ar   , c(NA, NA, p5$ar))
-  expect_identical(pna5$lower, c(NA, NA, p5$lower))
-  expect_identical(pna5$upper, c(NA, NA, p5$upper))
-  expect_identical(pna5$ar   , c(NA, NA, p5$ar))
+  expect_identical(pna5$cases     , c(5 , NA, p5$cases))
+  expect_identical(pna5$population, c(NA, 10, p5$population))
+  expect_identical(pna5$ar        , c(NA, NA, p5$ar))
+  expect_identical(pna5$lower     , c(NA, NA, p5$lower))
+  expect_identical(pna5$upper     , c(NA, NA, p5$upper))
 
 })
 
