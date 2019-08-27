@@ -16,6 +16,13 @@ test_that("Rates work with missing data", {
 
 })
 
+test_that("mismatched data are rejected", {
+
+  err <- "the length of the population vector (2) does not match the length of the cases/deaths vector (1)"
+  expect_error(attack_rate(5, c(10, 11)), err, fixed = TRUE) 
+
+})
+
 test_that("CI gets narrower with increasing sample size", {
   # All are data frames ------
   expect_is(p5, "data.frame")
