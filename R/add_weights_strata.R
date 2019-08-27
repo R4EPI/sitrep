@@ -37,9 +37,9 @@
 #' # including age group, sex, counts and proportions
 #' p <- sitrep::gen_population(total = 10000,
 #'  groups = c("0-10", "10-20", "20-30", "30-40", "40-50", "50-60"),
-#'  proportions = c(0.1, 0.2, 0.3, 0.4, 0.2, 0.1)) %>%
+#'  proportions = c(0.1, 0.2, 0.3, 0.4, 0.2, 0.1))
 #'  # make sure col names match survey dataset
-#'  dplyr::rename(age_grp = groups,
+#'  p <- dplyr::rename(p, age_grp = groups,
 #'  sex = strata,
 #'  population = n)
 #'
