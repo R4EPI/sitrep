@@ -45,12 +45,12 @@
 #'
 #' # add weights to a stratified simple random sample
 #' # weight based on age group and sex
-#' add_weights(x, p = p, age_grp, sex,
+#' add_weights_strata(x, p = p, age_grp, sex,
 #' population = population)
 #'
 
 
-add_weights <- function(x, p, ..., population = population, surv_weight = surv_weight, surv_weight_ID = surv_weight_ID) {
+add_weights_strata <- function(x, p, ..., population = population, surv_weight = surv_weight, surv_weight_ID = surv_weight_ID) {
 
   .dots      <- rlang::enquos(...)
   population <- rlang::enquo(population)

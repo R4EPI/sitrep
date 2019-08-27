@@ -84,7 +84,7 @@
 #'
 #' # add weights to a cluster sample
 #' # include weights for cluster, household and individual levels
-#' add_cluster_weights(x, cz = cz,
+#' add_weights_cluster(x, cz = cz,
 #' cluster_cz = cluster, household_cz = n_houses,
 #' cluster_x = cluster, household_x = household_id,
 #' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
@@ -94,7 +94,7 @@
 #' # add weights to a cluster sample
 #' # ignore weights for cluster and household level (set equal to 1)
 #' # only include weights at individual level
-#' add_cluster_weights(x, cz = cz,
+#' add_weights_cluster(x, cz = cz,
 #' cluster_cz = cluster, household_cz = n_houses,
 #' cluster_x = cluster, household_x = household_id,
 #' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
@@ -102,7 +102,7 @@
 #'
 
 
-add_cluster_weights <- function(x, cz = NULL,
+add_weights_cluster <- function(x, cz = NULL,
                         cluster_cz, household_cz,
                         cluster_x, household_x, individuals_eligible_x, individuals_interviewed_x,
                         ignore_cluster = TRUE, ignore_household = TRUE,
