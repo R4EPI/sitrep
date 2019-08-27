@@ -302,7 +302,7 @@ Checklist to update this script to match your data:
 [ ] Recode variable contents to match the dictionary
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r prep_nonDHIS_data, warning = FALSE, message = FALSE}
+```{r prep_nonDHIS_data, warning = FALSE, message = FALSE, eval = FALSE}
 ## MSF AJS Dictionary ----------------------------------------------------------
 ## This step shows you the data dictionary.
 
