@@ -1,13 +1,19 @@
 #' Add a column of cluster survey weights to a data frame.
+#'
 #' For use in surveys where you took a sample population out of a larger
 #' source population, with a cluster survey design.
 #'
 #' Will multiply the inverse chances of a cluster being selected, a household
-#'     being selected within a cluster, and an individual being selected within a household.
+#' being selected within a cluster, and an individual being selected within a
+#' household.
+#' 
 #' As follows:
+#'
+#' ```
 #' (unique(cluster_cz) / unique(cluster_x)) *
 #' (unique(household_cz) / unique(household_x)) *
 #' (individuals_eligible_x / individuals_interviewed_x)
+#' ```
 #'
 #' In the case where ignore_cluster and ignore_household are TRUE, this will simply be:
 #' 1 * 1 * individuals_eligible_x / inidivudals_interviewed_x
@@ -58,23 +64,24 @@
 #'
 #' # define a fake dataset of survey data
 #' # including household and individual information
-#' x <- tibble::tribble(
-#'   ~cluster, ~household_id, ~eligibile_n, ~surveyed_n, ~individual_id, ~age_grp, ~sex, ~outcome,
-#'   "Village A",             1,            6,           4,              1,   "0-10",  "Male",        "Y",
-#'   "Village A",             1,            6,           4,              2,  "20-30",  "Female",      "Y",
-#'   "Village A",             1,            6,           4,              3,  "30-40",  "Male",        "N",
-#'   "Village A",             1,            6,           4,              4,  "50-60",  "Female",      "N",
-#'   "Village A",             2,            6,           4,              4,  "50-60",  "Female",      "N",
-#'   "Village B",             2,            3,           3,              1,  "20-30",  "Male",        "N",
-#'   "Village B",             2,            3,           3,              2,  "50-60",  "Female",      "N",
-#'   "Village B",             2,            3,           3,              3,  "30-40",  "Female",      "Y"
+#' x <- data.frame(stringsAsFactors=FALSE,
+#'          cluster = c("Village A", "Village A", "Village A", "Village A",
+#'                      "Village A", "Village B", "Village B", "Village B"),
+#'     household_id = c(1, 1, 1, 1, 2, 2, 2, 2),
+#'      eligibile_n = c(6, 6, 6, 6, 6, 3, 3, 3),
+#'       surveyed_n = c(4, 4, 4, 4, 4, 3, 3, 3),
+#'    individual_id = c(1, 2, 3, 4, 4, 1, 2, 3),
+#'          age_grp = c("0-10", "20-30", "30-40", "50-60", "50-60", "20-30",
+#'                      "50-60", "30-40"),
+#'              sex = c("Male", "Female", "Male", "Female", "Female", "Male",
+#'                      "Female", "Female"),
+#'          outcome = c("Y", "Y", "N", "N", "N", "N", "N", "Y")
 #' )
-#'
 #'
 #' # define a fake dataset of cluster listings
 #' # including cluster names and number of households
 #' cz <- tibble::tribble(
-#'   ~cluster, ~n_houses,
+#'      ~cluster, ~n_houses,
 #'   "Village A",        23,
 #'   "Village B",        42,
 #'   "Village C",        56,
@@ -84,24 +91,24 @@
 #'
 #' # add weights to a cluster sample
 #' # include weights for cluster, household and individual levels
-#' add_weights_cluster(x, cz = cz,
-#' cluster_cz = cluster, household_cz = n_houses,
-#' cluster_x = cluster, household_x = household_id,
-#' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
-#' ignore_cluster = FALSE, ignore_household = FALSE)
+#' add_weights_cluster(x, cz = cz, 
+#'                     cluster_cz = cluster, household_cz = n_houses,
+#'                     cluster_x = cluster,  household_x = household_id,
+#'                     individuals_eligible_x = eligibile_n, 
+#'                     individuals_interviewed_x = surveyed_n,
+#'                     ignore_cluster = FALSE, ignore_household = FALSE)
 #'
 #'
 #' # add weights to a cluster sample
 #' # ignore weights for cluster and household level (set equal to 1)
 #' # only include weights at individual level
-#' add_weights_cluster(x, cz = cz,
-#' cluster_cz = cluster, household_cz = n_houses,
-#' cluster_x = cluster, household_x = household_id,
-#' individuals_eligible_x = eligibile_n, individuals_interviewed_x = surveyed_n,
-#' ignore_cluster = TRUE, ignore_household = TRUE)
+#' add_weights_cluster(x, cz = cz, 
+#'                     cluster_cz = cluster, household_cz = n_houses,
+#'                     cluster_x = cluster,  household_x = household_id,
+#'                     individuals_eligible_x = eligibile_n, 
+#'                     individuals_interviewed_x = surveyed_n,
+#'                     ignore_cluster = TRUE, ignore_household = TRUE)
 #'
-
-
 add_weights_cluster <- function(x, cz = NULL,
                         cluster_cz, household_cz,
                         cluster_x, household_x, individuals_eligible_x, individuals_interviewed_x,
@@ -113,10 +120,10 @@ add_weights_cluster <- function(x, cz = NULL,
     # define vars
     clus_id_cz <- tidyselect::vars_select(colnames(cz), {{cluster_cz}})
     hh_id_cz   <- tidyselect::vars_select(colnames(cz), {{household_cz}})
-    clus_id_x <- tidyselect::vars_select(colnames(x), {{cluster_x}})
-    hh_id_x   <- tidyselect::vars_select(colnames(x), {{household_x}})
-    indiv_eli   <- tidyselect::vars_select(colnames(x), {{individuals_eligible_x}})
-    indiv_surv   <- tidyselect::vars_select(colnames(x), {{individuals_interviewed_x}})
+    clus_id_x  <- tidyselect::vars_select(colnames(x),  {{cluster_x}})
+    hh_id_x    <- tidyselect::vars_select(colnames(x),  {{household_x}})
+    indiv_eli  <- tidyselect::vars_select(colnames(x),  {{individuals_eligible_x}})
+    indiv_surv <- tidyselect::vars_select(colnames(x),  {{individuals_interviewed_x}})
 
 
     if (ignore_cluster) {
