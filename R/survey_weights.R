@@ -115,8 +115,8 @@
 #' # define a fake population data set
 #' # including age group, sex, counts and proportions
 #' p <- sitrep::gen_population(total = 10000,
-#'  groups = c("0-10", "10-20", "30-40", "40-50", "50-60"),
-#'  proportions = c(0.1, 0.2, 0.3, 0.2, 0.1)) %>%
+#'  groups = c("0-10", "10-20", "20-30", "30-40", "40-50", "50-60"),
+#'  proportions = c(0.1, 0.2, 0.3, 0.4, 0.2, 0.1)) %>%
 #'  # make sure col names match survey dataset
 #'  dplyr::rename(age_grp = groups,
 #'  sex = strata,
@@ -136,7 +136,7 @@
 #' # add weights to a stratified simple random sample
 #' # weight based on age group and sex
 #' add_weights(x, p = p, age_grp, sex,
-#' population = n, method = "stratified")
+#' population = population, method = "stratified")
 #'
 #' # add weights to a cluster sample
 #' # include weights for cluster, household and individual levels
@@ -195,7 +195,6 @@ add_weights <- function(x, p, cz = NULL, ... , population,
     names(merge_by) <- as.character(rlang::expr(surv_weight_ID))
     d <- tidyr::unite(x, !! surv_weight_ID, !!! .dots, remove = FALSE)
     d <- dplyr::left_join(d, p, by = merge_by)
-    d
   }  else {
 
     # cluster method
@@ -269,10 +268,10 @@ add_weights <- function(x, p, cz = NULL, ... , population,
     # bind weights on to original dataset
     d <- dplyr::bind_cols(x, temp)
 
-    # return new dataset with weights
-    d
   }
 
+  # return new dataset with weights
+  d
 
 }
 
