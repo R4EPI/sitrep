@@ -12,11 +12,11 @@
 #' ```
 #' ((clusters available) / (clusters surveyed)) *
 #' ((households in each cluster) / (households surveyed in each cluster)) *
-#' ((individuals eligible in each household) / individuals interviewed))
+#' ((individuals eligible in each household) / (individuals interviewed))
 #' ```
 #'
 #' In the case where ignore_cluster and ignore_household are TRUE, this will simply be:
-#' 1 * 1 * individuals_eligible_x / inidivudals_interviewed_x
+#' 1 * 1 * (individuals eligible in each household) / (individuals interviewed)
 #'
 #' @param x a data frame of survey data
 #'
