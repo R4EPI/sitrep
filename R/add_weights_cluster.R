@@ -10,9 +10,9 @@
 #' As follows:
 #'
 #' ```
-#' (unique(cluster_cz) / unique(cluster_x)) *
-#' (unique(household_cz) / unique(household_x)) *
-#' (individuals_eligible_x / individuals_interviewed_x)
+#' ((clusters available) / (clusters surveyed)) *
+#' ((households in each cluster) / (households surveyed in each cluster)) *
+#' ((individuals eligible in each household) / individuals interviewed))
 #' ```
 #'
 #' In the case where ignore_cluster and ignore_household are TRUE, this will simply be:
