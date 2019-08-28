@@ -4,50 +4,51 @@
 \alias{add_weights_cluster}
 \title{Add a column of cluster survey weights to a data frame.}
 \usage{
-add_weights_cluster(x, cz = NULL, cluster_cz, household_cz, cluster_x,
-  household_x, individuals_eligible_x, individuals_interviewed_x,
+add_weights_cluster(x, cl, eligible, interviewed, cluster_x = NULL,
+  cluster_cl = NULL, household_x = NULL, household_cl = NULL,
   ignore_cluster = TRUE, ignore_household = TRUE,
   surv_weight = "surv_weight", surv_weight_ID = "surv_weight_ID")
 }
 \arguments{
 \item{x}{a data frame of survey data}
 
-\item{cz}{a data frame containing a list of clusters and the number of
-households in each. Default is NULL as the default \code{method} is "stratified".}
+\item{cl}{a data frame containing a list of clusters and the number of
+households in each.}
 
-\item{cluster_cz}{the column in \code{cz} that lists all possible clusters.
-Ignored if \code{ignore_cluster} is TRUE.}
+\item{eligible}{the column in \code{x} which specifies the number of people
+eligible for being interviewed in that household. (e.g. the total number of
+children)}
 
-\item{household_cz}{the column in \code{cz} that lists the number of households per cluster.
-Ignored if \code{ignore_household} is TRUE.}
-
-\item{cluster_x}{the column in \code{x} that indicates which cluster rows belong to.
-Ignored if \code{ignore_cluster} is TRUE.}
-
-\item{household_x}{the column in \code{x} that indicates a unique household identifier.
-Ignored if \code{ignore_household} is TRUE.}
-
-\item{individuals_eligible_x}{the column in \code{x} which specifies the number of people
-eligible for being interviewed in that household. (e.g. the total number of children)}
-
-\item{individuals_interviewed_x}{the column in \code{x} which specifies the number of people
+\item{interviewed}{the column in \code{x} which specifies the number of people
 actually interviewed in that household.}
 
-\item{ignore_cluster}{If TRUE, set the weight for clusters to be 1. This
-assumes that your sample was taken in a way which is a close approximation
-of a simple random sample.  Ignores inputs from \code{cluster_cz} as well as
-\code{cluster_x}.  Default is TRUE, as the default \code{method} is "stratified".}
+\item{cluster_x}{the column in \code{x} that indicates which cluster rows belong
+to. Ignored if \code{ignore_cluster} is TRUE.}
 
-\item{ignore_household}{If TRUE, set the weight for households to be 1. This
-assumes that your sample of households was takenin a way which is a close
-approximation of a simple random sample. Ignores inputs from \code{household_cz}
-and \code{household_x}.  Default is TRUE, as the default \code{method} is "stratified".}
+\item{cluster_cl}{the column in \code{cl} that lists all possible clusters.
+Ignored if \code{ignore_cluster} is TRUE.}
 
-\item{surv_weight}{the name of the new column to store the weights. Defaults to
-"surv_weight".}
+\item{household_x}{the column in \code{x} that indicates a unique household
+identifier. Ignored if \code{ignore_household} is TRUE.}
 
-\item{surv_weight_ID}{the name of the new ID column to be created. Defaults to
-"surv_weight_ID"}
+\item{household_cl}{the column in \code{cl} that lists the number of households
+per cluster.  Ignored if \code{ignore_household} is TRUE.}
+
+\item{ignore_cluster}{If TRUE (default), set the weight for clusters to be 1.
+This assumes that your sample was taken in a way which is a close
+approximation of a simple random sample. Ignores inputs from \code{cluster_cl}
+as well as \code{cluster_x}.}
+
+\item{ignore_household}{If TRUE (default), set the weight for households to
+be 1. This assumes that your sample of households was takenin a way which
+is a close approximation of a simple random sample. Ignores inputs from
+\code{household_cl} and \code{household_x}.}
+
+\item{surv_weight}{the name of the new column to store the weights. Defaults
+to "surv_weight".}
+
+\item{surv_weight_ID}{the name of the new ID column to be created. Defaults
+to "surv_weight_ID"}
 }
 \description{
 For use in surveys where you took a sample population out of a larger
@@ -58,13 +59,14 @@ Will multiply the inverse chances of a cluster being selected, a household
 being selected within a cluster, and an individual being selected within a
 household.
 
-As follows:\preformatted{(unique(cluster_cz) / unique(cluster_x)) *
-(unique(household_cz) / unique(household_x)) *
-(individuals_eligible_x / individuals_interviewed_x)
+As follows:\preformatted{((clusters available) / (clusters surveyed)) *
+((households in each cluster) / (households surveyed in each cluster)) *
+((individuals eligible in each household) / (individuals interviewed))
 }
 
-In the case where ignore_cluster and ignore_household are TRUE, this will simply be:
-1 * 1 * individuals_eligible_x / inidivudals_interviewed_x
+In the case where both ignore_cluster and ignore_household are TRUE, this
+will simply be:\preformatted{1 * 1 * (individuals eligible in each household) / (individuals interviewed)
+}
 }
 \examples{
 
@@ -75,7 +77,7 @@ x <- data.frame(stringsAsFactors=FALSE,
          cluster = c("Village A", "Village A", "Village A", "Village A",
                      "Village A", "Village B", "Village B", "Village B"),
     household_id = c(1, 1, 1, 1, 2, 2, 2, 2),
-     eligibile_n = c(6, 6, 6, 6, 6, 3, 3, 3),
+      eligible_n = c(6, 6, 6, 6, 6, 3, 3, 3),
       surveyed_n = c(4, 4, 4, 4, 4, 3, 3, 3),
    individual_id = c(1, 2, 3, 4, 4, 1, 2, 3),
          age_grp = c("0-10", "20-30", "30-40", "50-60", "50-60", "20-30",
@@ -87,7 +89,7 @@ x <- data.frame(stringsAsFactors=FALSE,
 
 # define a fake dataset of cluster listings
 # including cluster names and number of households
-cz <- tibble::tribble(
+cl <- tibble::tribble(
      ~cluster, ~n_houses,
   "Village A",        23,
   "Village B",        42,
@@ -98,25 +100,25 @@ cz <- tibble::tribble(
 
 # add weights to a cluster sample
 # include weights for cluster, household and individual levels
-add_weights_cluster(x, cz = cz, 
-                    cluster_cz = cluster, household_cz = n_houses,
+add_weights_cluster(x, cl = cl, 
+                    eligible = eligible_n, 
+                    interviewed = surveyed_n,
+                    cluster_cl = cluster, household_cl = n_houses,
                     cluster_x = cluster,  household_x = household_id,
-                    individuals_eligible_x = eligibile_n, 
-                    individuals_interviewed_x = surveyed_n,
                     ignore_cluster = FALSE, ignore_household = FALSE)
 
 
 # add weights to a cluster sample
 # ignore weights for cluster and household level (set equal to 1)
 # only include weights at individual level
-add_weights_cluster(x, cz = cz, 
-                    cluster_cz = cluster, household_cz = n_houses,
+add_weights_cluster(x, cl = cl, 
+                    eligible = eligible_n, 
+                    interviewed = surveyed_n,
+                    cluster_cl = cluster, household_cl = n_houses,
                     cluster_x = cluster,  household_x = household_id,
-                    individuals_eligible_x = eligibile_n, 
-                    individuals_interviewed_x = surveyed_n,
                     ignore_cluster = TRUE, ignore_household = TRUE)
 
 }
 \author{
-Zhian N. Kamvar Alex Spina Lukas Richter
+Alex Spina, Zhian N. Kamvar, Lukas Richter
 }
