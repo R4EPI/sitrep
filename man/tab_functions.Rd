@@ -28,10 +28,10 @@ tabulation. Defaults to \code{TRUE}, which keeps all the values.}
 \item{drop}{a character vector specifying which values to drop in the
 tabulation. Defaults to \code{NULL}, which keeps all values.}
 
-\item{na.rm}{When \code{TRUE}, missing (NA) values present in \code{var} will be removed
-from the data set with a warning, causing a change in denominator for the
-tabulations.  The default is set to \code{FALSE}, which creates an explicit
-missing value called "(Missing)".}
+\item{na.rm}{When \code{TRUE} (default), missing (NA) values present in \code{var}
+will be removed from the data set with a warning, causing a change in
+denominator for the tabulations. Setting this to \code{FALSE} creates an
+explicit missing value called "(Missing)".}
 
 \item{prop_total}{if \code{TRUE} and \code{strata} is not \code{NULL}, then the totals of the
 rows will be reported as proportions of the total data set, otherwise, they

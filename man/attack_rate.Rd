@@ -27,7 +27,7 @@ logical expression (see examples).}
 \item{population}{the number of individuals in the population.}
 
 \item{conf_level}{a number representing the confidence level for which to
-calculate the confidence interval. Defaults to 0.95, representinc 95%
+calculate the confidence interval. Defaults to 0.95, representing a 95%
 confidence interval.}
 
 \item{multiplier}{The base by which to multiply the output:
