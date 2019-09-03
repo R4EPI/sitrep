@@ -2,18 +2,33 @@ Type: Package
 Package: sitrep
 Title: Report templates and helper functions for EPI
 Version: 0.1.0
-Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
-                    role = c("aut")), 
-             person("Zhian N.", "Kamvar", email = "zkamvar@gmail.com",
-                    role = c("aut", "cre")),
-             person("Alex", "Spina", 
-                    role = c("aut")),
-             person("Kate", "Doyle", 
-                    role = c("aut")),
-             person("Chris", "Jarvis", 
-                    role = c("aut")),
-             person("Lukas", "Richter",
-                    role = c("aut")))
+Authors@R: 
+    c(person(given = "Dirk",
+             family = "Schumacher",
+             role = "aut",
+             email = "mai@dirk-schumacher.net"),
+      person(given = "Zhian N.",
+             family = "Kamvar",
+             role = c("aut", "cre"),
+             email = "zkamvar@gmail.com"),
+      person(given = "Alex",
+             family = "Spina",
+             role = "aut"),
+      person(given = "Kate",
+             family = "Doyle",
+             role = "aut"),
+      person(given = "Chris",
+             family = "Jarvis",
+             role = "aut"),
+      person(given = "Lukas",
+             family = "Richter",
+             role = "aut"),
+      person(given = "Annick",
+             family = "Lenglet",
+             role = "cph"),
+      person(given = "Neale",
+             family = "Batra",
+             role = "ctb"))
 Description: Report templates and helper functions for EPI.
 License: GPL-3
 Depends: R (>= 3.2)
