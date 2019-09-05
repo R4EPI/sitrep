@@ -57,3 +57,45 @@ test_that("mortality rates work", {
   expect_equal(mr$"mortality per 100 000", 37.02, tol = 0.01)
 })
 
+
+test_that("case_fatality_rate_df is equivalent to the non-df version", {
+
+  iris_res    <- case_fatality_rate_df(iris, Sepal.Width < 3)
+  iris_expect <- case_fatality_rate(sum(iris$Sepal.Width < 3), population = nrow(iris))
+  
+  expect_identical(iris_res, iris_expect)
+  expect_equal(iris_res$deaths, sum(iris$Sepal.Width < 3))
+  expect_equal(iris_res$population, nrow(iris))
+  expect_equal(iris_res$cfr, sum(iris$Sepal.Width < 3) / nrow(iris) * 100)
+
+})
+
+
+test_that("case_fatality_rate_df will do stratified analysis", {
+
+  iris_res <- case_fatality_rate_df(iris, Sepal.Width < 3, group = Species)
+  iris_n <- with(iris, tapply(Sepal.Width < 3, Species, function(i) case_fatality_rate(sum(i), length(i))))
+  iris_n <- tibble::rownames_to_column(do.call('rbind', iris_n), "Species")
+  iris_n <- tibble::as_tibble(iris_n)
+  iris_n$Species <- forcats::fct_inorder(iris_n$Species)
+ 
+  expect_identical(iris_res, iris_n)
+
+})
+
+test_that("case_fatality_rate_df will do stratified analysis", {
+
+  no_s_iris <- iris
+  no_s_iris$Species <- forcats::fct_recode(no_s_iris$Species, NULL = "setosa")
+  iris_res <- case_fatality_rate_df(no_s_iris, Sepal.Width < 3, group = Species)
+
+  iris_n <- with(iris, tapply(Sepal.Width < 3, Species, function(i) case_fatality_rate(sum(i), length(i))))
+  iris_n <- tibble::rownames_to_column(do.call('rbind', iris_n), "Species")
+  iris_n <- tibble::as_tibble(iris_n)[c(2, 3, 1), ]
+  iris_n$Species[3] <- "(Missing)"
+  iris_n$Species <- forcats::fct_inorder(iris_n$Species)
+ 
+  expect_identical(iris_res, iris_n)
+
+})
+

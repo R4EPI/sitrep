@@ -13,8 +13,8 @@
 #' @param population the number of individuals in the population.
 #'
 #' @param conf_level a number representing the confidence level for which to
-#' calculate the confidence interval. Defaults to 0.95, representinc 95%
-#' confidence interval.
+#'   calculate the confidence interval. Defaults to 0.95, representing a 95%
+#'   confidence interval.
 #'
 #' @param multiplier The base by which to multiply the output:
 #'  - `multiplier = 1`: ratio between 0 and 1
@@ -91,7 +91,8 @@ case_fatality_rate_df <- function(x, deaths, group = NULL, conf_level = 0.95,
 
   # Group the data if needed
   if (wants_grouping) {
-    x <- dplyr::group_by(x, !!qgroup)
+    x <- dplyr::mutate(x, !!qgroup := forcats::fct_explicit_na(!!qgroup, "(Missing)"))
+    x <- dplyr::group_by(x, !!qgroup, .drop = FALSE)
   }
 
   # Summarise the data. Luckily, deaths can be either a column or a logical
