@@ -606,9 +606,9 @@ survey_design <- study_data_cleaned %>%
 
 
 ```{r tally_change, echo = FALSE}
-at_start <- tally(study_data_cleaned, startcause == "Present at start")
-at_end   <- tally(study_data_cleaned, endcause == "Present at end") 
-net_change <- round( (1 - abs(at_start - at_end) / at_start) * 100, digits = 1) %>% pull(n)
+at_start   <- sum(study_data_cleaned$startcause == "Present at start", na.rm = TRUE)
+at_end     <- sum(study_data_cleaned$endcause == "Present at end", na.rm = TRUE)
+net_change <- round( (1 - (abs(at_start - at_end) / at_start)) * 100, digits = 1)
 ```
 
 
