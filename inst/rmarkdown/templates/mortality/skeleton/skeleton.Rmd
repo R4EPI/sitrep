@@ -770,6 +770,12 @@ the reasons for refusal are described below.
 ```
 
 
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The below chunks calculate values that are displayed inline
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
 
 ```{r median_age_sex_ratios}
 # compute the median age 
@@ -781,8 +787,8 @@ iqr <- paste0(  # basically copy paste togehter the following
     study_data_cleaned$age_in_years, 
     c(0.25, 0.75), 
     na.rm = TRUE), 
-  # between lower and upper place a dash
-  collapse = "-")
+  # between lower and upper place an en-dash
+  collapse = "--")
 
 
 # compute overall sex ratio 
@@ -803,6 +809,25 @@ sex_ratio_age <- study_data_cleaned %>%
 min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
 ```
 
+```{r pregnant_surveyed}
+# create a table representing the proportion of pregnant women in the data,
+# stratified by age
+pregnant_women_in_data <- study_data_cleaned %>% 
+  # filter for only women in the data
+  filter(sex == "Female") %>%
+  # tabulate age group, stratifiying by pregnancy status
+  tab_linelist(age_group, strata = q152_q7_pregnant) %>%
+  # select and rename the variables we need
+  select(age_group  = "value",
+         n          = "Yes n",
+         proportion = "Yes proportion") %>%
+  # arrange proportions in descending order
+  arrange(desc(proportion)) %>%
+  # grab the first row
+  slice(1)
+```
+
+
 
 Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
 `r fmt_count(study_data_cleaned, sex == "Female")` females and 
@@ -814,13 +839,13 @@ The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under five years of age made up 
 `r fmt_count(study_data_cleaned, age_in_years < 5)`of the surveyed individuals.
 The highest number of surveyed indivduals (unweighted) were in the 
-`r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` 
+`r table(study_data_cleaned$age_group) %>% which.max() %>% names()`
 year age group.
 The number of surveyed women who were pregnant was 
-`r fmt_count(study_data_cleaned %>% filter(sex == "Female"), q152_q7_pregnant == "Yes")`. 
+`r fmt_count(study_data_cleaned, sex == "Female" & q152_q7_pregnant == "Yes")`. 
 The highest proportion of pregnant women was among the 
-`r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(age_group)`year age group, at 
-`r study_data_cleaned %>% filter(sex == "Female") %>% descriptive("age_group", "q152_q7_pregnant") %>% slice(which.max(Yes_prop)) %>% pull(Yes_prop)`%.
+`r pregnant_women_in_data$age_group` year age group, at 
+`r round(pregnant_women_in_data$proportion, 1)`%.
 
 
 
@@ -828,45 +853,31 @@ The highest proportion of pregnant women was among the
 ```{r cluster_hh_size}
 # get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
-  group_by(cluster_number) %>% 
-  # return the number of unique household IDs by each cluster
-  summarise(
-    n = length(
-      unique(q65_iq4)
-      )
-    )
+  # trim data to only unique households within each cluster
+  distinct(cluster_number, q65_iq4) %>%
+  # count the number of households within each cluster
+  count(cluster_number) %>% 
+  pull(n)
 
 # get the median number of households per cluster
-clustermed <- clustersize %>% 
-  summarise(
-    median(n)
-    )
+clustermed <- median(clustersize)
 
 # get the min and max number of households per cluster
 # paste these together seperated by a dash 
-clusterrange <- paste0(
-  range(clustersize$n), 
-  collapse = "--")
+clusterrange <- paste0(range(clustersize), collapse = "--")
 
 # get counts of children per household 
 # do this by cluster as household IDs are only unique within clusters
 hhsize <- study_data_cleaned %>% 
-  group_by(cluster_number) %>% 
-  count(q65_iq4) 
+  count(cluster_number, q65_iq4) %>%
+  pull(n) 
 
 # get median number of children per household
 # ungroup to give you the overall median 
-hhmed <- hhsize %>%
-  ungroup() %>% 
-  summarise(
-    median(n)
-    )
-
+hhmed <- median(hhsize)
 # get the min and max number of children per household
 # paste these together seperated by a dash 
-hhrange <- paste0(
-  range(hhsize$n), 
-  collapse = "--")
+hhrange <- paste0(range(hhsize), collapse = "--")
 ```
 
 
