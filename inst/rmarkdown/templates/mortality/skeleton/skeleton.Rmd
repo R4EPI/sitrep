@@ -893,38 +893,75 @@ Age distribution of household population by year age group and gender.
 # return counts and proportions of individuals by age and sex
 # note that proportions are of the total sample (not within each gender) 
   # to change this, set proptotal = FALSE
-descriptive(study_data_cleaned, 
-            "age_group", 
-            "sex", 
-            rowtotals = TRUE, 
-            coltotals = TRUE, proptotal = TRUE) %>% 
-  # rename column names appropriately
-  rename("Age" = age_group, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop) %>% 
+tab_linelist(study_data_cleaned, age_group, 
+             strata     = sex, 
+             row_total  = TRUE,
+             col_total  = TRUE,
+             prop_total = TRUE) %>%
+  # NOTE: 
+  # 
+  # DEAREST ALEX, 
+  # 
+  # I WRITE TO YOU NOW TO ALERT YOU TO THIS CHANGE SO THAT YOU MAY PONDER UPON
+  # IT AND IMPOSE YOUR JUDGEMENT. THE TAB_LINELIST FUNCTION WILL ALWAYS RETURN
+  # A VARIABLE AND VALUE COLUMN. I THOUGHT THAT, INSTEAD OF DOING 
+  #
+  # SELECT(-VARIABLE) %>%
+  # RENAME(AGE = VALUE,
+  #        ...
+  #
+  # THAT WE COULD JUST DO IT IN ONE GO. WHAT DO YOU SAY?
+  #
+  # YOURS IN ALL CAPS,
+  # ZHIAN
+
+  # select and rename column names appropriately
+  select("Age"              = "value",
+         "Female cases (n)" = "Female n",
+         "%"                = "Female proportion",
+         "Male cases (n)"   = "Male n",
+         "%"                = "Male proportion",
+         "Total") %>%
   kable(digits = 2)
 ```
 
 Using the combined age category you can show the above breakdown by months and years. 
+
 
 ```{r describe_by_age_category_and_sex}
 
 # return counts and proportions of individuals by age and sex
 # note that proportions are of the total sample (not within each gender) 
   # to change this, set proptotal = FALSE
-descriptive(study_data_cleaned, 
-            "age_category", 
-            "sex", 
-            rowtotals = TRUE, 
-            coltotals = TRUE, proptotal = TRUE) %>% 
-  # rename column names appropriately
-  rename("Age" = age_category, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop) %>% 
+tab_linelist(study_data_cleaned, age_category, 
+             strata     = sex, 
+             row_total  = TRUE,
+             col_total  = TRUE,
+             prop_total = TRUE) %>%
+  # NOTE: 
+  # 
+  # DEAREST ALEX, 
+  # 
+  # I WRITE TO YOU NOW TO ALERT YOU TO THIS CHANGE SO THAT YOU MAY PONDER UPON
+  # IT AND IMPOSE YOUR JUDGEMENT. THE TAB_LINELIST FUNCTION WILL ALWAYS RETURN
+  # A VARIABLE AND VALUE COLUMN. I THOUGHT THAT, INSTEAD OF DOING 
+  #
+  # SELECT(-VARIABLE) %>%
+  # RENAME(AGE = VALUE,
+  #        ...
+  #
+  # THAT WE COULD JUST DO IT IN ONE GO. WHAT DO YOU SAY?
+  #
+  # YOURS IN ALL CAPS,
+  # ZHIAN
+
+  # select and rename column names appropriately
+  select("Age"              = "value",
+         "Female cases (n)" = "Female n",
+         "%"                = "Female proportion",
+         "Male cases (n)"   = "Male n",
+         "%"                = "Male proportion",
+         "Total") %>%
   kable(digits = 2)
 ```
 
