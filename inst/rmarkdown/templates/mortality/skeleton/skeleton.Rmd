@@ -1044,7 +1044,9 @@ as if no deaths (impossible to have negative deaths).
   # filter(died)
 cause_of_death_prop <- survey_design %>% 
   filter(died) %>%  # proportions only among those who died
-  tabulate_survey(cause_of_death)
+  tab_survey(cause_of_death) %>%
+  select(cause_of_death = value, n, ci) %>%
+  mutate(cause_of_death = fct_inorder(cause_of_death))
 
 # Then retrieve weighted cause-specific mortality ratios
 # note that survey ratio includes the observation times in calculation
@@ -1094,9 +1096,10 @@ Reported causes of death and cause-specific mortality rates, by age group, weigh
   # filter(died)
 survey_design %>% 
   filter(died) %>% 
-  tabulate_survey(cause_of_death, age_group) %>%
-  filter(cause_of_death != "Not Applicable") %>%
-  rename("Cause of Death" = "cause_of_death") %>%
+  tab_survey(cause_of_death, strata = age_group) %>%
+  select(-variable) %>%
+  filter(value != "Not Applicable") %>%
+  rename("Cause of Death" = "value") %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" to "% (95% CI)"
   kable(digits = 1)
@@ -1111,9 +1114,9 @@ Reported causes of death and cause-specific mortality rates, by gender, weighted
   # filter(died)
 survey_design %>% 
   filter(died) %>% 
-  tabulate_survey(cause_of_death, sex) %>%
-  filter(cause_of_death != "Not Applicable") %>%
-  rename("Cause of Death" = "cause_of_death") %>%
+  tab_survey(cause_of_death, strata = sex) %>%
+  filter(value != "Not Applicable") %>%
+  rename("Cause of Death" = "value") %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" variables in braces (note space before n).
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" to "% (95% CI)"
   kable(digits = 1)
@@ -1129,11 +1132,9 @@ Symptoms reported among those who were sick
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions 
-  # in your output table, only keep rows with the value TRUE 
-    # (this could also be "yes" if your variables were yes/no; 
-    # or a combination, e.g. c("yes", TRUE, "sick"))
+  # in your output table, drop rows that have an empty response
     # method xlogit uses the CDC SUDAAN method of calculating confidence intervals
-  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, method = "xlogit", digits = 2) %>%
+  tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2) %>%
   select(-variable) %>%
   rename("Symptom" = value,
          "N reported" = n,
@@ -1151,8 +1152,8 @@ Symptoms reported among those who were sick, stratified by age group
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
-  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE,  digits = 2,
-                         strata = age_group, pretty = TRUE, method = "xlogit") %>%
+  tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
+             strata = age_group, pretty = TRUE) %>%
   select(-variable) %>%
   rename("Symptom" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" variables in braces (note space before n).
@@ -1168,8 +1169,8 @@ Symptoms reported among those who were sick, stratified by gender
 survey_design %>%                  # use the survey object (weighted)
   filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
   # calculate weighted counts and weighted proportions - stratified by sex!!
-  tabulate_binary_survey(contains("symptoms"), keep = "", invert = TRUE, digits = 2,
-                  strata = sex, pretty = TRUE, method = "xlogit") %>%
+  tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
+             strata = sex, pretty = TRUE) %>%
   select(-variable) %>%
   rename("Symptom" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" variables in braces (note space before n).
