@@ -1009,8 +1009,7 @@ plot_age_pyramid(survey_design,
 # you will get separate columns, for weighted counts (weighted % with CI), 
 # note that survey_design is used rather than study_data_cleaned (weighted survey object)
 # COUNTS ARE ALSO WEIGHTED HERE
-death_props <- survey_design %>%
-  tabulate_survey(died)
+death_props <- tab_survey(survey_design, died) %>% filter(value == TRUE)
 
 # mortality per 10,000 persons/day with CI
 # survey ratio used to account for observation time 
@@ -1025,14 +1024,12 @@ CMR <- survey_design %>%
 
 
 During the recall period the weighted number of deaths in the population was 
-`r death_props %>% filter(died == TRUE) %>% pull(n)`, which gives a weighted 
-proportions of `r death_props %>% filter(died == TRUE) %>% pull(ci)`. 
+`r death_props$n`, which gives a weighted proportion of `r death_props$ci`. 
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
 
 
 
-Reported causes of death and cause-specific mortality ratio, weighted counts and 
-proportions. 
+Reported causes of death and cause-specific mortality ratio, weighted counts and proportions. 
 Note that low counts or short observation times may lead to a confidence interval 
 that crosses zero (i.e. negative) for mortality ratios. These should be interpreted
 as if no deaths (impossible to have negative deaths). 
