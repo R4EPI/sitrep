@@ -630,13 +630,14 @@ the reasons for refusal are described below.
 
 ```{r reason_no_consent}
 # get counts and props 
-tab_linelist(dropped, "q65_consent_no_reason", col_total = TRUE) %>% 
+tab_linelist(dropped, "q65_consent_no_reason", col_total = TRUE, digits = 2) %>% 
   # drop redundant column
   select(-variable) %>%
   # change column names 
   rename(Reason = value, 
          "Individuals (n)" = n, 
-         "%" = proportion)
+         "%" = proportion) %>%
+  kable(digits = 2)
 ```
 
 
