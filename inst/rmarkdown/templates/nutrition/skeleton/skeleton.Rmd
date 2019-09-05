@@ -644,9 +644,9 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ######## weighting ------------------------------------------------------------
 
-study_data_cleaned <- add_weights(x = study_data_cleaned, 
-                                  p = population_data_age, 
-                                  age_group, sex)
+study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
+                                         p = population_data_age, 
+                                         age_group, sex)
 
 # drop unwanted rows  ---------------------------------------------------------
 
@@ -736,13 +736,16 @@ your data.
 
 ```{r descriptive_sampling_bias}
 # first the counts and props of the study population
-ag <- descriptive(study_data_cleaned, "age_group") %>%
-  mutate(n_total = sum(n))
+ag <- tab_linelist(study_data_cleaned, "age_group") %>%
+  mutate(n_total = sum(n)) %>%
+  select(-variable) %>%
+  rename(age_group = value) %>%
+  mutate(age_group = fct_inorder(age_group))
 
 # then the counts and props of the source population
 propcount <- group_by(population_data_age, age_group) %>%
     tally(population) %>%
-    mutate(prop = n / sum(n))
+    mutate(proportion = n / sum(n))
 
 # bind together the columns of two tables, group by age, and perform a 
 # binomial test to see if n/total is significantly different from population
@@ -755,26 +758,26 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   # will add the variables p.value, parameter, conf.low, conf.high, method, and
   # alternative. We will only use p.value here. You can include other
   # columns if you want to report confidence intervals
-  mutate(binom = list(broom::tidy(binom.test(n, n_total, prop_pop)))) %>%
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, proportion_pop)))) %>%
   unnest() %>% # important for expanding the binom.test data frame
-  mutate(prop_pop = prop_pop * 100) %>%
+  mutate(proportion_pop = proportion_pop * 100) %>%
 
   # Adjusting the p-values to correct for false positives 
   # (because testing multiple age groups). This will only make 
   # a difference if you have many age categories
   mutate(p.value = p.adjust(p.value, method = "holm")) %>%
-  select(age_group, n, prop, n_pop, prop_pop, p.value) %>%
+  select(age_group, n, proportion, n_pop, proportion_pop, p.value) %>%
                       
   # Only show p-values over 0.001 (those under report as <0.001)
-  mutate(p.value = if_else(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
+  mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
   # rename the columns appropriatley
   rename(
     "Age group" = age_group,
     "Study population (n)" = n,
-    "%" = prop,
+    "%" = proportion,
     "Source population (n)" = n_pop,
-    "%" = prop_pop,
+    "%" = proportion_pop,
     "P-value" = p.value
   ) %>%
   kable(digits = 2)
@@ -785,18 +788,25 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
 Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
 the reasons for refusal are described below. 
 
+
 ```{r reason_no_consent}
 
 ## NEED TO ADD reasons for not consent using new tab_linelist function 
 ## use the "dropped" dataset 
-## use the q53_cq4a_000 to 003 variables
+## use the q53_cq4a_000 to 003 variables 
 ```
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The below chunks calculate values that are displayed inline
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 
 ```{r median_age_sex_ratios}
 # compute the median age 
 medage <- median(study_data_cleaned$age_month)
-
 # paste the lower and uper quartile together
 iqr <- paste0(  # basically copy paste togehter the following
   # calculate the 25% and 75% of distribution, with missings removed
@@ -804,8 +814,9 @@ iqr <- paste0(  # basically copy paste togehter the following
     study_data_cleaned$age_month, 
     c(0.25, 0.75), 
     na.rm = TRUE), 
-  # between lower and upper place a dash
-  collapse = "-")
+  # between lower and upper place an en-dash
+  collapse = "--")
+
 
 # compute overall sex ratio 
 sex_ratio <- study_data_cleaned %>% 
@@ -825,7 +836,6 @@ sex_ratio_age <- study_data_cleaned %>%
 min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
 ```
 
-
 Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
 `r fmt_count(study_data_cleaned, sex == "Female")` females and 
 `r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
@@ -836,7 +846,7 @@ The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under two years of age made up 
 `r fmt_count(study_data_cleaned, age_group_bin == "0-23")`of the surveyed individuals.
 The highest number of surveyed indivduals (unweighted) were in the 
-`r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` 
+`r table(study_data_cleaned$age_group) %>% which.max() %>% names()` 
 year age group.
 
 
@@ -844,46 +854,30 @@ year age group.
 ```{r cluster_hh_size}
 # get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
-  group_by(cluster_number) %>% 
+  distinct(cluster_number, household_id) %>%
+  count(cluster_number) %>%
   # return the number of unique household IDs by each cluster
-  summarise(
-    n = length(
-      unique(household_id)
-      )
-    )
+  pull(n)
 
 # get the median number of households per cluster
-clustermed <- clustersize %>% 
-  summarise(
-    median(n)
-    )
+clustermed <- median(clustersize)
 
 # get the min and max number of households per cluster
-# paste these together seperated by a dash 
-clusterrange <- paste0(
-  range(clustersize$n), 
-  collapse = "-")
+# paste these together seperated by a endash 
+clusterrange <- paste0(range(clustersize), collapse = "--")
 
 # get counts of children per household 
 # do this by cluster as household IDs are only unique within clusters
 hhsize <- study_data_cleaned %>% 
-  group_by(cluster_number) %>% 
-  count(household_id) 
+  count(cluster_number, household_id) %>%
+  pull(n)
 
 # get median number of children per household
 # ungroup to give you the overall median 
-hhmed <- hhsize %>%
-  ungroup() %>% 
-  summarise(
-    median(n)
-    )
-
+hhmed <- median(hhsize)
 # get the min and max number of children per household
 # paste these together seperated by a dash 
-hhrange <- paste0(
-  range(hhsize$n), 
-  collapse = "-")
-  
+hhrange <- paste0(range(hhsize), collapse = "--") 
 ```
 
 
@@ -893,25 +887,43 @@ per household was `r hhmed` and the range was `r hhrange`.
 
 Age distribution of household population by year age group and gender.
 
+
 ```{r describe_by_age_group_and_sex}
 
 # return counts and proportions of individuals by age and sex
 # note that proportions are of the total sample (not within each gender) 
   # to change this, set proptotal = FALSE
-descriptive(study_data_cleaned, 
-            "age_group", 
-            "sex", 
-            rowtotals = TRUE, 
-            coltotals = TRUE, proptotal = TRUE) %>% 
-  # rename column names appropriately
-  rename("Age" = age_group, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop) %>% 
+tab_linelist(study_data_cleaned, age_group, 
+             strata     = sex, 
+             row_total  = TRUE,
+             col_total  = TRUE,
+             prop_total = TRUE) %>%
+  # NOTE: 
+  # 
+  # DEAREST ALEX, 
+  # 
+  # I WRITE TO YOU NOW TO ALERT YOU TO THIS CHANGE SO THAT YOU MAY PONDER UPON
+  # IT AND IMPOSE YOUR JUDGEMENT. THE TAB_LINELIST FUNCTION WILL ALWAYS RETURN
+  # A VARIABLE AND VALUE COLUMN. I THOUGHT THAT, INSTEAD OF DOING 
+  #
+  # SELECT(-VARIABLE) %>%
+  # RENAME(AGE = VALUE,
+  #        ...
+  #
+  # THAT WE COULD JUST DO IT IN ONE GO. WHAT DO YOU SAY?
+  #
+  # YOURS IN ALL CAPS,
+  # ZHIAN
+
+  # select and rename column names appropriately
+  select("Age"              = "value",
+         "Female cases (n)" = "Female n",
+         "%"                = "Female proportion",
+         "Male cases (n)"   = "Male n",
+         "%"                = "Male proportion",
+         "Total") %>%
   kable(digits = 2)
 ```
-
 
 There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing information on sex and 
 `r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
