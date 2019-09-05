@@ -1141,20 +1141,22 @@ In addition the number of children missing MUAC was `r fmt_count(study_data_clea
 ```{r missing_flagged_indicators}
 
 study_data_cleaned %>% 
-  multi_descriptive(flen, fwei, fwfl, .id = "Indicator") %>% 
+  tab_linelist(flen, fwei, fwfl, transpose = "value", na.rm = FALSE, col_total = TRUE) %>% 
   # re-order columns (drop total_prop too)
-  select(Indicator, Missing_n, Missing_prop, TRUE_n, TRUE_prop, FALSE_n, FALSE_prop, Total_n) %>%
+  select(Indicator = variable, 
+         "Missing n", "Missing proportion", 
+         "TRUE n", "TRUE proportion", 
+         "FALSE n", "FALSE proportion", 
+         "Total (N)" = "Total n") %>%
   
   # rename indicators to something more understandable
-  mutate(
-    Indicator = recode_factor(Indicator, 
-    "flen" = "HAZ", 
-    "fwei" = "WAZ", 
-    "fwfl" = "WHZ" 
+  mutate(Indicator = fct_recode(Indicator, 
+    "HAZ" = "flen", 
+    "WAZ" = "fwei", 
+    "WHZ" = "fwfl"
   )) %>% 
   
   # rename total column to have a capital N in brackets
-  rename("Total (N)" = Total_n) %>% 
   # swap variabales with props in for percentages 
   rename_redundant("%" = "prop") %>%
   # swap TRUEs for Flagged and FALSE for included
@@ -1178,12 +1180,11 @@ overall <- survey_design %>%
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to indicators as columns 
   # important to drop missings! use na.rm = TRUE)
-  tabulate_binary_survey(indicators[10:12], keep = TRUE, 
-                         transpose = "variable", na.rm = TRUE) %>% 
+  tab_survey(indicators[10:12], keep = 'TRUE', transpose = "variable", na.rm = TRUE) %>% 
   # add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
   # reorganise columns so can bind to age_group table below 
-  select(age_group, 1:6)
+  select(age_group, everything())
 
 
 
@@ -1192,8 +1193,9 @@ age_strat <- survey_design %>%
   # indicators[10:12] has the names of muac variables in it 
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to have age groups as rows
-  tabulate_binary_survey(indicators[10:12], strata = age_group, keep = TRUE,
-                         transpose = "variable", na.rm = TRUE) 
+  tab_survey(indicators[10:12], keep = 'TRUE', transpose = "variable", na.rm = TRUE, 
+             strata = age_group) %>%
+  mutate(age_group = as.character(age_group))
 
 # bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
@@ -1207,8 +1209,6 @@ bind_rows(age_strat, overall) %>%
          "Proportion (95%CI)" = "sam_muac ci") %>% 
   knitr::kable(digits = 1)
 
-  
-
 ```
 
 
@@ -1217,34 +1217,33 @@ You could add a filter argument to this to only look at children <87cm for examp
 
 
 
-Prevalence of malnutrition based on MUAC among children <87cm, by age group (months) and overall 
 
-```{r muac_filter_age_group}
+```{r muac_age_group_filter}
 
 overall <- survey_design %>% 
-  filter(height < 87) %>% 
+  filter(height < 87) %>%
   # tabulate multiple variables with same values
   # indicators[10:12] has the names of muac variables in it 
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to indicators as columns 
   # important to drop missings! use na.rm = TRUE)
-  tabulate_binary_survey(indicators[10:12], keep = TRUE, 
-                         transpose = "variable", na.rm = TRUE) %>% 
+  tab_survey(indicators[10:12], keep = 'TRUE', transpose = "variable", na.rm = TRUE) %>% 
   # add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
   # reorganise columns so can bind to age_group table below 
-  select(age_group, 1:6)
+  select(age_group, everything())
 
 
 
 age_strat <- survey_design %>% 
-  filter(height < 87) %>% 
+  filter(height < 87) %>%
   # tabulate multiple variables with same values
   # indicators[10:12] has the names of muac variables in it 
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to have age groups as rows
-  tabulate_binary_survey(indicators[10:12], strata = age_group, keep = TRUE,
-                         transpose = "variable", na.rm = TRUE) 
+  tab_survey(indicators[10:12], keep = 'TRUE', transpose = "variable", na.rm = TRUE, 
+             strata = age_group) %>%
+  mutate(age_group = as.character(age_group))
 
 # bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
@@ -1279,20 +1278,20 @@ overall <- survey_design %>%
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to indicators as columns 
   # important to drop missings! use na.rm = TRUE)
-  tabulate_binary_survey(indicators[4:6], keep = TRUE, 
-                         transpose = "variable", na.rm = TRUE) %>% 
+  tab_survey(indicators[4:6], keep = 'TRUE', transpose = "variable", na.rm = TRUE) %>% 
   # add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
   # reorganise columns so can bind to age_group table below 
-  select(age_group, 1:6)
+  select(age_group, everything())
 
 age_strat <- survey_design %>% 
   # tabulate multiple variables with same values
   # indicators has the names of indicator variables in it 
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to have age groups as rows
-  tabulate_binary_survey(indicators[4:6], strata = age_group, keep = TRUE,
-                         transpose = "variable", na.rm = TRUE) 
+  tab_survey(indicators[4:6], keep = 'TRUE', transpose = "variable", na.rm = TRUE,
+             strata = age_group) %>%
+  mutate(age_group = as.character(age_group))
 
 # bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
@@ -1316,24 +1315,24 @@ Prevalence of malnutrition based on weight-for-age z-score categories, by age gr
 
 overall <- survey_design %>% 
   # tabulate multiple variables with same values
-  # indicatorshas the names of indicator variables in it 
+  # indicators[10:12] has the names of muac variables in it 
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to indicators as columns 
   # important to drop missings! use na.rm = TRUE)
-  tabulate_binary_survey(indicators[7:9], keep = TRUE, 
-                         transpose = "variable", na.rm = TRUE) %>% 
+  tab_survey(indicators[7:9], keep = 'TRUE', transpose = "variable", na.rm = TRUE) %>% 
   # add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
   # reorganise columns so can bind to age_group table below 
-  select(age_group, 1:6)
+  select(age_group, everything())
 
 age_strat <- survey_design %>% 
   # tabulate multiple variables with same values
   # indicators has the names of indicator variables in it 
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to have age groups as rows
-  tabulate_binary_survey(indicators[7:9], strata = age_group, keep = TRUE,
-                         transpose = "variable", na.rm = TRUE)
+  tab_survey(indicators[7:9], keep = 'TRUE', transpose = "variable", na.rm = TRUE,
+             strata = age_group) %>%
+  mutate(age_group = as.character(age_group))
 
 # bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
@@ -1359,24 +1358,24 @@ Prevalence of malnutrition based on weight-for-height z-score categories, by age
 
 overall <- survey_design %>% 
   # tabulate multiple variables with same values
-  # indicatorshas the names of indicator variables in it 
+  # indicators[10:12] has the names of muac variables in it 
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to indicators as columns 
   # important to drop missings! use na.rm = TRUE)
-  tabulate_binary_survey(indicators[1:3], keep = TRUE, 
-                         transpose = "variable", na.rm = TRUE) %>% 
+  tab_survey(indicators[1:3], keep = 'TRUE', transpose = "variable", na.rm = TRUE) %>% 
   # add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
   # reorganise columns so can bind to age_group table below 
-  select(age_group, 1:6)
+  select(age_group, everything())
 
 age_strat <- survey_design %>% 
   # tabulate multiple variables with same values
   # indicators has the names of indicator variables in it 
   # keep will drop all rows in the output where the value is not "TRUE"
   # transpose flips the table to have age groups as rows
-  tabulate_binary_survey(indicators[1:3], strata = age_group, keep = TRUE,
-                         transpose = "variable", na.rm = TRUE) 
+  tab_survey(indicators[1:3], keep = 'TRUE', transpose = "variable", na.rm = TRUE,
+             strata = age_group) %>%
+  mutate(age_group = as.character(age_group))
 
 # bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
