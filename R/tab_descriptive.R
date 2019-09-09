@@ -12,10 +12,10 @@
 #' @param drop a character vector specifying which values to drop in the
 #'   tabulation. Defaults to `NULL`, which keeps all values. 
 #'
-#' @param na.rm When `TRUE`, missing (NA) values present in `var` will be removed
-#'   from the data set with a warning, causing a change in denominator for the
-#'   tabulations.  The default is set to `FALSE`, which creates an explicit
-#'   missing value called "(Missing)".
+#' @param na.rm When `TRUE` (default), missing (NA) values present in `var`
+#'   will be removed from the data set with a warning, causing a change in
+#'   denominator for the tabulations. Setting this to `FALSE` creates an
+#'   explicit missing value called "(Missing)".
 #'
 #' @param prop_total if `TRUE` and `strata` is not `NULL`, then the totals of the
 #'   rows will be reported as proportions of the total data set, otherwise, they
