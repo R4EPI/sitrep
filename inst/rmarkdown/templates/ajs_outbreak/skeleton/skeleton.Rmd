@@ -311,11 +311,11 @@ specified in code and name columns. Code has the shortened value and Name has
 the full-text value.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r prep_nonDHIS_data, warning = FALSE, message = FALSE, eval = FALSE}
+```{r prep_nonDHIS_data, warning = FALSE, message = FALSE}
 ## MSF AJS Dictionary ----------------------------------------------------------
 # get MSF standard dictionary for AJS 
-linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
-  select(option_code, option_name, everything())
+# linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
+#   select(option_code, option_name, everything())
 
 ## look at the standard dictionary by uncommenting the line below
 # View(linelist_dict) 
@@ -328,14 +328,14 @@ linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
 ## Clean column names ----------------------------------------------------------
 ## This step fixes the column names so they are easy to use in R.
 
-# make a copy of your orginal dataset and name it linelist_cleaned
-linelist_cleaned <- linelist_raw
-
-# define clean variable names using clean_labels from the epitrix package
-cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
-
-# overwrite variable names with defined clean names
-colnames(linelist_cleaned) <- cleaned_colnames
+## make a copy of your orginal dataset and name it linelist_cleaned
+# linelist_cleaned <- linelist_raw
+ 
+## define clean variable names using clean_labels from the epitrix package
+# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+ 
+## overwrite variable names with defined clean names
+# colnames(linelist_cleaned) <- cleaned_colnames
 
 
 
