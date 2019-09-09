@@ -380,8 +380,7 @@ colnames(linelist_cleaned) <- cleaned_colnames
 This template uses population data to calculate things like incidence.
 
 There are three options:
-- You can read in a spreadsheet with age group and region data. (You can see an
-example spreadsheet TODO.)
+- You can read in a spreadsheet with age group and region data.
 - You can put in the specific populations into the gen_population function. 
 - If you have the total or regional populations, you can estimate the age group
 from proportions.
@@ -406,17 +405,17 @@ If you have more specific proportions, you can use them below.
 
 
 ## Enter counts directly -------------------------------------------------------
-## TODO EDIT ONCE REBUILT
-# population_data_age <- gen_population(total_pop = 5000,
+
+# population_data_age <- gen_population(
 #   groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
-#   proportions = c(0.068, 0.3622, 0.276, 0.1616, 0.1321),
+#   counts = c(3600, 18110, 13600, 8080, 6600),
 #   strata = NULL) %>%
 #   rename(age_group = groups,
 #     population = n)
 
-# population_data_region <- gen_population(total_pop = 5000,         
-#   groups = c("Village A", "Village B", "Village C", "Village D"),  
-#   proportions = c(0.221, 0.174, 0.355, 0.245),
+# population_data_region <- gen_population(
+#   groups = c("Village A", "Village B", "Village C", "Village D"),
+#   counts = c(10000, 20000, 15000, 5000),
 #   strata = NULL) %>%               # do not stratify by gender
 #   rename(patient_origin = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
 #          population = n)
