@@ -777,10 +777,10 @@ linelist_cleaned <- linelist_cleaned %>%
 ## Ideally, you want these values to match your shapefile and population data!
 
 # linelist_cleaned <- linelist_cleaned %>%
-#   mutate(patient_origin_free_text = case_when(
-#     patient_origin_free_text == "Valliages D"       ~ "Village D",
-#     patient_origin_free_text == "VillageD"          ~ "Village D",
-#     patient_origin_free_text == "Town C"            ~ "Village C"
+#   mutate(patient_origin = case_when(
+#     patient_origin == "Valliages D"       ~ "Village D",
+#     patient_origin == "VillageD"          ~ "Village D",
+#     patient_origin == "Town C"            ~ "Village C"
 #   ))
 
 
