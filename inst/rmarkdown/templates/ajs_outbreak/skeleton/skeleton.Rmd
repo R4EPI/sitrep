@@ -1994,10 +1994,9 @@ You will want to make your counts or AR categorical. R will not do this
 automatically (unlike QGIS or ArcGIS).
 
 This chunk will walk you through several steps:
-- Determine if you have a polygon or point shapefile.
 - Create table with categories of counts or ARs by region.
 - Join your table with your shapefile.
-- Choose which variable (for polygons) or color (for points) you will use.
+- Choose which variable you will use.
 
 Make sure you delete or comment out the section you are not using.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -2030,7 +2029,7 @@ mapsub <- left_join(map, ar_map, by = c("name" = "Region"))
 
 
 
-## Plot for polygons -----------------------------------------------------------
+## Plot cases or AR by geography -----------------------------------------------
 
 ## you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 10,000)`
 ggplot() +
@@ -2048,26 +2047,6 @@ ggplot() +
   geom_sf_text(data = mapsub, aes(label = name), colour = "grey50") + 
   # remove coordinates and axes
   theme_void() 
-
-
-
-## Plot for points -------------------------------------------------------------
-
-# ggplot() +
-#   # plot shapefile as point
-#   # shape 21 allows fill variable and colour border (e.g. black ring around circle)
-#   # size allows you to make it bigger
-#   geom_sf(data = mapsub, aes(fill = categories), 
-#           shape = 21, size = 5, 
-#           color = "black") +
-#   # needed to avoid gridlines being drawn
-#   coord_sf(datum = NA) + 
-#   # add a scalebar
-#   annotation_scale() + 
-#   # color the scale to be perceptually uniform
-#   scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") +
-#   # remove coordinates and axes
-#   theme_void() 
 
 ```
 
@@ -2160,20 +2139,15 @@ for (i in unique(cases$epiweek)) {
   # ar value on the y axis 
   barplot <- ggplot(this_ar, aes(x = reorder(Region, `AR (per 10,000)`),
                                  y = `AR (per 10,000)`)) + 
-    
     # plot as bars (identity = as is)
     geom_bar(stat = "identity", col = "black", fill = "red") + 
-    
      # add CIs
     geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) +
-    
     # set origin for axes
     scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  
-    
     # add labels to axes and below chart
     labs(x = "Region", y = "AR (per 10,000)", 
          captions = paste0("Source: MSF data from ", reporting_week)) + 
-    
     epicurve_theme
   
   
