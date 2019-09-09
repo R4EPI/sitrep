@@ -1683,26 +1683,20 @@ This chunk sets up the AR graph. (It does not print the graph automatically.)
 ```{r ar_line_graph}
 
 ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
-  
   # add confidence intervals as a ribbon
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "blue",  fill = "blue", 
               linetype = 2, alpha = 0.2, show.legend = FALSE) +
-  
   # add AR as a line
   geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
-  
   # set origin for axes
   scale_y_continuous(expand = c(0, 0)) +
-  
   # scale the x axis the same as the incidence curve. Expand forces it to align. 
   incidence::scale_x_incidence(inc_week_7, 
                                n_breaks = nrow(inc_week_7), 
                                expand = c(0, 7 * 1.5)) +
-  
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 10,000)") + 
-  
   # change visuals of dates and remove legend title
   epicurve_theme
 ```
@@ -1719,27 +1713,21 @@ If you do not have any deaths in your data set, this will not show anything.
 ```{r cfr_line_graph}
 
 cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
-  
   # add confidence intervals as a ribbon
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "red", fill = "red", 
               linetype = 2, alpha = 0.2, show.legend = FALSE) +
-  
   # add CFR as a line
   geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
-  
   # set origin for axes
   scale_y_continuous(expand = c(0, 0)) +  
-  
   # scale the x axis the same as the incidence curve. Expand forces it to align. 
   incidence::scale_x_incidence(inc_week_7, 
                                n_breaks = nrow(inc_week_7), 
                                expand = c(0, 7 * 1.5)) +
-  
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "CFR [95% CI]", 
        subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
-  
   # change visuals of dates and remove legend title
   epicurve_theme 
 ```
@@ -1915,21 +1903,16 @@ will show regions in descending order by AR.
 ```{r bar_attack_rate_by_region}
 
 ggplot(ar_region, aes(x = reorder(Region, `AR (per 10,000)`),
-               y = `AR (per 10,000)`)) + 
-  
+               y = `AR (per 10,000)`)) +
   # plot as bars (identity = as is)
   geom_bar(stat = "identity", col = "black", fill = "red") + 
-  
   # add CIs
   geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) +
-  
   # set origin for axes
   scale_y_continuous(expand = c(0,0)) +  
-  
   # add labels to axes and below chart
   labs(x = "Region", y = "AR (per 10,000)", 
        captions = paste0("Source: MSF data from ", reporting_week)) + 
-  
   epicurve_theme
 ```
 
@@ -2159,21 +2142,16 @@ for (i in unique(cases$epiweek)) {
   
   # choropleth 
   map_plot <- ggplot() +
-    
     # shapefile as polygon
     geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + 
-     
     # needed to avoid gridlines being drawn
     coord_sf(datum = NA) + 
-    
     # add a scalebar
     annotation_scale() + 
-    
     # color the scale to be perceptually uniform (keep levels)
     scale_fill_brewer(drop = FALSE, 
                     palette = "OrRd", 
                     name = "AR (per 10,000)") +  
-    
     # remove coordinates and axes
     theme_void() 
   
