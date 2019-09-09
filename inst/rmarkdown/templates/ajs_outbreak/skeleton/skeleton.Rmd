@@ -311,7 +311,7 @@ specified in code and name columns. Code has the shortened value and Name has
 the full-text value.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r prep_nonDHIS_data, warning = FALSE, message = FALSE}
+```{r prep_nonDHIS_data, warning = FALSE, message = FALSE, eval = FALSE}
 ## MSF AJS Dictionary ----------------------------------------------------------
 # get MSF standard dictionary for AJS 
 linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
