@@ -1960,9 +1960,6 @@ The names of the polygons or points MUST match the names in your linelist.
 
 Your coordinate reference system needs to be WGS84.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-
-
 ```{r read_shapefiles, message=FALSE}
 ## fake map data - DELETE if you are using real data
 map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin))
@@ -1979,6 +1976,24 @@ map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin))
 ## if CRS not WGS84, reset it
 # map <- st_set_crs(map, value = 4326) # Sets to WGS84
 
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// dot_map \\\
+--------------------------------------------------------------------------------
+
+If you have the coordinates for your cases, you can create a dot map showing
+where the cases are.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r dot_map, message=FALSE}
+# ggplot() +
+#   # load shapefile
+#   geom_sf(data = map, col = "grey50") + 
+#   # add in case coordinates
+#   geom_point(mapping = aes(x = lat, y = lon), 
+#              data = linelist_cleaned)
 ```
 
 
