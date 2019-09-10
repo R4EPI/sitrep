@@ -110,13 +110,12 @@ week. Put it below.
 aweek::set_week_start will define the beginning of the week. The standard is
 Monday.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
 ```{r define_current_week}
 ## set the day that defines the beginning of your epiweek.
 aweek::set_week_start("Monday")
 
 ## set current week 
-reporting_week <- as.aweek("2019-W25")
+reporting_week <- aweek::as.aweek("2019-W25")
 
 ## sets the labels in ggplot for the epicurves
 epicurve_labels <- labs(x = "Calendar week", 
@@ -930,20 +929,19 @@ This chunk removes cases after your reporting week and defines the start and end
 of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r report_setup, eval = FALSE}
+# return the last day of the reporting week
+obs_end   <- week2date(str_glue(reporting_week, "-7"))
 
-# filter out cases after reporting week
+# filter out cases after end of reporting week
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_consultation_admission <= week2date(sprintf("%s-7", reporting_week)))
+  filter(date_of_consultation_admission <= obs_end)
 
 # define the first week of outbreak (date of first case)
-first_week <- levels(linelist_cleaned$epiweek)[1]
+first_week <- as.aweek(min(as.character(linelist_cleaned$epiweek)))
 
 # outbreak start 
 # return the first day in the week of first case 
-obs_start <- week2date(sprintf("%s-1", first_week))
-
-# return last day of reporting week 
-obs_end   <- week2date(sprintf("%s-7", reporting_week))
+obs_start <- as.Date(first_week)
 ```
 
 
@@ -1967,8 +1965,6 @@ map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin))
 
 ## read in shapefile
 # map <- read_sf(here("mapfolder", "region.shp"))
-
-
 
 ## check the coordinate reference system (CRS)
 # st_crs(map)
