@@ -928,7 +928,7 @@ LABS <- c("hep_b_rdt",
 This chunk removes cases after your reporting week and defines the start and end
 of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r report_setup, eval = FALSE}
+```{r report_setup}
 # return the last day of the reporting week
 obs_end   <- week2date(str_glue(reporting_week, "-7"))
 
@@ -954,7 +954,7 @@ You can save your cleaned dataset as an Excel.
 This automatically names your file "linelist_cleaned_DATE", where DATE is the
 current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r save_cleaned_data, eval = FALSE}
+```{r save_cleaned_data}
 # rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
 ```
 
