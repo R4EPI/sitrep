@@ -154,7 +154,7 @@ linelist_raw <- gen_data("AJS")
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You should load your data as a linelist, where each row is one case.
 
-There are three options:
+There are two options:
 - Your data is from DHIS2: use read_DHIS_excel_data
 - Your data is NOT FROM DHIS2 and in Excel, CSV, or Stata format: 
 use read_nonDHIS_data
