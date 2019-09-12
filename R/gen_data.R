@@ -479,6 +479,10 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
                                    "Village C", "Village D"),
                                  numcases, replace = TRUE)
 
+    # make two health districts
+    dis_output$health_district <- ifelse(dis_output$village == "Village A" |
+                                           dis_output$village == "Village B",
+                                         "District A", "District B")
 
     # cluster ID (based on village)
     dis_output$cluster_number <- as.numeric(factor(dis_output$village))
@@ -576,10 +580,6 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output$fact_0_id <- dis_output$household_id
 
 
-
-
-
-
     # age in months (1 to 60 - i.e. under 5 years)
     dis_output$age_month <- sample(1:60L, numcases, replace = TRUE)
 
@@ -604,6 +604,11 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     dis_output$village <- sample(c("Village A", "Village B",
                                    "Village C", "Village D"),
                                  numcases, replace = TRUE)
+
+    # make two health districts
+    dis_output$health_district <- ifelse(dis_output$village == "Village A" |
+                                           dis_output$village == "Village B",
+                                         "District A", "District B")
 
     # cluster ID (based on village)
     dis_output$q77_what_is_the_cluster_number <- as.numeric(factor(dis_output$village))
