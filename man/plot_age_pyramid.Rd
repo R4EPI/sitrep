@@ -6,8 +6,8 @@
 \usage{
 plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
   stack_by = split_by, proportional = FALSE, na.rm = FALSE,
-  show_halfway = TRUE, vertical_lines = FALSE,
-  horizontal_lines = TRUE, pyramid = TRUE, pal = NULL)
+  compare_group = 1, show_halfway = TRUE, vertical_lines = FALSE,
+  horizontal_lines = TRUE, facet = TRUE, pal = NULL)
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}
@@ -28,6 +28,8 @@ case counts}
 \item{na.rm}{If \code{TRUE}, this removes NA counts from the age groups. Defaults
 to \code{TRUE}.}
 
+\item{compare_group}{sdflkjsdlfkjsldkjfl}
+
 \item{show_halfway}{When \code{TRUE} (default), a dashed vertical line will be
 added to each of the age bars showing the halfway point for the
 un-stratified age group. When \code{FALSE}, no halfway point is marked.}
@@ -39,9 +41,10 @@ to turn on write \code{TRUE}.}
 \item{horizontal_lines}{If \code{TRUE} (default), horizontal dashed lines will
 appear behind the bars of the pyramid}
 
-\item{pyramid}{if \code{TRUE}, then binary \code{split_by} variables will result in
-a population pyramid (non-binary variables cannot form a pyramid). If
-\code{FALSE}, a pyramid will not form.}
+\item{facet}{if \code{TRUE} (default) and the \code{split_by} variables are not binary,
+then the different levels will be split into different panels showing the
+remainder of the data. When \code{FALSE}, the \code{split_by} variables that are not
+part of \code{compare_group} are stacked.}
 
 \item{pal}{a color palette function or vector of colors to be passed to
 \code{\link[ggplot2:scale_fill_manual]{ggplot2::scale_fill_manual()}} defaults to the first "qual" palette from
@@ -53,9 +56,18 @@ Plot a population pyramid (age-sex) from a dataframe.
 \note{
 If the \code{split_by} variable is bivariate (e.g. an indicator for
 pregnancy), then the result will show up as a pyramid, otherwise, it will be
-presented as a facetted barplot with with empty bars in the background
+presented as several facetted pyramids with with empty bars in the background
 indicating the range of the un-facetted data set. Values of \code{spit_by} will
 show up as labels at top of each facet.
+
+The theme for this function is \code{\link[ggplot2:theme_classic]{ggplot2::theme_classic()}} with additional
+elements as follows:\preformatted{ theme(axis.line.y.left = element_blank(),
+       panel.grid.major.y = element_line(lintype = 2)) 
+}
+
+Because of a known bug in ggplot2 (\url{https://github.com/tidyverse/ggplot2/issues/3039}),
+these theme elements may disappear if you attempt to add any more elements,
+so you might want to add these elements in addition.
 }
 \examples{
 library(ggplot2)
@@ -76,8 +88,12 @@ dat  <- data.frame(AGE              = ages,
 # Create the age pyramid, stratifying by sex
 print(ap   <- plot_age_pyramid(dat, age_group = AGE))
 
+# You can also flip which group is used for comparison
+print(ap   <- plot_age_pyramid(dat, age_group = AGE, compare_group = "Female"))
+
 # Create the age pyramid, stratifying by gender, which can include non-binary
 print(apg  <- plot_age_pyramid(dat, age_group = AGE, split_by = gender))
+print(apg  <- plot_age_pyramid(dat, age_group = AGE, split_by = gender, compare_group = "Female"))
 
 # Remove NA categories with na.rm = TRUE
 dat2 <- dat
@@ -85,6 +101,7 @@ dat2[1, 1] <- NA
 dat2[2, 2] <- NA
 dat2[3, 3] <- NA
 print(ap   <- plot_age_pyramid(dat2, age_group = AGE))
+print(ap   <- plot_age_pyramid(dat2, age_group = AGE, facet = FALSE))
 print(ap   <- plot_age_pyramid(dat2, age_group = AGE, na.rm = TRUE))
 
 # Stratify by case definition and customize with ggplot2
@@ -115,5 +132,9 @@ print(ap)
 # empty group levels will still be displayed
 dat3 <- dat2
 dat3[dat$AGE == "[0,5)", "sex"] <- NA
+plot_age_pyramid(dat3, age_group = AGE, na.rm = TRUE) 
 plot_age_pyramid(dat3, age_group = AGE) 
+
+# if you want to force a single pyramid, use facet = FALSE
+plot_age_pyramid(dat3, age_group = AGE, facet = FALSE) 
 }
