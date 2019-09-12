@@ -179,6 +179,14 @@ study_data_dict <- msf_dict_survey("Mortality")
 ```
 
 
+```{r fake_cluster_counts}
+
+cluster_counts <- tibble(cluster = c("Village A", "Village B", "Village C", "Village D"), 
+                         households = c(700, 400, 600, 500))
+
+```
+
+
 
 
 ```{r read_population_data, warning = FALSE, message = FALSE}
@@ -219,14 +227,34 @@ study_data_dict <- msf_dict_survey("Mortality")
 ## if you only know the total population and the proportions in each age group, use this function 
 
 
-# generate population data by age groups in years 
-population_data_age <- gen_population(total_pop = 10000, # set the total population 
+# generate population data by age groups in years for district A
+population_data_age_district_a <- gen_population(total_pop = 10000, # set the total population 
   groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set the groups
-  proportions = c(0.182, 0.278, 0.26, 0.11, 0.07), # set the proportions for each group
+  proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set the proportions for each group
   strata      = c("Male", "Female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (syntax is NEW NAME = OLD NAME)
          sex        = strata,
-         population = n)
+         population = n) %>% 
+  mutate(health_district = "District A")                      # add a column to identify the region 
+
+
+# generate population data by age groups in years for district B
+population_data_age_district_b <- gen_population(total_pop = 10000, # set the total population 
+  groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set the groups
+  proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set the proportions for each group
+  strata      = c("Male", "Female")) %>%           # stratify by gender
+  rename(age_group  = groups,                      # rename columns (syntax is NEW NAME = OLD NAME)
+         sex        = strata,
+         population = n) %>% 
+  mutate(health_district = "District B")                      # add a column to identify the region 
+
+
+
+# bind region population data together to get overall population 
+# broken down by 
+population_data_age <- bind_rows(population_data_age_district_a, 
+                                 population_data_age_district_b)
+
 ```
 
 
@@ -468,9 +496,35 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ######## weighting ------------------------------------------------------------
 
+# create a variable called "surv_weight_strata" 
+# contains weights for each individual - by age group, sex and health district
 study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
                                          p = population_data_age, 
-                                         age_group, sex)
+                                         # surv_weight = surv_weight_strata, 
+                                         # surv_weight_ID = surv_weight_ID_strata,
+                                         age_group, sex, health_district)
+
+
+## merge village and household to create a unique household ID 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(hh_id = glue::glue("{village}_{q65_iq4}"))
+
+
+# create cluster weights 
+study_data_cleaned <- add_weights_cluster(x = study_data_cleaned, 
+                                          cl = cluster_counts, 
+                                          eligible = eligible, 
+                                          interviewed = interviewed, 
+                                          cluster_x = village, 
+                                          cluster_cl = cluster, 
+                                          household_x = hh_id, 
+                                          household_cl = households, 
+                                          surv_weight = "surv_weight_cluster", 
+                                          surv_weight_ID = "surv_weight_ID_cluster")
+
+# create a survey weight for cluster and strata 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(surv_weight_cluster_strata = surv_weight * surv_weight_cluster)
 
 
 #### observation time ----------------------------------------------------------
@@ -610,6 +664,16 @@ survey_design <- study_data_cleaned %>%
                    weights = surv_weight, # weight variable created above 
                    strata = NULL # sampling was simple (no strata)
                    )
+
+
+study_design_cluster <- study_data_cleaned %>% 
+  as_survey_design(ids = 1, # 1 for no cluster ids 
+                   weights = surv_weight, # weight variable created above 
+                   strata = NULL # sampling was simple (no strata)
+                   )
+
+
+
 ```
 
 
