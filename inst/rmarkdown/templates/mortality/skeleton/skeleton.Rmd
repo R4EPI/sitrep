@@ -516,10 +516,10 @@ study_data_cleaned <- study_data_cleaned %>%
 check_dates <- assert_positive_timespan(study_data_cleaned, startdate, enddate)
 
 # create a variable for month of end (used for deaths by month)
-study_data_cleaned$endmonth <- months(study_data_cleaned$enddate)
-# set factor levels for months variable 
-study_data_cleaned$endmonth <- factor(study_data_cleaned$endmonth, 
-                                      levels = c("February", "March", "April", "May"))
+study_data_cleaned <- mutate(study_data_cleaned, 
+                             endmonth = factor(months(enddate), 
+                                               levels = month.name)
+                             )
 
 
 # return the unique identifiers which have negative observation time 
@@ -527,18 +527,18 @@ study_data_cleaned$endmonth <- factor(study_data_cleaned$endmonth,
 # check_dates$fact_0_id
 
 # make sure there are the appropriate levels (names)
-study_data_cleaned$startcause <- recode_factor(study_data_cleaned$startcause,
+study_data_cleaned$startcause <- fct_recode(study_data_cleaned$startcause,
                                                "Present at start" = "Present at start",
-                                               "q88_q33_born_date" = "Born",
-                                               "q114_q16_date_arrival_camp" = "Other arrival",
-                                               "q41_q25_hh_arrive_date" = "Other arrival"
+                                               "Born" = "q88_q33_born_date",
+                                               "Other arrival" = "q114_q16_date_arrival_camp",
+                                               "Other arrival" = "q41_q25_hh_arrive_date"
                                                )
 
 # make sure there are the appropriate levels (names)
-study_data_cleaned$endcause <- recode_factor(study_data_cleaned$endcause,
+study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
                                              "Present at end" = "Present at end",
-                                             "q137_q35_died_date" = "Died",
-                                             "q45_q29_hh_leave_date" = "Other departure")
+                                             "Died" = "q137_q35_died_date",
+                                              "Other departure" = "q45_q29_hh_leave_date")
 
 
 ## Define observation time in days (need to highlight if negatives occur)
@@ -570,7 +570,7 @@ study_data_cleaned <- study_data_cleaned %>%
 ```{r save_cleaned_data, eval = FALSE}
 ## OPTIONAL: save your cleaned dataset as an excel file! 
 ## put the current date in the name so you know!
-writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date(), ".xlsx"))
+rio::export(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date(), ".xlsx"))
 ```
 
 
