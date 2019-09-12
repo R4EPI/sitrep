@@ -495,6 +495,43 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
       dis_output[dis_output$cluster_number == i, "q65_iq4"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
     }
 
+
+
+    ## create a vars for eligible and interviewed
+
+    # drop interviewed and eligible
+    dis_output$eligible <- NULL
+    dis_output$interviewed <- NULL
+
+    # get counts of people by household and cluster
+    hh_int <- aggregate(dis_output$q65_iq4,
+                        by = list(dis_output$cluster_number, dis_output$q65_iq4),
+                        FUN = length)
+
+    # make interviewed 3/4s of those eligible
+    hh_int$interviewed <- round(hh_int$x * 0.75, digits = 0)
+
+    # create a merger in hh_int
+    hh_int$merger <- paste0(hh_int$Group.1,"_", hh_int$Group.2)
+
+    # create a merger in dis_output
+    dis_output$merger <- paste0(dis_output$cluster_number, "_", dis_output$q65_iq4)
+    # drop extra columns
+    hh_int <- hh_int[,c("merger", "x", "interviewed")]
+
+    # rename columns
+    colnames(hh_int) <- c("merger", "eligible", "interviewed")
+
+    # merge with dis_output
+    dis_output <- merge(dis_output, hh_int, by = "merger", all.x = TRUE)
+
+    # drop merger var
+    dis_output$merger <- NULL
+
+
+
+
+
     # use household num as a standin for fact_0_id for now
     dis_output$fact_0_id <- dis_output$q65_iq4
 
@@ -576,6 +613,39 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
       dis_output[dis_output$cluster_number == i, "household_id"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
     }
 
+    ## create a var for eligible and interviewed
+
+    # drop interviewed and eligible
+    dis_output$eligible <- NULL
+    dis_output$interviewed <- NULL
+
+    # get counts of people by household and cluster
+    hh_int <- aggregate(dis_output$household_id,
+                        by = list(dis_output$cluster_number, dis_output$household_id),
+                        FUN = length)
+
+    # make interviewed 3/4s of those eligible
+    hh_int$interviewed <- round(hh_int$x * 0.75, digits = 0)
+
+    # create a merger in hh_int
+    hh_int$merger <- paste0(hh_int$Group.1,"_", hh_int$Group.2)
+
+    # create a merger in dis_output
+    dis_output$merger <- paste0(dis_output$cluster_number, "_", dis_output$household_id)
+    # drop extra columns
+    hh_int <- hh_int[,c("merger", "x", "interviewed")]
+
+    # rename columns
+    colnames(hh_int) <- c("merger", "eligible", "interviewed")
+
+    # merge with dis_output
+    dis_output <- merge(dis_output, hh_int, by = "merger", all.x = TRUE)
+
+    # drop merger var
+    dis_output$merger <- NULL
+
+
+
     # use household num as a standin for fact_0_id for now
     dis_output$fact_0_id <- dis_output$household_id
 
@@ -620,6 +690,39 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
       dis_output[dis_output$q77_what_is_the_cluster_number == i, "q14_hh_no"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
     }
+
+    ## create a var for eligible and interviewed
+
+    # drop interviewed and eligible
+    dis_output$eligible <- NULL
+    dis_output$interviewed <- NULL
+
+    # get counts of people by household and cluster
+    hh_int <- aggregate(dis_output$q14_hh_no,
+                        by = list(dis_output$cluster_number, dis_output$q14_hh_no),
+                        FUN = length)
+
+    # make interviewed 3/4s of those eligible
+    hh_int$interviewed <- round(hh_int$x * 0.75, digits = 0)
+
+    # create a merger in hh_int
+    hh_int$merger <- paste0(hh_int$Group.1,"_", hh_int$Group.2)
+
+    # create a merger in dis_output
+    dis_output$merger <- paste0(dis_output$cluster_number, "_", dis_output$q14_hh_no)
+    # drop extra columns
+    hh_int <- hh_int[,c("merger", "x", "interviewed")]
+
+    # rename columns
+    colnames(hh_int) <- c("merger", "eligible", "interviewed")
+
+    # merge with dis_output
+    dis_output <- merge(dis_output, hh_int, by = "merger", all.x = TRUE)
+
+    # drop merger var
+    dis_output$merger <- NULL
+
+
     # use household num as a standin for fact_0_id for now
     dis_output$fact_0_id <- dis_output$q14_hh_no
 
