@@ -1,28 +1,40 @@
 #' Plot a population pyramid (age-sex) from a dataframe.
 #'
 #' @param data Your dataframe (e.g. linelist)
+#'
 #' @param age_group the name of a column in the data frame that defines the age
 #'   group categories. Defaults to "age_group"
+#'
 #' @param split_by the name of a column in the data frame that defines the
 #'   the bivariate column. Defaults to "sex". See NOTE
+#'
 #' @param stack_by the name of the column in the data frame to use for shading
 #'   the bars
+#'
 #' @param proportional If `TRUE`, bars will represent proportions of cases out
 #'   of the entire population. Otherwise (`FALSE`, default), bars represent
 #'   case counts
+#'
 #' @param na.rm  If `TRUE`, this removes NA counts from the age groups. Defaults
 #'   to `TRUE`.
+#'
 #' @param show_halfway When `TRUE` (default), a dashed vertical line will be
 #'   added to each of the age bars showing the halfway point for the
 #'   un-stratified age group. When `FALSE`, no halfway point is marked.
+#'
+#' @param compare_group sdflkjsdlfkjsldkjfl
+#'
 #' @param vertical_lines If you would like to add dashed vertical lines to help
 #' visual interpretation of numbers. Default is to not show (`FALSE`),
 #' to turn on write `TRUE`.
+#'
 #' @param horizontal_lines If `TRUE` (default), horizontal dashed lines will
 #'   appear behind the bars of the pyramid
+#'
 #' @param pyramid if `TRUE`, then binary `split_by` variables will result in 
 #'   a population pyramid (non-binary variables cannot form a pyramid). If 
 #'   `FALSE`, a pyramid will not form.
+#'
 #' @param pal a color palette function or vector of colors to be passed to
 #'   [ggplot2::scale_fill_manual()] defaults to the first "qual" palette from
 #'   [ggplot2::scale_fill_brewer()].
@@ -35,6 +47,7 @@
 #'
 #' @import ggplot2
 #' @importFrom scales percent
+#' @importFrom rlang !! enquo .data :=
 #' @export
 #' @examples
 #' library(ggplot2)
@@ -94,9 +107,11 @@
 #' # empty group levels will still be displayed
 #' dat3 <- dat2
 #' dat3[dat$AGE == "[0,5)", "sex"] <- NA
+#' plot_age_pyramid(dat3, age_group = AGE, na.rm = TRUE) 
 #' plot_age_pyramid(dat3, age_group = AGE) 
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                              stack_by = split_by, proportional = FALSE, na.rm = FALSE,
+                             compare_group = 1,
                              show_halfway = TRUE, vertical_lines = FALSE, 
                              horizontal_lines = TRUE, pyramid = TRUE, 
                              pal = NULL) {
@@ -112,9 +127,10 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     stop(msg)
   }
 
-  ag        <- rlang::sym(age_group)
-  sb        <- rlang::sym(split_by)
-  st        <- rlang::sym(stack_by)
+  group <- rlang::sym(age_group)
+  split <- rlang::sym(split_by)
+  fill  <- rlang::sym(stack_by)
+  cfill <- rlang::sym(glue::glue("__{as.integer(Sys.time())}__{stack_by}"))
 
   # Count the plot data --------------------------------------------------------
   plot_data <- count_age_categories(data,
@@ -123,7 +139,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                                     stack_by, 
                                     proportional, 
                                     na.rm)
-
+  max_n <- max(plot_data[["n"]])
   # gathering the levels for each of the elements ------------------------------ 
   age_levels    <- levels(plot_data[[age_group]])
   max_age_group <- age_levels[length(age_levels)]
@@ -132,6 +148,14 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   split_levels  <- plot_data[[split_by]]
   split_levels  <- if (is.factor(split_levels)) levels(split_levels) else unique(split_levels)
   split_levels  <- split_levels[!is.na(split_levels)]
+
+  if (is.numeric(compare_group)) {
+    compare_group <- split_levels[compare_group]
+  } 
+  if (!compare_group %in% split_levels) {
+    slevels <- glue::glue_collapse(split_levels, sep = ", ", last = ", or ")
+    stop(glue::glue("`compare_group` ({compare_group}) must be one of {slevels}"))
+  }
 
   # Stacking levels assuming there is no missing data
   stk_levels    <- plot_data[[stack_by]]
@@ -144,17 +168,34 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
   # levels is binary.
   split_measured_binary <- pyramid && length(split_levels) == 2L
 
-  if (split_measured_binary) {
-    maxdata <- dplyr::group_by(plot_data, !!ag, !!sb, .drop = FALSE)
-  } else {
-    maxdata <- dplyr::group_by(plot_data, !!ag, .drop = FALSE)
-  }
+  midpoint <- function(u, l) u - (abs(u - l) / 2L)
 
-  # find the maximum x axis position
-  maxdata <- dplyr::tally(maxdata, wt = !! quote(n))
-  max_n   <- max(abs(maxdata[["n"]]), na.rm = TRUE)
+  background <- dplyr::group_by(plot_data, !!group)
+  background <- dplyr::mutate(background, N = sum(.data$n))
+  background <- dplyr::filter(background, !!split == compare_group)
+  background <- dplyr::mutate(background,
+                              upper = .data$N - sum(.data$n),
+                              lower = -1L     * .data$n)
 
-  # make sure the x axis is a multiple of ten. This took a lot of fiddling
+
+  compare_bg <- dplyr::select(background, 
+                              !!group, 
+                              !!split, 
+                              !!fill, 
+                              n = .data$lower)
+  compare_bg <- dplyr::mutate(compare_bg, !!cfill := !!fill)
+  compare_bg <- dplyr::rename_at(compare_bg, vars(split_by), toupper)
+
+  plot_bg <- tidyr::gather(background, key = "part", value = "n", 
+                           .data$upper, .data$lower)
+  plot_bg <- dplyr::select(plot_bg, -!!split)
+  plot_bg <- dplyr::distinct(plot_bg, !!group, .data$n, .keep_all = TRUE)
+  plot_bg[["zzzz_alpha"]] <- "Total"
+
+  max_n <- dplyr::group_by(plot_data, !!group, !!split)
+  max_n <- dplyr::summarise(max_n, n = sum(.data$n))
+  max_n <- max(abs(max_n[["n"]]))
+
   if (proportional) {
     max_n     <- ceiling(max_n * 100)
     max_n     <- max_n + if (max_n %% 10 == 0) 0 else (10 - max_n %% 10)
@@ -169,163 +210,129 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
     y_lab     <- "counts"
   }
 
-  stopifnot(is.finite(max_n), max_n > 0)
-
-  # Make sure the breaks are correct for the plot size
-  the_breaks <- seq(0, max_n, step_size)
-  the_breaks <- if (split_measured_binary) c(-rev(the_breaks[-1]), the_breaks) else the_breaks
-
-
-  if (split_measured_binary) {
-    # If the user has a binary level and wants to plot the data in a pyramid,
-    # then we need to make the counts for the primary level negative so that
-    # they appear to go to the left on the plot.
-    plot_data[["n"]] <- ifelse(plot_data[[split_by]] == split_levels[[1L]], -1L, 1L) * plot_data[["n"]]
-    maxdata[["d"]]   <- ifelse(maxdata[[split_by]] == split_levels[[1L]], -1L, 0L) * maxdata[["n"]]
-    # If we are labelling the center, then we can get it by summing the values over the age groups
-    maxdata          <- dplyr::summarise(maxdata, center = sum(!! quote(d)) + sum(!! quote(n)) / 2)
-  } else {
-    maxdata[["center"]] <- maxdata[["n"]] / 2
+  cmpr_labeller <- function(x, cmpr = compare_group) {
+    glue::glue("{cmpr} vs {x}")
   }
 
-  # Create base plot -----------------------------------------------------------
-  pyramid <- ggplot(plot_data, aes(x = !!ag, y = !!quote(n))) + 
-    theme_classic() + 
-    theme(axis.line.y.left = element_blank()) +
-    labs(y = y_lab)
-  pal     <- if (is.function(pal)) pal(length(stk_levels)) else pal
-
-  if (!split_measured_binary) { 
-    # add the background layer if the split is not binary
-    maxdata[["zzzzz_alpha"]] <- "Total"
-    pyramid <- pyramid + 
-      geom_col(aes(alpha = !! quote(zzzzz_alpha)), fill = "grey80", color = "grey20", data = maxdata)
-  }
-
-  # Add bars, scales, and themes -----------------------------------------------
-  pyramid <- pyramid + 
-    geom_col(aes(group = !!sb, fill = !!st), color = "grey20") +
-    coord_flip() 
-  if (is.null(pal)) {
-    pyramid <- pyramid + scale_fill_brewer(type = "qual", guide = guide_legend(order = 1)) 
-  } else {
-    pyramid <- pyramid + scale_fill_manual(values = pal, guide = guide_legend(order = 1))
-  }
-  pyramid <- pyramid + 
-    scale_y_continuous(limits = if (split_measured_binary) c(-max_n, max_n) else c(0, max_n),
-                       breaks = the_breaks,
-                       labels = lab_fun) +
-    scale_x_discrete(drop = FALSE) # note: drop = FALSE important to avoid missing age groups
-
+  plot_data <- dplyr::filter(plot_data, !!split != compare_group)
+  pyramid <- ggplot(plot_data, aes(x = !!group, y = .data$n)) 
+  
   if (!split_measured_binary) {
-    # Wrap the categories if the split is not binary
     pyramid <- pyramid + 
-      facet_wrap(split_by) +
-      scale_alpha_manual(values = 0.5, guide = guide_legend(title = NULL, order = 3)) 
-  }
-  if (vertical_lines == TRUE) {
-    pyramid <- pyramid +
-      geom_hline(yintercept = c(seq(-max_n, max_n, step_size)), linetype = "dotted", colour = "grey")
+      geom_col(data = plot_bg, mapping = aes(alpha = .data$zzzz_alpha), 
+               fill = "grey80", color = "grey20", position = "stack") +
+      facet_wrap(split, labeller = as_labeller(cmpr_labeller)) +
+      scale_alpha_manual(values = 0.5, 
+                         guide = guide_legend(title = NULL, order = 3)) 
   }
 
+  pyramid <- pyramid + 
+    geom_col(mapping = aes(fill = !!fill), 
+             position = "stack", color = "grey20") +
+    geom_col(data = compare_bg, mapping = aes(fill = !!cfill), 
+             color = "grey20", position = "stack", show.legend = FALSE) +
+    geom_hline(yintercept = 0) +
+    coord_flip()
 
   if (show_halfway) {
-    maxdata              <- dplyr::arrange(maxdata, !! ag)
+    maxdata <- dplyr::arrange(background, !!group)
+    maxdata <- dplyr::group_by(maxdata, !!group)
+    maxdata <- dplyr::summarise(maxdata, 
+                                upper = max(.data$upper), 
+                                lower = sum(.data$lower))
+    maxdata <- dplyr::mutate(maxdata, center = midpoint(.data$upper, .data$lower))
+    maxdata <- dplyr::select(maxdata, !!group, .data$center)
     maxdata[['x']]       <- seq_along(maxdata[[age_group]]) - 0.25
     maxdata[['xend']]    <- maxdata[['x']] + 0.5
     maxdata[['halfway']] <- 'midpoint'
     pyramid <- pyramid + 
-      geom_segment(aes(x        = !! quote(x),
-                       xend     = !! quote(xend),
-                       y        = !! quote(center),
-                       yend     = !! quote(center),
-                       linetype = !! quote(halfway)),
+      geom_segment(aes(x        = .data$x,
+                       xend     = .data$xend,
+                       y        = .data$center,
+                       yend     = .data$center,
+                       linetype = .data$halfway),
                    color     = "grey20",
                    key_glyph = "vpath", # NOTE: key_glyph is only part of ggplot2 >= 2.3.0; this will warn otherwise
                    data      = maxdata) +
       scale_linetype_manual(values = 'dashed', guide = guide_legend(title = NULL, order = 2))
     
   }
+  if (is.null(pal)) {
+    pyramid <- pyramid + scale_fill_brewer(type = "qual", guide = guide_legend(order = 1)) 
+  } else {
+    pyramid <- pyramid + scale_fill_manual(values = pal, guide = guide_legend(order = 1))
+  }
 
-  if (split_measured_binary && stack_by != split_by) {
-    # If the split is binary and we have both stacked and split data, then we
-    # need to label the groups. We do so by adding a label annotation
+  if (!split_measured_binary || split_by != stack_by) {
+
+    pd              <- dplyr::distinct(plot_data, .data[[split_by]])
+    pd[[age_group]] <- max_age_group
+    pd$n            <- step_size
+
     pyramid <- pyramid +
+      geom_label(data = pd, 
+                 mapping = aes(label = .data[[split_by]]),
+                 vjust = 0.5,
+                 label.padding = grid::unit(0.5, "lines"),
+                 hjust = 0) +
       annotate(geom  = "label",
                x     = max_age_group,
                y     = -step_size,
                vjust = 0.5,
                hjust = 1,
-               label = split_levels[[1]]) +
-      annotate(geom  = "label",
-               x     = max_age_group,
-               y     = step_size,
-               vjust = 0.5,
-               hjust = 0,
-               label = split_levels[[2]])
+               label.padding = grid::unit(0.5, "lines"),
+               label = compare_group) 
   }
 
-  if (horizontal_lines == TRUE) {
-    pyramid <- pyramid + theme(panel.grid.major.y = element_line(linetype = 2))
-  }
+  the_breaks <- seq(0, max_n, step_size)
+  the_breaks <- c(-rev(the_breaks[-1]), the_breaks)
 
-  pyramid <- pyramid +
-    geom_hline(yintercept = 0) # add vertical line
+  pyramid +
+    scale_y_continuous(limits = c(-max_n, max_n),
+                       breaks = the_breaks,
+                       labels = lab_fun) +
+    scale_x_discrete(drop = FALSE) # note: drop = FALSE important to avoid missing age groups
 
-  pyramid 
 }
 
 
 # This will count the age categories for us. I've pulled it out of the plot-age
-count_age_categories <- function(data, age_group, split_by, stack_by, proportional, na.rm) {
+count_age_categories <- function(data, age_group, split_by, stack_by, 
+                                 proportional = FALSE, na.rm = FALSE) {
 
   ag <- rlang::sym(age_group)
   sb <- rlang::sym(split_by)
   st <- rlang::sym(stack_by)
 
   if (is.data.frame(data)) {
-    sbv <- data[[split_by]]
-    stv <- data[[stack_by]]
-    if (!is.character(sbv) || !is.factor(sbv)) {
-      data[[split_by]] <- as.character(sbv)
-    }
-    if (!is.character(stv) || !is.factor(stv)) {
-      data[[stack_by]] <- as.character(stv)
-    }
-    if (anyNA(sbv) || anyNA(stv)) {
-      nas <- is.na(sbv) | is.na(stv)
-      warning(sprintf("removing %d observations with missing values between the %s and %s columns.",
-                      sum(nas), split_by, stack_by))
-      data <- data[!nas, , drop = FALSE]
-    }
+    data <- dplyr::select(data, !!ag, !!sb, !!st)
     if (na.rm) {
-      nas <- is.na(data[[age_group]])
-      warning(sprintf("removing %d observations with missing values from the %s column.",
-                      sum(nas), age_group))
-      data <- data[!nas, , drop = FALSE]
+      missing <- dplyr::mutate_at(data,
+                                  .vars = vars(!!ag, !!sb, !!st),
+                                  .funs = is.na)
+      sumissing <- colSums(missing)
+      if (any(sumissing > 0)) {
+        nmiss <- glue::glue(" {sumissing} values from {names(sumissing)} ")
+        nmiss <- glue::glue_collapse(nmiss, sep = ",", last = "and")
+        missing <- missing[[age_group]] | missing[[split_by]] | missing[[stack_by]]
+        msg     <- glue::glue("{sum(missing)} missing rows were removed ({nmiss}).")
+        warning(msg)
+        data    <- data[!missing, , drop = FALSE]
+      } else {
+        # 🤷
+      }
     } else {
-      data[[age_group]] <- forcats::fct_explicit_na(data[[age_group]])
+      data <- dplyr::mutate_at(data,
+                               .vars = vars(!!ag, !!sb, !!st),
+                               .funs = forcats::fct_explicit_na, "Missing")
     }
-    # plot_data <- tidyr::complete(data, !!ag) # make sure all factors are represented
-    plot_data <- dplyr::group_by(data, !!ag, !!sb, !!st, .drop = FALSE)
-    plot_data <- dplyr::summarise(plot_data, n = dplyr::n())
-    plot_data <- dplyr::ungroup(plot_data)
-    if (is.factor(sbv)) {
-      plot_data[[split_by]] <- factor(plot_data[[split_by]], levels(sbv))
-    }
-    if (is.factor(stv)) {
-      plot_data[[stack_by]] <- factor(plot_data[[stack_by]], levels(stv))
-    }
+    plot_data <- dplyr::count(data, !!ag, !!sb, !!st, .drop = FALSE)
   } else {
     plot_data <- srvyr::group_by(data, !!ag, !!sb, !!st, .drop = FALSE)
     plot_data <- srvyr::summarise(plot_data,
                                   n = srvyr::survey_total(vartype = "ci", level = 0.95))
 
   }
-  # Remove any missing values
-  to_delete <- is.na(plot_data[[split_by]]) & is.na(plot_data[[stack_by]]) & plot_data[["n"]] == 0
-  plot_data <- plot_data[!to_delete, , drop = FALSE]
-
   if (proportional) {
     plot_data$n <- plot_data$n / sum(plot_data$n, na.rm = TRUE)
   }
