@@ -79,7 +79,7 @@ test_that("case_fatality_rate_df will do stratified analysis", {
   iris_n <- tibble::as_tibble(iris_n)
   iris_n$Species <- forcats::fct_inorder(iris_n$Species)
  
-  expect_identical(iris_res, iris_n)
+  expect_equal(iris_res, iris_n)
 
 })
 
@@ -95,7 +95,7 @@ test_that("case_fatality_rate_df will do stratified analysis", {
   iris_n$Species[3] <- "(Missing)"
   iris_n$Species <- forcats::fct_inorder(iris_n$Species)
  
-  expect_identical(iris_res, iris_n)
+  expect_equal(iris_res, iris_n)
 
 })
 
