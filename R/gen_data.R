@@ -138,18 +138,13 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
   # produce clean compact data dictionary for use in gen_data
   if (long && compact == TRUE) {
 
-    browser()
     squished <- dplyr::group_by(outtie, !! quote(data_element_shortname))
     if (new_tidyr) {
       squished <- tidyr::nest(squished, options = dplyr::starts_with("option_"))
     } else {
       squished <- tidyr::nest(squished, dplyr::starts_with("option_"), .key = "options")
     }
-    outtie   <- dplyr::select(outtie, -dplyr::starts_with("option_"))
-    outtie   <- dplyr::distinct(outtie)
-    outtie   <- dplyr::left_join(outtie, squished, by = names(outtie))
-
-    return(tibble::as_tibble(outtie))
+    return(dplyr::ungroup(squished))
     # change dat_opts to wide format
     # remove the optionset_UID for treatment_facility_site
     # (is just numbers 1:50 and dont want it in the data dictionary)
