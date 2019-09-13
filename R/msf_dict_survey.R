@@ -47,12 +47,17 @@ msf_dict_survey <- function(disease, name = "MSF-survey-dict.xlsx",
                             !! quote(type),
                             dplyr::starts_with("option_"))
   dat_dict <- dplyr::group_by(dat_dict, !! quote(column_name))
+
   dat_dict <- dplyr::mutate(dat_dict, option_order_in_set = seq(dplyr::n()))
+
   if (compact) {
     if (packageVersion("tidyr") > "0.8.99") {
       dat_dict <- tidyr::nest(dat_dict, options = dplyr::starts_with("option_"))
     } else {
-      dat_dict <- tidyr::nest(dat_dict, dplyr::starts_with("option_"), .key = "options")
+      squished <- tidyr::nest(dat_dict, dplyr::starts_with("option_"), .key = "options")
+      dat_dict <- dplyr::select(dat_dict, -dplyr::starts_with("option_"))
+      dat_dict <- dplyr::distinct(dat_dict)
+      dat_dict <- dplyr::left_join(dat_dict, squished, by = "column_name")
     }
   }
   dat_dict <- dplyr::ungroup(dat_dict)

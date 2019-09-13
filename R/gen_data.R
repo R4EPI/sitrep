@@ -145,6 +145,9 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
       squished <- tidyr::nest(squished, options = dplyr::starts_with("option_"))
     } else {
       squished <- tidyr::nest(squished, dplyr::starts_with("option_"), .key = "options")
+      outtie   <- dplyr::select(outtie, -dplyr::starts_with("option_"))
+      outtie   <- dplyr::distinct(outtie)
+      squished <- dplyr::left_join(outtie, squished, by = "data_element_shortname")
     }
 
     return(dplyr::ungroup(squished))
