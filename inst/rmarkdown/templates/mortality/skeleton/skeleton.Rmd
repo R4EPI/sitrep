@@ -500,7 +500,7 @@ study_data_cleaned <- study_data_cleaned %>%
 # contains weights for each individual - by age group, sex and health district
 study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
                                          p = population_data_age, 
-                                         # surv_weight = surv_weight_strata, 
+                                         # surv_weight = surv_weight_strata,
                                          # surv_weight_ID = surv_weight_ID_strata,
                                          age_group, sex, health_district)
 
@@ -520,7 +520,9 @@ study_data_cleaned <- add_weights_cluster(x = study_data_cleaned,
                                           household_x = hh_id, 
                                           household_cl = households, 
                                           surv_weight = "surv_weight_cluster", 
-                                          surv_weight_ID = "surv_weight_ID_cluster")
+                                          surv_weight_ID = "surv_weight_ID_cluster", 
+                                          ignore_cluster = FALSE, 
+                                          ignore_household = FALSE)
 
 # create a survey weight for cluster and strata 
 study_data_cleaned <- study_data_cleaned %>% 
