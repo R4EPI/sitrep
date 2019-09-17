@@ -312,7 +312,7 @@ the full-text value.
 
 ```{r prep_nonDHIS_data, warning = FALSE, message = FALSE}
 ## MSF Cholera Dictionary ----------------------------------------------------------
-# get MSF standard dictionary for cholera 
+## get MSF standard dictionary for cholera 
 # linelist_dict <- msf_dict("Cholera", compact = FALSE) %>%
 #   select(option_code, option_name, everything())
 
@@ -535,8 +535,8 @@ specific variables or rows.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r remove_unused_data}
 ## Drop unused rows  -----------------------------------------------------------
-# This step removes blank rows that don't have both a date of admission and ID
-# number.
+## This step removes blank rows that don't have both a date of admission and ID
+## number.
 linelist_cleaned <- linelist_cleaned %>% 
   filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
 
@@ -1164,6 +1164,8 @@ If you do not have lab results, comment out this chunk.
 tab_linelist(linelist_cleaned, LABS, 
              transpose = "value") %>% 
   # fix the way lab test names are displayed
+  # gsub switches underscore for space in the variable column
+  # str_to_sentence makes the first letter capital, and all others lowercase
   mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
   # rename accordingly
   rename("Lab test" = variable) %>%
@@ -1600,6 +1602,27 @@ plot(inc_week_7_gender,
   epicurve_labels +
   epicurve_theme
 
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// incidence_by_case_def \\\
+--------------------------------------------------------------------------------
+
+This chunk shows the weekly incidence by case definition. You must have a
+defined case definition variable.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r incidence_by_case_def, message = FALSE}
+inc_week_7_casedef <- incidence(linelist_cleaned$date_of_onset, 
+                                interval = "Monday week", 
+                                groups = linelist_cleaned$case_def)
+plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
+  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
+  # add labels to axes and below chart
+  epicurve_labels +
+  # change visuals of dates, remove legend title and move legend to bottom
+  epicurve_theme
 ```
 
 
