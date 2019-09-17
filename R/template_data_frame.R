@@ -7,7 +7,12 @@ template_data_frame_categories <- function(dat_dict, numcases, varnames, survey 
 
   colnames(dis_output) <- dat_dict[[varnames]]
 
-  categories <- tidyr::unnest(dat_dict)
+
+  if (packageVersion("tidyr") > "0.8.99") {
+    categories <- tidyr::unnest(dat_dict, cols = "options")
+  } else {
+    categories <- tidyr::unnest(dat_dict)
+  }
   categories <- dplyr::filter(categories, !is.na(!! quote(option_name)))
 
   # take samples for vars with defined options (non empties)
