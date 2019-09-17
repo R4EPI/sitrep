@@ -330,7 +330,7 @@ study_data_cleaned <- rename(study_data_cleaned,
                              vaccine_sia = q32_vaccine_sia,
                              vaccine_mass = q17_vaccine_mass,
                              disease_diagnosis = q47_disease_diagnosis,
-                             cluster = q77_what_is_the_cluster_number)
+                             cluster_number = q77_what_is_the_cluster_number)
 
 
 ## OPTIONAL: if you only want to keep certain variables - 
@@ -552,15 +552,121 @@ rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx
 
 # cluster sample (using srvyr package)
 survey_design <- study_data_cleaned %>% 
-  as_survey_design(ids = cluster, # cluster id variable (created during collection) 
+  as_survey_design(ids = cluster_number, # cluster id variable (created during collection) 
                    weights = surv_weight,  # weight variable created above 
                    strata = NULL)  # # sampling was clustered without strata
 ```
 
 
+### Survey inclusion 
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The below chunks calculate values that are displayed with the inline text
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+
+```{r inclusion_counts}
+
+## get the number of counts by cluster and household 
+## then use these in the size counts below #
+
+## get counts of number of clusters 
+num_clus <- study_data_cleaned %>%
+  ## trim data to unique clusters
+  distinct(cluster_number) %>% 
+  ## get number of rows (count how many unique)
+  nrow()
+
+## get counts of number households 
+num_hh <- study_data_cleaned %>% 
+  ## get unique houses by cluster
+  distinct(cluster_number, q14_hh_no) %>% 
+  ## get number of rounds (count how many unique)
+  nrow()
+
+```
+
+
+
+
+
+We included `r num_hh` households accross `r num_clus` clusters in this survey analysis. 
+
+
+
+Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
+the reasons for refusal are described below. 
+
+```{r reason_no_consent}
+# get counts and props 
+tab_linelist(dropped, "q65_consent_no_reason", col_total = TRUE, digits = 2) %>% 
+  # drop variable column and rename others
+  select("Reason" = value, 
+         "n" = n, 
+         "%" = proportion) %>%
+  kable(digits = 2)
+```
+
+
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The below chunks calculate values that are displayed with the inline text
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+
+```{r cluster_hh_size}
+# get counts of the number of households per cluster
+clustersize <- study_data_cleaned %>% 
+  # trim data to only unique households within each cluster
+  distinct(cluster_number, q14_hh_no) %>%
+  # count the number of households within each cluster
+  count(cluster_number) %>% 
+  pull(n)
+
+# get the median number of households per cluster
+clustermed <- median(clustersize)
+
+# get the min and max number of households per cluster
+# paste these together seperated by a dash 
+clusterrange <- paste0(range(clustersize), collapse = "--")
+
+# get counts of children per household 
+# do this by cluster as household IDs are only unique within clusters
+hhsize <- study_data_cleaned %>% 
+  count(cluster_number, q14_hh_no) %>%
+  pull(n) 
+
+# get median number of children per household
+hhmed <- median(hhsize)
+# get the min and max number of children per household
+# paste these together seperated by a dash 
+hhrange <- paste0(range(hhsize), collapse = "--")
+
+# get standard deviation 
+hhsd <- round(sd(hhsize), digits = 1)
+
+```
+
+
+The median number of households per cluster was
+`r clustermed`, with a range of `r clusterrange`. The median number of children
+per household was `r hhmed` (range: `r hhrange`, standard deviation: `r hhsd`). 
 
 
 ## Demographic information
+
+
+In total we included `r nrow(study_data_cleaned)` in the survey analysis. 
+The age break down and a comparison with the source population is shown below. 
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Compare the proportions in each age group between your sample and the source population. 
 This is important to be able to highlight potential sampling bias. 
@@ -572,6 +678,8 @@ compared to the source population is more
 important that the binomial test itself. This is because increasing sample size
 will more often than not lead to differences that may be irrelevant after weighting
 your data. 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~--> 
 
 
 ```{r descriptive_sampling_bias}
@@ -625,21 +733,6 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
 ```
 
 
-Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
-the reasons for refusal are described below. 
-
-```{r reason_no_consent}
-# get counts and props 
-tab_linelist(dropped, "q65_consent_no_reason", col_total = TRUE, digits = 2) %>% 
-  # drop redundant column
-  select(-variable) %>%
-  # change column names 
-  rename(Reason = value, 
-         "Individuals (n)" = n, 
-         "%" = proportion) %>%
-  kable(digits = 2)
-```
-
 
 ```{r median_age_sex_ratios}
 # compute the median age 
@@ -688,40 +781,6 @@ year age group.
 
 
 
-```{r cluster_hh_size}
-# get counts of the number of households per cluster
-clustersize <- study_data_cleaned %>% 
-  # trim data to only unique households within each cluster
-  distinct(cluster, q14_hh_no) %>%
-  # count the number of households within each cluster
-  count(cluster) %>% 
-  pull(n)
-
-# get the median number of households per cluster
-clustermed <- median(clustersize)
-
-# get the min and max number of households per cluster
-# paste these together seperated by a dash 
-clusterrange <- paste0(range(clustersize), collapse = "--")
-
-# get counts of children per household 
-# do this by cluster as household IDs are only unique within clusters
-hhsize <- study_data_cleaned %>% 
-  count(cluster, q14_hh_no) %>%
-  pull(n) 
-
-# get median number of children per household
-# ungroup to give you the overall median 
-hhmed <- median(hhsize)
-# get the min and max number of children per household
-# paste these together seperated by a dash 
-hhrange <- paste0(range(hhsize), collapse = "--")
-```
-
-
-The median number of households per cluster was
-`r clustermed`, with a range of `r clusterrange`. The median number of children
-per household was `r hhmed` and the range was `r hhrange`. 
 
 Age distribution of household population by year age group and gender.
 
@@ -735,23 +794,6 @@ tab_linelist(study_data_cleaned, age_group,
              row_total  = TRUE,
              col_total  = TRUE,
              prop_total = TRUE) %>%
-  # NOTE: 
-  # 
-  # DEAREST ALEX, 
-  # 
-  # I WRITE TO YOU NOW TO ALERT YOU TO THIS CHANGE SO THAT YOU MAY PONDER UPON
-  # IT AND IMPOSE YOUR JUDGEMENT. THE TAB_LINELIST FUNCTION WILL ALWAYS RETURN
-  # A VARIABLE AND VALUE COLUMN. I THOUGHT THAT, INSTEAD OF DOING 
-  #
-  # SELECT(-VARIABLE) %>%
-  # RENAME(AGE = VALUE,
-  #        ...
-  #
-  # THAT WE COULD JUST DO IT IN ONE GO. WHAT DO YOU SAY?
-  #
-  # YOURS IN ALL CAPS,
-  # ZHIAN
-
   # select and rename column names appropriately
   select("Age"              = "value",
          "Female cases (n)" = "Female n",
@@ -775,23 +817,6 @@ tab_linelist(study_data_cleaned, age_category,
              row_total  = TRUE,
              col_total  = TRUE,
              prop_total = TRUE) %>%
-  # NOTE: 
-  # 
-  # DEAREST ALEX, 
-  # 
-  # I WRITE TO YOU NOW TO ALERT YOU TO THIS CHANGE SO THAT YOU MAY PONDER UPON
-  # IT AND IMPOSE YOUR JUDGEMENT. THE TAB_LINELIST FUNCTION WILL ALWAYS RETURN
-  # A VARIABLE AND VALUE COLUMN. I THOUGHT THAT, INSTEAD OF DOING 
-  #
-  # SELECT(-VARIABLE) %>%
-  # RENAME(AGE = VALUE,
-  #        ...
-  #
-  # THAT WE COULD JUST DO IT IN ONE GO. WHAT DO YOU SAY?
-  #
-  # YOURS IN ALL CAPS,
-  # ZHIAN
-
   # select and rename column names appropriately
   select("Age"              = "value",
          "Female cases (n)" = "Female n",
