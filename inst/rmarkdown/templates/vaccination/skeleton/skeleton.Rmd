@@ -515,7 +515,7 @@ study_data_cleaned <- study_data_cleaned %>%
 ```{r save_cleaned_data, eval = FALSE}
 ## OPTIONAL: save your cleaned dataset as an excel file! 
 ## put the current date in the name so you know!
-writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date(), ".xlsx"))
+rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
 ```
 
 
