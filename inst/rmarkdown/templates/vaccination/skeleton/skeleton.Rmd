@@ -863,13 +863,11 @@ Distinguishing between vaccination cards and verbal confirmation
 ```{r vaccination_coverage_overall_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% # use the survey object (weighted)
-  # calculate weighted counts and weighted proportions, 
-  # include design effect because cluster sample
-  tab_survey(vaccination_status, deff = TRUE, digits = 2) %>% 
+  # calculate weighted counts and weighted proportions
+  tab_survey(vaccination_status, digits = 2) %>% 
   select(-variable) %>%
   rename("Vaccination status" = value, 
-         "Children (n)" = n, 
-         "Design effect" = deff, 
+         "Children (n)" = n,  
          "% (95% CI)" = ci) %>% 
   kable(digits = 2)
 ```
@@ -881,13 +879,12 @@ Accepting equal validity from self-reported and card-reported vaccination status
 # return weighted counts and weighted proportions 
 survey_design %>% # use the survey object (weighted)
   # calculate weighted counts and weighted proportions - stratified by sex
-  # include design effect because cluster sample
-  tab_survey(vaccination_status_simple, strata = sex, deff = TRUE, digits = 2) %>%
+  tab_survey(vaccination_status_simple, deff = TRUE, strata = sex, digits = 2) %>%
   select(-variable) %>%
   rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%    # wrap all "n" vars in braces (note space before n).
   rename_redundant("% (95% CI)"    = "ci",        # relabel all columns containing "ci" to "% (95% CI)"
-                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
+                   "Design Effect" = "_deff") %>% # "deff" to "Design effect"
   kable(digits = 2)
 ```
 
@@ -896,12 +893,12 @@ Distinguishing between vaccination cards and verbal confirmation, by sex
 ```{r vaccination_coverage_sex_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tab_survey(vaccination_status, strata = sex, deff = TRUE, digits = 2) %>%
+  tab_survey(vaccination_status, strata = sex, digits = 2) %>%
   select(-variable) %>%
   rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%    # wrap all "n" vars in braces (note space before n).
-  rename_redundant("% (95% CI)"    = "ci",        # relabel all columns containing "ci" to "% (95% CI)"
-                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
+  rename_redundant("% (95% CI)"    = "ci"        # relabel all columns containing "ci" to "% (95% CI)"
+                   ) %>% 
   kable(digits = 2)
 ```
 
@@ -925,12 +922,12 @@ Distinguishing between vaccination cards and verbal confirmation, by age group
 ```{r vaccination_coverage_age_group_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tab_survey(vaccination_status, strata = age_group, deff = TRUE, digits = 2, 
+  tab_survey(vaccination_status, strata = age_group, digits = 2, 
              drop = "Missing", transpose = "value") %>%
   rename("Age group (years)" = age_group) %>% 
   augment_redundant(" (n)"         = "_n") %>%    # wrap all "n" vars in braces (note space before n).
-  rename_redundant("% (95% CI)"    = "_ci",       # relabel all columns containing "ci" to "% (95% CI)"
-                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
+  rename_redundant("% (95% CI)"    = "_ci"       # relabel all columns containing "ci" to "% (95% CI)"
+                   ) %>%
   kable(digits = 2)
 ```
 
