@@ -699,7 +699,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
     # get counts of people by household and cluster
     hh_int <- aggregate(dis_output$q14_hh_no,
-                        by = list(dis_output$cluster_number, dis_output$q14_hh_no),
+                        by = list(dis_output$q77_what_is_the_cluster_number, dis_output$q14_hh_no),
                         FUN = length)
 
     # make interviewed 3/4s of those eligible
@@ -709,7 +709,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
     hh_int$merger <- paste0(hh_int$Group.1,"_", hh_int$Group.2)
 
     # create a merger in dis_output
-    dis_output$merger <- paste0(dis_output$cluster_number, "_", dis_output$q14_hh_no)
+    dis_output$merger <- paste0(dis_output$q77_what_is_the_cluster_number, "_", dis_output$q14_hh_no)
     # drop extra columns
     hh_int <- hh_int[,c("merger", "x", "interviewed")]
 
