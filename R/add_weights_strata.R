@@ -54,37 +54,42 @@
 #' # weight based on age group and sex
 #' add_weights_strata(x, p = p, age_grp, sex, population = population)
 #'
+add_weights_strata <- function(x, p, ..., 
+                               population = population, 
+                               surv_weight = surv_weight, 
+                               surv_weight_ID = surv_weight_ID) {
 
-
-add_weights_strata <- function(x, p, ..., population = population, surv_weight = surv_weight, surv_weight_ID = surv_weight_ID) {
-
-  .dots      <- rlang::enquos(...)
-  population <- rlang::enquo(population)
+  pop <- tidyselect::vars_select(names(p), {{population}}, .strict = FALSE)
+  if (length(pop) == 0) {
+    cll   <- match.call()
+    ppltn <- rlang::as_name(rlang::enquo(population))
+    stop(glue::glue("{ppltn} is not one of the columns of {cll[['p']]}"))
+  } else {
+    population      <- rlang::ensym(pop)
+  }
   surv_weight_ID  <- rlang::enquo(surv_weight_ID)
   surv_weight     <- rlang::enquo(surv_weight)
+  onames          <- names(x)
 
   # create a merger ID by age group and sex
-  p <- tidyr::unite(p, "ID", !!! .dots)
+  p <- tidyr::unite(p, !!surv_weight_ID, ...)
+  x <- tidyr::unite(x, !!surv_weight_ID, ..., remove = FALSE)
 
   # get study sample counts
-  counts <- dplyr::count(x, !!! .dots)
-  counts <- tidyr::unite(counts, "ID", !!! .dots)
-  counts <- dplyr::select(counts, .data$ID, .data$n)
+  counts <- dplyr::count(x, !!surv_weight_ID)
 
   # merge counts to population data
-  p <- dplyr::left_join(p, counts, by = "ID")
+  p <- dplyr::left_join(p, counts, by = rlang::as_name(surv_weight_ID))
 
   # create weight variable
-  p <- dplyr::mutate(p, !! surv_weight := !! population / .data$n)
-  p <- dplyr::select(p, .data$ID, !! surv_weight)
+  p <- dplyr::mutate(p, !!surv_weight := !!population / .data$n)
+  p <- dplyr::select(p, !!surv_weight, !!surv_weight_ID)
 
 
   # merge to study sample
-  merge_by <- "ID"
-  names(merge_by) <- as.character(rlang::expr(surv_weight_ID))
-  d <- tidyr::unite(x, !! surv_weight_ID, !!! .dots, remove = FALSE)
-  d <- dplyr::left_join(d, p, by = merge_by)
-  d
+  res <- dplyr::left_join(x, p, by = rlang::as_name(surv_weight_ID))
 
+  # return in original order of x
+  dplyr::select(res, onames, !!surv_weight_ID, !!surv_weight)
 
 }
