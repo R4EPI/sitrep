@@ -235,9 +235,25 @@ tab_general <-  function(x,
   is_survey <- inherits(x, "tbl_svy")
   stopifnot(is_survey || is.data.frame(x))
 
-  vars      <- tidyselect::vars_select(colnames(x), ...)
-  stra      <- rlang::enquo(strata)
-  flip_it   <- wide && !is.null(transpose)
+  # We try to match the user-supplied variables to the colnames. If the user
+  # supplied a tidyselect verb (e.g. `starts_with("CHOICE")`, then it should
+  # filter properly.
+  vars <- tidyselect::vars_select(colnames(x), ..., .strict = FALSE)
+
+  # However, if the user supplies a vector of column names and some do not exist,
+  # tidyselect unhelpfully returns nothing 
+  #
+  # ಠ_ಠ
+  #
+  # so, to give our users something, we wrap this character vector in one_of(),
+  # which will warn about which columns were not recognised.
+  if (length(vars) == 0) {
+    vars <- tidyselect::vars_select(colnames(x), tidyselect::one_of(...), .strict = FALSE)
+  }
+
+  stra    <- rlang::enquo(strata)
+  flip_it <- wide && !is.null(transpose)
+
   if (flip_it) {
     transpose <- match.arg(tolower(transpose), c("variable", "value", "both"))
   }

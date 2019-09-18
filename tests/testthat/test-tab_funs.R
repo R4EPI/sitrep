@@ -245,9 +245,13 @@ test_that("survey---adding strata works", {
 
   s_res_choice  <- tab_survey(s, tidyselect::starts_with("CHOICE"), strata = strata, drop = "")
   s_res_symptom <- tab_survey(s, SYMPTOMS, strata = strata, keep = "Yes")
+  expect_warning({
+    s_warning <- tab_survey(s, c("bullsweat", SYMPTOMS), strata = strata, keep = "Yes")
+  }, "Unknown columns: `bullsweat`", fixed = TRUE)
 
   expect_equal(ncol(s_res_choice), 8L)
   expect_equal(ncol(s_res_symptom), 8L)
+  expect_equal(s_warning, s_res_symptom)
 
   sum_choice  <- s_res_choice %>% dplyr::select(dplyr::ends_with(" n")) %>% rowSums()
   sum_symptom <- s_res_symptom %>% dplyr::select(dplyr::ends_with(" n")) %>% rowSums()
