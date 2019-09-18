@@ -833,11 +833,11 @@ linelist_cleaned <- linelist_cleaned %>%
   mutate(case_def = case_when(
     is.na(cholera_pcr_result) &
       is.na(cholera_culture_result) &
-      is.na(cholera_rdt_result)               ~ NA_character_,
-    grepl("Positive", cholera_pcr_result)     ~ "Confirmed",  
-    grepl("Positive", cholera_culture_result) ~ "Confirmed",
-    grepl("Positive", cholera_rdt_result)     ~ "Probable",
-    TRUE                                      ~ "Suspected"
+      is.na(cholera_rdt_result)                    ~ NA_character_,
+    str_detect(cholera_pcr_result, "Positive")     ~ "Confirmed",  
+    str_detect(cholera_culture_result, "Positive") ~ "Confirmed",
+    str_detect(cholera_rdt_result, "Positive")     ~ "Probable",
+    TRUE                                           ~ "Suspected"
   ))
 
 
@@ -1196,7 +1196,7 @@ tab_linelist(linelist_cleaned,
 
 #### Case fatality ratio 
 
-Of `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` inpatients, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status), patient_facility_type == "Inpatient")` deaths, of which 
+Of `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` inpatients, there have been `r fmt_count(linelist_cleaned, str_detect(exit_status, "Dead"), patient_facility_type == "Inpatient")` deaths, of which 
 `r fmt_count(linelist_cleaned, exit_status == "Dead on arrival")` 
 were dead on arrival. 
 
@@ -1722,7 +1722,7 @@ Case fatality ratio as a proportion among inpatients by week
 # calculate CFR among inpatients by week
 cfr <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(grepl("Dead", exit_status), group = epiweek)
+  case_fatality_rate_df(str_detect(exit_status, "Dead"), group = epiweek)
 
 
 cfr %>%
@@ -2016,7 +2016,7 @@ Mortality rate per 10,000 population by region
 ```{r mortality_rate_region, warning = FALSE}
 
 deaths <- group_by(linelist_cleaned, patient_origin) %>%
-  filter(grepl("Dead", exit_status)) %>% 
+  filter(str_detect(exit_status, "Dead")) %>% 
   summarise(deaths = n()) %>% # count deaths by region
   left_join(population_data_region, by = "patient_origin") # merge population data 
 
