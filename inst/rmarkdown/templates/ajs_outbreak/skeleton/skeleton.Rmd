@@ -11,7 +11,7 @@ This is a template which can be used to create an automated outbreak situation
 report for acute jaundice syndrome (AJS). 
 
 - It is organised by time, place and person. 
-- For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
+For a more detailed explanation of this template, please visit https://r4epis.netlify.com/outbreaks
 - Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 - Text within <! > will not show in your final document. These comments are used
 to explain the template. You can delete them if you want.
@@ -36,7 +36,7 @@ field. If you have access to a USB key with these packages, it makes sense to
 copy and paste the packages into your computer's R package library 
 (run the command .libPaths() to see the folder path). 
 
-For help installing packages, see the wiki: https://github.com/R4EPI/sitrep/wiki/1---Getting-started
+For help installing packages, please visit https://r4epis.netlify.com/welcome
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
@@ -312,7 +312,7 @@ the full-text value.
 
 ```{r prep_nonDHIS_data, warning = FALSE, message = FALSE}
 ## MSF AJS Dictionary ----------------------------------------------------------
-# get MSF standard dictionary for AJS 
+## get MSF standard dictionary for AJS 
 # linelist_dict <- msf_dict("AJS", compact = FALSE) %>%
 #   select(option_code, option_name, everything())
 
@@ -535,8 +535,8 @@ specific variables or rows.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r remove_unused_data}
 ## Drop unused rows  -----------------------------------------------------------
-# This step removes blank rows that don't have both a date of admission and ID
-# number.
+## This step removes blank rows that don't have both a date of admission and ID
+## number.
 linelist_cleaned <- linelist_cleaned %>% 
   filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
 
@@ -1028,13 +1028,14 @@ tab_linelist(linelist_cleaned,
 ```
 
 
-
+  
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// total_props_agegroup_sex \\\
 --------------------------------------------------------------------------------
 
 You can also show cases by proportion of the total population by sex and age.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Cases by age group and sex 
 ```{r total_props_agegroup_sex}
 tab_linelist(linelist_cleaned, 
              age_group, strata = sex,
@@ -1046,7 +1047,7 @@ tab_linelist(linelist_cleaned,
   kable(digits = 2)
 ```
 
-
+  
 Age pyramid 
 
 There were `r fmt_count(linelist_cleaned, is.na(sex)| sex == "Unknown/unspecified")` cases missing information on sex and `r fmt_count(linelist_cleaned, is.na(age_group))` missing age group.
@@ -1088,8 +1089,10 @@ This chunk gives the counts and proportions for all of the variables in SYMPTOMS
 
 tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
   select(-value) %>%
-  # fix the way symptom names are displayed - remove the _ and make the first letter uppercase
-  mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
+  # fix the way symptoms are displayed
+  # str_replace_all switches underscore for space in the variable column
+  # str_to_sentence makes the first letter capital, and all others lowercase
+  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
   # rename accordingly
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
@@ -1112,7 +1115,9 @@ If you do not have lab results, comment out this chunk.
 tab_linelist(linelist_cleaned, LABS, 
              transpose = "value") %>% 
   # fix the way lab test names are displayed
-  mutate(variable = str_to_sentence(gsub("_", " ", variable))) %>%
+  # str_replace_all switches underscore for space in the variable column
+  # str_to_sentence makes the first letter capital, and all others lowercase
+  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
   # rename accordingly
   rename("Lab test" = variable) %>%
   rename_redundant("%" = proportion) %>%
@@ -1126,7 +1131,7 @@ tab_linelist(linelist_cleaned, LABS,
 
 #### Case fatality ratio 
 
-Of `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` inpatients, there have been `r fmt_count(linelist_cleaned, grepl("Dead", exit_status), patient_facility_type == "Inpatient")` deaths, of which 
+Of `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` inpatients, there have been `r fmt_count(linelist_cleaned, str_detect(exit_status, "Dead"), patient_facility_type == "Inpatient")` deaths, of which 
 `r fmt_count(linelist_cleaned, exit_status == "Dead on arrival")` 
 were dead on arrival. 
 
@@ -1369,6 +1374,7 @@ To produce a mortality rate (attribuatble to AJS) per 10,000 people use the
 following code chunk. This assumes that you are capturing every AJS death in
 your population.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Mortality rate attributable to AJS per 10,000 population
 ```{r mortality_rate}
 
 mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
@@ -1395,6 +1401,7 @@ In this situation the time period of interest is from the beginning of the
 epiweek your first case occured in, until the last day of the epiweek you are 
 currently reporting on. (see this presentation (https://www.odi.org/sites/odi.org.uk/files/odi-assets/events-presentations/776.pdf) for more detail)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Crude mortality rate attributable to AJS per 10,000 population per day
 
 ```{r mortality_rate_CMR}
 
@@ -1417,11 +1424,12 @@ representative of the wider population, use the following code chunk.
 This uses the person days of cases in your linelist with a known outcome. 
 However, this will give you an unreasonably high mortality rate, as 
 those in hospital will only be the most severely affected. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Mortality rate attributable to AJS per 10,000 patients per day
 
 ```{r mortality_rate_patients}
 mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
-         "Population" = population, 
+         "Person-days" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
   kable(digits = 2)
@@ -1534,6 +1542,26 @@ plot(inc_week_7_gender,
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// incidence_by_case_def \\\
+--------------------------------------------------------------------------------
+
+This chunk shows the weekly incidence by case definition. You must have a
+defined case definition variable.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r incidence_by_case_def, message = FALSE}
+inc_week_7_casedef <- incidence(linelist_cleaned$date_of_onset, 
+                                interval = "Monday week", 
+                                groups = linelist_cleaned$case_def)
+plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
+  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
+  # add labels to axes and below chart
+  epicurve_labels +
+  # change visuals of dates, remove legend title and move legend to bottom
+  epicurve_theme
+```
+
+
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// incidence_by_water_source \\\
@@ -1564,6 +1592,8 @@ plot(inc_week_7_water, show_cases = TRUE, border = "black",
 
 This chunk limits the data to only inpatients, then stratifies by sex.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Cases by week of onset among inpatients by sex 
+
 ```{r incidence_by_sex_facility, message = FALSE}
 inc_week_7_sex_fac <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
@@ -1587,6 +1617,8 @@ plot(inc_week_7_sex_fac, show_cases = TRUE, border = "black", n_breaks = nrow(in
 
 This chunk creates a table of attack rate by week
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Attack rate per 10,000 population by week 
+
 ```{r attack_rate_per_week, warning = FALSE, message = FALSE}
 # counts and cumulative counts by week
 cases <- linelist_cleaned %>%
@@ -1618,6 +1650,8 @@ ar %>%
 
 This chunk calculates the cumulative attack rate per week.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Cumulative attack rate per 10,000 population per week
+
 ```{r cumulative_attack_rate_per_week}
 
 attack_rate(cases$cumulative, population, multiplier = 10000) %>% 
@@ -1637,15 +1671,16 @@ attack_rate(cases$cumulative, population, multiplier = 10000) %>%
 /// cumulative_attack_rate_per_week \\\
 --------------------------------------------------------------------------------
 
-This chunk calculates the CFR among inpatients as a proportion of the population
-per week.
+This chunk calculates the CFR among inpatients as a proportion per week.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Case fatality ratio as a proportion among inpatients by week
+
 ```{r cfr_per_week, warning = FALSE, message = FALSE}
 
 # calculate CFR among inpatients by week
 cfr <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(grepl("Dead", exit_status), group = epiweek)
+  case_fatality_rate_df(str_detect(exit_status, "Dead"), group = epiweek)
 
 
 cfr %>%
@@ -1737,7 +1772,7 @@ cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
 
 This chunk prints the AR and CFR with the epicurve.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r epicurve_ar_cfr, message = FALSE, fig.height = 10}
+```{r epicurve_ar_cfr, warning = FALSE, message = FALSE, fig.height = 10}
 
 nofx <- theme(axis.text.x = element_blank(),
               axis.title.x = element_blank())
@@ -1758,11 +1793,16 @@ cowplot::plot_grid(
 /// describe_admissions_by_epiweek \\\
 --------------------------------------------------------------------------------
 
-This chunk creates a table showing inpatient admissions by epiweek.
+This chunk creates a table showing inpatient admissions by  case definition 
+and epiweek.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Inpatient admissions by case definition and week  
+
 ```{r describe_admissions_by_epiweek, warning = FALSE}
 
-tab_linelist(linelist_cleaned, epiweek, strata = case_def,
+linelist_cleaned %>% 
+  filter(patient_facility_type == "Inpatient") %>%
+  tab_linelist(epiweek, strata = case_def,
              col_total = TRUE,
              row_total = TRUE) %>% 
   select(-variable) %>%
@@ -1779,6 +1819,8 @@ tab_linelist(linelist_cleaned, epiweek, strata = case_def,
 
 This chunk creates a table showing inpatient exits by type per epiweek.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Inpatient discharges by reason for exit and week 
+
 ```{r describe_exits_by_epiweek, warning = FALSE}
 
 linelist_cleaned %>% 
@@ -1818,6 +1860,8 @@ shapefile to create this map.
 This chunk creates a basic table of the number and percent of cases by region
 and by facility. If you only have one facility, you can remove the strata.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+Cases by region and facility type
+
 ```{r describe_by_region_facility}
 
 tab_linelist(linelist_cleaned, patient_origin, 
@@ -1830,7 +1874,7 @@ tab_linelist(linelist_cleaned, patient_origin,
   kable(digits = 2)
 ```
 
-
+  
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// describe_by_region_outcome \\\
@@ -1838,7 +1882,9 @@ tab_linelist(linelist_cleaned, patient_origin,
 
 This chunk creates a basic table of the outcomes among inpatients by region.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r describe_by_region_outcome}
+Inpatient discharges by reason for exit and region 
+
+```{r describe_by_region_outcome, warning = FALSE}
 
 tab_linelist(filter(linelist_cleaned,
                     patient_facility_type == "Inpatient"),
@@ -1864,7 +1910,9 @@ Consider facet wrapping by a larger unit if you have many regions (eg if you
 have patients from 10+ villages, you may want to show your tables by health
 zone)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r attack_rate_by_region}
+Attack rage per 10,000 population by region 
+
+```{r attack_rate_by_region, warning = FALSE}
 
 # count cases by region
 cases <- count(linelist_cleaned, patient_origin) %>%
@@ -1897,7 +1945,7 @@ ar_region %>%
 You can then plot the above table on a bar plot. AR is on the y-axis, and it
 will show regions in descending order by AR.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r bar_attack_rate_by_region}
+```{r bar_attack_rate_by_region, warning = FALSE}
 
 ggplot(ar_region, aes(x = reorder(Region, `AR (per 10,000)`),
                y = `AR (per 10,000)`)) +
@@ -1922,10 +1970,12 @@ ggplot(ar_region, aes(x = reorder(Region, `AR (per 10,000)`),
 You could also calculate mortality rate by region (check the mortality code
 chunk in Person section for assumptions).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r mortality_rate_region}
+Mortality rate per 10,000 population by region 
+
+```{r mortality_rate_region, warning = FALSE}
 
 deaths <- group_by(linelist_cleaned, patient_origin) %>%
-  filter(grepl("Dead", exit_status)) %>% 
+  filter(str_detect(exit_status, "Dead")) %>% 
   summarise(deaths = n()) %>% # count deaths by region
   left_join(population_data_region, by = "patient_origin") # merge population data 
 

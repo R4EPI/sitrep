@@ -156,8 +156,6 @@ tab_linelist <- function(x,
                          wide       = TRUE,
                          transpose  = NULL,
                          digits     = 1,
-                         method     = "logit",
-                         deff       = FALSE,
                          pretty     = TRUE) {
 
   tab_general(x,
@@ -172,8 +170,6 @@ tab_linelist <- function(x,
               wide       = wide,
               transpose  = transpose,
               digits     = digits,
-              method     = method,
-              deff       = deff,
               pretty     = pretty
              )
 
@@ -318,6 +314,7 @@ tab_general <-  function(x,
     
   } else if (flip_it && !strata_exists && transpose != "both") {
 
+    flip_it <- FALSE
     # This is the situation where the user doesn't have a stratafying variable,
     # but they want to transpose either the variable or value.
     the_column <- if (transpose == "variable") "value" else "variable"
@@ -328,7 +325,18 @@ tab_general <-  function(x,
                             !!rlang::sym(transpose),
                             pretty = if (is_survey) pretty else FALSE,
                             digits = digits)
-    flip_it <- FALSE
+
+    if (col_total && the_column == "value") {
+      # prevent Total from appearing as one of the middle rows
+      res[["value"]] <- forcats::fct_relevel(res[["value"]], "Total", after = Inf)
+      res <- res[order(res[["value"]]), ] 
+    }
+    if (col_total && the_column == "variable") {
+      # prevent Total from appearing as one of the middle columns
+      good_order <- c(grep("Total", names(res), invert = TRUE), 
+                      grep("Total", names(res)))
+      res <- res[good_order]
+    }
 
   } else {
 

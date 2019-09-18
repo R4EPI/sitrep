@@ -59,6 +59,7 @@ show up as labels at top of each facet.
 }
 \examples{
 library(ggplot2)
+old <- theme_set(theme_classic(base_size = 18))
 
 set.seed(2018-01-15)
 ages <- cut(sample(80, 150, replace = TRUE),
@@ -116,4 +117,5 @@ print(ap)
 dat3 <- dat2
 dat3[dat$AGE == "[0,5)", "sex"] <- NA
 plot_age_pyramid(dat3, age_group = AGE) 
+theme_set(old)
 }

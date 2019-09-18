@@ -21,7 +21,9 @@
 #'
 #' @keywords internal
 #' @examples
+#' \dontrun{
 #' check_sitrep_templates("mortality")
+#' }
 check_sitrep_templates <- function(templates = available_sitrep_templates(),
                                    path = tempdir(), 
                                    quiet = FALSE, 

@@ -8,7 +8,7 @@
 tab_linelist(x, ..., strata = NULL, keep = TRUE, drop = NULL,
   na.rm = TRUE, prop_total = FALSE, row_total = FALSE,
   col_total = FALSE, wide = TRUE, transpose = NULL, digits = 1,
-  method = "logit", deff = FALSE, pretty = TRUE)
+  pretty = TRUE)
 
 tab_survey(x, ..., strata = NULL, keep = TRUE, drop = NULL,
   na.rm = TRUE, prop_total = FALSE, row_total = FALSE,
@@ -67,13 +67,13 @@ Use this if both the variables and values are important.
 \item{digits}{(survey only) if \code{pretty = FALSE}, this indicates the number
 of digits used for proportion and CI}
 
+\item{pretty}{(survey only) if \code{TRUE}, default, the proportion and CI are merged}
+
 \item{method}{(survey only) a method from \code{\link[survey:svyciprop]{survey::svyciprop()}} to calculate
 the confidence interval. Defaults to "logit".}
 
 \item{deff}{a logical indicating if the design effect should be reported.
 Defaults to \code{TRUE}.}
-
-\item{pretty}{(survey only) if \code{TRUE}, default, the proportion and CI are merged}
 }
 \value{
 a \code{\link[tibble:tibble]{tibble::tibble()}} with a column for variables, a column for values,

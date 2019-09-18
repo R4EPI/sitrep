@@ -25,7 +25,7 @@ mortality survey.
 - Code itself can be deleted, but as a word of caution: make sure you aren't
     deleting bits where variables are created/manipulated, or at least update
     them appropriatley
-- For a more detailed exaplanation of this template, see [Wiki](https://github.com/R4EPI/sitrep/wiki)
+For a more detailed explanation of this template, please visit https://r4epis.netlify.com/surveys
 - Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 
 
@@ -42,7 +42,7 @@ field. If you have access to a USB key with these packages, it makes sense to
 copy and paste the packages into your computer's R package library 
 (run the command .libPaths() to see the folder path). 
 
-For help installing packages, see the [Wiki](https://github.com/R4EPI/sitrep/wiki/1)-Getting-started)
+For help installing packages, please visit https://r4epis.netlify.com/welcome
 
 
 ```{r setup, include = FALSE, results='hide', message=FALSE, warning=FALSE}
