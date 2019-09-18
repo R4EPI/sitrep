@@ -1489,7 +1489,7 @@ representative of the wider population, use the following code chunk.
 This uses the person days of cases in your linelist with a known outcome. 
 However, this will give you an unreasonably high mortality rate, as 
 those in hospital will only be the most severely affected. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Mortality rate attributable to AJS per 10,000 patients per day
+Mortality rate attributable to cholera per 10,000 patients per day
 ```{r mortality_rate_patients}
 mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
