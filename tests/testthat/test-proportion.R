@@ -63,7 +63,7 @@ test_that("case_fatality_rate_df is equivalent to the non-df version", {
   iris_res    <- case_fatality_rate_df(iris, Sepal.Width < 3)
   iris_expect <- case_fatality_rate(sum(iris$Sepal.Width < 3), population = nrow(iris))
   
-  expect_identical(iris_res, iris_expect)
+  expect_equal(iris_res, iris_expect)
   expect_equal(iris_res$deaths, sum(iris$Sepal.Width < 3))
   expect_equal(iris_res$population, nrow(iris))
   expect_equal(iris_res$cfr, sum(iris$Sepal.Width < 3) / nrow(iris) * 100)
@@ -79,7 +79,7 @@ test_that("case_fatality_rate_df will do stratified analysis", {
   iris_n <- tibble::as_tibble(iris_n)
   iris_n$Species <- forcats::fct_inorder(iris_n$Species)
  
-  expect_identical(iris_res, iris_n)
+  expect_equal(iris_res, iris_n)
 
 })
 
@@ -95,7 +95,7 @@ test_that("case_fatality_rate_df will do stratified analysis", {
   iris_n$Species[3] <- "(Missing)"
   iris_n$Species <- forcats::fct_inorder(iris_n$Species)
  
-  expect_identical(iris_res, iris_n)
+  expect_equal(iris_res, iris_n)
 
 })
 

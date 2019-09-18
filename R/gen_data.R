@@ -131,57 +131,26 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
 
     outtie <- dplyr::left_join(dat_dict, dat_opts,
                                by = c("used_optionset_uid" = "optionset_uid"))
+
     outtie <- if (tibble) tibble::as_tibble(outtie) else outtie
 
   }
+
   # produce clean compact data dictionary for use in gen_data
   if (long && compact == TRUE) {
 
     squished <- dplyr::group_by(outtie, !! quote(data_element_shortname))
-    squished <- tidyr::nest(squished,  dplyr::starts_with("option_"), .key = "options")
-    outtie   <- dplyr::select(outtie, -dplyr::starts_with("option_"))
-    outtie   <- dplyr::distinct(outtie)
-    outtie   <- dplyr::left_join(outtie, squished, by = "data_element_shortname")
 
-    return(tibble::as_tibble(outtie))
-    # change dat_opts to wide format
-    # remove the optionset_UID for treatment_facility_site
-    # (is just numbers 1:50 and dont want it in the data dictionary)
-    # a <- stats::aggregate(option_code ~ optionset_uid,
-    #                       dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    # obs     <- lengths(a$option_code) # count length of var opts for each
-    # highest <- seq_len(max(obs)) # create sequence for pulling out of list
-    # out     <- t(sapply(a$option_code, "[", i = highest)) # pull out of list and flip to make dataframe
-    # colnames(out) <- sprintf("Code%d", seq(ncol(out))) # rename with code and num of columns
+    if (packageVersion("tidyr") > "0.8.99") {
+      squished <- tidyr::nest(squished, options = dplyr::starts_with("option_"))
+    } else {
+      squished <- tidyr::nest(squished, dplyr::starts_with("option_"), .key = "options")
+      outtie   <- dplyr::select(outtie, -dplyr::starts_with("option_"))
+      outtie   <- dplyr::distinct(outtie)
+      squished <- dplyr::left_join(outtie, squished, by = "data_element_shortname")
+    }
 
-    # # bind to above
-    # a$option_code <- NULL
-    # a <- cbind(a, out)
-
-    # # repeat above for names
-    # b <- stats::aggregate(option_name ~ optionset_uid,
-    #                       dat_opts[dat_opts$optionset_uid != "MilOli6bHV0",], I) # spread wide based on UID
-    # obs     <- lengths(b$option_name) # count length of var opts for each
-    # highest <- seq_len(max(obs)) # create sequence for pulling out of list
-    # out     <- t(sapply(b$option_name, "[", i = highest)) # pull out of list and flip to make dataframe
-    # colnames(out) <- sprintf("Name%d", seq(ncol(out))) # rename with code and num of column
-
-    # b$option_name <- NULL
-    # b$optionset_uid <- NULL
-    # b <- cbind(b, out)
-
-    # # bind code and name together
-    # combiner <- cbind(a, b)
-
-    # # merge with data dicationry
-    # outtie <- merge(dat_dict, combiner,
-    #                 by.x = "used_optionset_uid", by.y = "optionset_uid",
-    #                 all.x = TRUE)
-
-    # # return a tibble
-    # if (tibble == TRUE) {
-    #   outtie <- tibble::as_tibble(outtie)
-    # }
+    return(dplyr::ungroup(squished))
 
   }
 
