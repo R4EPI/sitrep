@@ -1139,7 +1139,7 @@ This chunk gives the counts and proportions for all of the variables in SYMPTOMS
 tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
   select(-value) %>%
   # fix the way symptom names are displayed
-  # gsub switches underscore for space in the variable column
+  # str_replace_all switches underscore for space in the variable column
   # str_to_sentence makes the first letter capital, and all others lowercase
   mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
   # rename accordingly
