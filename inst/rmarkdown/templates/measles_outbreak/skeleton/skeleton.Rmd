@@ -1387,6 +1387,7 @@ the following code chunk. This assumes that you are capturing every measles
 death in your population.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Mortality rate attributable to measles per 10,000 population
+
 ```{r mortality_rate}
 
 mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
@@ -1414,6 +1415,7 @@ epiweek your first case occured in, until the last day of the epiweek you are
 currently reporting on. (see this presentation (https://www.odi.org/sites/odi.org.uk/files/odi-assets/events-presentations/776.pdf) for more detail)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Crude mortality rate attributable to measles per 10,000 population per day
+
 ```{r mortality_rate_CMR}
 
 mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) %>%
@@ -1436,6 +1438,7 @@ This uses the person days of cases in your linelist with a known outcome.
 However, this will give you an unreasonably high mortality rate, as 
 those in hospital will only be the most severely affected. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Mortality rate attributable to measles per 10,000 patients per day
+
 ```{r mortality_rate_patients}
 mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
   rename("Deaths" = deaths, 
@@ -1559,6 +1562,7 @@ plot(inc_week_7_gender,
 This chunk limits the data to only inpatients, then stratifies by sex.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Cases by week of onset among inpatients by sex 
+
 ```{r incidence_by_sex_facility, message = FALSE}
 inc_week_7_sex_fac <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
@@ -1627,6 +1631,7 @@ plot(inc_week_7_vax, show_cases = TRUE, border = "black", n_breaks = nrow(inc_we
 This chunk creates a table of attack rate by week
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Attack rate per 10,000 population by week 
+
 ```{r attack_rate_per_week, warning = FALSE, message = FALSE}
 # counts and cumulative counts by week
 cases <- linelist_cleaned %>%
@@ -1659,6 +1664,7 @@ ar %>%
 This chunk calculates the cumulative attack rate per week.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Cumulative attack rate per 10,000 population per week
+
 ```{r cumulative_attack_rate_per_week}
 
 attack_rate(cases$cumulative, population, multiplier = 10000) %>% 
@@ -1681,6 +1687,7 @@ attack_rate(cases$cumulative, population, multiplier = 10000) %>%
 This chunk calculates the CFR among inpatients as a proportion per week.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Case fatality ratio as a proportion among inpatients by week
+
 ```{r cfr_per_week, warning = FALSE, message = FALSE}
 
 # calculate CFR among inpatients by week
@@ -1802,6 +1809,7 @@ cowplot::plot_grid(
 This chunk creates a table showing inpatient admissions by epiweek.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Inpatient admissions by case definition and week  
+
 ```{r describe_admissions_by_epiweek, warning = FALSE}
 
 linelist_cleaned %>% 
@@ -1824,6 +1832,7 @@ linelist_cleaned %>%
 This chunk creates a table showing inpatient exits by type per epiweek.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Inpatient discharges by reason for exit and week 
+
 ```{r describe_exits_by_epiweek, warning = FALSE}
 
 linelist_cleaned %>% 
@@ -1864,6 +1873,7 @@ This chunk creates a basic table of the number and percent of cases by region
 and by facility. If you only have one facility, you can remove the strata.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Cases by region and facility type
+
 ```{r describe_by_region_facility, warning = FALSE}
 
 tab_linelist(linelist_cleaned, patient_origin, 
@@ -1885,6 +1895,7 @@ tab_linelist(linelist_cleaned, patient_origin,
 This chunk creates a basic table of the outcomes among inpatients by region.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Inpatient discharges by reason for exit and region 
+
 ```{r describe_by_region_outcome, warning = FALSE}
 
 tab_linelist(filter(linelist_cleaned,
@@ -1912,6 +1923,7 @@ have patients from 10+ villages, you may want to show your tables by health
 zone)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Attack rage per 10,000 population by region 
+
 ```{r attack_rate_by_region, warning = FALSE}
 
 # count cases by region
@@ -1971,6 +1983,7 @@ You could also calculate mortality rate by region (check the mortality code
 chunk in Person section for assumptions).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Mortality rate per 10,000 population by region 
+
 ```{r mortality_rate_region, warning = FALSE}
 
 deaths <- group_by(linelist_cleaned, patient_origin) %>%
