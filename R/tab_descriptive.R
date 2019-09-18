@@ -71,14 +71,14 @@
 #' 
 #' # Simulating linelist data
 #'
-#' linelist     <- gen_data("Meningitis")
-#' meningitis_dict <- msf_dict("Meningitis", compact = FALSE) %>%
+#' linelist     <- gen_data("Measles")
+#' measles_dict <- msf_dict("Measles", compact = FALSE) %>%
 #'   select(option_code, option_name, everything())
 #'
 #' # Cleaning linelist data
 #' linelist_clean <- clean_variable_spelling(
 #'   x             = linelist,
-#'   wordlists     = filter(meningitis_dict, !is.na(option_code)),
+#'   wordlists     = filter(measles_dict, !is.na(option_code)),
 #'   spelling_vars = "data_element_shortname",
 #'   sort_by       = "option_order_in_set"
 #' )
@@ -156,8 +156,6 @@ tab_linelist <- function(x,
                          wide       = TRUE,
                          transpose  = NULL,
                          digits     = 1,
-                         method     = "logit",
-                         deff       = FALSE,
                          pretty     = TRUE) {
 
   tab_general(x,
@@ -172,8 +170,6 @@ tab_linelist <- function(x,
               wide       = wide,
               transpose  = transpose,
               digits     = digits,
-              method     = method,
-              deff       = deff,
               pretty     = pretty
              )
 
