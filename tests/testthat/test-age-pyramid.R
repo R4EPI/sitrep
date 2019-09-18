@@ -71,12 +71,14 @@ ap3  <- plot_age_pyramid(datd, age_group = "AGE")
 
 test_that("plots appear the same", {
            
+  old <- ggplot2::theme_set(ggplot2::theme_classic(base_size = 18))
   skip_if_not_installed("vdiffr")
   vdiffr::expect_doppelganger("default age pyramid", ap1)
   vdiffr::expect_doppelganger("ill age pyramid"    , ap2)
   vdiffr::expect_doppelganger("missing age pyramid", ap3)
   vdiffr::expect_doppelganger("gender age pyramid" , apg)
   vdiffr::expect_doppelganger("default no pyramid" , apnp)
+  ggplot2::theme_set(old)
 
 })
 

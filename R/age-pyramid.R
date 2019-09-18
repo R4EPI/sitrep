@@ -38,6 +38,7 @@
 #' @export
 #' @examples
 #' library(ggplot2)
+#' old <- theme_set(theme_classic(base_size = 18))
 #'
 #' set.seed(2018-01-15)
 #' ages <- cut(sample(80, 150, replace = TRUE),
@@ -95,6 +96,7 @@
 #' dat3 <- dat2
 #' dat3[dat$AGE == "[0,5)", "sex"] <- NA
 #' plot_age_pyramid(dat3, age_group = AGE) 
+#' theme_set(old)
 plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
                              stack_by = split_by, proportional = FALSE, na.rm = FALSE,
                              show_halfway = TRUE, vertical_lines = FALSE, 
@@ -190,8 +192,7 @@ plot_age_pyramid <- function(data, age_group = "age_group", split_by = "sex",
 
   # Create base plot -----------------------------------------------------------
   pyramid <- ggplot(plot_data, aes(x = !!ag, y = !!quote(n))) + 
-    theme_classic() + 
-    theme(axis.line.y.left = element_blank()) +
+    theme(axis.line.y = element_blank()) +
     labs(y = y_lab)
   pal     <- if (is.function(pal)) pal(length(stk_levels)) else pal
 
