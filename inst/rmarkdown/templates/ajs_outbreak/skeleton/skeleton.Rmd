@@ -1024,7 +1024,7 @@ tab_linelist(linelist_cleaned,
   augment_redundant(" cases (n)" = " n$") %>%
   
   # makes the table easy to read with only 2 decimal places
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1044,7 +1044,7 @@ tab_linelist(linelist_cleaned,
   rename("Age group" = value) %>%
   rename_redundant("%" = proportion) %>%
   augment_redundant(" cases (n)" = " n$") %>%
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
   
@@ -1096,7 +1096,7 @@ tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>%
   # rename accordingly
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1122,7 +1122,7 @@ tab_linelist(linelist_cleaned, LABS,
   rename("Lab test" = variable) %>%
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 2)
+  kable(digits = 1)
 
 ```
 
@@ -1150,7 +1150,7 @@ filter(linelist_cleaned, DIED, patient_facility_type == "Inpatient") %>%
   rename("Time (hours)" = value, 
          "Deaths (n)" = n, 
          "%" = proportion) %>% 
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1172,7 +1172,7 @@ linelist_cleaned %>%
          "Cases" = population,
          "CFR (%)" = cfr,
          "95%CI" = ci) %>%
-  kable(digits = 2)
+  kable(digits = 1)
 
 ```
 
@@ -1195,7 +1195,7 @@ linelist_cleaned %>%
          "Cases" = population, 
          "CFR (%)" = cfr, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 2)
+  knitr::kable(digits = 1)
 ```
 
 
@@ -1223,7 +1223,7 @@ linelist_cleaned %>%
          "Cases" = population, 
          "CFR (%)" = cfr, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 2)
+  knitr::kable(digits = 1)
 ```
 
 
@@ -1246,7 +1246,7 @@ use this. If you have no deaths, the table will not be useful.
 #          "Cases" = population,
 #          "CFR (%)" = cfr,
 #          "95%CI" = ci) %>%
-#   knitr::kable(digits = 2)
+#   knitr::kable(digits = 1)
 ```
 
 
@@ -1289,7 +1289,7 @@ ar %>%
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
   select(-Population) %>% # drop the population column as it is not changing
-  knitr::kable(digits = 2, align = "r")
+  knitr::kable(digits = 1, align = "r")
 ```
 
 Here, we can see that the attack rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
@@ -1320,7 +1320,7 @@ attack_rate(cases$n, cases$population, multiplier = 10000, mergeCI = TRUE) %>%
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  kable(digits = 2, format.args = list(big.mark = ",")) # set thousands separator
+  kable(digits = 1, format.args = list(big.mark = ",")) # set thousands separator
 ```
 
 
@@ -1382,7 +1382,7 @@ mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1410,7 +1410,7 @@ mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) 
          "Person-days" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1432,7 +1432,7 @@ mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
          "Person-days" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1639,7 +1639,7 @@ ar %>%
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 2, align = "r")
+  knitr::kable(digits = 1, align = "r")
 ```
  
 
@@ -1662,7 +1662,7 @@ attack_rate(cases$cumulative, population, multiplier = 10000) %>%
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 2, align = "r")
+  knitr::kable(digits = 1, align = "r")
 ```
 
 
@@ -1690,7 +1690,7 @@ cfr %>%
          "Cases" = population, 
          "CFR (%)" = cfr, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 2, align = "r")
+  knitr::kable(digits = 1, align = "r")
 ```
 
 
@@ -1808,7 +1808,7 @@ linelist_cleaned %>%
   select(-variable) %>%
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1831,7 +1831,7 @@ linelist_cleaned %>%
   rename("Week" = value) %>%
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1871,7 +1871,7 @@ tab_linelist(linelist_cleaned, patient_origin,
   rename("Region" = value) %>%
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
   
@@ -1894,7 +1894,7 @@ tab_linelist(filter(linelist_cleaned,
   rename("Region" = value) %>%
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
@@ -1934,7 +1934,7 @@ ar_region <- attack_rate(cases$n, cases$population, multiplier = 10000) %>%
 ar_region %>% 
   merge_ci_df(e = 4) %>% # merge lower and upper CI in to one column 
   rename("95%CI" = ci) %>%  # rename single 95%CI column
-  kable(digits = 2, align = "r", format.args = list(big.mark = ",")) # set thousands separator
+  kable(digits = 1, align = "r", format.args = list(big.mark = ",")) # set thousands separator
 ```
 
 
@@ -1988,7 +1988,7 @@ mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 2)
+  kable(digits = 1)
 ```
 
 
