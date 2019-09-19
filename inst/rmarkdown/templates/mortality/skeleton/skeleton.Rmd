@@ -584,11 +584,11 @@ study_data_cleaned <- mutate(study_data_cleaned,
 
 # make sure there are the appropriate levels (names)
 study_data_cleaned$startcause <- fct_recode(study_data_cleaned$startcause,
-                                               "Present at start" = "Present at start",
-                                               "Born" = "q88_q33_born_date",
-                                               "Other arrival" = "q114_q16_date_arrival_camp",
-                                               "Other arrival" = "q41_q25_hh_arrive_date"
-                                               )
+                                            "Present at start" = "Present at start",
+                                            "Born" = "q88_q33_born_date",
+                                            "Other arrival" = "q114_q16_date_arrival_camp",
+                                            "Other arrival" = "q41_q25_hh_arrive_date"
+                                           )
 
 # make sure there are the appropriate levels (names)
 study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
