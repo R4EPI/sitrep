@@ -480,9 +480,9 @@ study_data_cleaned <- study_data_cleaned %>%
 # put these in a second variable called sex_brief
 # (this is necessary because the anthro package doesnt accept "Male"/"female")
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(sex_brief = recode_factor(sex, 
-                             "Female" = "F", 
-                             "Male" = "M"))
+  mutate(sex_brief = fct_recode(sex, 
+                              "F" = "Female", 
+                              "M" = "Male"))
 
 
 # change the order of levels
@@ -981,10 +981,10 @@ temp_data <- study_data_cleaned %>%
   select(Indicator, Zscore) %>% 
   # rename indicators to something more understandable
   mutate(
-    Indicator = recode_factor(Indicator, 
-    "zlen" = "HAZ", 
-    "zwei" = "WAZ", 
-    "zwfl" = "WHZ" 
+    Indicator = fct_recode(Indicator, 
+    "HAZ" = "zlen", 
+    "WAZ" = "zwei", 
+    "WHZ" = "zwfl"  
   ))
 
 
@@ -1011,10 +1011,10 @@ temp_data <- study_data_cleaned %>%
   select(sex, Indicator, Zscore) %>% 
   # rename indicators to something more understandable
   mutate(
-    Indicator = recode_factor(Indicator, 
-    "zlen" = "HAZ", 
-    "zwei" = "WAZ", 
-    "zwfl" = "WHZ" 
+    Indicator = fct_recode(Indicator, 
+    "HAZ" = "zlen", 
+    "WAZ" = "zwei", 
+    "WHZ" = "zwfl" 
   ))
 
 # use indicators on the x-axis and z-score on the y-axis
