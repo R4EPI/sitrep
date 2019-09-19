@@ -79,7 +79,8 @@ If there is no stratification, the results will produce a single-row table
 a long or wide tibble with tabulations n, ci, and deff
 }
 \description{
-Tabulate survey design objects by a categorical and another stratifying variable
+This function has been superseeded by \code{\link[=tab_survey]{tab_survey()}} please use that function
+instead.
 }
 \examples{
 library(srvyr)
@@ -121,3 +122,4 @@ surv \%>\%
 \seealso{
 \code{\link[=rename_redundant]{rename_redundant()}}, \code{\link[=augment_redundant]{augment_redundant()}}
 }
+\keyword{internal}

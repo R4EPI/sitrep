@@ -49,7 +49,8 @@ excluded from the computation}
 \item{.id}{the name of the column identifying the aggregates}
 }
 \description{
-Option to add row and column totals
+This function has been superseeded by \code{\link[=tab_linelist]{tab_linelist()}}. Please use that
+function instead.
 }
 \details{
 The \code{descriptive()} function returns a single table with counts and
@@ -95,3 +96,4 @@ descriptive(linelist_clean, "trimester", "prescribed_vitamin_a", explicit_missin
 }) }
 
 }
+\keyword{internal}
