@@ -1,4 +1,7 @@
 #' Tabulate survey design objects by a categorical and another stratifying variable
+#' 
+#' This function has been superseeded by [tab_survey()] please use that function
+#' instead.
 #'
 #' @param x a survey design object
 #'
@@ -40,48 +43,11 @@
 #'
 #' @return a long or wide tibble with tabulations n, ci, and deff
 #'
-#' @export
+#' @keywords internal
 #'
 #' @seealso [rename_redundant()], [augment_redundant()]
 #'
 #' @importFrom srvyr survey_total survey_mean
-#'
-#' @examples
-#' library(srvyr)
-#' library(survey)
-#' data(api)
-#'
-#' # stratified sample
-#' surv <- apistrat %>%
-#'   as_survey_design(strata = stype, weights = pw)
-#'
-#' s <- surv %>%
-#'   tabulate_survey(awards, stype, coltotals = TRUE, rowtotals = TRUE, deff = TRUE)
-#' s
-#'
-#' # making things pretty
-#' s %>%
-#'   # wrap all "n" variables in braces (note space before n).
-#'   augment_redundant(" n" = " (n)") %>%
-#'   # relabel all columns containing "prop" to "% (95% CI)"
-#'   rename_redundant("ci"   = "% (95% CI)",
-#'                    "deff" = "Design Effect")
-#'
-#' # long data
-#' surv %>%
-#'   tabulate_survey(awards, strata = stype, wide = FALSE)
-#'
-#' # tabulate binary variables
-#' surv %>%
-#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"))
-#'
-#' # stratify the binary variables
-#' surv %>%
-#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, strata = stype, keep = c("Yes"))
-#'
-#' # invert the tabulation
-#' surv %>%
-#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
                             digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
                             proptotal = FALSE, rowtotals = FALSE, 
@@ -130,7 +96,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
         "strata and the appropriate weights.",
         .sep = " "
         )
-      stop(msg)
+      stop(msg, call. = FALSE)
     }
     st <- rlang::sym(vars[2])
   }
@@ -144,7 +110,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   }
   # For numeric data, however, we need to warn the user
   if (is.numeric(x$variables[[vars[1]]])) {
-    warning(glue::glue("converting `{vars[1]}` to a factor"))
+    warning(glue::glue("converting `{vars[1]}` to a factor"), call. = FALSE)
     x <- srvyr::mutate(x, !!cod := fac_from_num(!! cod))
   }
 
@@ -153,7 +119,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   if (na.rm) {
     nas <- sum(is.na(x$variables[[vars[1]]]))
     if (nas > 0) {
-      warning(glue::glue("removing {nas} missing value(s) from `{vars[1]}`"))
+      warning(glue::glue("removing {nas} missing value(s) from `{vars[1]}`"), call. = FALSE)
       x <- srvyr::filter(x, !is.na(!!cod))
     }
   } else {
@@ -312,30 +278,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
 }
 
 
-#' Make the tabulation pretty by uniting the confindence intervals
-#'
-#' @param y a data frame
-#' @param digits number of digits to round to
-#' @param null_strata a logical value specifyingif there is a null strata variable
-#' @param cod variable of interest
-#' @param st stratifying variable
-#' @noRd
-prettify_tabulation <- function(y, digits = 1, ci_prefix = "") {
-
-
-  ci <- trimws(sprintf("%s ci", ci_prefix))
-  y <- unite_ci(y, ci, dplyr::contains("proportion"), percent = TRUE, digits = digits)
-
-  # convert any NA% proportions to just NA
-  y[[ci]] <- dplyr::if_else(grepl("NA%", y[[ci]]), NA_character_, y[[ci]])
-
-  return(y)
-
-}
-
-
-
-#' @export
+#' @keywords internal
 #' @rdname tabulate_survey
 #' @param ... binary variables for tabulation
 #' @param keep a vector of binary values to keep
@@ -360,7 +303,7 @@ tabulate_binary_survey <- function(x, ..., strata = NULL, proptotal = FALSE,
 
   stopifnot(inherits(x, "tbl_svy"))
   if (is.null(keep)) {
-    stop("Please provide a list of values to keep in the output.")
+    stop("Please provide a list of values to keep in the output.", call. = FALSE)
   }
 
   vars <- tidyselect::vars_select(colnames(x), ...)

@@ -1,6 +1,7 @@
 #' Produces counts with respective proportions from specified variables in a dataframe.
 #'
-#' Option to add row and column totals
+#' This function has been superseeded by [tab_linelist()]. Please use that
+#' function instead.
 #' 
 #' @param df A dataframe (e.g. your linelist)
 #'
@@ -48,37 +49,7 @@
 #' @importFrom tidyr complete gather unite spread
 #' @importFrom rlang sym "!!" ".data" ":="
 #' @importFrom stats setNames
-#' @export
-#' @examples 
-#' have_packages <- require("dplyr") && require("linelist")
-#' if (have_packages) { withAutoprint({
-#' 
-#' # Simulating linelist data
-#'
-#' linelist     <- gen_data("Measles")
-#' measles_dict <- msf_dict("Measles", compact = FALSE) %>%
-#'   select(option_code, option_name, everything())
-#'
-#' # Cleaning linelist data
-#' linelist_clean <- clean_variable_spelling(
-#'   x             = linelist,
-#'   wordlists     = filter(measles_dict, !is.na(option_code)),
-#'   spelling_vars = "data_element_shortname",
-#'   sort_by       = "option_order_in_set"
-#' )
-#' 
-#' # get a descriptive table by sex
-#' descriptive(linelist_clean, "sex")
-#' 
-#' # describe prenancy statistics, but remove missing data from the tally
-#' descriptive(linelist_clean, "trimester", explicit_missing = FALSE)
-#' 
-#' # describe prenancy statistics, stratifying by vitamin A perscription
-#' descriptive(linelist_clean, "trimester", "prescribed_vitamin_a", explicit_missing = FALSE)
-#' 
-#'
-#' }) }
-#' 
+#' @keywords internal
 descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 1,
                         proptotal = FALSE, coltotals = FALSE, rowtotals = FALSE,
                         single_row = FALSE, explicit_missing = TRUE) {
@@ -94,7 +65,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
   # Check if counter is an integer and force factor ----------------------------
 
   if (is.numeric(df[[counter]])) {
-    warning(glue::glue("converting `{counter}` to a factor"))
+    warning(glue::glue("converting `{counter}` to a factor"), call. = FALSE)
     df[[counter]] <- fac_from_num(df[[counter]])
   }
   
@@ -111,7 +82,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
     df[[counter]] <- forcats::fct_explicit_na(df[[counter]], "Missing")
   } else {
     nas <- is.na(df[[counter]])
-    if (sum(nas) > 0) warning(sprintf("Removing %d missing values", sum(nas)))
+    if (sum(nas) > 0) warning(glue::glue("Removing {sum(nas)} missing values"), call. = FALSE)
     df  <- df[!nas, , drop = FALSE]
   }
 
@@ -185,7 +156,7 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
 #' @rdname descriptive
 #' @param ... columns to pass to descriptive
 #' @param .id the name of the column identifying the aggregates
-#' @export
+#' @keywords internal
 multi_descriptive <- function(df, ..., multiplier = 100, digits = 1, proptotal = FALSE, coltotals = TRUE, .id = "symptom", explicit_missing = TRUE) { 
   
   the_vars <- tidyselect::vars_select(colnames(df), ...)

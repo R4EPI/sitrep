@@ -183,6 +183,13 @@ get_ratio_est <- function(x, measure = "OR", conf = 0.95, strata_name = "strata"
 #' @noRd
 #'
 #' @examples
+#' arr <- c(10, 35, 90, 465, 36, 25, 164, 175)
+#' arr <- array(arr, dim = c(2, 2, 2),
+#'              dimnames = list(risk = c(TRUE, FALSE),
+#'                              outcome = c(TRUE, FALSE),
+#'                              old = c(FALSE, TRUE))
+#'        )
+#' get_chisq_pval(arr)
 get_chisq_pval <- function(x) {
   ndim   <- length(dim(x))
   n      <- if (ndim == 3L) dim(x)[ndim] + 1L else 1L
