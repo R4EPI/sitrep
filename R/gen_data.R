@@ -466,7 +466,7 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
 
 
-    dis_output <- gen_elegible_interviewed(dis_output, 
+    dis_output <- gen_eligible_interviewed(dis_output, 
                                            household = "q65_iq4", 
                                            cluster = "cluster_number"
     )
