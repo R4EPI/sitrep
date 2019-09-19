@@ -48,43 +48,6 @@
 #' @seealso [rename_redundant()], [augment_redundant()]
 #'
 #' @importFrom srvyr survey_total survey_mean
-#'
-#' @examples
-#' library(srvyr)
-#' library(survey)
-#' data(api)
-#'
-#' # stratified sample
-#' surv <- apistrat %>%
-#'   as_survey_design(strata = stype, weights = pw)
-#'
-#' s <- surv %>%
-#'   tabulate_survey(awards, stype, coltotals = TRUE, rowtotals = TRUE, deff = TRUE)
-#' s
-#'
-#' # making things pretty
-#' s %>%
-#'   # wrap all "n" variables in braces (note space before n).
-#'   augment_redundant(" n" = " (n)") %>%
-#'   # relabel all columns containing "prop" to "% (95% CI)"
-#'   rename_redundant("ci"   = "% (95% CI)",
-#'                    "deff" = "Design Effect")
-#'
-#' # long data
-#' surv %>%
-#'   tabulate_survey(awards, strata = stype, wide = FALSE)
-#'
-#' # tabulate binary variables
-#' surv %>%
-#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"))
-#'
-#' # stratify the binary variables
-#' surv %>%
-#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, strata = stype, keep = c("Yes"))
-#'
-#' # invert the tabulation
-#' surv %>%
-#'   tabulate_binary_survey(yr.rnd, sch.wide, awards, keep = c("Yes"), deff = TRUE, invert = TRUE)
 tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
                             digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
                             proptotal = FALSE, rowtotals = FALSE, 
