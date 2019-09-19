@@ -993,9 +993,7 @@ ggplot(temp_data, aes(x = Indicator, y = Zscore)) +
   # plot as a box plot
   geom_boxplot() + 
   # add a dotted horizontal line at 0 for reference 
-  geom_hline(yintercept = 0, linetype = "dashed") + 
-  # change theme to white background with black axes
-  theme_classic()
+  geom_hline(yintercept = 0, linetype = "dashed")
 
 ```
 
@@ -1027,9 +1025,7 @@ ggplot(temp_data, aes(x = Indicator, y = Zscore, fill = sex)) +
   # add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed") + 
   # remove the title of legend 
-  theme(legend.title = element_blank()) + 
-  # change theme to white background with black axes
-  theme_classic()
+  theme(legend.title = element_blank())
 ```
 
 
@@ -1044,9 +1040,7 @@ ggplot(study_data_cleaned, aes(x = age_group, y = zlen)) +
   # add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed") + 
   # change axis titles 
-  labs(x = "Age group (Months)", y = "HAZ score") + 
-  # change theme to white background with black axes
-  theme_classic()
+  labs(x = "Age group (Months)", y = "HAZ score") 
 
 ```
 
@@ -1061,9 +1055,7 @@ ggplot(study_data_cleaned, aes(x = age_group, y = zwei)) +
   # add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed") + 
   # change axis titles 
-  labs(x = "Age group (Months)", y = "WAZ score") + 
-  # change theme to white background with black axes
-  theme_classic()
+  labs(x = "Age group (Months)", y = "WAZ score") 
 
 ```
 
@@ -1079,9 +1071,7 @@ ggplot(study_data_cleaned, aes(x = age_group, y = zwfl)) +
   # add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed") + 
   # change axis titles 
-  labs(x = "Age group (Months)", y = "WHZ score") + 
-  # change theme to white background with black axes
-  theme_classic()
+  labs(x = "Age group (Months)", y = "WHZ score") 
 
 ```
 
@@ -1097,9 +1087,7 @@ study_data_cleaned %>%
   # only consider z-scores that are not flagged
   filter(flen == FALSE) %>% 
   # plot zcurve
-  zcurve(zlen) + 
-  # change theme to white background with black axes
-  theme_classic()
+  zcurve(zlen)
 
 ```
 
@@ -1112,9 +1100,7 @@ study_data_cleaned %>%
   # only consider z-scores that are not flagged
   filter(fwei == FALSE) %>% 
   # plot zcurve
-  zcurve(zwei) + 
-  # change theme to white background with black axes
-  theme_classic()
+  zcurve(zwei)
 
 ```
 
@@ -1127,9 +1113,7 @@ study_data_cleaned %>%
   # only consider z-scores that are not flagged
   filter(fwfl == FALSE) %>% 
   # plot zcurve
-  zcurve(zwfl) + 
-  # change theme to white background with black axes
-  theme_classic()
+  zcurve(zwfl)
 
 ```
 
