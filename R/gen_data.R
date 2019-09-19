@@ -448,6 +448,10 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
                                    "Village C", "Village D"),
                                  numcases, replace = TRUE)
 
+    # make two health districts
+    dis_output$health_district <- ifelse(dis_output$village == "Village A" |
+                                           dis_output$village == "Village B",
+                                         "District A", "District B")
 
     # cluster ID (based on village)
     dis_output$cluster_number <- as.numeric(factor(dis_output$village))
@@ -459,6 +463,13 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
       dis_output[dis_output$cluster_number == i, "q65_iq4"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
     }
+
+
+
+    dis_output <- gen_elegible_interviewed(dis_output, 
+                                           household = "q65_iq4", 
+                                           cluster = "cluster_number"
+    )
 
     # use household num as a standin for fact_0_id for now
     dis_output$fact_0_id <- dis_output$q65_iq4
@@ -541,12 +552,14 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
       dis_output[dis_output$cluster_number == i, "household_id"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
     }
 
+    ## create a var for eligible and interviewed
+
+    dis_output <- gen_eligible_interviewed(dis_output,
+                                           household = "household_id",
+                                           cluster = "cluster_number")
+
     # use household num as a standin for fact_0_id for now
     dis_output$fact_0_id <- dis_output$household_id
-
-
-
-
 
 
     # age in months (1 to 60 - i.e. under 5 years)
@@ -574,6 +587,11 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
                                    "Village C", "Village D"),
                                  numcases, replace = TRUE)
 
+    # make two health districts
+    dis_output$health_district <- ifelse(dis_output$village == "Village A" |
+                                           dis_output$village == "Village B",
+                                         "District A", "District B")
+
     # cluster ID (based on village)
     dis_output$q77_what_is_the_cluster_number <- as.numeric(factor(dis_output$village))
 
@@ -584,6 +602,13 @@ gen_data <- function(dictionary, varnames = "data_element_shortname", numcases =
 
       dis_output[dis_output$q77_what_is_the_cluster_number == i, "q14_hh_no"] <- sample(1:(as.integer(nums/5) + 1), nums, replace = TRUE)
     }
+
+    ## create a var for eligible and interviewed
+
+    dis_output <- gen_eligible_interviewed(dis_output,
+                                           household = "q14_hh_no",
+                                           cluster = "q77_what_is_the_cluster_number")
+
     # use household num as a standin for fact_0_id for now
     dis_output$fact_0_id <- dis_output$q14_hh_no
 

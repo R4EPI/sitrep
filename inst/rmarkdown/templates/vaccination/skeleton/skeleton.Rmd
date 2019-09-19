@@ -330,7 +330,7 @@ study_data_cleaned <- rename(study_data_cleaned,
                              vaccine_sia = q32_vaccine_sia,
                              vaccine_mass = q17_vaccine_mass,
                              disease_diagnosis = q47_disease_diagnosis,
-                             cluster = q77_what_is_the_cluster_number)
+                             cluster_number = q77_what_is_the_cluster_number)
 
 
 ## OPTIONAL: if you only want to keep certain variables - 
@@ -495,9 +495,9 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ######## weighting ------------------------------------------------------------
 
-study_data_cleaned <- add_weights(x = study_data_cleaned, 
-                                  p = population_data_age, 
-                                  age_group, sex)
+study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
+                                         p = population_data_age, 
+                                         age_group, sex)
 
 # drop unwanted rows  ---------------------------------------------------------
 
@@ -515,7 +515,7 @@ study_data_cleaned <- study_data_cleaned %>%
 ```{r save_cleaned_data, eval = FALSE}
 ## OPTIONAL: save your cleaned dataset as an excel file! 
 ## put the current date in the name so you know!
-writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date(), ".xlsx"))
+rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
 ```
 
 
@@ -552,15 +552,121 @@ writexl::write_xlsx(study_data_cleaned, paste0("study_data_cleaned_", Sys.Date()
 
 # cluster sample (using srvyr package)
 survey_design <- study_data_cleaned %>% 
-  as_survey_design(ids = cluster, # cluster id variable (created during collection) 
+  as_survey_design(ids = cluster_number, # cluster id variable (created during collection) 
                    weights = surv_weight,  # weight variable created above 
                    strata = NULL)  # # sampling was clustered without strata
 ```
 
 
+### Survey inclusion 
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The below chunks calculate values that are displayed with the inline text
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+
+```{r inclusion_counts}
+
+## get the number of counts by cluster and household 
+## then use these in the size counts below #
+
+## get counts of number of clusters 
+num_clus <- study_data_cleaned %>%
+  ## trim data to unique clusters
+  distinct(cluster_number) %>% 
+  ## get number of rows (count how many unique)
+  nrow()
+
+## get counts of number households 
+num_hh <- study_data_cleaned %>% 
+  ## get unique houses by cluster
+  distinct(cluster_number, q14_hh_no) %>% 
+  ## get number of rounds (count how many unique)
+  nrow()
+
+```
+
+
+
+
+
+We included `r num_hh` households accross `r num_clus` clusters in this survey analysis. 
+
+
+
+Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
+the reasons for refusal are described below. 
+
+```{r reason_no_consent}
+# get counts and props 
+tab_linelist(dropped, "q65_consent_no_reason", col_total = TRUE, digits = 2) %>% 
+  # drop variable column and rename others
+  select("Reason" = value, 
+         "n" = n, 
+         "%" = proportion) %>%
+  kable(digits = 2)
+```
+
+
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The below chunks calculate values that are displayed with the inline text
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+
+```{r cluster_hh_size}
+# get counts of the number of households per cluster
+clustersize <- study_data_cleaned %>% 
+  # trim data to only unique households within each cluster
+  distinct(cluster_number, q14_hh_no) %>%
+  # count the number of households within each cluster
+  count(cluster_number) %>% 
+  pull(n)
+
+# get the median number of households per cluster
+clustermed <- median(clustersize)
+
+# get the min and max number of households per cluster
+# paste these together seperated by a dash 
+clusterrange <- paste0(range(clustersize), collapse = "--")
+
+# get counts of children per household 
+# do this by cluster as household IDs are only unique within clusters
+hhsize <- study_data_cleaned %>% 
+  count(cluster_number, q14_hh_no) %>%
+  pull(n) 
+
+# get median number of children per household
+hhmed <- median(hhsize)
+# get the min and max number of children per household
+# paste these together seperated by a dash 
+hhrange <- paste0(range(hhsize), collapse = "--")
+
+# get standard deviation 
+hhsd <- round(sd(hhsize), digits = 1)
+
+```
+
+
+The median number of households per cluster was
+`r clustermed`, with a range of `r clusterrange`. The median number of children
+per household was `r hhmed` (range: `r hhrange`, standard deviation: `r hhsd`). 
 
 
 ## Demographic information
+
+
+In total we included `r nrow(study_data_cleaned)` in the survey analysis. 
+The age break down and a comparison with the source population is shown below. 
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Compare the proportions in each age group between your sample and the source population. 
 This is important to be able to highlight potential sampling bias. 
@@ -573,17 +679,21 @@ important that the binomial test itself. This is because increasing sample size
 will more often than not lead to differences that may be irrelevant after weighting
 your data. 
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~--> 
+
 
 ```{r descriptive_sampling_bias}
 # first the counts and props of the study population
-ag <- descriptive(study_data_cleaned, "age_group") %>%
-  filter(age_group != "Missing") %>%  # drop missings to fit with population data
-  mutate(n_total = sum(n))
+ag <- tab_linelist(study_data_cleaned, "age_group") %>%
+  mutate(n_total = sum(n)) %>%
+  select(-variable) %>%
+  rename(age_group = value) %>%
+  mutate(age_group = fct_inorder(age_group))
 
 # then the counts and props of the source population
 propcount <- group_by(population_data_age, age_group) %>%
     tally(population) %>%
-    mutate(prop = n / sum(n))
+    mutate(proportion = n / sum(n))
 
 # bind together the columns of two tables, group by age, and perform a 
 # binomial test to see if n/total is significantly different from population
@@ -596,26 +706,26 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   # will add the variables p.value, parameter, conf.low, conf.high, method, and
   # alternative. We will only use p.value here. You can include other
   # columns if you want to report confidence intervals
-  mutate(binom = list(broom::tidy(binom.test(n, n_total, prop_pop)))) %>%
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, proportion_pop)))) %>%
   unnest() %>% # important for expanding the binom.test data frame
-  mutate(prop_pop = prop_pop * 100) %>%
+  mutate(proportion_pop = proportion_pop * 100) %>%
 
   # Adjusting the p-values to correct for false positives 
   # (because testing multiple age groups). This will only make 
   # a difference if you have many age categories
   mutate(p.value = p.adjust(p.value, method = "holm")) %>%
-  select(age_group, n, prop, n_pop, prop_pop, p.value) %>%
+  select(age_group, n, proportion, n_pop, proportion_pop, p.value) %>%
                       
   # Only show p-values over 0.001 (those under report as <0.001)
-  mutate(p.value = if_else(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
+  mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
   # rename the columns appropriatley
   rename(
     "Age group" = age_group,
     "Study population (n)" = n,
-    "%" = prop,
+    "%" = proportion,
     "Source population (n)" = n_pop,
-    "%" = prop_pop,
+    "%" = proportion_pop,
     "P-value" = p.value
   ) %>%
   kable(digits = 2)
@@ -623,28 +733,10 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
 ```
 
 
-Among the `r nrow(dropped)` individuals without consent to participate in the survey, 
-the reasons for refusal are described below. 
-
-```{r reason_no_consent}
-# get counts and props 
-descriptive(dropped,
-            "q65_consent_no_reason", 
-            coltotals = TRUE) %>% 
-  # change column names 
-  rename(Reason = q65_consent_no_reason, 
-         "Individuals (n)" = n, 
-         "%" = prop)
-```
-
-
-
-
 
 ```{r median_age_sex_ratios}
 # compute the median age 
 medage <- median(study_data_cleaned$age_in_years)
-
 # paste the lower and uper quartile together
 iqr <- paste0(  # basically copy paste togehter the following
   # calculate the 25% and 75% of distribution, with missings removed
@@ -652,8 +744,9 @@ iqr <- paste0(  # basically copy paste togehter the following
     study_data_cleaned$age_in_years, 
     c(0.25, 0.75), 
     na.rm = TRUE), 
-  # between lower and upper place a dash
-  collapse = "-")
+  # between lower and upper place an en-dash
+  collapse = "--")
+
 
 # compute overall sex ratio 
 sex_ratio <- study_data_cleaned %>% 
@@ -673,7 +766,6 @@ sex_ratio_age <- study_data_cleaned %>%
 min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
 ```
 
-
 Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
 `r fmt_count(study_data_cleaned, sex == "Female")` females and 
 `r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
@@ -684,59 +776,11 @@ The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under five years of age made up 
 `r fmt_count(study_data_cleaned, age_in_years < 5)`of the surveyed individuals.
 The highest number of surveyed indivduals (unweighted) were in the 
-`r descriptive(study_data_cleaned, "age_group") %>% slice(which.max(n)) %>% pull(age_group)` 
+`r table(study_data_cleaned$age_group) %>% which.max() %>% names()`
 year age group.
 
 
-```{r cluster_hh_size}
-# get counts of the number of households per cluster
-clustersize <- study_data_cleaned %>% 
-  group_by(cluster) %>% 
-  # return the number of unique household IDs by each cluster
-  summarise(
-    n = length(
-      unique(q14_hh_no)
-      )
-    )
 
-# get the median number of households per cluster
-clustermed <- clustersize %>% 
-  summarise(
-    median(n)
-    )
-
-# get the min and max number of households per cluster
-# paste these together seperated by a dash 
-clusterrange <- paste0(
-  range(clustersize$n), 
-  collapse = "--")
-
-# get counts of children per household 
-# do this by cluster as household IDs are only unique within clusters
-hhsize <- study_data_cleaned %>% 
-  group_by(cluster) %>% 
-  count(q14_hh_no) 
-
-# get median number of children per household
-# ungroup to give you the overall median 
-hhmed <- hhsize %>%
-  ungroup() %>% 
-  summarise(
-    median(n)
-    )
-
-# get the min and max number of children per household
-# paste these together seperated by a dash 
-hhrange <- paste0(
-  range(hhsize$n), 
-  collapse = "--")
-```
-
-
-
-The median number of households per cluster was
-`r clustermed`, with a range of `r clusterrange`. The median number of children
-per household was `r hhmed` and the range was `r hhrange`. 
 
 Age distribution of household population by year age group and gender.
 
@@ -745,38 +789,41 @@ Age distribution of household population by year age group and gender.
 # return counts and proportions of individuals by age and sex
 # note that proportions are of the total sample (not within each gender) 
   # to change this, set proptotal = FALSE
-descriptive(study_data_cleaned, 
-            "age_group", 
-            "sex", 
-            rowtotals = TRUE, 
-            coltotals = TRUE, proptotal = TRUE) %>% 
-  # rename column names appropriately
-  rename("Age" = age_group, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop) %>% 
+tab_linelist(study_data_cleaned, age_group, 
+             strata     = sex, 
+             row_total  = TRUE,
+             col_total  = TRUE,
+             prop_total = TRUE) %>%
+  # select and rename column names appropriately
+  select("Age"              = "value",
+         "Female cases (n)" = "Female n",
+         "%"                = "Female proportion",
+         "Male cases (n)"   = "Male n",
+         "%"                = "Male proportion",
+         "Total") %>%
   kable(digits = 2)
 ```
 
 Using the combined age category you can show the above breakdown by months and years. 
+
 
 ```{r describe_by_age_category_and_sex}
 
 # return counts and proportions of individuals by age and sex
 # note that proportions are of the total sample (not within each gender) 
   # to change this, set proptotal = FALSE
-descriptive(study_data_cleaned, 
-            "age_category", 
-            "sex", 
-            rowtotals = TRUE, 
-            coltotals = TRUE, proptotal = TRUE) %>% 
-  # rename column names appropriately
-  rename("Age" = age_category, 
-         "Female cases (n)" = Female_n, 
-         "%" = Female_prop, 
-         "Male cases (n)" = Male_n, 
-         "%" = Male_prop) %>% 
+tab_linelist(study_data_cleaned, age_category, 
+             strata     = sex, 
+             row_total  = TRUE,
+             col_total  = TRUE,
+             prop_total = TRUE) %>%
+  # select and rename column names appropriately
+  select("Age"              = "value",
+         "Female cases (n)" = "Female n",
+         "%"                = "Female proportion",
+         "Male cases (n)"   = "Male n",
+         "%"                = "Male proportion",
+         "Total") %>%
   kable(digits = 2)
 ```
 
@@ -785,6 +832,7 @@ There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing informati
 `r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
 
 Age and gender distribution of household population covered by the survey.
+
 
 ```{r age_pyramid, warning=FALSE}
 # This is unweighted as you are using study_data_cleaned
@@ -826,8 +874,9 @@ Accepting equal validity from self-reported and card-reported vaccination status
 survey_design %>%  # use the survey object (weighted)
   # calculate weighted counts and weighted proportions, 
   # include design effect because cluster sample
-  tabulate_survey(vaccination_status_simple, deff = TRUE, digits = 2) %>% 
-  rename("Vaccination status" = vaccination_status_simple, 
+  tab_survey(vaccination_status_simple, deff = TRUE, digits = 2) %>% 
+  select(-variable) %>%
+  rename("Vaccination status" = value, 
          "Children (n)" = n, 
          "Design effect" = deff, 
          "% (95% CI)" = ci) %>% 
@@ -839,12 +888,11 @@ Distinguishing between vaccination cards and verbal confirmation
 ```{r vaccination_coverage_overall_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% # use the survey object (weighted)
-  # calculate weighted counts and weighted proportions, 
-  # include design effect because cluster sample
-  tabulate_survey(vaccination_status, deff = TRUE, digits = 2) %>%
-  rename("Vaccination status" = vaccination_status, 
-         "Children (n)" = n, 
-         "Design effect" = deff, 
+  # calculate weighted counts and weighted proportions
+  tab_survey(vaccination_status, digits = 2) %>% 
+  select(-variable) %>%
+  rename("Vaccination status" = value, 
+         "Children (n)" = n,  
          "% (95% CI)" = ci) %>% 
   kable(digits = 2)
 ```
@@ -856,12 +904,12 @@ Accepting equal validity from self-reported and card-reported vaccination status
 # return weighted counts and weighted proportions 
 survey_design %>% # use the survey object (weighted)
   # calculate weighted counts and weighted proportions - stratified by sex
-  # include design effect because cluster sample
-  tabulate_survey(vaccination_status_simple, sex, deff = TRUE, digits = 2) %>%
-  rename("Vaccination status" = vaccination_status_simple) %>% 
+  tab_survey(vaccination_status_simple, deff = TRUE, strata = sex, digits = 2) %>%
+  select(-variable) %>%
+  rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%    # wrap all "n" vars in braces (note space before n).
   rename_redundant("% (95% CI)"    = "ci",        # relabel all columns containing "ci" to "% (95% CI)"
-                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
+                   "Design Effect" = "_deff") %>% # "deff" to "Design effect"
   kable(digits = 2)
 ```
 
@@ -870,12 +918,12 @@ Distinguishing between vaccination cards and verbal confirmation, by sex
 ```{r vaccination_coverage_sex_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(vaccination_status, sex, deff = TRUE, digits = 2) %>%
-  rename("Vaccination status" = vaccination_status) %>% 
-  # wrap all "n" variables in braces (note space before n).
+  tab_survey(vaccination_status, strata = sex, digits = 2) %>%
+  select(-variable) %>%
+  rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%    # wrap all "n" vars in braces (note space before n).
-  rename_redundant("% (95% CI)"    = "ci",        # relabel all columns containing "ci" to "% (95% CI)"
-                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
+  rename_redundant("% (95% CI)"    = "ci"        # relabel all columns containing "ci" to "% (95% CI)"
+                   ) %>% 
   kable(digits = 2)
 ```
 
@@ -884,19 +932,8 @@ Accepting equal validity from self-reported and card-reported vaccination status
 ```{r vaccination_coverage_age_group}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(vaccination_status_simple, age_group, deff = TRUE, digits = 2, wide = FALSE) %>%
-  
-  # spread values to wide format to have appropriate groups 
-    # collect variables of interest (n, deff and ci) (call the clasifier column "variable")
-  gather(key = "variable", value = "value", c(n, deff, ci)) %>% 
-    # create temp column which combine the classifier column with vacc_status column seperated by underscore
-  unite(col = "temp", vaccination_status_simple, variable, sep = "_") %>%
-    # spread wide based on newly create combo column above 
-  spread(temp, value) %>% 
-  # change order of columns 
-  select(age_group, Vaccinated_n, Vaccinated_ci, Vaccinated_deff, 
-         Unvaccinated_n, Unvaccinated_ci, Unvaccinated_deff) %>% 
-  
+  tab_survey(vaccination_status_simple, strata = age_group, deff = TRUE, digits = 2,
+             drop = "Missing", transpose = "value") %>%
   rename("Age group (years)" = age_group) %>% 
   augment_redundant(" (n)"         = "_n") %>%    # wrap all "n" vars in braces (note space before n).
   rename_redundant("% (95% CI)"    = "_ci",       # relabel all columns containing "ci" to "% (95% CI)"
@@ -910,24 +947,12 @@ Distinguishing between vaccination cards and verbal confirmation, by age group
 ```{r vaccination_coverage_age_group_detail}
 # return weighted counts and weighted proportions 
 survey_design %>% 
-  tabulate_survey(vaccination_status, age_group,  deff = TRUE, digits = 2, wide = FALSE) %>%
-  
-  # spread values to wide format to have appropriate groups 
-    # collect variables of interest (n, deff and ci) (call the clasifier column "variable")
-  gather(key = "variable", value = "value", c(n, deff, ci)) %>% 
-    # create temp column which combine the classifier column with vacc_status column seperated by underscore
-  unite(col = "temp", vaccination_status, variable, sep = "_") %>%
-    # spread wide based on newly create combo column above 
-  spread(temp, value) %>% 
-  # change order of columns 
-  select(age_group, Card_n, Card_ci, Card_deff, 
-         Verbal_n, Verbal_ci, Verbal_deff,
-         Unvaccinated_n, Unvaccinated_ci, Unvaccinated_deff) %>% 
-  
+  tab_survey(vaccination_status, strata = age_group, digits = 2, 
+             drop = "Missing", transpose = "value") %>%
   rename("Age group (years)" = age_group) %>% 
   augment_redundant(" (n)"         = "_n") %>%    # wrap all "n" vars in braces (note space before n).
-  rename_redundant("% (95% CI)"    = "_ci",       # relabel all columns containing "ci" to "% (95% CI)"
-                   "Design Effect" = "deff") %>%  # "deff" to "Design effect"
+  rename_redundant("% (95% CI)"    = "_ci"       # relabel all columns containing "ci" to "% (95% CI)"
+                   ) %>%
   kable(digits = 2)
 ```
 
@@ -943,9 +968,10 @@ among those not vaccinated
 routine <- survey_design %>% 
   # filter for those not vaccinated 
   filter(!vaccine_routine %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
-  tabulate_survey(q7_no_routine_vacc_r) %>%
+  tab_survey(q7_no_routine_vacc_r, digits = 2) %>%
+  select(-variable) %>%
   # rename columns appropriately
-  rename(Reasons = q7_no_routine_vacc_r, 
+  rename(Reasons = value, 
          "Routine (n)" = n , 
          "% (95% CI)" = ci)
 
@@ -953,16 +979,17 @@ routine <- survey_design %>%
 campaign <- survey_design %>% 
   # filter for not vaccinated 
   filter(!vaccine_mass %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
-  tabulate_survey(q28_no_campaign_vacc_r) %>% 
+  tab_survey(q28_no_campaign_vacc_r, digits = 2) %>% 
   # drop the reasons column 
-  select(-q28_no_campaign_vacc_r) 
+  select(-variable, -value) 
   
 
 bind_cols(routine, 
           campaign) %>% 
   # rename remaining columns appropriately 
   rename("Campaign (n)" = n, 
-         "% (95% CI)" = ci)
+         "% (95% CI)" = ci) %>%
+  kable(digits = 2)
 
 ```
 
@@ -974,10 +1001,12 @@ among those not vaccinated
 # get weight counts and proportions for routine vaccination
 survey_design %>% 
   filter(!vaccine_sia %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
-  tabulate_survey(q38_no_sia_vacc_reason) %>%
+  tab_survey(q38_no_sia_vacc_reason, digits = 2) %>%
+  select(-variable) %>%
   # rename columns appropriately
-  rename(Reasons = q38_no_sia_vacc_reason, 
+  rename(Reasons = value, 
          "Routine (n)" = n , 
-         "% (95% CI)" = ci)
+         "% (95% CI)" = ci) %>%
+  kable(digits = 2)
 ```
 

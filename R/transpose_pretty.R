@@ -176,10 +176,12 @@ widen_tabulation <- function(y, cod, st, pretty = TRUE, digits = 1) {
   y <- tidyr::spread(y, !!TMP, !!VALUE)                                       # 6
 
   # 7
-  levels_in_order <- glue::glue("^{l} (n|deff|proportion|ci)")
-  col_arrangement <- lapply(levels_in_order, grep, names(y))
-  col_arrangement <- unlist(col_arrangement, use.names = FALSE)
-  y               <- y[c(1, col_arrangement)]
+  # guarding against common situation of having a stratifier that is 45+, changing to 45[+]
+  protected_levels <- gsub("([[:punct:][:space:]])", "[\\1]", l)
+  levels_in_order  <- glue::glue("^{protected_levels} (n|deff|proportion|ci)")
+  col_arrangement  <- lapply(levels_in_order, grep, names(y))
+  col_arrangement  <- unlist(col_arrangement, use.names = FALSE)
+  y                <- y[c(1, col_arrangement)]
 
   if (pretty) {
     # map through all the levels of l and pull out the matching columns

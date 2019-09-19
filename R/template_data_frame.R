@@ -39,6 +39,40 @@ template_data_frame_categories <- function(dat_dict, numcases, varnames, survey 
   dis_output
 }
 
+gen_eligible_interviewed <- function(dis_output, household = "q14_hh_no", cluster = "q77_what_is_the_cluster_number") {
+
+    dis_output$eligible <- NULL
+    dis_output$interviewed <- NULL
+
+    hh <- dis_output[[household]]
+    cl <- dis_output[[cluster]]
+
+    # get counts of people by household and cluster
+    hh_int <- aggregate(hh, by = list(hh, cl), FUN = length)
+
+    # make interviewed 3/4s of those eligible
+    hh_int$interviewed <- round(hh_int$x * 0.75, digits = 0)
+
+    # create a merger in hh_int
+    hh_int$merger <- paste0(hh_int$Group.1,"_", hh_int$Group.2)
+
+    # create a merger in dis_output
+    dis_output$merger <- paste0(cl, "_", hh)
+    # drop extra columns
+    hh_int <- hh_int[,c("merger", "x", "interviewed")]
+
+    # rename columns
+    colnames(hh_int) <- c("merger", "eligible", "interviewed")
+
+    # merge with dis_output
+    dis_output <- merge(dis_output, hh_int, by = "merger", all.x = TRUE)
+
+    # drop merger var
+    dis_output$merger <- NULL
+
+    dis_output
+
+}
 
 # Enforces timing between two columns in a data frame.
 #
