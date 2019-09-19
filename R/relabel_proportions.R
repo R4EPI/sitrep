@@ -70,15 +70,15 @@ augment_redundant <- function(x, ...) {
 #'   dots_to_charlist()
 #' }
 #' x(a = 1, b = TRUE, c = three)
-dots_to_charlist <- function() {
-  sp <- sys.parent(n = 1L)
+dots_to_charlist <- function(parent = 1L) {
+  sp <- sys.parent(n = parent)
   if (sp == 0) {
     stop('dots_to_charlist() can only be called within a user-facing function')
   }
   pairs <- match.call(definition  = sys.function(sp),
                       call        = sys.call(sp),
                       expand.dots = FALSE,
-                      envir       = parent.frame(2L))[["..."]]
+                      envir       = parent.frame(parent + 1L))[["..."]]
   pairs <- lapply(pairs, as.character)
   pairs
 }
