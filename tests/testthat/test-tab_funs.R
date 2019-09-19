@@ -166,6 +166,25 @@ tbs_expect_symptom <- tibble::tribble(
 SYMPTOMS <- c("itch", "fever", "bleeding")
 
 
+# Error tests {{{
+
+test_that("specifying all columns that do not match will throw an error", {
+  
+  expect_warning({
+    expect_error(tab_survey(nss, "bullsweat"), "No columns matched the data")
+  }, "Unknown columns: `bullsweat`")
+
+  expect_warning({
+    tab_survey(nss, itch, bullsweat, office, clothes) %>%
+      expect_is("tbl_df") %>%
+      expect_named(c("variable", "value", "n", "ci"))
+  }, "Unknown columns: `bullsweat`, `office`, `clothes`")  
+
+})
+
+
+# }}}
+
 # Basic tests---no strata {{{
 
 # These tests will check that tab_survey and tab_linelist can both handle the

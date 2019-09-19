@@ -245,6 +245,18 @@ tab_general <-  function(x,
   # which will warn about which columns were not recognised.
   if (length(vars) == 0) {
     vars <- tidyselect::vars_select(colnames(x), tidyselect::one_of(...), .strict = FALSE)
+    if (length(vars) == 0) {
+      stop("No columns matched the data", call. = FALSE)
+    }
+  } else {
+    the_dots <- dots_to_charlist(parent = 2L)
+    # we want to tally the dots that don't match up
+    if (length(the_dots) > 1 && length(the_dots) > length(vars)) {
+      no_bueno <- glue::glue_collapse(glue::glue("`{setdiff(the_dots, vars)}`"),
+                                      sep = ", ")
+      warning(glue::glue("Unknown columns: {no_bueno}"), call. = FALSE)
+      
+    }
   }
 
   stra    <- rlang::enquo(strata)
