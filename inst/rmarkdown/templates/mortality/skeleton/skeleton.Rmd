@@ -11,48 +11,45 @@ This is a template which can be used to create a report from a retrospective
 mortality survey. 
 
 - There are sections for reading and cleaning data, followed by 
-    weighting and observation time calculations and then survey analysis. 
-    Use the drop-down menu on the bottom left of this script window to jump 
-    between sections. 
-- You can type normal text in white spaces (such as here) and r-code in grey
-    spaces (denoted by three backticks and r) (see [Rmarkdown
-    introduction](https://rmarkdown.rstudio.com/articles_intro.html) and
-    [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
-- Introductions and contents of sections are within square brackets "[...]" and
-    can be deleted as appropriate
-- Examples of inline code (to automate updating numbers, e.g. in the "Results
-    section"), can similarly be removed/updated
-- Code itself can be deleted, but as a word of caution: make sure you aren't
-    deleting bits where variables are created/manipulated, or at least update
-    them appropriatley
-For a more detailed explanation of this template, please visit https://r4epis.netlify.com/surveys
+    weighting and observation time calculations and then survey analysis.  
+- For a more detailed explanation of this template, please visit https://r4epis.netlify.com/surveys  
 - Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 
+- Text within <! > will not show in your final document. These comments are used
+to explain the template. You can delete them if you want.
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This comment will not show up when you knit the document.
+A comment with a title with slashes indicates a name of a code chunk.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ## Installing and loading required packages 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// setup \\\
+--------------------------------------------------------------------------------
 Several packages are required for different aspects of  analysis with *R*. 
 You will need to install these before starting. 
-We will be using the following packages. Some of these packages automatically
-install other packages they need to work (called dependencies).
-
 These packages can be quite large and may take a while to download in the
 field. If you have access to a USB key with these packages, it makes sense to
 copy and paste the packages into your computer's R package library 
 (run the command .libPaths() to see the folder path). 
-
 For help installing packages, please visit https://r4epis.netlify.com/welcome
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r setup, include = FALSE, results='hide', message=FALSE, warning=FALSE}
-# hide all code chunks in the output, but show errors
+## hide all code chunks in the output, but show errors
 knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
-# set default NA to - in output, define figure width/height
+
+
+## set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
 
-# Installing required packages for this template
+
+
+## Installing required packages for this template
 required_packages <- c("knitr",       # create output docs
+                       "here",        # find your files
                        "rio",         # for importing data
                        "epitrix",     # clean/shape data
                        "dplyr",       # clean/shape data
@@ -74,92 +71,130 @@ for (pkg in required_packages) {
   # load packages to this current session 
   library(pkg, character.only = TRUE)
 }
-# set default text size to 16 for plots
-# give classic black/white axes for plots
+
+
+## set default text size to 16 for plots
+## give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
 ```
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_fake_data \\\
+--------------------------------------------------------------------------------
+To play with this template, you can create fake data based off data
+dictionary used for Dharma.
+Comment out this chunk when you are using real data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r read_data_generic, message = FALSE}
-
-## This section gives a variety of options for reading in datasets in different formats
-
-## Read data ------------------------------------
-# CSV file
-# linelist_raw <- rio::import("linelist.csv")
-#
-# Excel file
-# to read in a specific sheet use "which"
-# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
-#
-# Stata data file
-# linelist_raw <- rio::import("linelist.dat")
-#
-# For password protected Excel file 
-# use the excel.link package 
-# library(excel.link)
-# linelist_raw <- excel.link::xl.read.file("linelist.xlsx",
-#                                          xl.sheet = "Sheet1",
-#                                          password = askpass::askpass(prompt = "please enter file
-#                                                                      password"))
-
-```
+```{r read_fake_data, warning = FALSE, message = FALSE}
 
 
+## generates MSF standard dictionary for Dharma 
+study_data_dict <- msf_dict_survey("Mortality")
 
 
-```{r read_dharma_excel_data, message = FALSE}
-
-# If your linelist is an excel export of data from Dharma use this code chunk
-# If that is not the case use the code chunk above reading in other formats
-
-## Read data ------------------------------------------------------
-
-# This assums that you have two levels in your survey (level 0 and level 1). 
-# These correspond to, for example, household and individual. 
-# We will read in and later merge these two levels in to one dataset. 
-# We will assume the data is not password protected (code for reading 
-# password protected excels is in the read_data_generic code chunk)
-
-## read in household data sheet
-# study_data_hh <- rio::import("mortality_survey.xlsx", 
-#                               which = "Level 0 Named", na = ".")
-
-## read in individual level data sheet
-# study_data_indiv <- rio::import("mortality_survey.xlsx", 
-#                               which = "Level 1 Named", na = ".")
-
-## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
-# generates a fake dataset for use as an example in this template
+## generates a fake dataset for use as an example in this template
+## this dataset already has household and individual levels merged
 study_data_raw <- gen_data(dictionary = "Mortality",
                            varnames   = "column_name",
                            numcases   = 1000)
 
-## Data dictionary ---------------
-## The data dictionary has variable names in the "column_name" column.
-## Possible values for variables are specified in the "choice_code" and "choice_name"
-## columns. 
-## Where code has the shortened values and name has the full text values.
 
-# read in data dictionary (for reference purposes)
-# study_data_dict <- rio::import("mortality_survey.xlsx",
-#                                which = "Data Dictionary")
-
-## you can look at the dictionary by uncommenting the line below
-# View(study_data_dict) 
-
-## you can view variable names in the data dicationry uncommenting the line below
-# study_data_dict$column_name
-
-## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
-# generates a fake dataset for use as an example in this template
-# this dataset already has the two levels merged
-# variable names are in the column_name column
-# possible values for each variable are specified in the "Code" columns.
-study_data_dict <- msf_dict_survey("Mortality")
 ```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You should load your data as a linelist, where each row is one person. 
+
+There are two options for reading data:
+- Your data is from Dharma: use read_DHARMA_data
+- Your data is NOT FROM Dharma and in Excel, CSV, or Stata format: 
+use read_nonDHARMA_data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_DHARMA_data \\\
+--------------------------------------------------------------------------------
+This section is for data collected with Dharma.
+It uses the standardized MSF data dictionary.
+
+If you didn't use the standardized data dictionary, go to read_nonDHARMA_data.
+
+Generally, survey datasets will have two levels:
+One for household and one for individual (to combine see merge_data_levels).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_DHARMA_data, warning = FALSE, message = FALSE}
+
+### Read in data ---------------------------------------------------------------
+
+
+## Excel file ------------------------------------------------------------------
+
+## read in household data sheet
+# study_data_hh <- rio::import(here::here("mortality_survey.xlsx"), 
+#                               which = "Level 0 Named", na = ".")
+
+## read in individual level data sheet
+# study_data_indiv <- rio::import(here::here("mortality_survey.xlsx", 
+#                               which = "Level 1 Named", na = ".")
+
+
+## Excel file with password ----------------------------------------------------
+## Use this section if your Excel has a password.
+
+# install.packages(c("excel.link", "askpass"))
+# library(excel.link)
+
+# study_data_hh <- xl.read.file(here::here("mortality_survey.xlsx"),
+#                              xl.sheet = "Level 0 Named",
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
+# study_data_indiv <- xl.read.file(here::here("mortality_survey.xlsx"),
+#                              xl.sheet = "Level 1 Named",
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_nonDHARMA_data \\\
+--------------------------------------------------------------------------------
+This section is for data not from Dharma. 
+If you have already loaded data from Dharma, go to merge_data_levels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_nonDHIS_data, warning = FALSE, message = FALSE}
+
+## Excel file ------------------------------------------------------------------
+## to read in a specific sheet use "which"
+# study_data_hh <- rio::import(here::here("mortality_survey.xlsx"), which = "Sheet1")
+
+## Excel file -- Specific range ------------------------------------------------
+## you can specify a range in an excel sheet.
+# study_data_hh <- rio::import(here::here("mortality_survey.xlsx"), range = "B2:J102")
+
+## Excel file with password ----------------------------------------------------
+## use this section if your Excel has a password.
+# install.packages(c("excel.link", "askpass"))
+# library(excel.link)
+# study_data_hh <- xl.read.file(here::here("mortality_survey.xlsx"),
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
+## CSV file --------------------------------------------------------------------
+# study_data_hh <- rio::import(here::here("mortality_survey.csv"))
+
+## Stata data file -------------------------------------------------------------
+# study_data_hh <- rio::import(here::here("mortality_survey.dat"))
+```
+
+
+
 
 
 ```{r merge_data_levels}
@@ -179,12 +214,33 @@ study_data_dict <- msf_dict_survey("Mortality")
 ```
 
 
-```{r fake_cluster_counts}
 
-cluster_counts <- tibble(cluster = c("Village A", "Village B", "Village C", "Village D"), 
-                         households = c(700, 400, 600, 500))
+```{r prep_DHARMA_data}
 
+
+## Data dictionary ---------------
+## The data dictionary has variable names in the "column_name" column.
+## Possible values for variables are specified in the "choice_code" and "choice_name"
+## columns. 
+## Where code has the shortened values and name has the full text values.
+
+# read in data dictionary (for reference purposes)
+# study_data_dict <- rio::import("mortality_survey.xlsx",
+#                                which = "Data Dictionary")
+
+## you can look at the dictionary by uncommenting the line below
+# View(study_data_dict) 
+
+## you can view variable names in the data dicationry uncommenting the line below
+# study_data_dict$column_name
 ```
+
+
+
+
+
+
+
 
 
 
@@ -254,6 +310,15 @@ population_data_age_district_b <- gen_population(total_pop = 10000, # set the to
 # broken down by 
 population_data_age <- bind_rows(population_data_age_district_a, 
                                  population_data_age_district_b)
+
+```
+
+
+
+```{r cluster_counts}
+
+cluster_counts <- tibble(cluster = c("Village A", "Village B", "Village C", "Village D"), 
+                         households = c(700, 400, 600, 500))
 
 ```
 
