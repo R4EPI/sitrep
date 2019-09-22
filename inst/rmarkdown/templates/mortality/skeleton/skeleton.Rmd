@@ -738,11 +738,16 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// save_cleaned_data \\\
+--------------------------------------------------------------------------------
 
+You can save your cleaned dataset as an Excel. 
+This automatically names your file "study_data_cleaned_DATE", where DATE is the
+current date.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r save_cleaned_data, eval = FALSE}
-## OPTIONAL: save your cleaned dataset as an excel file! 
-## put the current date in the name so you know!
 rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
 ```
 
