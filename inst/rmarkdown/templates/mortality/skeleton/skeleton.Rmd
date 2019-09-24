@@ -771,8 +771,8 @@ There are three options, comment out those you do not use:
 ## contains weights for each individual - by age group, sex and health district
 study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
                                          p = population_data_age, 
-                                         # surv_weight = surv_weight_strata,
-                                         # surv_weight_ID = surv_weight_ID_strata,
+                                         surv_weight = surv_weight_strata,
+                                         surv_weight_ID = surv_weight_ID_strata,
                                          age_group, sex, health_district)
 
 
@@ -801,13 +801,13 @@ study_data_cleaned <- add_weights_cluster(x = study_data_cleaned,
 
 ## create a survey weight for cluster and strata 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(surv_weight_cluster_strata = surv_weight * surv_weight_cluster)
+  mutate(surv_weight_cluster_strata = surv_weight_strata * surv_weight_cluster)
 ```
 
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// survey_weights \\\
+/// survey_design \\\
 --------------------------------------------------------------------------------
 
 Create survey object according to your study design. 
@@ -816,27 +816,49 @@ Used the same way as dataframes to calculate weight proportions etc.
 
 Make sure that all necessary variables are created before this. 
 
-There are three options, comment out those you do not use: 
+There are four options, comment out those you do not use: 
+- Simple random 
 - Stratified 
 - Cluster 
-- Post-hoc stratification  
+- Stratified cluster
 
+For this template - we will pretend that we cluster surveys in two seperate 
+strata (health districts A and B). 
+So to get overall estimates we need have combined cluster and strata weights. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r survey_design}
 
-# simple random sample (using srvyr package)
-survey_design <- study_data_cleaned %>% 
+## simple random ---------------------------------------------------------------
+
+survey_design_simple <- study_data_cleaned %>% 
   as_survey_design(ids = 1, # 1 for no cluster ids 
-                   weights = surv_weight, # weight variable created above 
+                   weights = NULL, # NULL for no weights
                    strata = NULL # sampling was simple (no strata)
                    )
 
+## stratified ------------------------------------------------------------------
 
-study_design_cluster <- study_data_cleaned %>% 
+survey_design_strata <- study_data_cleaned %>% 
   as_survey_design(ids = 1, # 1 for no cluster ids 
-                   weights = surv_weight, # weight variable created above 
+                   weights = surv_weight_strata, # weight variable created above 
+                   strata = health_district # sampling was stratified by district
+                   )
+
+## cluster ---------------------------------------------------------------------
+
+survey_design_cluster <- study_data_cleaned %>% 
+  as_survey_design(ids = village, # 1 for no cluster ids 
+                   weights = surv_weight_cluster, # weight variable created above 
                    strata = NULL # sampling was simple (no strata)
+                   )
+
+## stratified cluster ----------------------------------------------------------
+
+survey_design <- study_data_cleaned %>% 
+  as_survey_design(ids = village, # 1 for no cluster ids 
+                   weights = surv_weight_cluster_strata, # weight variable created above 
+                   strata = health_district # sampling was simple (no strata)
                    )
 ```
 
@@ -1234,6 +1256,33 @@ plot_age_pyramid(study_data_cleaned,
        )
 ```
 
+
+Unweighted age and gender distribution, stratified by health district,
+of household population covered by the survey.
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// age_pyramid_strata \\\
+--------------------------------------------------------------------------------
+
+This chunk creates an unweighted (using study_data_cleaned) age/sex pyramid
+of your cases, stratified by health district. 
+
+If you have a stratified survey design this may be useful for visualising 
+if you have an excess of representation in 
+either sex or gender in any of your survey strata. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r age_pyramid_strata, warning=FALSE}
+
+plot_age_pyramid(study_data_cleaned, 
+                 age_group = "age_group", 
+                 split_by = "sex",
+                 proportion = TRUE) + 
+  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
 
 
 Weighted age and gender distribution of household population covered by the survey.  
