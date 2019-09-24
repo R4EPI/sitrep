@@ -1559,7 +1559,7 @@ Note that this does not account for time of arrival/departure - and only
 shows arbitrary arrival and departure reasons. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r visualise_population_flow, warning = FALSE, fig.width = 12, fig.height = 10}
+```{r visualise_population_flow, warning = FALSE, fig.width = 12, fig.height = 9}
 
 ## summarize data
 flow_table <- study_data_cleaned %>%
@@ -1582,14 +1582,18 @@ ggplot(flow_table, aes(x, id = id, split = y, value = n)) +
   ## fill in the label boxes grey
   geom_parallel_sets_axes(axis.width = 0.15, fill = "grey80", color = "grey80") +
   ## change text colour and angle (needs to be adjusted)
-  geom_parallel_sets_labels(color = "black", angle = 0) +
+  geom_parallel_sets_labels(color = "black", angle = 0, size = 5) +
   ## adjusted y and x axes (probably needs more vertical space)
   scale_x_discrete(name = NULL, expand = c(0, 0.2)) +
   scale_y_continuous(breaks = NULL, expand = c(0, 0)) +
+  scale_fill_brewer(type = "qual") + 
   ## remove axis labels
   theme(
+    title = element_text(size = 26),
+    text = element_text(size = 26),
     axis.line = element_blank(),
-    axis.ticks = element_blank()
+    axis.ticks = element_blank(),
+    legend.position = "bottom"
   )
 ```
 
