@@ -56,8 +56,8 @@
 #'
 add_weights_strata <- function(x, p, ..., 
                                population = population, 
-                               surv_weight = surv_weight, 
-                               surv_weight_ID = surv_weight_ID) {
+                               surv_weight = "surv_weight", 
+                               surv_weight_ID = "surv_weight_ID") {
 
   pop <- tidyselect::vars_select(names(p), {{population}}, .strict = FALSE)
   if (length(pop) == 0) {
@@ -67,8 +67,8 @@ add_weights_strata <- function(x, p, ...,
   } else {
     population      <- rlang::ensym(pop)
   }
-  surv_weight_ID  <- rlang::enquo(surv_weight_ID)
-  surv_weight     <- rlang::enquo(surv_weight)
+  surv_weight_ID  <- rlang::sym(surv_weight_ID)
+  surv_weight     <- rlang::sym(surv_weight)
   onames          <- names(x)
 
   # create a merger ID by age group and sex
