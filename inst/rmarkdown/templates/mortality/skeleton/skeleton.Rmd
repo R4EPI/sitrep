@@ -73,7 +73,7 @@ for (pkg in required_packages) {
 }
 
 
-## set default text size to 16 for plots
+## set default text size to 18 for plots
 ## give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
 ```
@@ -771,8 +771,8 @@ There are three options, comment out those you do not use:
 ## contains weights for each individual - by age group, sex and health district
 study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
                                          p = population_data_age, 
-                                         surv_weight = surv_weight_strata,
-                                         surv_weight_ID = surv_weight_ID_strata,
+                                         surv_weight = "surv_weight_strata",
+                                         surv_weight_ID = "surv_weight_ID_strata",
                                          age_group, sex, health_district)
 
 
@@ -833,7 +833,7 @@ So to get overall estimates we need have combined cluster and strata weights.
 
 survey_design_simple <- study_data_cleaned %>% 
   as_survey_design(ids = 1, # 1 for no cluster ids 
-                   weights = NULL, # NULL for no weights
+                   weights = surv_weight_strata, # weight variable created above 
                    strata = NULL # sampling was simple (no strata)
                    )
 
@@ -890,7 +890,7 @@ rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx
 
 The below chunks calculate values that are displayed with the inline text
 
-Get the counts cluster and households included 
+Get the counts of clusters and households included 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 ```{r inclusion_counts}
@@ -932,12 +932,11 @@ needs to be of the total and missings need to be dropped.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 ```{r consent_reasons}
-
 ## using the dataset with dropped individuals 
 dropped %>% 
   # get counts multiple variables with reasons for no consent 
   # make the proportion of the total, including the missings for each
-  tab_linelist(paste0("q53_cq4a_00", 0:3), 
+  tab_linelist(glue::glue("q53_cq4a_00{0:3}"), 
                prop_total = TRUE, na.rm = FALSE) %>% 
   # remove missings from the table 
   filter(!value == "Missing") %>% 
@@ -974,7 +973,7 @@ clustermed <- median(clustersize)
 
 ## get the min and max number of households per cluster
 ## paste these together seperated by a dash 
-clusterrange <- paste0(range(clustersize), collapse = "--")
+clusterrange <- glue::glue_collapse(range(clustersize), sep = "--")
 
 ## get counts of children per household 
 ## do this by cluster as household IDs are only unique within clusters
@@ -986,7 +985,7 @@ hhsize <- study_data_cleaned %>%
 hhmed <- median(hhsize)
 ## get the min and max number of children per household
 ## paste these together seperated by a dash 
-hhrange <- paste0(range(hhsize), collapse = "--")
+hhrange <- glue::glue_collapse(range(hhsize), sep = "--")
 
 ## get standard deviation 
 hhsd <- round(sd(hhsize), digits = 1)
@@ -1089,14 +1088,14 @@ It also pulls the age group with the highest sex ratio.
 ## compute the median age 
 medage <- median(study_data_cleaned$age_in_years)
 ## paste the lower and uper quartile together
-iqr <- paste0(  # basically copy paste togehter the following
+iqr <- glue::glue_collapse(  # basically copy paste together the following
   ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
     study_data_cleaned$age_in_years, 
-    c(0.25, 0.75), 
+    probs = c(0.25, 0.75), 
     na.rm = TRUE), 
   ## between lower and upper place an en-dash
-  collapse = "--")
+  sep = "--")
 
 
 ## compute overall sex ratio 
@@ -1731,6 +1730,7 @@ survey_design %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
   kable(digits = 1)
+
 ```
 
 
