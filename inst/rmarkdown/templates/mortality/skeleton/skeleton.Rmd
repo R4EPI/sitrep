@@ -1275,6 +1275,7 @@ either sex or gender in any of your survey strata.
 plot_age_pyramid(study_data_cleaned, 
                  age_group = "age_group", 
                  split_by = "sex",
+                 stack_by = "health_district",
                  proportion = TRUE) + 
   labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
