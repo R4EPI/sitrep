@@ -833,7 +833,7 @@ So to get overall estimates we need have combined cluster and strata weights.
 
 survey_design_simple <- study_data_cleaned %>% 
   as_survey_design(ids = 1, # 1 for no cluster ids 
-                   weights = surv_weight_strata, # weight variable created above 
+                   weights = NULL, # No weight added
                    strata = NULL # sampling was simple (no strata)
                    )
 
