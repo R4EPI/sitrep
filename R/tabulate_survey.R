@@ -127,11 +127,45 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
     x <- srvyr::group_by(x, !!cod, !!st, .drop = FALSE)
   }
 
-  # Calculating the survey total will also give us zero counts
-  y <- srvyr::summarise(x,
-                        n    = srvyr::survey_total(vartype = "se", na.rm = TRUE),
-                        mean = srvyr::survey_mean(na.rm    = TRUE, deff  = deff))
+  # Creating counts and design effect columns
+  #
+  # Wed 25 Sep 2019 12:06:49 BST: I had to add in a trycatch statement here
+  # because there was a weird error in srvyr that depended on the order in which
+  # the grouping arguments were specified. One way would produce an error when
+  # fitting the model that needed factors with 2 or more levels, but the other
+  # way would give an answer. 
+  #
+  # This statement explicitly tries to summarize and then, if there is an error
+  # and it exactly matches the weirdness, it will try it the other way. 
+  # Otherwise, it will return the error.
+  y <- tryCatch({
+      y <- srvyr::summarise(x,
+                            n    = srvyr::survey_total(vartype = "se", na.rm = TRUE),
+                            mean = srvyr::survey_mean(na.rm    = TRUE, deff  = deff))
+    }, 
+    # In the case of an error, return the error by default, but try to flip the
+    # groups and try again.
+    error = function(e) {
+      y <- e 
+      if (!null_strata && y$message == "contrasts can be applied only to factors with 2 or more levels") {
+        x <- group_by(x, !!st, !!cod, .drop = FALSE)
+        y <- srvyr::summarise(x,
+                              n    = srvyr::survey_total(vartype = "se", na.rm = TRUE),
+                              mean = srvyr::survey_mean(na.rm    = TRUE, deff  = deff))
 
+      }
+      y
+    })
+  
+
+  if (!null_strata) {
+    y <- dplyr::arrange(y, !!cod, !!st)
+    y <- dplyr::select(y, !!cod, !!st, dplyr::everything())
+    if (!is.factor(pull(y, !!st))) {
+      y <- dplyr::mutate(y, !!st := factor(!!st))
+    }
+  }
+  
   # Removing the mean values here because we are going to calculate them later
   y$mean             <- NULL
   y$mean_se          <- NULL
