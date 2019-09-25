@@ -63,12 +63,12 @@ required_packages <- c("knitr",       # create output docs
                        )
 
 for (pkg in required_packages) {
-  # install packages if not already present
+  ## install packages if not already present
   if (!pkg %in% rownames(installed.packages())) {
     install.packages(pkg, repos = "https://cloud.r-project.org/")
   }
   
-  # load packages to this current session 
+  ## load packages to this current session 
   library(pkg, character.only = TRUE)
 }
 
@@ -324,7 +324,7 @@ If you have more specific proportions, you can use them below.
 ## together 
 
 
-# generate population data by age groups in years for district A
+## generate population data by age groups in years for district A
 population_data_age_district_a <- gen_population(total_pop = 10000, # set total population 
   groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set groups
   proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set proportions for each group
@@ -335,7 +335,7 @@ population_data_age_district_a <- gen_population(total_pop = 10000, # set total 
   mutate(health_district = "District A")           # add a column to identify region 
 
 
-# generate population data by age groups in years for district B
+## generate population data by age groups in years for district B
 population_data_age_district_b <- gen_population(total_pop = 10000, # set total population 
   groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set groups
   proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set proportions for each group
@@ -347,8 +347,7 @@ population_data_age_district_b <- gen_population(total_pop = 10000, # set total 
 
 
 
-# bind region population data together to get overall population 
-# broken down by 
+## bind region population data together to get overall population 
 population_data_age <- bind_rows(population_data_age_district_a, 
                                  population_data_age_district_b)
 ```
@@ -960,6 +959,7 @@ From these create medians and standard deviations.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 ```{r cluster_hh_size}
+
 ## get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
   ## trim data to only unique households within each cluster
