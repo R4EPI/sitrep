@@ -1289,8 +1289,8 @@ survey_design %>% # use the survey object (weighted)
   select(-variable) %>%
   rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = "ci",      # relabel all columns containing "ci"
-                   "Design Effect" = "_deff") %>% # "deff" to "Design effect"
+  rename_redundant("% (95% CI)"    = " ci",      # relabel all columns containing "ci"
+                   "Design Effect" = " deff") %>% # "deff" to "Design effect"
   kable(digits = 1)
 ```
 
@@ -1319,7 +1319,7 @@ survey_design %>%
   select(-variable) %>%
   rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = "ci"       # relabel all columns containing "ci"
+  rename_redundant("% (95% CI)"    = " ci"       # relabel all columns containing "ci"
                    ) %>% 
   kable(digits = 1)
 ```
@@ -1347,9 +1347,9 @@ survey_design %>%
   tab_survey(vaccination_status_simple, strata = age_group, deff = TRUE, 
              digits = 1, drop = "Missing", transpose = "value") %>%
   rename("Age group (years)" = age_group) %>% 
-  augment_redundant(" (n)"         = "_n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = "_ci",       # relabel all columns containing "ci"
-                   "Design Effect" = "_deff") %>% # "deff" to "Design effect"
+  augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
+  rename_redundant("% (95% CI)"    = " ci",       # relabel all columns containing "ci"
+                   "Design Effect" = " deff") %>% # "deff" to "Design effect"
   kable(digits = 1)
 ```
 
@@ -1377,8 +1377,8 @@ survey_design %>%
   tab_survey(vaccination_status, strata = age_group, 
              drop = "Missing", transpose = "value") %>%
   rename("Age group (years)" = age_group) %>% 
-  augment_redundant(" (n)"         = "_n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = "_ci"      # relabel all columns containing "ci"
+  augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
+  rename_redundant("% (95% CI)"    = " ci"      # relabel all columns containing "ci"
                    ) %>%
   kable(digits = 1)
 ```
