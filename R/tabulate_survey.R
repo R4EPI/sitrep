@@ -87,17 +87,6 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   if (null_strata) {
     st <- st 
   } else {
-    if (x$has.strata && vars[2] != names(x$strata)[1]) {
-      msg <- glue::glue(
-        "The stratification present in the survey object ({names(x$strata[1])})",
-        "does not match the user-specified stratification ({vars[2]}). If you",
-        "want to assess the survey tabulation stratifying by '{vars[2]}',",
-        "re-specify the survey object with this",
-        "strata and the appropriate weights.",
-        .sep = " "
-        )
-      stop(msg, call. = FALSE)
-    }
     st <- rlang::sym(vars[2])
   }
 

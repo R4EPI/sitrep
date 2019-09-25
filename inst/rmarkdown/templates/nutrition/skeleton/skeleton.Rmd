@@ -171,8 +171,8 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 ## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
 # generates a fake dataset for use as an example in this template
 study_data_raw <- gen_data(dictionary = "Nutrition", 
-                         varnames = "column_name",
-                         numcases = 1000)
+                           varnames = "column_name",
+                           numcases = 1000)
 
 ## Data dictionary ---------------
 ## The data dictionary has variable names in the "column_name" column.
@@ -264,10 +264,10 @@ study_data_dict <- msf_dict_survey("Nutrition")
 
 # generate population data by age groups in years 
 population_data_age <- gen_population(total_pop = 1000, # set the total population 
-  groups = c("6-11", "12-23", "24-35", "36-47", "48-60"),    # set the groups
-  proportions = c(0.15, 0.11, 0.07, 0.26, 0.182),       # set the proportions for each group
-  strata = c("Male", "Female")) %>%                      # stratify by gender 
-  rename(age_group = groups,                        # rename columns (syntax is NEW NAME = OLD NAME)
+    groups = c("6-11", "12-23", "24-35", "36-47", "48-60"), # set the groups
+    proportions = c(0.15, 0.11, 0.07, 0.26, 0.182),         # set the proportions for each group
+    strata = c("Male", "Female")) %>%                       # stratify by gender
+  rename(age_group = groups, # rename columns (syntax is NEW NAME = OLD NAME)
          sex = strata,
          population = n)
 
@@ -275,10 +275,10 @@ population_data_age <- gen_population(total_pop = 1000, # set the total populati
 
 # generate population data by age groups in months (under and over 24 months)
 population_data_age24 <- gen_population(total_pop = 1000, # set the total population 
-  groups = c("0-23", "24-60"),    # set the groups
-  proportions = c(0.26, 0.512),       # set the proportions for each group
-  strata = c("Male", "Female")) %>%                      # stratify by gender 
-  rename(age_group = groups,                        # rename columns (syntax is NEW NAME = OLD NAME)
+    groups = c("0-23", "24-60"),      # set the groups
+    proportions = c(0.26, 0.512),     # set the proportions for each group
+    strata = c("Male", "Female")) %>% # stratify by gender
+  rename(age_group = groups, # rename columns (syntax is NEW NAME = OLD NAME)
          sex = strata,
          population = n)
 
