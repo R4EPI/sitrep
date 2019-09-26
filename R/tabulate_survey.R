@@ -161,7 +161,7 @@ tabulate_survey <- function(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
   if (!null_strata) {
     y <- dplyr::arrange(y, !!cod, !!st)
     y <- dplyr::select(y, !!cod, !!st, dplyr::everything())
-    if (!is.factor(pull(y, !!st))) {
+    if (!is.factor(dplyr::pull(y, !!st))) {
       y <- dplyr::mutate(y, !!st := factor(!!st))
     }
   }
