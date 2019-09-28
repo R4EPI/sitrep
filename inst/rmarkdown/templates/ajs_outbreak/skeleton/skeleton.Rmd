@@ -121,8 +121,7 @@ reporting_week <- aweek::as.aweek("2019-W25")
 epicurve_labels <- labs(x = "Calendar week", 
                         y = "Cases (n)", 
                         title = "Cases by week of onset",
-                        subtitle = sprintf("Source: MSF data from %s", 
-                                           reporting_week)
+                        subtitle = str_glue("Source: MSF data from {reporting_week}")
                        ) 
 ```
 
@@ -930,7 +929,7 @@ of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r report_setup}
 # return the last day of the reporting week
-obs_end   <- week2date(str_glue(reporting_week, "-7"))
+obs_end   <- week2date(str_glue("{reporting_week}-7"))
 
 # filter out cases after end of reporting week
 linelist_cleaned <- linelist_cleaned %>% 
@@ -955,7 +954,7 @@ This automatically names your file "linelist_cleaned_DATE", where DATE is the
 current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r save_cleaned_data}
-# rio::export(linelist_cleaned, paste0("linelist_cleaned_", Sys.Date(), ".xlsx"))
+# rio::export(linelist_cleaned, str_glue("linelist_cleaned_{Sys.Date()}.xlsx"))
 ```
 
 
@@ -1957,7 +1956,7 @@ ggplot(ar_region, aes(x = reorder(Region, `AR (per 10,000)`),
   scale_y_continuous(expand = c(0,0)) +  
   # add labels to axes and below chart
   labs(x = "Region", y = "AR (per 10,000)", 
-       captions = paste0("Source: MSF data from ", reporting_week)) + 
+       captions = str_glue("Source: MSF data from {reporting_week}")) + 
   epicurve_theme
 ```
 
@@ -2207,7 +2206,7 @@ for (i in unique(cases$epiweek)) {
     scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  
     # add labels to axes and below chart
     labs(x = "Region", y = "AR (per 10,000)", 
-         captions = paste0("Source: MSF data from ", reporting_week)) + 
+         captions = str_glue("Source: MSF data from {reporting_week}")) + 
     epicurve_theme
   
   
@@ -2215,7 +2214,7 @@ for (i in unique(cases$epiweek)) {
   # combine the barplot and map plot into one
   print(
     cowplot::plot_grid(
-      barplot + labs(title = paste0("Epiweek: ", i)),
+      barplot + labs(title = str_glue("Epiweek: {i}")),
       map_plot,
       nrow = 1,
       align = "h",

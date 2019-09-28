@@ -40,7 +40,6 @@ Imports:
     cowplot,
     clipr,
     dplyr (>= 0.7),
-    epitools,
     epitrix,
     forcats,
     ggplot2 (>= 3.0.0),
@@ -56,7 +55,7 @@ Imports:
     purrr,
     raster,
     rio,
-    rlang,
+    rlang (>= 0.4.0),
     rmarkdown,
     scales,
     sf,
@@ -99,10 +98,8 @@ Collate:
     'msf_dict_survey.R'
     'nutrition.R'
     'prettify_tabulation.R'
-    'pull_epitable.R'
     'relabel_proportions.R'
     'sample-size.R'
-    'survey.R'
     'tab_descriptive.R'
     'tab_univariate.R'
     'tabulate_survey.R'
@@ -110,5 +107,4 @@ Collate:
     'transpose_pretty.R'
     'two_by_two_funs.R'
     'unite_ci.R'
-    'univariate-analysis.R'
     'zcurve.R'
