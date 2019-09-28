@@ -1504,7 +1504,6 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 ```{r weighted_cause_death_strata, warning = FALSE, message = FALSE}
 
-## weighted counts and proportions by cause of death stratified by health district
 survey_design %>% 
   filter(died) %>%  # proportions only among those who died
   tab_survey(cause_of_death, strata = health_district, col_total = TRUE) %>%
@@ -1515,6 +1514,27 @@ survey_design %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" 
   kable(digits = 1)
+```
+
+
+
+Weighted cause specific mortality ratios for reported causes of death by 
+health district
+
+```{r weighted_cause_death_MR_strata, warning = FALSE, message = FALSE}
+
+survey_design %>% 
+  filter(died) %>%  # proportions only among those who died
+  group_by(cause_of_death, health_district) %>% 
+  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  unite_ci("mort", starts_with("mortality"),
+           m100 = FALSE, percent = FALSE) %>% 
+  pivot_wider(id_cols = cause_of_death,     # choose variable for rows
+              names_from = health_district, # choose variable for columns 
+              values_from = mort) %>%       # choose what goes in cells
+  select("Cause of death" = cause_of_death, 
+         "District A MR (95%CI)" = "District A", 
+         "District B MR (95%CI)" = "District B")
 ```
 
 
