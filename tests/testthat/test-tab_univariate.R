@@ -55,7 +55,7 @@ arrt <- as.data.frame.table(arr) %>%
     outcome = rep(outcome, Freq),
     old = rep(old, Freq)
   ))) %>%
-  tidyr::unnest() %>%
+  tidyr::unnest(cols = c(res)) %>%
   lapply(as.logical) %>%
   tibble::as_tibble()
 

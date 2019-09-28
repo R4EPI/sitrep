@@ -297,3 +297,35 @@ test_that("linelist---adding strata works", {
 })
 
 # }}}
+
+
+# edge case tests {{{
+# TODO: FINISH THIS TEST
+
+srv <- tibble::tribble(
+               ~cause_of_death, ~health_district,   ~n,
+               "Malaria/fever",     "District A",   2L,
+               "Malaria/fever",     "District B",   0L,
+                   "Diarrhoea",     "District A",   1L,
+                   "Diarrhoea",     "District B",   2L,
+                 "Respiratory",     "District A",   2L,
+                 "Respiratory",     "District B",   0L,
+             "Trauma/accident",     "District A",   0L,
+             "Trauma/accident",     "District B",   0L,
+           "Pregnancy-related",     "District A",   0L,
+           "Pregnancy-related",     "District B",   1L,
+                    "Violence",     "District A",   2L,
+                    "Violence",     "District B",   2L,
+  "Outbreak disease (specify)",     "District A",   1L,
+  "Outbreak disease (specify)",     "District B",   1L,
+                "Malnutrition",     "District A",   1L,
+                "Malnutrition",     "District B",   0L,
+                     "Unknown",     "District A",   1L,
+                     "Unknown",     "District B",   3L,
+             "Other (specify)",     "District A",   0L,
+             "Other (specify)",     "District B",   1L,
+              "Not Applicable",     "District A", 196L,
+              "Not Applicable",     "District B", 214L
+  )
+
+# }}}

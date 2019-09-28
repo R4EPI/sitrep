@@ -160,12 +160,8 @@ test_that("a warning is thrown for missing data", {
 
 test_that("tabulate_survey will throw an error if the stratification is not correct", {
   
-  msg <- paste("The stratification present in the survey object (stype) does",
-               "not match the user-specified stratification (awards). If you",
-               "want to assess the survey tabulation stratifying by 'awards',",
-               "re-specify the survey object with this",
-               "strata and the appropriate weights.")
-  expect_error(tabulate_survey(s, stype, awards), msg, fixed = TRUE)
+  expect_error(tabulate_survey(s, stype, awards), "Cannot modify survey variable", fixed = TRUE)
+  expect_is(tabulate_survey(s, yr.rnd, awards), "tbl_df")
   
 })
 
