@@ -950,7 +950,7 @@ your data.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
-```{r descriptive_sampling_bias}
+```{r descriptive_sampling_bias, warning = FALSE}
 ## counts and props of the study population
 ag <- tab_linelist(study_data_cleaned, "age_group") %>%
   mutate(n_total = sum(n)) %>%
@@ -1238,7 +1238,6 @@ survey_design %>%  # use the survey object (weighted)
 ```
 
 
-
 Weighted vaccination coverage; distinguishing between vaccination cards and 
 verbal confirmation 
 
@@ -1266,7 +1265,44 @@ survey_design %>% # use the survey object (weighted)
 ```
 
 
-Weighted vaccination coverage by sex; accepting equal validity from self-reported and card-reported vaccination status
+
+Weighted vaccination coverage by health district;
+accepting equal validity from self-reported and 
+card-reported vaccination status 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// vaccination_coverage_strata \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of counts proportions for vaccination 
+coverage while accpeting equal validity from self- and card-reporting, 
+stratified by health district. 
+
+Note that this includes a design effect. 
+
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for mortality ratios. These should be interpreted
+as if no deaths or recoded to zero (impossible to have negative deaths). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r vaccination_coverage_strata}
+
+survey_design %>%  # use the survey object (weighted)
+  tab_survey(vaccination_status_simple, strata = health_district) %>% 
+  select("Vaccination status" = value, 
+         everything(), 
+         -variable) %>% 
+  augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
+  rename_redundant("% (95% CI)"    = " ci") %>% # relabel all columns containing "ci"
+  kable(digits = 1)
+```
+
+
+
+
+
+Weighted vaccination coverage by sex; accepting equal validity from self-reported 
+and card-reported vaccination status
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// vaccination_coverage_sex \\\
@@ -1286,8 +1322,9 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 survey_design %>% # use the survey object (weighted)
   ## calculate weighted counts and weighted proportions - stratified by sex
   tab_survey(vaccination_status_simple, strata = sex, deff = TRUE) %>%
-  select(-variable) %>%
-  rename("Vaccination status" = value) %>% 
+  select("Vaccination status" = value, 
+         everything(), 
+         -variable) %>% 
   augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)"    = " ci",      # relabel all columns containing "ci"
                    "Design Effect" = " deff") %>% # "deff" to "Design effect"
@@ -1316,8 +1353,9 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 # return weighted counts and weighted proportions 
 survey_design %>% 
   tab_survey(vaccination_status, strata = sex) %>%
-  select(-variable) %>%
-  rename("Vaccination status" = value) %>% 
+  select("Vaccination status" = value, 
+         everything(), 
+         -variable) %>% 
   augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)"    = " ci"       # relabel all columns containing "ci"
                    ) %>% 
