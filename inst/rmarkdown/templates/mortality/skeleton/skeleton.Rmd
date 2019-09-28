@@ -1022,7 +1022,7 @@ your data.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
-```{r descriptive_sampling_bias}
+```{r descriptive_sampling_bias, warning = FALSE}
 ## counts and props of the study population
 ag <- tab_linelist(study_data_cleaned, "age_group") %>%
   mutate(n_total = sum(n)) %>%
@@ -1384,13 +1384,13 @@ CMR_strat <- survey_design %>%
 ```
 
 
-In District A there weighted number of deaths was 
-`r death_props_strat %>% pull("District A n") %>% round(digits = 0)`, 
+In District A the weighted number of deaths was 
+`r death_props_strat %>% pull("District A n") %>% as.integer(round(digits = 0))`, 
 which gives a weighted proportion of 
 `r death_props_strat %>% pull("District A ci")`, and a design effect of
 `r death_props_strat %>% pull("District A deff") %>% round(digits = 3)`.  
 In comparison, the weighted number of deaths in District B was
-`r death_props_strat %>% pull("District B n") %>% round(digits = 0)`, 
+`r death_props_strat %>% pull("District B n") %>% as.integer(round(digits = 0))`, 
 the weighted proportion was 
 `r death_props_strat %>% pull("District B ci")` and the design effect was 
 `r death_props_strat %>% pull("District B deff") %>% round(digits = 3)`.  
@@ -1521,6 +1521,18 @@ survey_design %>%
 Weighted cause specific mortality ratios for reported causes of death by 
 health district
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// weighted_cause_death_MR_strata \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of MRs for 
+reported causes of death by health district
+
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for mortality ratios. These should be interpreted
+as if no deaths or recoded to zero (impossible to have negative deaths). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r weighted_cause_death_MR_strata, warning = FALSE, message = FALSE}
 
 survey_design %>% 
@@ -1534,7 +1546,8 @@ survey_design %>%
               values_from = mort) %>%       # choose what goes in cells
   select("Cause of death" = cause_of_death, 
          "District A MR (95%CI)" = "District A", 
-         "District B MR (95%CI)" = "District B")
+         "District B MR (95%CI)" = "District B") %>% 
+  kable(digits = 1)
 ```
 
 
