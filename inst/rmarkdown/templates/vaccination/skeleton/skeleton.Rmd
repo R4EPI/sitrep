@@ -337,8 +337,8 @@ If you have more specific proportions, you can use them below.
 ## generate population data by age groups in years for district A
 population_data_age_district_a <- gen_population(total_pop = 10000, # set total population 
   groups      = c("0", "1", "2", "3", "4", "5+"), # set groups
-  proportions = c(0.0329, 0.0329, 0.0310, 
-                  0.0310, 0.0310, 0.2772), # set proportions for each group
+  proportions = c(0.0164, 0.0164, 0.015, 0.015,
+                  0.015, 0.1386), # set proportions for each group
   strata      = c("Male", "Female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
@@ -349,8 +349,8 @@ population_data_age_district_a <- gen_population(total_pop = 10000, # set total 
 ## generate population data by age groups in years for district B
 population_data_age_district_b <- gen_population(total_pop = 10000, # set total population 
   groups      = c("0", "1", "2", "3", "4", "5+"), # set groups
-  proportions = c(0.0329, 0.0329, 0.0310, 
-                  0.0310, 0.0310, 0.2772), # set proportions for each group
+  proportions = c(0.0164, 0.0164, 0.015, 0.015,
+                  0.015, 0.1386), # set proportions for each group
   strata      = c("Male", "Female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
