@@ -267,7 +267,6 @@ specified in choice_code and choice_name columns.
 Code has the shortened value and Name has the full-text value.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-
 ```{r prep_DHARMA_data}
 
 ## Data dictionary -------------------------------------------------------------
@@ -395,16 +394,43 @@ population_data_age <- bind_rows(population_data_age_district_a,
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// cluster_counts \\\
+--------------------------------------------------------------------------------
+For cluster surveys you may want to add survey weights at the cluster level. 
+
+This could be done as in the read_population_data chunk. 
+
+Alternatively if there are only a few counts, these could be entered as below
+in to a tibble. 
+
+In any case you will need to have one column with a cluster identifier which 
+matches your survey data, and another column with the number of households in 
+each cluster. 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r cluster_counts}
+
+cluster_counts <- tibble(cluster = c("Village A", "Village B", "Village C", "Village D"), 
+                         households = c(700, 400, 600, 500))
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// browse_data \\\
+--------------------------------------------------------------------------------
+
+You'll want to look at your data. Here are a few ways you can explore.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r browse_data, eval = FALSE}
-## Browsing data ---------------------------------
-## here are a few ways to do data explorations 
 
 ## view the first ten rows of data
 head(study_data_raw, n = 10)
 
 ## view your whole dataset interactivley (in an excel style format)
-## Remember that `View` needs to be written with a capital *V*
 View(study_data_raw)
 
 ## overview of variable types and contents
@@ -416,6 +442,7 @@ str(study_data_raw)
 summary(study_data_raw)
 
 ## view unique values contained in variables 
+## you can run this for any column -- just replace the column name
 unique(study_data_raw$sex)
 
 ## check for logical inconsistencies 
@@ -423,87 +450,99 @@ unique(study_data_raw$sex)
 study_data_raw %>% 
   filter(age_month < 6 & height > 100) %>% 
   select("fact_0_id")
-
-
-## another alternative is with the "summarytools package"
-## use the dfSummary function in combination with view
-## note that view is not capitalised with this package
-# install.packages("summarytools")
-# summarytools::view(summarytools::dfSummary(study_data_raw))
 ```
 
 
 
 
-```{r standardise_clean_data, warning = FALSE}
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This part of the script will create and clean variables in your data.
 
-## All your data cleaning and new variable creation should happen in this chunk. 
-## This way, if you mess up all you have to do is push the small arrow at the
-## top of this chunk between the cogg and the play buttons, to run all the 
-## code chunks up to the current one, then continue your cleaning from where you
-## started. 
-## 
-## YOU WILL NEED TO ADAPT THIS SECTION ACCORDING TO YOUR DATA!
-## 
-## currently there are examples of cleaning for: 
-##    - Date variables 
-##    - Numeric variables 
-##    - Categorical variables from numerics (e.g. age groups) 
-##    - Factor variables (for creating/manipulating categorical variables)
-##    - Adding weights based on population 
-##    - Dropping rows and columns 
+All your cleaning and variable creation should happen in these chunks.
+That way, in case something goes wrong, you can push the small arrow at the top
+of the chunk to re-run all the code chunks up to the current one.
 
+The chunks are:
+- standardise_dates    -- will set up and clean dates.
+- create_age_group     -- creates the age group variables from age
+- factor_vars          -- helps clean factor variables
+- nutrition_indicators -- calculates z-scores and cutoffs
+- remove_unused_data   -- dropping unused rows/columns
+- survey_weights       -- claculating survey weights according to study design
+- survey_design        -- create a survey object for weighted analysis 
 
-
+You must adapt this section according to your data!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
-## OPTIONAL: if you only want to keep certain variables - 
-## you can select these by name or column number view the names of your vars
-## and their column number using: names(linelist_cleaned) this example keeps
-## the first three columns as well as age_years and sex variables
-
-# study_data_cleaned <- select(study_data_cleaned, c(1:3, "age_month", "sex")
 
 
-# Date variables ---------------------------------
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// standardise_dates \\\
+--------------------------------------------------------------------------------
 
-# IF YOU ARE USING A DHARMA DATA DICTIONARY USE THIS OTHERWISE UNCOMMENT LINES BELOW
-# make sure all date variables are formatted as dates 
+This chunk will help you set up and clean your date variables.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-# select all variables which are dates using the data dictionary
-# DATEVARS <- filter(study_data_dict, type == "QuestionDate") %>% 
-#   select(column_name) # select date vars
+```{r standardise_dates}
 
-# retrieving date vars from the fake dictionary (DELETE THIS)
+## DHARMA standard data --------------------------------------------------------
+## If you got your data from Dharma, use this portion of the code.
+## If not, comment this section out and use the below.
+
+## make sure all date variables are formatted as dates 
 DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
-  select(column_name) # select date vars
+  filter(column_name %in% names(study_data_cleaned)) %>% 
+  ## filter to match the column names of your data
+  pull(column_name) # select date vars
 
-# change to dates 
+## change to dates 
+## use the guess_dates() function to make a first pass at date variables.
 study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(DATEVARS$column_name, as.Date)
+  mutate_at(DATEVARS, linelist::guess_dates, 
+            error_tolerance = 0.5)
 
-# if you dont have a data dictionary you could do it this way too
+
+## Non-DHARMA data -------------------------------------------------------------
+## Use this section if you did not have Dharma data. 
+
+## use the guess_dates() function to make a first pass at date variables.
 # study_data_cleaned <- study_data_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), as.Date)
+#   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
+#             error_tolerance = 0.5)
 
+## Fix wrong dates ------------------------------------------------------------- 
 
+## Some dates will be unrealistic or wrong.
+## Here is an example of how to manually fix dates. 
+## Look at your data and edit as needed.
 
-# Ideally you should have defined rules in your forms to make sure dates collected are logical
-# If not then uncomment the following lines to fix wrong dates (or set them to NA)
-# Fixing wrong dates 
-# set unrealistic dates to NA, based on having browsed dates in the previous chunk
+## set specific unrealistic dates to NA
 # study_data_cleaned <- mutate(study_data_cleaned,
 #                            date_of_survey < as.Date("2017-11-01") ~ as.Date(NA), 
 #                            date_of_survey == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+```
 
 
-# Age group variables ---------------------------------
 
-# make sure age is an integer 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// create_age_group \\\ 
+--------------------------------------------------------------------------------
+
+This chunk will help you set up your age group variable.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r create_age_group}
+
+## Age group variables ----------------------------------------------------------
+## This step shows you how to create categorical variables from numeric variables.
+## We have some intermediate steps on the way.
+
+## make sure age is an integer 
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(age_month = as.integer(age_month))
 
-# create an age group variable (combining those over 24 months and those under) 
+## create an age group variable (combining those over 24 months and those under) 
 study_data_cleaned <- study_data_cleaned %>%
   mutate(age_group_bin = factor(
     if_else(age_month >= 24,
@@ -513,20 +552,12 @@ study_data_cleaned <- study_data_cleaned %>%
   ))
 
 
-
-## alternatively you could use the age_categories function as below
-
-# create an age group variable by specifying categorical breaks (of years)
-# study_data_cleaned <- study_data_cleaned %>% 
-#   mutate(age_group = age_categories(age_year, 
-#                                     breakers = c(0, 3, 15, 30, 45)
-#                                     ))
-
-# create age group variable for under 1 years based on months
+## create age group variable for under 1 years based on months
 study_data_cleaned <- study_data_cleaned %>%
   mutate(age_group = age_categories(study_data_cleaned$age_month,
                                                  breakers = c(6, 12, 24, 36, 48, 60),
                                                  ceiling = TRUE))
+
 
 ## alternatively, create an age group variable specify a sequence
 # study_data_cleaned$age_group <- age_categories(study_data_cleaned$age,
@@ -543,70 +574,91 @@ study_data_cleaned <- study_data_cleaned %>%
 ## to combine different age categories use the following function 
 ## this prioritises the smaller unit, i.e. if given months and years, will return months first
 # study_data_cleaned <- group_age_categories(study_data_cleaned, 
-#                                          years = age_group, 
-#                                          months = age_group_mon)
+#                                            years  = age_group,
+#                                            months = age_group_mon)
+```
 
 
-# Factor (categorical) variables ---------------------------------
 
-# Change a yes/no variable in to TRUE/FALSE
-# create a new variable called consent 
-# where the old one is yes place TRUE in the new one
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// factor_vars \\\
+--------------------------------------------------------------------------------
+
+This chunk will help you clean factor variables.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r factor_vars}
+
+## Change a yes/no variable in to TRUE/FALSE
+## create a new variable called consent 
+## where the old one is yes place TRUE in the new one
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(consent = head_consent == "Yes")
 
-# Change a character to factor - set the levels of a factor 
+
+## Change a character to factor - set the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
   mutate(sex = factor(sex,
                       levels = c("Female", "Male")))
 
-# recode the levels of a factor 
-# put these in a second variable called sex_brief
-# (this is necessary because the anthro package doesnt accept "Male"/"female")
+## recode the levels of a factor 
+## put these in a second variable called sex_brief
+## (this is necessary because the anthro package doesnt accept "Male"/"female")
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(sex_brief = fct_recode(sex, 
                               "F" = "Female", 
                               "M" = "Male"))
 
-
-# change the order of levels
+## change the order of levels
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(soap = fct_relevel(soap, 
                             "Distribution", 
                             "Healthcentre", 
                             "Never")
-  )
+         )
 
 
-# create a new grouping for soap variable 
-# simplified, distribution or health centre then covered otherwise not covered 
+## create a new grouping for soap variable 
+## simplified, distribution or health centre then covered otherwise not covered 
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(coverage = case_when(
     soap %in% c("Distribution", "Healthcentre") ~ "Covered", 
     TRUE ~ "Not covered")
-  )
+    )
 
 
-# explicitly replace NA of a factor
+## explicitly replace NA of a factor
 # study_data_cleaned <- study_data_cleaned %>%
 #   mutate(coverage = fct_explicit_na(coverage, na_level = "Not Applicable"))
 
 
 ## replace missing values in Dharma multi-choice questions to "" so that we can
 ## filter them out later.
-
 study_data_cleaned <- study_data_cleaned %>%
   mutate_at(.vars = vars(contains("q53")), # all variables that contain the word "q53"
             .funs = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
             ) 
+```
 
 
-######## nutrition indicators -------------------------------------------------
 
-# we can use the anthro package to compute z-scores (compared to WHO standards 2006)
-# the result is a data.frame with the different indicators and columns
-# indicating if they are flagged
-# indicators that could not be computed are NA
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// nutrition_indicators \\\
+--------------------------------------------------------------------------------
+
+This chunk will help you calculate nutrition indicators. 
+
+It uses the anthro package to compute z-scores (compared to WHO standards 2006)
+the result is a data.frame with columns for the indicators whether they 
+are flagged.
+Indicators that could not be computed are NA
+
+Using these values we can create categorical variables in our dataset. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r nutrition_indicators}
+
+## anthro zscores --------------------------------------------------------------
+
+## retrieve zscores 
 zscore_results <- with(study_data_cleaned, anthro_zscores(
   sex = as.character(sex_brief),
   age = age_month,
@@ -618,41 +670,42 @@ zscore_results <- with(study_data_cleaned, anthro_zscores(
 ))
 
 
-# add columns zscore columns to study dataset
+## add columns from zscore_results columns to study dataset
 study_data_cleaned <- bind_cols(study_data_cleaned, zscore_results)
 
+## categorise children ---------------------------------------------------------
 
-# classify child according to weight for height z-scores
-# * Global acute malnutrition (GAM): a WHZ score of less than (<) -2 and/or oedema;
-# * Moderate acute malnutrition: WHZ score <-2 and ≥ -3 and no oedema; 
-# * Severe acute malnutrition (SAM): WHZ score <-3 and/or oedema.
+## weight for height z-scores
+## * Global acute malnutrition (GAM): a WHZ score of less than (<) -2 and/or oedema;
+## * Moderate acute malnutrition: WHZ score <-2 and ≥ -3 and no oedema; 
+## * Severe acute malnutrition (SAM): WHZ score <-3 and/or oedema.
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
     gam_whz = zwfl <  -2 | oedema == "Yes", 
     mam_whz = zwfl >= -3 & zwei < -2, 
     sam_whz = zwfl <  -3 | oedema == "Yes"
   ) %>%
-  # set flagged children to NA for each of the indicator variables
-    # if the flag for this indicator is not missing and is 1 then set indicator vars to NA
-    # else leave the indicator variable as it was
+  ## set flagged children to NA for each of the indicator variables
+    ## if the flag for this indicator is not missing and is 1 then set indicator vars to NA
+    ## else leave the indicator variable as it was
   mutate_at(.vars = vars(gam_whz, mam_whz, sam_whz), # select the indicator variables
             .funs = ~if_else(!is.na(fwfl) & fwfl == 1, NA, .)) # NA if flagged, else leave as is
 
 
 
-# classify children for stunting according to height for age z-scores
-# * Stunting: HAZ score <-2;
-# * Moderate stunting: HAZ score >=-3 and <-2; 
-# * Severe stunting: HAZ score <-3.
+## stunting according to height for age z-scores
+## * Stunting: HAZ score <-2;
+## * Moderate stunting: HAZ score >=-3 and <-2; 
+## * Severe stunting: HAZ score <-3.
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
     stunting_haz = zlen < -2, 
     moderate_stunting_haz = zlen >= -3 & zlen < -2, 
     severe_stunting_haz = zlen < -3
   ) %>%
-  # set flagged children to NA for each of the indicator variables
-    # if the flag for this indicator is not missing and is 1 then set indicator vars to NA
-    # else leave the indicator variable as it was
+  ## set flagged children to NA for each of the indicator variables
+    ## if the flag for this indicator is not missing and is 1 then set indicator vars to NA
+    ## else leave the indicator variable as it was
   mutate_at(.vars = vars(stunting_haz, 
                          moderate_stunting_haz, 
                          severe_stunting_haz), # select the indicator variables
@@ -660,19 +713,19 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 
-# classify children for underweight according to height for age z-scores 
-# * Underweight: WAZ score < -2; 
-# * moderate underweight: WAZ score >=-3 and <-2; 
-# * Severe underweight: WAZ <-3
+## underweight according to height for age z-scores 
+## * Underweight: WAZ score < -2; 
+## * moderate underweight: WAZ score >=-3 and <-2; 
+## * Severe underweight: WAZ <-3
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
     underweight_waz = zwei < -2 | oedema == "Yes", 
     moderate_underweight_waz = zwei >= -3 & zwei < -2, 
     severe_underweight_waz = zwei < -3 | oedema == "Yes"
   ) %>%
-  # set flagged children to NA for each of the indicator variables
-    # if the flag for this indicator is not missing and is 1 then set indicator vars to NA
-    # else leave the indicator variable as it was
+  ## set flagged children to NA for each of the indicator variables
+    ## if the flag for this indicator is not missing and is 1 then set indicator vars to NA
+    ## else leave the indicator variable as it was
   mutate_at(.vars = vars(underweight_waz, 
                          moderate_underweight_waz, 
                          severe_underweight_waz), # select the indicator variables
@@ -680,10 +733,10 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 
-# classify children according to muac 
-# * Global acute malnutrition (GAM): MUAC of <125mm and/or oedema;
-# * Moderate acute malnutrirtion: MUAC <125mm and >= 115mm and no oedema;
-# * Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
+## according to MUAC 
+## * Global acute malnutrition (GAM): MUAC of <125mm and/or oedema;
+## * Moderate acute malnutrirtion: MUAC <125mm and >= 115mm and no oedema;
+## * Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
     gam_muac = muac_mm_left_arm < 125 | oedema == "Yes", 
@@ -691,9 +744,10 @@ study_data_cleaned <- study_data_cleaned %>%
     sam_muac = muac_mm_left_arm < 115 |  oedema == "Yes"
   )
 
+## group indicator variables ---------------------------------------------------
 
-# define all the indicators of interest 
-# we will use this to run the same function over all variables later on
+## define all the indicators of interest 
+## we will use this to run the same function over all variables later on
 
 WHZ <- c("gam_whz",
          "mam_whz",
@@ -714,93 +768,197 @@ MUAC <- c("gam_muac",
 indicators <- c(WHZ, HAZ, WAZ, MUAC)
 
 
-# turn all indicators in to factors 
+## turn all indicators in to factors 
 study_data_cleaned <- study_data_cleaned %>%
   mutate_at(.vars = vars(indicators), # all variables named in indicators
             .funs = ~factor(.) # turn into a factor
             ) 
 
 
-# turn all flags in to TRUE/FALSE variables
+## turn all flags in to TRUE/FALSE variables
 study_data_cleaned <- study_data_cleaned %>%
   mutate_at(.vars = vars(c("fwei", "flen", "fwfl")), # names of flag variables
             .funs = ~as.logical(.) # turn in to logical
             )
 
+```
 
-######## weighting ------------------------------------------------------------
 
-study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
-                                         p = population_data_age, 
-                                         age_group, sex)
 
-# drop unwanted rows  ---------------------------------------------------------
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// remove_unused_data \\\
+--------------------------------------------------------------------------------
 
-# store the cases that you drop so you can describe them (e.g. non-consenting)
+Your data might have empty rows or columns you want to remove.
+You can also use this section to create temporary datasets so you can review
+specific variables or rows.
+
+You may want to drop rows with missing IDs (i.e. blank rows from excel) 
+simply add a !is.na(fact_0_id) if using a dharma dataset.
+You will also want to drop those rows with ages outside of the range you want!
+Those without consent need to be dropped too
+
+It is important that you drop observations before adding survey weights!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r remove_unused_data}
+## Drop unused rows  -----------------------------------------------------------
+
+## store the cases that you drop so you can describe them (e.g. non-consenting)
 dropped <- study_data_cleaned %>% 
   filter(!consent & 
            (age_month < 6 | 
            age_month > 60))
-
-# you may want to drop rows with missing IDs (i.e. blank rows from excel) 
-  # simply add a & !is.na(fact_0_id) if using a dharma dataset
-# you will also want to drop those rows with no consent! 
+## drop the unused rows from the survey data set  
 study_data_cleaned <- study_data_cleaned %>%
   filter(consent & 
            age_month > 6 & 
            age_month < 60
            )
+
+
+## Drop columns ----------------------------------------------------------------
+## OPTIONAL: This step shows you how you can remove certain variables.
+## study_data_cleaned <- select(study_data_cleaned, -c("age_month", "sex"))
+
+## OPTIONAL: if you want to inspect certain variables, you can select these by
+## name or column number. This example creates a reduced dataset for the first
+## three columns, age_month, and sex.
+
+# study_data_reduced <- select(study_data_cleaned, c(1:3, "age_month", "sex")
 ```
 
 
-```{r save_cleaned_data, eval = FALSE}
-## OPTIONAL: save your cleaned dataset as an excel file! 
-## put the current date in the name so you know!
-rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// survey_weights \\\
+--------------------------------------------------------------------------------
+
+Create survey weights according to your study design. 
+
+These require information on the source population and/or the clusters surveyed. 
+
+There are three options, comment out those you do not use: 
+- Stratified 
+- Cluster 
+- Stratified and cluster 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r survey_weights}
+
+## stratified ------------------------------------------------------------------
+
+## create a variable called "surv_weight_strata" 
+## contains weights for each individual - by age group, sex and health district
+study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
+                                         p = population_data_age, 
+                                         surv_weight = "surv_weight_strata",
+                                         surv_weight_ID = "surv_weight_ID_strata",
+                                         age_group, sex, health_district)
+
+
+## cluster ---------------------------------------------------------------------
+
+## merge village and household to create a unique household ID 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(hh_id = glue::glue("{village}_{household_id}"))
+
+
+## create cluster weights 
+study_data_cleaned <- add_weights_cluster(x = study_data_cleaned, 
+                                          cl = cluster_counts, 
+                                          eligible = eligible, 
+                                          interviewed = interviewed, 
+                                          cluster_x = village, 
+                                          cluster_cl = cluster, 
+                                          household_x = hh_id, 
+                                          household_cl = households, 
+                                          surv_weight = "surv_weight_cluster", 
+                                          surv_weight_ID = "surv_weight_ID_cluster", 
+                                          ignore_cluster = FALSE, 
+                                          ignore_household = FALSE)
+
+## stratified and cluster ------------------------------------------------------
+
+## create a survey weight for cluster and strata 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(surv_weight_cluster_strata = surv_weight_strata * surv_weight_cluster)
 ```
 
 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// survey_design \\\
+--------------------------------------------------------------------------------
+
+Create survey object according to your study design. 
+
+Used the same way as dataframes to calculate weight proportions etc. 
+
+Make sure that all necessary variables are created before this. 
+
+There are four options, comment out those you do not use: 
+- Simple random 
+- Stratified 
+- Cluster 
+- Stratified cluster
+
+For this template - we will pretend that we cluster surveys in two seperate 
+strata (health districts A and B). 
+So to get overall estimates we need have combined cluster and strata weights. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r survey_design}
-## USE THIS TO SET THE STUDY DESIGN FOR YOUR SURVEY  ---------------------------
-##
-## This creates "survey objects" which can be used as data frames for calculating
-## weighted proportions etc. 
-## There are several options for study design here. 
-## At the basic level you want to decide if it is a simple random or a cluster
-## design study. You will then need to identify your weights variable. 
-## You can also create several study designs, e.g. if you would like to have
-## an overall design and a stratified design (e.g. by sex or by region). 
-##
-## Checklist for study design --------------------------------------------------
-## 
-## - [ ] Make sure you have created all necessary variables in earlier code chunks!!
-## - [ ] Decide on your study design (cluster or simple random)
-## - [ ] If doing cluster:
-##          - [ ] place your cluster ID variable in the ids option 
-##                (e.g. householdID - "fact_0_id" not availble in dat dict)
-##          - [ ] specify your weight variable (created previously)
-##                (set to NULL if want no weights)
-## - [ ] If doing simple random: 
-##          - [ ] set ids equals 1 to have no clustering 
-##          - [ ] specify your weight variable (created previously)
-##                (set to NULL if want no weights)
-## - [ ] Create additional study designs based on strata if you did stratified 
-##        sampling 
-##      (make sure that your weight variable is based on appropriately stratified
-##        population data)
 
+## simple random ---------------------------------------------------------------
 
-# simple random sample (using srvyr package)
-survey_design <- study_data_cleaned %>% 
+survey_design_simple <- study_data_cleaned %>% 
   as_survey_design(ids = 1, # 1 for no cluster ids 
-                   weights = surv_weight, # weight variable created above 
+                   weights = NULL, # No weight added
                    strata = NULL # sampling was simple (no strata)
+                   )
+
+## stratified ------------------------------------------------------------------
+
+survey_design_strata <- study_data_cleaned %>% 
+  as_survey_design(ids = 1, # 1 for no cluster ids 
+                   weights = surv_weight_strata, # weight variable created above 
+                   strata = health_district # sampling was stratified by district
+                   )
+
+## cluster ---------------------------------------------------------------------
+
+survey_design_cluster <- study_data_cleaned %>% 
+  as_survey_design(ids = village, # 1 for no cluster ids 
+                   weights = surv_weight_cluster, # weight variable created above 
+                   strata = NULL # sampling was simple (no strata)
+                   )
+
+## stratified cluster ----------------------------------------------------------
+
+survey_design <- study_data_cleaned %>% 
+  as_survey_design(ids = village, # 1 for no cluster ids 
+                   weights = surv_weight_cluster_strata, # weight variable created above 
+                   strata = health_district # sampling was simple (no strata)
                    )
 ```
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// save_cleaned_data \\\
+--------------------------------------------------------------------------------
+
+You can save your cleaned dataset as an Excel. 
+This automatically names your file "study_data_cleaned_DATE", where DATE is the
+current date.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r save_cleaned_data, eval = FALSE}
+rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
+```
 
 
 
