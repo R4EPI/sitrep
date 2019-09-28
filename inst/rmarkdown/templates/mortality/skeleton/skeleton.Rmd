@@ -933,13 +933,13 @@ needs to be of the total and missings need to be dropped.
 ```{r consent_reasons}
 ## using the dataset with dropped individuals 
 dropped %>% 
-  # get counts multiple variables with reasons for no consent 
-  # make the proportion of the total, including the missings for each
+  ## get counts multiple variables with reasons for no consent 
+  ## make the proportion of the total, including the missings for each
   tab_linelist(glue::glue("q53_cq4a_00{0:3}"), 
                prop_total = TRUE, na.rm = FALSE) %>% 
-  # remove missings from the table 
+  ## remove missings from the table 
   filter(!value == "Missing") %>% 
-  # drop variable column and rename others
+  ## drop variable column and rename others
   select("Reason" = value, 
          "n" = n, 
          "%" = proportion) %>% 
