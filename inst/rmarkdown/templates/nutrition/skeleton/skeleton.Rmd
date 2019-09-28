@@ -6,30 +6,24 @@ output:
 ---
 
 
-This is a template which can be used to create a report from a nutrition survey. 
+# Introduction to this template
 
-- There are sections for reading and cleaning data, followed by 
-    weighting and then survey analysis. 
-    Use the drop-down menu on the bottom left of this script window to jump 
-    between sections. 
-- You can type normal text in white spaces (such as here) and r-code in grey
-    spaces (denoted by three backticks and r) (see [Rmarkdown
-    introduction](https://rmarkdown.rstudio.com/articles_intro.html) and
-    [Markdown basics](https://rmarkdown.rstudio.com/authoring_basics.html))
-- Introductions and contents of sections are within square brackets "[...]" and
-    can be deleted as appropriate
-- Examples of inline code (to automate updating numbers, e.g. in the "Results
-    section"), can similarly be removed/updated
-- Code itself can be deleted, but as a word of caution: make sure you aren't
-    deleting bits where variables are created/manipulated, or at least update
-    them appropriatley
-For a more detailed explanation of this template, please visit https://r4epis.netlify.com/surveys
+This is a template which can be used to create a report from a retrospective
+mortality survey. 
+
+- There are sections for reading and cleaning data, calculating 
+    anthropometric indicators based on z-score counts followed by  
+    weighting and then survey analysis.  
+- For a more detailed explanation of this template, please visit https://r4epis.netlify.com/surveys  
 - Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 
-This template will guide you through the following steps:  
-- merging household and individual level data  
-- calculating anthropometric indicators based on z-score counts  
-- calculating anthropometric indicators based on weighted z-score counts
+- Text within <! > will not show in your final document. These comments are used
+to explain the template. You can delete them if you want.
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This comment will not show up when you knit the document.
+A comment with a title with slashes indicates a name of a code chunk.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
 ## Data analysis: Definitions and standards
@@ -67,28 +61,31 @@ Exclusion of z-scores from Observed mean SMART flags included:
 
 ## Installing and loading required packages 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// setup \\\
+--------------------------------------------------------------------------------
 Several packages are required for different aspects of  analysis with *R*. 
 You will need to install these before starting. 
-We will be using the following packages. Some of these packages automatically
-install other packages they need to work (called dependencies).
-
 These packages can be quite large and may take a while to download in the
 field. If you have access to a USB key with these packages, it makes sense to
 copy and paste the packages into your computer's R package library 
 (run the command .libPaths() to see the folder path). 
-
 For help installing packages, please visit https://r4epis.netlify.com/welcome
-
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r setup, include = FALSE, results='hide', message=FALSE, warning=FALSE}
-# hide all code chunks in the output, but show errors
+## hide all code chunks in the output, but show errors
 knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
-# set default NA to - in output, define figure width/height
+
+
+## set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
 
-# Installing required packages for this template
-required_packages <- c("knitr",       # create output docs
+
+
+## Installing required packages for this template
+required_packages <- c("knitr",       # create output docs 
+                       "here",        # find your files
                        "rio",         # for importing data
                        "epitrix",     # clean/shape data
                        "dplyr",       # clean/shape data
@@ -96,122 +93,162 @@ required_packages <- c("knitr",       # create output docs
                        "forcats",     # clean/shape data
                        "ggplot2",     # create plots and charts
                        "sitrep",      # MSF field epi functions
-                       "anthro",       # WHO Child Growth Standards (wrapper of survey)
+                       "anthro",      # WHO Child Growth Standards (wrapper of survey)
                        "survey",      # for survey functions
                        "srvyr"        # dplyr wrapper for survey package
                        )
 
 for (pkg in required_packages) {
-  # install packages if not already present
+  ## install packages if not already present
   if (!pkg %in% rownames(installed.packages())) {
     install.packages(pkg)
   }
   
-  # load packages to this current session 
+  ## load packages to this current session 
   library(pkg, character.only = TRUE)
 }
-# set default text size to 16 for plots
-# give classic black/white axes for plots
+
+
+## set default text size to 16 for plots
+## give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
 ```
 
 
 
 
-```{r read_data_generic, message = FALSE}
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_fake_data \\\
+--------------------------------------------------------------------------------
+To play with this template, you can create fake data based off data
+dictionary used for Dharma.
+Comment out this chunk when you are using real data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-## This section gives a variety of options for reading in datasets in different formats
+```{r read_fake_data, warning = FALSE, message = FALSE}
 
-## Read data ------------------------------------
-# CSV file
-# linelist_raw <- rio::import("linelist.csv")
-#
-# Excel file
-# to read in a specific sheet use "which"
-# linelist_raw <- rio::import("linelist.xlsx", which = "Sheet1")
-#
-# Stata data file
-# linelist_raw <- rio::import("linelist.dat")
-#
-# For password protected Excel file 
-# use the excel.link package 
-# library(excel.link)
-# linelist_raw <- excel.link::xl.read.file("linelist.xlsx",
-#                                          xl.sheet = "Sheet1",
-#                                          password = askpass::askpass(prompt = "please enter file
-#                                                                      password"))
 
+## generates MSF standard dictionary for Dharma 
+study_data_dict <- msf_dict_survey("Nutrition")
+
+
+## generates a fake dataset for use as an example in this template
+## this dataset already has household and individual levels merged
+study_data_raw <- gen_data(dictionary = "Nutrition",
+                           varnames   = "column_name",
+                           numcases   = 1000)
 ```
 
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You should load your data as a linelist, where each row is one person. 
 
-```{r read_dharma_excel_data, message = FALSE}
+There are two options for reading data:
+- Your data is from Dharma: use read_DHARMA_data
+- Your data is NOT FROM Dharma and in Excel, CSV, or Stata format: 
+use read_nonDHARMA_data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-# If your linelist is an excel export of data from Dharma use this code chunk
-# If that is not the case use the code chunk above reading in other formats
 
-## Read data ------------------------------------------------------
 
-# This assums that you have two levels in your survey (level 0 and level 1). 
-# These correspond to, for example, household and individual. 
-# We will read in and later merge these two levels in to one dataset. 
-# We will assume the data is not password protected (code for reading 
-# password protected excels is in the read_data_generic code chunk)
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_DHARMA_data \\\
+--------------------------------------------------------------------------------
+This section is for data collected with Dharma.
+It uses the standardized MSF data dictionary.
+
+If you didn't use the standardized data dictionary, go to read_nonDHARMA_data.
+
+Generally, survey datasets will have two levels:
+One for household and one for individual (to combine see merge_data_levels).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_DHARMA_data, warning = FALSE, message = FALSE}
+
+### Read in data ---------------------------------------------------------------
+
+
+## Excel file ------------------------------------------------------------------
 
 ## read in household data sheet
-# study_data_hh <- rio::import("nutrition_survey.xlsx", 
+# study_data_hh <- rio::import(here::here("nutrition_survey.xlsx"), 
 #                               which = "Level 0 Named", na = ".")
 
 ## read in individual level data sheet
-# study_data_indiv <- rio::import("nutrition_survey.xlsx", 
+# study_data_indiv <- rio::import(here::here("nutrition_survey.xlsx", 
 #                               which = "Level 1 Named", na = ".")
 
-## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
-# generates a fake dataset for use as an example in this template
-study_data_raw <- gen_data(dictionary = "Nutrition", 
-                           varnames = "column_name",
-                           numcases = 1000)
 
-## Data dictionary ---------------
-## The data dictionary has variable names in the "column_name" column.
-## Possible values for variables are specified in the "choice_code" and "choice_name"
-## columns. 
-## Where code has the shortened values and name has the full text values.
+## Excel file with password ----------------------------------------------------
+## Use this section if your Excel has a password.
 
-# read in data dictionary (for reference purposes)
-# study_data_dict <- import("nutrition_survey.xlsx",
-#                       which = "Data Dictionary")
+# install.packages(c("excel.link", "askpass"))
+# library(excel.link)
 
-## you can look at the dictionary by uncommenting the line below
-# View(study_data_dict) 
+# study_data_hh <- xl.read.file(here::here("nutrition_survey.xlsx"),
+#                              xl.sheet = "Level 0 Named",
+#                              password = askpass::askpass(prompt = "please enter file password"))
 
-## you can view variable names in the data dicationry uncommenting the line below
-# study_data_dict$column_name
-
-## DELETE THIS LINE --- YOU READ IN YOUR OWN DATA ABOVE!
-# generates a fake dataset for use as an example in this template
-# this dataset already has the two levels merged
-# variable names are in the column_name column
-# possible values for each variable are specified in the "Code" columns.
-study_data_dict <- msf_dict_survey("Nutrition")
+# study_data_indiv <- xl.read.file(here::here("nutrition_survey.xlsx"),
+#                              xl.sheet = "Level 1 Named",
+#                              password = askpass::askpass(prompt = "please enter file password"))
 ```
 
 
 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_nonDHARMA_data \\\
+--------------------------------------------------------------------------------
+This section is for data not from Dharma. 
+If you have already loaded data from Dharma, go to merge_data_levels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_nonDHIS_data, warning = FALSE, message = FALSE}
+
+## Excel file ------------------------------------------------------------------
+## to read in a specific sheet use "which"
+# study_data_hh <- rio::import(here::here("nutrition_survey.xlsx"), which = "Sheet1")
+
+## Excel file -- Specific range ------------------------------------------------
+## you can specify a range in an excel sheet.
+# study_data_hh <- rio::import(here::here("nutrition_survey.xlsx"), range = "B2:J102")
+
+## Excel file with password ----------------------------------------------------
+## use this section if your Excel has a password.
+# install.packages(c("excel.link", "askpass"))
+# library(excel.link)
+# study_data_hh <- xl.read.file(here::here("nutrition_survey.xlsx"),
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
+## CSV file --------------------------------------------------------------------
+# study_data_hh <- rio::import(here::here("nutrition_survey.csv"))
+
+## Stata data file -------------------------------------------------------------
+# study_data_hh <- rio::import(here::here("nutrition_survey.dat"))
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// merge_data_levels \\\
+--------------------------------------------------------------------------------
+For survey datasets with two levels (e.g. household and individual), 
+these levels will need to be merged in to one dataset. 
+
+This is done using a unique identifier for the household 
+(which has to be repeated for each row in the individuals dataset) 
+For a Dharma dataset this variable is "fact_0_id".
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r merge_data_levels}
 
-## Need to merge individual data with household data
-## This is done using a unique identifier for the household 
-## (which repeats in the individuals dataset) 
-## For a Dharma dataset this variable is "fact_0_id"
-
-## fact_0_id, the merging variable, needs to be applied to all relevant rows in the indidivual data set
-## (equivalent of dragging down with mouse in excel)
-## this is achieved using the fill function from the tidyr package
-# study_data_indiv <- study_data_indiv %>%
-#                       fill(fact_0_id)
+## make sure each individual has the ID 
+## (equivalent of excel drag downwards to fill blanks)
+# study_data_indiv <- study_data_indiv %>% fill(fact_0_id)
 
 ## join the individual and household data to form a complete data set
 #study_data_raw <- left_join(study_data_hh, study_data_indiv, by = "fact_0_id")
@@ -219,69 +256,141 @@ study_data_dict <- msf_dict_survey("Nutrition")
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// prep_DHARMA_data \\\
+--------------------------------------------------------------------------------
+This section is to import your data dictionary and standardise variable names. 
+
+The Dharma data dictionary has variable names
+in the column_name column. Possible values for each variable are
+specified in choice_code and choice_name columns. 
+Code has the shortened value and Name has the full-text value.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+```{r prep_DHARMA_data}
+
+## Data dictionary -------------------------------------------------------------
+
+
+## read in data dictionary
+# study_data_dict <- rio::import("nutrition_survey.xlsx",
+#                                which = "Data Dictionary")
+
+## look at the dictionary by uncommenting the line below
+# View(study_data_dict) 
+
+
+## Clean column names ----------------------------------------------------------
+## This step fixes the column names so they are easy to use in R.
+
+
+## make a copy of your orginal dataset and name it study_data_cleaned
+study_data_cleaned <- study_data_raw
+
+## define clean variable names using clean_labels from the epitrix package. 
+cleaned_colnames <- epitrix::clean_labels(colnames(study_data_cleaned))
+
+## overwrite variable names with defined clean names
+colnames(study_data_cleaned) <- cleaned_colnames 
+
+## Some of the names outputed from Dharma are very long
+## In this example, we rename several variables
+## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
+study_data_cleaned <- rename(study_data_cleaned,
+                             head_available = q28_cq1,
+                             head_adult = q45_cq2,
+                             head_consent = q49_cq3,
+                             no_consent_other = q61_cq4b)
+```
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_population_data \\\
+--------------------------------------------------------------------------------
+This template uses population data to create survey weights. 
 
+There are three options:
+- You can read in a spreadsheet with age group, sex and region data.
+- You can put in the specific populations into the gen_population function. 
+- If you have the total or regional populations, you can estimate the age group
+from proportions.
+
+Below we show basic examples for reading data and entering counts - as well as 
+a more complex version using proportions to get the age/sex breakdown in 
+two seperate regions. (Useful if doing a stratified survey)
+
+Comment out the options you are not using.
+
+Make sure that the groups fit those in your survey data!
+
+Age group proportions are from the OCBA population denominators tool v1. The
+proportions below are for sub-Saharan Africa in 2019. They are only an estimate!
+If you have more specific proportions, you can use them below.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_population_data, warning = FALSE, message = FALSE}
 
-## There are two options for using population data here. 
-## The first one is where you only know the total population number, and the 
-## proportion breakdown for categories (e.g. by age group, sex or region). 
-## The second option is to read in population from excel. 
-## In both cases you will need to make sure that the respective groups for 
-## population fit the groups in your linelist data set!
-##
-## Checklist for population data ----------------------------------------------
-## 
-## - [ ] Decide if you have stratified population data available as counts or only proportions
-## - [ ] If you have counts available:
-##          - [ ] use View on the fake data generated to make sure your format in excel matches
-##          - [ ] read in and clean data appropriately in the "Read data" section
-##          - [ ] make sure the groups match the appropriate variable in your linelist!
-## - [ ] If have total population and proportion breakdown available: 
-##          - [ ] use the gen_population function in "counts from populaiton proportions" section
-##          - [ ] type in your population, groups, and respective proportions
-##          - [ ] group can be any categorical variable you want
-##          - [ ] make sure the groups match the appropriate variable in your linelist!
-## - [ ] DELETE OR COMMENT OUT THE UNUSED SECTION
+
+## Read data -------------------------------------------------------------------
+
+## This step reads in your population data from Excel.
+## You may need to rename your columns.
+
+# population_data <- rio::import(here::here("population.xlsx"), which = "Sheet1")
+
+## repeat preparation steps as appropriate
 
 
-## Read data ------------------------------------
-
-## Excel file
-## See the gen_population function section below to see how to structure your data!!
-## to read in a specific sheet use "which"
-# population_data <- rio::import("population.xlsx", which = "Sheet1")
-
-## repeat same cleaning steps as in standardise_clean_data code chunk as appropriate
-## make sure your place variable name matches!
-
-## Counts from population proportions ------------------------------------ 
-## if you only know the total population and the proportions in each age group, use this function 
+## Enter counts directly -------------------------------------------------------
 
 
-# generate population data by age groups in years 
-population_data_age <- gen_population(total_pop = 1000, # set the total population 
-    groups = c("6-11", "12-23", "24-35", "36-47", "48-60"), # set the groups
-    proportions = c(0.15, 0.11, 0.07, 0.26, 0.182),         # set the proportions for each group
-    strata = c("Male", "Female")) %>%                       # stratify by gender
-  rename(age_group = groups, # rename columns (syntax is NEW NAME = OLD NAME)
-         sex = strata,
-         population = n)
+## Below is an example of how to enter population counts by groups. 
+
+# population_data_age <- gen_population(
+#   groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
+#   counts = c(3600, 18110, 13600, 8080, 6600),
+#   strata = NULL) %>%
+#   rename(age_group = groups,
+#     population = n)
+
+
+## Create counts from proportions ----------------------------------------------
+## This step helps you estimate sub-group size with proportions.
+## You need to replace the total_pop and proportions. You can change the groups
+## to fit your needs. 
+
+## Here we repeat the steps for two regions (district A and B) then bind the two
+## together 
+
+
+## generate population data by age groups in years for district A
+population_data_age_district_a <- gen_population(total_pop = 10000, # set total population 
+  groups      = c("6-11", "12-23", "24-35", "36-47", "48-60"), # set groups
+  proportions = c(0.0164, 0.0164, 0.015, 0.015, 0.015), # set proportions for each group
+  strata      = c("Male", "Female")) %>%           # stratify by gender
+  rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
+         sex        = strata,
+         population = n) %>% 
+  mutate(health_district = "District A")           # add a column to identify region 
+
+
+## generate population data by age groups in years for district B
+population_data_age_district_b <- gen_population(total_pop = 10000, # set total population 
+  groups      = c("6-11", "12-23", "24-35", "36-47", "48-60"), # set groups
+  proportions = c(0.0164, 0.0164, 0.015, 0.015, 0.015), # set proportions for each group
+  strata      = c("Male", "Female")) %>%           # stratify by gender
+  rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
+         sex        = strata,
+         population = n) %>% 
+  mutate(health_district = "District B")           # add a column to identify region 
 
 
 
-# generate population data by age groups in months (under and over 24 months)
-population_data_age24 <- gen_population(total_pop = 1000, # set the total population 
-    groups = c("0-23", "24-60"),      # set the groups
-    proportions = c(0.26, 0.512),     # set the proportions for each group
-    strata = c("Male", "Female")) %>% # stratify by gender
-  rename(age_group = groups, # rename columns (syntax is NEW NAME = OLD NAME)
-         sex = strata,
-         population = n)
-
+## bind region population data together to get overall population 
+population_data_age <- bind_rows(population_data_age_district_a, 
+                                 population_data_age_district_b)
 ```
 
 
@@ -311,8 +420,6 @@ unique(study_data_raw$sex)
 
 ## check for logical inconsistencies 
 ## for example check age <6 months and height >100 cm and return corresponding IDs
-# (fact_0_id only exists in real dharma datasets - not those from gen_data 
-#  function)
 study_data_raw %>% 
   filter(age_month < 6 & height > 100) %>% 
   select("fact_0_id")
@@ -347,30 +454,7 @@ study_data_raw %>%
 ##    - Dropping rows and columns 
 
 
-## make a copy of your orginal dataset and name it study_data_cleaned
-study_data_cleaned <- study_data_raw
 
-
-# Clean variable names  ---------------------------------
-## define clean variable names using clean_labels from the epitrix package. This
-## function defines rules for variable naming; for example, it changes spaces
-## and dots to "_" and sets all characters to lowercase.
-
-# overwrite variable names with defined clean names
-cleaned_colnames <- epitrix::clean_labels(colnames(study_data_cleaned))
-colnames(study_data_cleaned) <- cleaned_colnames 
-
-
-## Some of the names outputed from Dharma are really long and painful, you can change these as below
-## in case you want to specifically change a
-## few names you can also change specific var names using the *rename*
-## function. 
-## The formula for this is rename(data, NEW_NAME = OLD_NAME)
-study_data_cleaned <- rename(study_data_cleaned,
-                             head_available = q28_cq1,
-                             head_adult = q45_cq2,
-                             head_consent = q49_cq3,
-                             no_consent_other = q61_cq4b)
 
 
 ## OPTIONAL: if you only want to keep certain variables - 
