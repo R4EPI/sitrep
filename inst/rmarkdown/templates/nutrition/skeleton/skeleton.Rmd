@@ -40,14 +40,15 @@ We used the following definitions for the analysis of the survey results for MUA
 * Moderate acute malnutrirtion: MUAC <125mm and >= 115mm and no oedema;
 * Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
 
-In order to estimate stunting in the surveyed population, we looked at Height for Age z-scores (HAZ) and used the following definitions:
-
+In order to estimate stunting in the surveyed population, we looked at Height for Age z-scores (HAZ) and used the following definitions:  
+  
 * Stunting: HAZ score <-2;
 * Moderate stunting: HAZ score >=-3 and <-2; 
 * Severe stunting: HAZ score <-3.
 
 
 In order to estimate underweight in the surveyed population, we looked at Weight for Age z-scores (WAZ) and used the following definitions:  
+  
 * Underweight: WAZ score < -2;  
 * moderate underweight: WAZ score >=-3 and <-2;  
 * Severe underweight: WAZ <-3  
@@ -57,7 +58,7 @@ Exclusion of z-scores from Observed mean SMART flags included:
 * WHZ: <-5 or >5;  
 * HAZ: <-6 or >6;  
 * WAZ: <-6 or >5.  
-
+ 
 
 ## Installing and loading required packages 
 
@@ -968,17 +969,17 @@ rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx
 ### Survey inclusion 
 
 
+
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// inclusion_counts \\\
+--------------------------------------------------------------------------------
 
 The below chunks calculate values that are displayed with the inline text
 
+Get the counts of clusters and households included 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
-
 ```{r inclusion_counts}
-
-## get the number of counts by cluster and household 
-## then use these in the size counts below #
 
 ## get counts of number of clusters 
 num_clus <- study_data_cleaned %>%
@@ -1010,17 +1011,28 @@ Among the `r nrow(dropped)` individuals excluded from the survey analysis,
 for lack of consent. The reasons for no consent are shown below. 
 
 
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// consent_reasons \\\
+--------------------------------------------------------------------------------
+
+This chunk will create a table of dropped individuals by reason for no consent. 
+
+Note that these reasons are spread over multiple columns, thus the proportion
+needs to be of the total and missings need to be dropped. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
 ```{r consent_reasons}
 
 ## using the dataset with dropped individuals 
 dropped %>% 
-  # get counts multiple variables with reasons for no consent 
-  # make the proportion of the total, including the missings for each
+  ## get counts multiple variables with reasons for no consent 
+  ## make the proportion of the total, including the missings for each
   tab_linelist(paste0("q53_cq4a_00", 0:3), 
                prop_total = TRUE, na.rm = FALSE) %>% 
-  # remove missings from the table 
+  ## remove missings from the table 
   filter(!value == "") %>% 
-  # drop variable column and rename others
+  ## drop variable column and rename others
   select("Reason" = value, 
          "n" = n, 
          "%" = proportion) %>% 
@@ -1031,27 +1043,31 @@ dropped %>%
 
 
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// cluster_hh_size \\\
+--------------------------------------------------------------------------------
 
 The below chunks calculate values that are displayed with the inline text
 
+Get counts of households per cluster and individuals per household. 
+From these create medians and standard deviations. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
-
 ```{r cluster_hh_size}
-# get counts of the number of households per cluster
+
+## get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
-  # trim data to only unique households within each cluster
+  ## trim data to only unique households within each cluster
   distinct(cluster_number, household_id) %>%
-  # count the number of households within each cluster
+  ## count the number of households within each cluster
   count(cluster_number) %>% 
   pull(n)
 
-# get the median number of households per cluster
+## get the median number of households per cluster
 clustermed <- median(clustersize)
 
-# get the min and max number of households per cluster
-# paste these together seperated by a dash 
-clusterrange <- paste0(range(clustersize), collapse = "--")
+## get the min and max number of households per cluster
+## paste these together seperated by a dash 
+clusterrange <- glue::glue_collapse(range(clustersize), sep = "--")
 
 # get counts of children per household 
 # do this by cluster as household IDs are only unique within clusters
@@ -1059,15 +1075,14 @@ hhsize <- study_data_cleaned %>%
   count(cluster_number, household_id) %>%
   pull(n) 
 
-# get median number of children per household
+## get median number of children per household
 hhmed <- median(hhsize)
-# get the min and max number of children per household
-# paste these together seperated by a dash 
-hhrange <- paste0(range(hhsize), collapse = "--")
+## get the min and max number of children per household
+## paste these together seperated by a dash 
+hhrange <- glue::glue_collapse(range(hhsize), sep = "--")
 
-# get standard deviation 
+## get standard deviation 
 hhsd <- round(sd(hhsize), digits = 1)
-
 ```
 
 
@@ -1082,8 +1097,12 @@ In total we included `r nrow(study_data_cleaned)` in the survey analysis.
 The age break down and a comparison with the source population is shown below. 
 
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// descriptive_sampling_bias \\\
+--------------------------------------------------------------------------------
 
-Compare the proportions in each age group between your sample and the source population. 
+Compare the proportions in each age group between your sample and 
+the source population. 
+
 This is important to be able to highlight potential sampling bias. 
 You could similarly repeat this looking at distributions by sex. 
 
@@ -1096,45 +1115,45 @@ your data.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
+```{r descriptive_sampling_bias, warning = FALSE}
 
-```{r descriptive_sampling_bias}
-# first the counts and props of the study population
+## counts and props of the study population
 ag <- tab_linelist(study_data_cleaned, "age_group") %>%
   mutate(n_total = sum(n)) %>%
   select(-variable) %>%
   rename(age_group = value) %>%
   mutate(age_group = fct_inorder(age_group))
 
-# then the counts and props of the source population
+## counts and props of the source population
 propcount <- group_by(population_data_age, age_group) %>%
     tally(population) %>%
     mutate(proportion = n / sum(n))
 
-# bind together the columns of two tables, group by age, and perform a 
-# binomial test to see if n/total is significantly different from population
-# proportion.
-  # suffix here adds to text to the end of columns in each of the two datasets
+## bind together the columns of two tables, group by age, and perform a 
+## binomial test to see if n/total is significantly different from population
+## proportion.
+  ## suffix here adds to text to the end of columns in each of the two datasets
 left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   group_by(age_group) %>%
 
-  # broom::tidy(binom.test()) makes a data frame out of the binomial test and
-  # will add the variables p.value, parameter, conf.low, conf.high, method, and
-  # alternative. We will only use p.value here. You can include other
-  # columns if you want to report confidence intervals
+  ## broom::tidy(binom.test()) makes a data frame out of the binomial test and
+  ## will add the variables p.value, parameter, conf.low, conf.high, method, and
+  ## alternative. We will only use p.value here. You can include other
+  ## columns if you want to report confidence intervals
   mutate(binom = list(broom::tidy(binom.test(n, n_total, proportion_pop)))) %>%
   unnest() %>% # important for expanding the binom.test data frame
   mutate(proportion_pop = proportion_pop * 100) %>%
 
-  # Adjusting the p-values to correct for false positives 
-  # (because testing multiple age groups). This will only make 
-  # a difference if you have many age categories
+  ## Adjusting the p-values to correct for false positives 
+  ## (because testing multiple age groups). This will only make 
+  ## a difference if you have many age categories
   mutate(p.value = p.adjust(p.value, method = "holm")) %>%
   select(age_group, n, proportion, n_pop, proportion_pop, p.value) %>%
                       
-  # Only show p-values over 0.001 (those under report as <0.001)
+  ## Only show p-values over 0.001 (those under report as <0.001)
   mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
-  # rename the columns appropriatley
+  ## rename the columns appropriatley
   rename(
     "Age group" = age_group,
     "Study population (n)" = n,
@@ -1148,42 +1167,47 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
 ```
 
 
-<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The below chunks calculate values that are displayed inline
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// median_age_sex_ratios \\\
+--------------------------------------------------------------------------------
+
+The below chunk calculate values that are displayed inline
+
+This returns the median age and sex ratios overall as well as by age group. 
+It also pulls the age group with the highest sex ratio. 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
-
 ```{r median_age_sex_ratios}
-# compute the median age 
+## compute the median age 
 medage <- median(study_data_cleaned$age_month)
-# paste the lower and uper quartile together
-iqr <- paste0(  # basically copy paste togehter the following
-  # calculate the 25% and 75% of distribution, with missings removed
+## paste the lower and uper quartile together
+iqr <- glue::glue_collapse(  # basically copy paste togehter the following
+  ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
     study_data_cleaned$age_month, 
     c(0.25, 0.75), 
     na.rm = TRUE), 
-  # between lower and upper place an en-dash
-  collapse = "--")
+  ## between lower and upper place an en-dash
+  sep = "--")
 
 
-# compute overall sex ratio 
+## compute overall sex ratio 
 sex_ratio <- study_data_cleaned %>% 
   count(sex) %>% 
   spread(sex, n) %>%
   mutate(ratio = round(Male/Female, digits = 3)) %>%
   pull(ratio)
 
-# compute sex ratios by age group 
+## compute sex ratios by age group 
 sex_ratio_age <- study_data_cleaned %>% 
   count(age_group, sex) %>% 
   spread(sex, n) %>%
   mutate(ratio = round(Male/Female, digits = 3)) %>%
   select(age_group, ratio)
 
-# sort table by ascending ratio then select the lowest (first)
+## sort table by ascending ratio then select the lowest (first)
 min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
 ```
 
@@ -1195,27 +1219,35 @@ female ratio was `r min_sex_ratio_age$ratio`
 in the `r min_sex_ratio_age$age_group` month age group.
 The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under two years of age made up 
-`r fmt_count(study_data_cleaned, age_group_bin == "0-23")`of the surveyed individuals.
+`r fmt_count(study_data_cleaned, age_group_bin == "0-23")`of the surveyed 
+individuals.
 The highest number of surveyed indivduals (unweighted) were in the 
 `r table(study_data_cleaned$age_group) %>% which.max() %>% names()` 
 year age group.
 
 
 
-Age distribution of household population by year age group and gender.
+Unweighted age distribution of household population by year age group and gender.
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// describe_by_age_group_and_sex \\\
+--------------------------------------------------------------------------------
+
+This chunk will create an unweighted table of survey individuals by age group 
+and sex.
+
+Note that proportions are of the total sample (not within each gender) 
+to change this, set proptotal = FALSE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r describe_by_age_group_and_sex}
 
-# return counts and proportions of individuals by age and sex
-# note that proportions are of the total sample (not within each gender) 
-  # to change this, set proptotal = FALSE
 tab_linelist(study_data_cleaned, age_group, 
              strata     = sex, 
              row_total  = TRUE,
              col_total  = TRUE,
              prop_total = TRUE) %>%
-  # select and rename column names appropriately
+  ## select and rename column names appropriately
   select("Age"              = "value",
          "Female cases (n)" = "Female n",
          "%"                = "Female proportion",
@@ -1225,13 +1257,25 @@ tab_linelist(study_data_cleaned, age_group,
   kable(digits = 2)
 ```
 
-There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing information on sex and 
+
+
+There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing 
+information on sex and 
 `r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
 
-Age and gender distribution of household population covered by the survey.
+Unweighted age and gender distribution of household population covered by the
+survey.
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// age_pyramid \\\
+--------------------------------------------------------------------------------
+
+This chunk creates an unweighted (using study_data_cleaned) age/sex pyramid
+of your cases.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r age_pyramid, warning=FALSE}
-# This is unweighted as you are using study_data_cleaned
+
 plot_age_pyramid(study_data_cleaned, 
                  age_group = "age_group", 
                  split_by = "sex",
@@ -1243,12 +1287,54 @@ plot_age_pyramid(study_data_cleaned,
        )
 ```
 
-Weighted age and gender distribution - if this is substantially different to your unweighted 
+
+
+Unweighted age and gender distribution, stratified by health district,
+of household population covered by the survey.
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// age_pyramid_strata \\\
+--------------------------------------------------------------------------------
+
+This chunk creates an unweighted (using study_data_cleaned) age/sex pyramid
+of your cases, stratified by health district. 
+
+If you have a stratified survey design this may be useful for visualising 
+if you have an excess of representation in 
+either sex or gender in any of your survey strata. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r age_pyramid_strata, warning=FALSE}
+
+plot_age_pyramid(study_data_cleaned, 
+                 age_group = "age_group", 
+                 split_by = "sex",
+                 stack_by = "health_district",
+                 proportion = TRUE) + 
+  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+
+
+Weighted age and gender distribution of household population covered by the survey.  
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// age_pyramid_survey \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a weighted (using survey_design) age/sex pyramid
+of your cases.
+
+Note - if this is substantially different to your unweighted 
 pyramid, then it may suggest some sampling bias (similarly to the table comparing 
 sample and source population distributions by binomial test). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r age_pyramid_survey, warning=FALSE}
-# Note that here you are using survey_design so will produce weighted proportions
+
 plot_age_pyramid(survey_design,
                  age_group = "age_group",
                  split_by = "sex", 
@@ -1263,23 +1349,45 @@ plot_age_pyramid(survey_design,
 
 ## Quality of indicators collected
 
-You may want to look at the standard deviation of your zscores using box-plots. 
-This will also help you to assess how reliable your survey sample is. 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This part of the script will help you visualise the standard deviation of zscores
+using box-plots. 
+
+This will help assessing how reliable your survey sample is. 
 A wide distribution may suggest an unreliable survey sample. 
+
 Standard deviations are expected to be higher in younger age groups as it can 
 be harder to measure babies. 
+
 There is some suggestion that deviation may be higher in boys due to a higher 
 rate of pre-term births. But generally these should not be substantially different. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+
+Box plot of Zscores for height-for-age, weight-for-age and weight-for-height
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// boxplot_indicators \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a unweighted box plot of z-scores for nutrition indicators. 
+
+This happens in two steps: 
+- First pull variables together in correct format for plotting 
+- Then plot using ggplot 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r boxplot_indicators, warning = FALSE}
-# pull variables together for plotting 
+
+## pull variables together for plotting 
 temp_data <- study_data_cleaned %>%
-  # stack variable names in one column and values for vars in another
-  # call first column indicator and second column zscore
+  ## stack variable names in one column and values for vars in another
+  ## call first column indicator and second column zscore
   gather("Indicator", "Zscore", zwfl, zlen, zwei) %>% 
-  # only keep variables of interest
+  ## only keep variables of interest
   select(Indicator, Zscore) %>% 
-  # rename indicators to something more understandable
+  ## rename indicators to something more understandable
   mutate(
     Indicator = fct_recode(Indicator, 
     "HAZ" = "zlen", 
@@ -1288,28 +1396,39 @@ temp_data <- study_data_cleaned %>%
   ))
 
 
-# use indicators on the x-axis and z-score on the y-axis
+## use indicators on the x-axis and z-score on the y-axis
 ggplot(temp_data, aes(x = Indicator, y = Zscore)) + 
-  # plot as a box plot
+  ## plot as a box plot
   geom_boxplot() + 
-  # add a dotted horizontal line at 0 for reference 
+  ## add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed")
-
 ```
 
 
 Box plot of Zscores for height-for-age, weight-for-age and weight-for-height by sex
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// boxplot_indicators_sex \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a unweighted box plot of z-scores for nutrition indicators, 
+by sex
+
+This happens in two steps: 
+- First pull variables together in correct format for plotting 
+- Then plot using ggplot 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r boxplot_indicators_sex, warning = FALSE}
 
-# pull variables together for plotting 
+## pull variables together for plotting 
 temp_data <- study_data_cleaned %>%
-  # stack variable names in one column and values for vars in another
-  # call first column indicator and second column zscore
+  ## stack variable names in one column and values for vars in another
+  ## call first column indicator and second column zscore
   gather("Indicator", "Zscore", zwfl, zlen, zwei) %>% 
-  # only keep variables of interest
+  ## only keep variables of interest
   select(sex, Indicator, Zscore) %>% 
-  # rename indicators to something more understandable
+  ## rename indicators to something more understandable
   mutate(
     Indicator = fct_recode(Indicator, 
     "HAZ" = "zlen", 
@@ -1317,173 +1436,248 @@ temp_data <- study_data_cleaned %>%
     "WHZ" = "zwfl" 
   ))
 
-# use indicators on the x-axis and z-score on the y-axis
-# colour according to sex 
+## use indicators on the x-axis and z-score on the y-axis
+## colour according to sex 
 ggplot(temp_data, aes(x = Indicator, y = Zscore, fill = sex)) + 
-  # plot as a boxplot
+  ## plot as a boxplot
   geom_boxplot() + 
-  # add a dotted horizontal line at 0 for reference 
+  ## add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed") + 
-  # remove the title of legend 
+  ## remove the title of legend 
   theme(legend.title = element_blank())
 ```
 
 
+
 Box plot of Zscores for height-for-age by age group
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// boxplot_haz_age \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a unweighted box plot of height-for-age zscores, by age group
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r boxplot_haz_age, warning = FALSE}
 
-# use age group on the x-axis and  height z-score  on the y-axis
+## use age group on the x-axis and  height z-score  on the y-axis
 ggplot(study_data_cleaned, aes(x = age_group, y = zlen)) + 
-  # plot as a boxplot
+  ## plot as a boxplot
   geom_boxplot() + 
-  # add a dotted horizontal line at 0 for reference 
+  ## add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed") + 
-  # change axis titles 
+  ## change axis titles 
   labs(x = "Age group (Months)", y = "HAZ score") 
 
 ```
 
+
+
 Box plot of Zscores for weight-for-age by age group
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// boxplot_waz_age \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a unweighted box plot of weight-for-age zscores, by age group
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r boxplot_waz_age, warning = FALSE}
 
-# use age group on the x-axis and  weight z-score  on the y-axis
+## use age group on the x-axis and  weight z-score  on the y-axis
 ggplot(study_data_cleaned, aes(x = age_group, y = zwei)) + 
-  # plot as a boxplot
+  ## plot as a boxplot
   geom_boxplot() + 
-  # add a dotted horizontal line at 0 for reference 
+  ## add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed") + 
-  # change axis titles 
+  ## change axis titles 
   labs(x = "Age group (Months)", y = "WAZ score") 
-
 ```
 
 
 Box plot of Zscores for weight-for-height by age group
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// boxplot_whz_age \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a unweighted box plot of weight-for-height zscores, by age group
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r boxplot_whz_age, warning = FALSE}
 
-# use age group on the x-axis and  weight-height z-score  on the y-axis
+## use age group on the x-axis and  weight-height z-score  on the y-axis
 ggplot(study_data_cleaned, aes(x = age_group, y = zwfl)) + 
-  # plot as a boxplot
+  ## plot as a boxplot
   geom_boxplot() + 
-  # add a dotted horizontal line at 0 for reference 
+  ## add a dotted horizontal line at 0 for reference 
   geom_hline(yintercept = 0, linetype = "dashed") + 
-  # change axis titles 
+  ## change axis titles 
   labs(x = "Age group (Months)", y = "WHZ score") 
-
 ```
 
 
-You can then also plot your zscores in comparison to the WHO reference population. 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This part of the script will help you plot your zscores in comparison to the
+WHO reference population. 
+
 While the observed scores will not to match the reference scores, the hope is 
-that they are somewhat normally distributed. 
-Z-curve of height-for-age among non-flagged children for this indicator
+that they are somewhat normally distributed.  
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+
+Unweighted z-curve of height-for-age among non-flagged children for this indicator
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// zcurve_haz \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a z-curve of height-for-age compared to the WHO reference 
+population 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r zcurve_haz, warning = FALSE}
 
-# use unweighted dataset 
 study_data_cleaned %>% 
-  # only consider z-scores that are not flagged
+  ## only consider z-scores that are not flagged
   filter(flen == FALSE) %>% 
-  # plot zcurve
+  ## plot zcurve
   zcurve(zlen)
-
 ```
 
 
-Z-curve of weight-for-age among non-flagged children for this indicator
+
+Unweighted z-curve of weight-for-age among non-flagged children for this indicator
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// zcurve_haz \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a z-curve of weight-for-age compared to the WHO reference 
+population 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r zcurve_waz, warning = FALSE}
 
-# use unweighted dataset 
 study_data_cleaned %>% 
-  # only consider z-scores that are not flagged
+  ## only consider z-scores that are not flagged
   filter(fwei == FALSE) %>% 
-  # plot zcurve
+  ## plot zcurve
   zcurve(zwei)
-
 ```
 
 
-Z-curve of weight-for-height among non-flagged children for this indicator
+Unweighted z-curve of weight-for-height among non-flagged children for this indicator
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// zcurve_whz \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a z-curve of weighted-for-height compared to the WHO reference 
+population 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r zcurve_whz, warning = FALSE}
 
-# use unweighted dataset 
 study_data_cleaned %>% 
-  # only consider z-scores that are not flagged
+  ## only consider z-scores that are not flagged
   filter(fwfl == FALSE) %>% 
-  # plot zcurve
+  ## plot zcurve
   zcurve(zwfl)
-
 ```
 
 
-You will also want to look at the number of children missing indicator measures, 
-as well as the number of flagged by indicator. 
-In addition the number of children missing MUAC was `r fmt_count(study_data_cleaned, is.na(muac_mm_left_arm))`. 
+Unweighted counts and proportions of children missing or flagged for indicators
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// missing_flagged_indicators \\\
+--------------------------------------------------------------------------------
+
+This chunk creates an unweighted table of number children with missing or 
+flagged indicators 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r missing_flagged_indicators}
 
 study_data_cleaned %>% 
-  tab_linelist(flen, fwei, fwfl, transpose = "value", na.rm = FALSE, col_total = TRUE) %>% 
-  # re-order columns (drop total_prop too)
+  tab_linelist(flen, fwei, fwfl, transpose = "value",
+               na.rm = FALSE, col_total = TRUE) %>% 
+  ## re-order columns and drop total_prop
   select(Indicator = variable, 
          "Missing n", "Missing proportion", 
          "TRUE n", "TRUE proportion", 
          "FALSE n", "FALSE proportion", 
          "Total (N)" = "Total n") %>%
   
-  # rename indicators to something more understandable
+  ## rename indicators to something more understandable
   mutate(Indicator = fct_recode(Indicator, 
     "HAZ" = "flen", 
     "WAZ" = "fwei", 
     "WHZ" = "fwfl"
   )) %>% 
   
-  # rename total column to have a capital N in brackets
-  # swap variabales with props in for percentages 
+  ## swap variabales with props in for percentages 
   rename_redundant("%" = "prop") %>%
-  # swap TRUEs for Flagged and FALSE for included
-  # put n's in brackets
+  ## swap TRUEs for Flagged and FALSE for included
+  ## put n's in brackets
   augment_redundant("Flagged"  = "TRUE",
                     "Included" = "FALSE",
                     " (n)"     = "_n$") %>% 
   kable(digits = 1)
-
 ```
+
+
+
+In addition the number of children missing MUAC 
+was `r fmt_count(study_data_cleaned, is.na(muac_mm_left_arm))`. 
+
 
 
 ## Nutritional status based on indicators  
 
-Prevalence of malnutrition based on MUAC, by age group (months) and overall 
+
+
+Weighted prevalence of malnutrition based on MUAC, by age group (months)
+and overall 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// muac_age_group \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a weighted table of prevalence based on MUAC for age groups
+and for the overall population.
+
+This happens in three stages: 
+- Table for overall 
+- Table for age groups
+- Bind the two together as rows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r muac_age_group}
 
 overall <- survey_design %>% 
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to indicators as columns 
-  # important to drop missings! use na.rm = TRUE)
+  ## tabulate multiple variables with same values
+  ## keep will drop all rows in the output where the value is not "TRUE"
+  ## transpose flips the table to indicators as columns 
+  ## important to drop missings! use na.rm = TRUE)
   tab_survey(MUAC, keep = 'TRUE', 
              transpose = "variable", na.rm = TRUE, deff = TRUE) %>% 
-  # add in an age_group variable to be able to bind to age_group table below 
+  ## add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
-  # reorganise columns so can bind to age_group table below 
+  ## reorganise columns so can bind to age_group table below 
   select(age_group, everything())
 
 
 
 age_strat <- survey_design %>% 
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to have age groups as rows
+  ## tabulate multiple variables with same values
+  ## keep will drop all rows in the output where the value is not "TRUE"
+  ## transpose flips the table to have age groups as rows
   tab_survey(MUAC, keep = 'TRUE', transpose = "variable", na.rm = TRUE, 
              strata = age_group, deff = TRUE) %>%
   mutate(age_group = as.character(age_group))
 
-# bind the age stratified and overall tables together 
+## bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
-  # change column names 
+  ## change column names 
   rename("Age group (months)" = "age_group", 
          "GAM (n)" = "gam_muac n", 
          "MAM (n)" = "mam_muac n",  
@@ -1491,161 +1685,181 @@ bind_rows(age_strat, overall) %>%
   rename_redundant("DEFF" = " deff", 
                    "Proportion (95%CI)" = " ci") %>% 
   knitr::kable(digits = 1)
-
 ```
 
 
+Weighted prevalence of malnutrition based on MUAC among children <87cm, 
+by age group (months) and overall
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// muac_age_group_filter \\\
+--------------------------------------------------------------------------------
 
-You could add a filter argument to this to only look at children <87cm for example. 
+This chunk creates a weighted table of prevalence based on MUAC for age groups
+and for the overall population among children under 87cm tall (using filter). 
+
+This happens in three stages: 
+- Table for overall 
+- Table for age groups
+- Bind the two together as rows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r muac_age_group_filter}
 
 overall <- survey_design %>% 
+  ## only keep children less than 87cm
   filter(height < 87) %>%
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to indicators as columns 
-  # important to drop missings! use na.rm = TRUE)
-  tab_survey(MUAC, keep = 'TRUE', transpose = "variable", na.rm = TRUE) %>% 
-  # add in an age_group variable to be able to bind to age_group table below 
+  tab_survey(MUAC, keep = 'TRUE', 
+             transpose = "variable", na.rm = TRUE) %>% 
+  ## add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
-  # reorganise columns so can bind to age_group table below 
+  ## reorganise columns so can bind to age_group table below 
   select(age_group, everything())
 
 
 
 age_strat <- survey_design %>% 
+  ## only keep children less than 87cm
   filter(height < 87) %>%
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to have age groups as rows
-  tab_survey(MUAC, keep = 'TRUE', transpose = "variable", na.rm = TRUE, 
+  tab_survey(MUAC, keep = 'TRUE', 
+             transpose = "variable", na.rm = TRUE, 
              strata = age_group) %>%
   mutate(age_group = as.character(age_group))
 
-# bind the age stratified and overall tables together 
+## bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
-  # change column names 
+  ## change column names 
   rename("Age group (months)" = "age_group", 
          "GAM (n)" = "gam_muac n", 
          "MAM (n)" = "mam_muac n",  
          "SAM (n)" = "sam_muac n") %>% 
   rename_redundant("Proportion (95%CI)" = " ci") %>% 
   knitr::kable(digits = 1)
-
 ```
 
 
 
+Weighted prevalence of malnutrition based on height-for-age z-score categories, 
+by age group (months) and overall
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// haz_age_group \\\
+--------------------------------------------------------------------------------
 
+This chunk creates a weighted table of prevalence based on height-for-age 
+z-scores for age groups and for the overall population. 
 
-
-Prevalence of malnutrition based on height-for-age z-score categories, by age group (months) and overall
-
+This happens in three stages: 
+- Table for overall 
+- Table for age groups
+- Bind the two together as rows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r haz_age_group, warning = FALSE}
 
 overall <- survey_design %>% 
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to indicators as columns 
-  # important to drop missings! use na.rm = TRUE)
-  tab_survey(HAZ, keep = 'TRUE', transpose = "variable", na.rm = TRUE) %>% 
-  # add in an age_group variable to be able to bind to age_group table below 
+  tab_survey(HAZ, keep = 'TRUE',
+             transpose = "variable", na.rm = TRUE) %>% 
+  ## add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
-  # reorganise columns so can bind to age_group table below 
+  ## reorganise columns so can bind to age_group table below 
   select(age_group, everything())
 
 age_strat <- survey_design %>% 
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to have age groups as rows
   tab_survey(HAZ, keep = 'TRUE', transpose = "variable", na.rm = TRUE,
              strata = age_group) %>%
   mutate(age_group = as.character(age_group))
 
-# bind the age stratified and overall tables together 
+## bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
-  # change column names 
+  ## change column names 
   rename("Age group (months)" = "age_group", 
          "Moderate stunting (n)" = "moderate_stunting_haz n",
          "Severe stunting (n)" = "severe_stunting_haz n", 
          "Stunting (n)" = "stunting_haz n") %>% 
   rename_redundant("Proportion (95%CI)" = " ci") %>% 
   knitr::kable(digits = 1)
-
-
 ```
 
 
-Prevalence of malnutrition based on weight-for-age z-score categories, by age group (months) and overall
+
+Weighted prevalence of malnutrition based on weight-for-age z-score categories,
+by age group (months) and overall
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// waz_age_group \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a weighted table of prevalence based on weight-for-age 
+z-scores for age groups and for the overall population. 
+
+This happens in three stages: 
+- Table for overall 
+- Table for age groups
+- Bind the two together as rows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r waz_age_group, warning = FALSE}
 
 overall <- survey_design %>% 
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to indicators as columns 
-  # important to drop missings! use na.rm = TRUE)
-  tab_survey(WAZ, keep = 'TRUE', transpose = "variable", na.rm = TRUE) %>% 
-  # add in an age_group variable to be able to bind to age_group table below 
+  tab_survey(WAZ, keep = 'TRUE', 
+             transpose = "variable", na.rm = TRUE) %>% 
+  ## add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
-  # reorganise columns so can bind to age_group table below 
+  ## reorganise columns so can bind to age_group table below 
   select(age_group, everything())
 
 age_strat <- survey_design %>% 
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to have age groups as rows
   tab_survey(WAZ, keep = 'TRUE', transpose = "variable", na.rm = TRUE,
              strata = age_group) %>%
   mutate(age_group = as.character(age_group))
 
-# bind the age stratified and overall tables together 
+## bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
-  # change column names 
+  ## change column names 
   rename("Age group (months)" = "age_group", 
          "Moderate underweight (n)" = "moderate_underweight_waz n", 
          "Severe underweight (n)" = "severe_underweight_waz n", 
          "Underweight (n)" = "underweight_waz n") %>% 
   rename_redundant("Proportion (95%CI)" = " ci") %>% 
   knitr::kable(digits = 1)
-
-
 ```
 
 
 
 
-Prevalence of malnutrition based on weight-for-height z-score categories, by age group (months) and overall
+Weighted prevalence of malnutrition based on weight-for-height z-score categories,
+by age group (months) and overall
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// waz_age_group \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a weighted table of prevalence based on weight-for-height
+z-scores for age groups and for the overall population. 
+
+This happens in three stages: 
+- Table for overall 
+- Table for age groups
+- Bind the two together as rows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r whz_age_group, warning = FALSE}
 
 overall <- survey_design %>% 
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to indicators as columns 
-  # important to drop missings! use na.rm = TRUE)
   tab_survey(WHZ, keep = 'TRUE', 
              transpose = "variable", na.rm = TRUE, deff = TRUE) %>% 
-  # add in an age_group variable to be able to bind to age_group table below 
+  ## add in an age_group variable to be able to bind to age_group table below 
   mutate(age_group = "Overall") %>% 
-  # reorganise columns so can bind to age_group table below 
+  ## reorganise columns so can bind to age_group table below 
   select(age_group, everything())
 
 age_strat <- survey_design %>% 
-  # tabulate multiple variables with same values
-  # keep will drop all rows in the output where the value is not "TRUE"
-  # transpose flips the table to have age groups as rows
   tab_survey(WHZ, keep = 'TRUE', 
              transpose = "variable", na.rm = TRUE, deff = TRUE,
              strata = age_group) %>%
   mutate(age_group = as.character(age_group))
 
-# bind the age stratified and overall tables together 
+## bind the age stratified and overall tables together 
 bind_rows(age_strat, overall) %>% 
-  # change column names 
+  ## change column names 
   rename("Age group (months)" = "age_group", 
          "GAM (n)" = "gam_whz n", 
          "MAM (n)" = "mam_whz n",  
@@ -1659,14 +1873,23 @@ bind_rows(age_strat, overall) %>%
 
 ### Programme coverage
 
+Weighted counts and proportions of individual children who received soap
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// soap_coverage \\\
+--------------------------------------------------------------------------------
+
+This chunk creates a weighted table of number and proportion of children that 
+received soap in the overall population. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r soap_coverage}
 survey_design %>% 
   tab_survey(soap, na.rm = FALSE) %>% 
+  ## choose and rename relevant columns
   select("Method" = value, 
          "Received (n)" = n, 
          "Proportion (95%CI)" = ci) %>% 
   kable(digits = 1)
-
 ```
 
 
