@@ -246,8 +246,8 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   # drop columns if specified
   # use numbers because names will be different according to measure, but place is always same
   if (!extend_output) {
-    to_drop <- if (has_strata) c(-5, -8, -12) else c(-4, -7, -11)
-    nums    <- nums[to_drop]
+    to_keep <- !grepl("(odds|risk|incidence)$", names(nums))
+    nums    <- nums[to_keep]
   }
 
   # drop woolf-test pvalue
@@ -259,9 +259,6 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
   if (mergeCI) {
     nums <- unite_ci(nums, col = "est_ci", "ratio", "lower", "upper", m100 = FALSE, digits = digits)
   }
-
-  # change output table to a tibble
-  # nums <- tibble(nums)
 
   # spit out the out table
   return(nums)

@@ -86,8 +86,16 @@ test_that("woolf p-values work", {
 
 
 OR_strata <- tab_univariate(arrt, outcome, risk, strata = old, measure = "OR", woolf_test = TRUE)
+OR_simple <- tab_univariate(arrt, outcome, risk, strata = old, measure = "OR", extend_output = FALSE, mergeCI = TRUE)
+OR_names <- c("variable", "est_type", "exp_cases", "unexp_cases", "exp_controls", "unexp_controls", "est_ci", "p.value")
+
 RR_strata <- tab_univariate(arrt, outcome, risk, strata = old, measure = "RR", woolf_test = TRUE)
+RR_simple <- tab_univariate(arrt, outcome, risk, strata = old, measure = "RR", extend_output = FALSE, mergeCI = TRUE)
+RR_names <- c("variable", "est_type", "exp_cases", "exp_total", "unexp_cases", "unexp_total", "est_ci", "p.value")
+
 IRR_strata <- tab_univariate(arrt, outcome, risk, strata = old, perstime = pt, measure = "IRR", woolf_test = TRUE)
+IRR_simple <- tab_univariate(arrt, outcome, risk, strata = old, perstime = pt, measure = "IRR", extend_output = FALSE, mergeCI = TRUE)
+IRR_names <- c("variable", "est_type", "exp_cases", "exp_perstime", "unexp_cases", "unexp_perstime", "est_ci", "p.value")
 
 
 test_that("tab_univariate OR works with strata", {
@@ -159,3 +167,13 @@ test_that("tab_univariate works with IRR strata", {
   expect_equal(IRR_strata$upper, expected$upper)
 
 })
+
+test_that("setting extend_output to FALSE will remove only the estimates", {
+
+  expect_named(RR_simple, RR_names)
+  expect_named(OR_simple, OR_names)
+  expect_named(IRR_simple, IRR_names)
+
+
+})
+
