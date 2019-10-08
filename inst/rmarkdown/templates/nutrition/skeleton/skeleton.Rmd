@@ -957,7 +957,7 @@ This automatically names your file "study_data_cleaned_DATE", where DATE is the
 current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r save_cleaned_data, eval = FALSE}
+```{r save_cleaned_data}
 # rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
 ```
 
