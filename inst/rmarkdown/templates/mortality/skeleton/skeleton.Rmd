@@ -490,8 +490,8 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ## set specific unrealistic dates to NA
 # study_data_cleaned <- mutate(study_data_cleaned,
-#                            date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
-#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+#                              date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
+#                              date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
 
 ## set inappropriate dates to NA based on rules 
 ## e.g. arrivals before start, departures departures after end
@@ -542,20 +542,20 @@ study_data_cleaned <- study_data_cleaned %>%
 ## create age group variable for under 2 years based on months
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(age_group_mon = age_categories(study_data_cleaned$q156_q3_age_month, 
-                                                 breakers = c(0, 6, 9, 12, 24), 
-                                                 ceiling = TRUE))
+                                        breakers = c(0, 6, 9, 12, 24), 
+                                        ceiling = TRUE))
 
 
 ## alternatively, create an age group variable specify a sequence
 # study_data_cleaned$age_group <- age_categories(study_data_cleaned$age,
-#                                              lower = 0, 
-#                                              upper = 100, 
-#                                              by = 10)
+#                                                lower = 0, 
+#                                                upper = 100, 
+#                                                by = 10)
 
 ## If you already have an age group variable defined, you should manually
 ## arrange the categories
 # study_data_cleaned$age_group <- factor(study_data_cleaned$age_group,
-#                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
+#                                        c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
 
 
 ## to combine different age categories use the following function 
@@ -672,9 +672,9 @@ study_data_cleaned$startcause <- fct_recode(study_data_cleaned$startcause,
 
 ## make sure there are the appropriate levels (names)
 study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
-                                             "Present at end" = "Present at end",
-                                             "Died" = "q137_q35_died_date",
-                                              "Other departure" = "q45_q29_hh_leave_date")
+                                          "Present at end" = "Present at end",
+                                          "Died" = "q137_q35_died_date",
+                                          "Other departure" = "q45_q29_hh_leave_date")
 
 ## month of death --------------------------------------------------------------
 
@@ -727,11 +727,11 @@ It is important that you drop observations before adding survey weights!
 ## store the cases that you drop so you can describe them (e.g. non-consenting)
 dropped <- study_data_cleaned %>% 
   filter((is.na(startdate) | is.na(enddate)) | 
-           !consent)
+         !consent)
 ## drop the unused rows from the survey data set  
 study_data_cleaned <- study_data_cleaned %>%
   filter(!(is.na(startdate) | is.na(enddate)) & 
-           consent)
+         consent)
 
 
 ## Drop columns ----------------------------------------------------------------
