@@ -58,7 +58,8 @@ required_packages <- c("knitr",       # create output docs
                        "epitrix",     # clean/shape data
                        "dplyr",       # clean/shape data
                        "tidyr",       # clean/shape data
-                       "forcats",     # clean/shape data
+                       "forcats",     # manipulate and rearrange factors
+                       "stringr",     # manipulate texts
                        "ggplot2",     # create plots and charts
                        "sitrep",      # MSF field epi functions
                        "survey",      # for survey functions
@@ -581,11 +582,11 @@ study_data_cleaned <- study_data_cleaned %>%
 ## create a new variable by reordering the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
   mutate(no_consent = fct_relevel(q65_consent_no_reason,
-                                      "Refuse to explain", 
-                                      "No time", 
-                                      "Bad experience",
-                                      "Other reason")
-         )
+                                  "Refuse to explain", 
+                                  "No time", 
+                                  "Bad experience",
+                                  "Other reason")
+        )
 
 
 ## combine all vaccine variables in to one 
@@ -714,7 +715,7 @@ study_data_cleaned <- add_weights_strata(x = study_data_cleaned,
 
 ## merge village and household to create a unique household ID 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(hh_id = glue::glue("{village}_{q14_hh_no}"))
+  mutate(hh_id = str_glue("{village}_{q14_hh_no}"))
 
 
 ## create cluster weights 
@@ -769,7 +770,7 @@ survey_design_simple <- study_data_cleaned %>%
   as_survey_design(ids = 1, # 1 for no cluster ids 
                    weights = NULL, # No weight added
                    strata = NULL # sampling was simple (no strata)
-                   )
+                  )
 
 ## stratified ------------------------------------------------------------------
 
@@ -777,7 +778,7 @@ survey_design_strata <- study_data_cleaned %>%
   as_survey_design(ids = 1, # 1 for no cluster ids 
                    weights = surv_weight_strata, # weight variable created above 
                    strata = health_district # sampling was stratified by district
-                   )
+                  )
 
 ## cluster ---------------------------------------------------------------------
 
@@ -785,7 +786,7 @@ survey_design_cluster <- study_data_cleaned %>%
   as_survey_design(ids = village, # 1 for no cluster ids 
                    weights = surv_weight_cluster, # weight variable created above 
                    strata = NULL # sampling was simple (no strata)
-                   )
+                  )
 
 ## stratified cluster ----------------------------------------------------------
 
@@ -793,7 +794,7 @@ survey_design <- study_data_cleaned %>%
   as_survey_design(ids = village, # 1 for no cluster ids 
                    weights = surv_weight_cluster_strata, # weight variable created above 
                    strata = health_district # sampling was simple (no strata)
-                   )
+                  )
 ```
 
 
@@ -807,8 +808,8 @@ This automatically names your file "study_data_cleaned_DATE", where DATE is the
 current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r save_cleaned_data, eval = FALSE}
-rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
+```{r save_cleaned_data}
+# rio::export(study_data_cleaned, str_glue("study_data_cleaned_{Sys.Date()}.xlsx"))
 ```
 
 
@@ -865,7 +866,7 @@ needs to be of the total and missings need to be dropped.
 ```{r consent_reasons}
 
 ## using the dataset with dropped individuals 
-tab_linelist(dropped, "q65_consent_no_reason", col_total = TRUE, digits = 2) %>% 
+tab_linelist(dropped, "q65_consent_no_reason", col_total = TRUE, digits = 1) %>% 
   ## drop variable column and rename others
   select("Reason" = value, 
          "n" = n, 
@@ -900,7 +901,7 @@ clustermed <- median(clustersize)
 
 ## get the min and max number of households per cluster
 ## paste these together seperated by a dash 
-clusterrange <- glue::glue_collapse(range(clustersize), sep = "--")
+clusterrange <- str_c(range(clustersize), collapse = "--")
 
 ## get counts of children per household 
 ## do this by cluster as household IDs are only unique within clusters
@@ -912,7 +913,7 @@ hhsize <- study_data_cleaned %>%
 hhmed <- median(hhsize)
 ## get the min and max number of children per household
 ## paste these together seperated by a dash 
-hhrange <- glue::glue_collapse(range(hhsize), sep = "--")
+hhrange <- str_c(range(hhsize), collapse = "--")
 
 # get standard deviation 
 hhsd <- round(sd(hhsize), digits = 1)
@@ -1017,27 +1018,27 @@ It also pulls the age group with the highest sex ratio.
 ## compute the median age 
 medage <- median(study_data_cleaned$age_in_years)
 ## paste the lower and uper quartile together
-iqr <- glue::glue_collapse(  # basically copy paste togehter the following
+iqr <- str_c(  # basically copy paste togehter the following
   ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
     study_data_cleaned$age_in_years, 
     c(0.25, 0.75), 
     na.rm = TRUE), 
   ## between lower and upper place an en-dash
-  sep = "--")
+  collapse = "--")
 
 
 ## compute overall sex ratio 
 sex_ratio <- study_data_cleaned %>% 
   count(sex) %>% 
-  spread(sex, n) %>%
+  pivot_wider(names_from = sex, values_from = n) %>% 
   mutate(ratio = round(Male/Female, digits = 3)) %>%
   pull(ratio)
 
 ## compute sex ratios by age group 
 sex_ratio_age <- study_data_cleaned %>% 
   count(age_group, sex) %>% 
-  spread(sex, n) %>%
+  pivot_wider(names_from = sex, values_from = n) %>% 
   mutate(ratio = round(Male/Female, digits = 3)) %>%
   select(age_group, ratio)
 
@@ -1266,9 +1267,8 @@ survey_design %>% # use the survey object (weighted)
 
 
 
-Weighted vaccination coverage by health district;
-accepting equal validity from self-reported and 
-card-reported vaccination status 
+Weighted vaccination coverage by health district; accepting equal validity from
+self-reported and card-reported vaccination status 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// vaccination_coverage_strata \\\
@@ -1289,9 +1289,8 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 survey_design %>%  # use the survey object (weighted)
   tab_survey(vaccination_status_simple, strata = health_district) %>% 
-  select("Vaccination status" = value, 
-         everything(), 
-         -variable) %>% 
+  select(-variable) %>%
+  rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)"    = " ci") %>% # relabel all columns containing "ci"
   kable(digits = 1)
@@ -1322,9 +1321,8 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 survey_design %>% # use the survey object (weighted)
   ## calculate weighted counts and weighted proportions - stratified by sex
   tab_survey(vaccination_status_simple, strata = sex, deff = TRUE) %>%
-  select("Vaccination status" = value, 
-         everything(), 
-         -variable) %>% 
+  select(-variable) %>%
+  rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)"    = " ci",      # relabel all columns containing "ci"
                    "Design Effect" = " deff") %>% # "deff" to "Design effect"
@@ -1353,11 +1351,10 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 # return weighted counts and weighted proportions 
 survey_design %>% 
   tab_survey(vaccination_status, strata = sex) %>%
-  select("Vaccination status" = value, 
-         everything(), 
-         -variable) %>% 
+  select(-variable) %>%
+  rename("Vaccination status" = value) %>% 
   augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = " ci"       # relabel all columns containing "ci"
+  rename_redundant("% (95% CI)"    = " ci"      # relabel all columns containing "ci"
                    ) %>% 
   kable(digits = 1)
 ```
@@ -1448,7 +1445,7 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ## routine reasons 
 routine <- survey_design %>% 
   ## filter for those not vaccinated 
-  filter(!vaccine_routine %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  filter(str_detect(vaccine_routine, pattern = fixed("Yes -"), negate = TRUE)) %>%
   tab_survey(q7_no_routine_vacc_r) %>%
   # rename columns appropriately
   select("Reasons" = value, 
@@ -1458,7 +1455,7 @@ routine <- survey_design %>%
 ## campaign reasons 
 campaign <- survey_design %>% 
   ## filter for not vaccinated 
-  filter(!vaccine_mass %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  filter(str_detect(vaccine_mass, pattern = fixed("Yes -"), negate = TRUE)) %>%
   tab_survey(q28_no_campaign_vacc_r) %>% 
   ## rename remaining columns appropriately 
   select("Campaign (n)" = n, 
@@ -1489,7 +1486,7 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ```{r no_vacc_reason_sia}
 
 survey_design %>% 
-  filter(!vaccine_sia %in% c("Yes - Verbal", "Yes - Vaccination card")) %>% 
+  filter(str_detect(vaccine_sia, pattern = fixed("Yes -"), negate = TRUE)) %>%
   tab_survey(q38_no_sia_vacc_reason) %>%
   ## rename columns appropriately
   select("Reasons" = value, 
