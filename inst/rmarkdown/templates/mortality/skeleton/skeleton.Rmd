@@ -726,12 +726,9 @@ It is important that you drop observations before adding survey weights!
 
 ## store the cases that you drop so you can describe them (e.g. non-consenting)
 dropped <- study_data_cleaned %>% 
-  filter((is.na(startdate) | is.na(enddate)) | 
-         !consent)
-## drop the unused rows from the survey data set  
-study_data_cleaned <- study_data_cleaned %>%
-  filter(!(is.na(startdate) | is.na(enddate)) & 
-         consent)
+  filter(!consent | is.na(startdate) | is.na(enddate))
+## use the dropped cases to remove the unused rows from the survey data set  
+study_data_cleaned <- anti_join(study_data_cleaned, dropped, by = names(dropped))
 
 
 ## Drop columns ----------------------------------------------------------------
