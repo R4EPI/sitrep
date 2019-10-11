@@ -682,7 +682,7 @@ study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
 study_data_cleaned <- mutate(study_data_cleaned, 
                              endmonth = factor(months(enddate), 
                                                levels = month.name)
-                             )
+                            )
 
 
 ## time sequence of events -----------------------------------------------------
@@ -834,7 +834,7 @@ survey_design_simple <- study_data_cleaned %>%
   as_survey_design(ids = 1, # 1 for no cluster ids 
                    weights = NULL, # No weight added
                    strata = NULL # sampling was simple (no strata)
-                   )
+                  )
 
 ## stratified ------------------------------------------------------------------
 
@@ -842,7 +842,7 @@ survey_design_strata <- study_data_cleaned %>%
   as_survey_design(ids = 1, # 1 for no cluster ids 
                    weights = surv_weight_strata, # weight variable created above 
                    strata = health_district # sampling was stratified by district
-                   )
+                  )
 
 ## cluster ---------------------------------------------------------------------
 
@@ -850,7 +850,7 @@ survey_design_cluster <- study_data_cleaned %>%
   as_survey_design(ids = village, # 1 for no cluster ids 
                    weights = surv_weight_cluster, # weight variable created above 
                    strata = NULL # sampling was simple (no strata)
-                   )
+                  )
 
 ## stratified cluster ----------------------------------------------------------
 
@@ -858,7 +858,7 @@ survey_design <- study_data_cleaned %>%
   as_survey_design(ids = village, # 1 for no cluster ids 
                    weights = surv_weight_cluster_strata, # weight variable created above 
                    strata = health_district # sampling was simple (no strata)
-                   )
+                  )
 ```
 
 
@@ -935,7 +935,7 @@ needs to be of the total and missings need to be dropped.
 dropped %>% 
   ## get counts multiple variables with reasons for no consent 
   ## make the proportion of the total, including the missings for each
-  tab_linelist(glue::glue("q53_cq4a_00{0:3}"), 
+  tab_linelist(starts_with("q53_cq4a_"),
                prop_total = TRUE, na.rm = FALSE) %>% 
   ## remove missings from the table 
   filter(!value == "Missing") %>% 
@@ -1668,8 +1668,8 @@ This resulted in `r fmt_count(study_data_cleaned, endcause == "Present at end")`
 individuals who were present at the end of the recall period; for a net change
 in sample population of `r net_change`%.
 
-Below shows the unweighted counts and proportions of 
-arrival reasons during the study period. 
+Below shows the unweighted counts and proportions of arrival reasons during the
+study period. 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// descriptive_start_population \\\
@@ -1689,8 +1689,8 @@ tab_linelist(study_data_cleaned, "startcause", col_total = TRUE) %>%
   kable(digits = 1)
 ```
 
-This shows the unweighted counts and proportions of 
-departure reasons during the study period 
+This shows the unweighted counts and proportions of departure reasons during
+the study period 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// descriptive_end_population \\\
