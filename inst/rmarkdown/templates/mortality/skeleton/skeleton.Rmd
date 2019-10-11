@@ -54,7 +54,8 @@ required_packages <- c("knitr",       # create output docs
                        "epitrix",     # clean/shape data
                        "dplyr",       # clean/shape data
                        "tidyr",       # clean/shape data
-                       "forcats",     # clean/shape data
+                       "forcats",     # manipulate and rearrange factors
+                       "stringr",     # manipulate texts
                        "ggplot2",     # create plots and charts
                        "ggforce",     # for visualising population flows
                        "sitrep",      # MSF field epi functions
@@ -776,7 +777,7 @@ study_data_cleaned <- add_weights_strata(x = study_data_cleaned,
 
 ## merge village and household to create a unique household ID 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(hh_id = glue::glue("{village}_{q65_iq4}"))
+  mutate(hh_id = str_glue("{village}_{q65_iq4}"))
 
 
 ## create cluster weights 
@@ -870,7 +871,7 @@ current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r save_cleaned_data, eval = FALSE}
-rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
+rio::export(study_data_cleaned, str_glue("study_data_cleaned_{Sys.Date()}.xlsx"))
 ```
 
 
@@ -970,7 +971,7 @@ clustermed <- median(clustersize)
 
 ## get the min and max number of households per cluster
 ## paste these together seperated by a dash 
-clusterrange <- glue::glue_collapse(range(clustersize), sep = "--")
+clusterrange <- str_c(range(clustersize), collapse = "--")
 
 ## get counts of children per household 
 ## do this by cluster as household IDs are only unique within clusters
@@ -982,7 +983,7 @@ hhsize <- study_data_cleaned %>%
 hhmed <- median(hhsize)
 ## get the min and max number of children per household
 ## paste these together seperated by a dash 
-hhrange <- glue::glue_collapse(range(hhsize), sep = "--")
+hhrange <- str_c(range(hhsize), collapse = "--")
 
 ## get standard deviation 
 hhsd <- round(sd(hhsize), digits = 1)
@@ -1085,14 +1086,14 @@ It also pulls the age group with the highest sex ratio.
 ## compute the median age 
 medage <- median(study_data_cleaned$age_in_years)
 ## paste the lower and uper quartile together
-iqr <- glue::glue_collapse(  # basically copy paste together the following
+iqr <- str_c(  # basically copy paste together the following
   ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
     study_data_cleaned$age_in_years, 
     probs = c(0.25, 0.75), 
     na.rm = TRUE), 
   ## between lower and upper place an en-dash
-  sep = "--")
+  collapse = "--")
 
 
 ## compute overall sex ratio 
