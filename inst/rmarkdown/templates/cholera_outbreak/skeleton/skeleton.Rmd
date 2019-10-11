@@ -67,7 +67,6 @@ required_packages <- c("knitr",       # create output docs
                        "linelist",    # functions for cleaning/standardising data
                        "incidence",   # create epicurves
                        "aweek",       # define epi weeks
-                       "epitools",    # 2x2 tables and other epi goodness
                        "epitrix",     # epi helpers and tricks
                        "sf",          # encode spatial vector data
                        "ggspatial")   # plot maps
