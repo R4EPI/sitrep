@@ -1341,7 +1341,7 @@ CMR <- survey_design %>%
 
 
 During the recall period the weighted number of deaths in the population was 
-`r round(death_props$n, digits = 1)`, which gives a weighted proportion of 
+`r format(round(death_props$n, digits = 1), big.mark = ","`, which gives a weighted proportion of 
 `r death_props$ci`, and a design effect of
 `r round(death_props$deff, digits = 1)`. 
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
@@ -1368,7 +1368,9 @@ Note the posibility of negative confidence intervals if there are low counts
 death_props_strat <- tab_survey(survey_design, died, 
                                 strata = health_district,
                                 deff = TRUE, 
-                                keep = "TRUE")
+                                keep = "TRUE") %>%
+  mutate_at(.vars = vars(ends_with(" n")), 
+            .funs = ~format(round(., digits = 1), big.mark = ","))
 
 ## mortality per 10,000 persons/day with CI
 CMR_strat <- survey_design %>% 
@@ -1376,19 +1378,19 @@ CMR_strat <- survey_design %>%
   ## survey ratio used to account for observation time 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   ## merge confidence intervals for mortality in to one column (do not change to percent)
-  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
+  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE, digits = 1)
 
 
 ```
 
 
 In District A the weighted number of deaths was 
-`r death_props_strat %>% pull("District A n") %>% as.integer(round(digits = 0))`, 
+`r death_props_strat %>% pull("District A n")`, 
 which gives a weighted proportion of 
 `r death_props_strat %>% pull("District A ci")`, and a design effect of
 `r death_props_strat %>% pull("District A deff") %>% round(digits = 3)`.  
 In comparison, the weighted number of deaths in District B was
-`r death_props_strat %>% pull("District B n") %>% as.integer(round(digits = 0))`, 
+`r death_props_strat %>% pull("District B n")`, 
 the weighted proportion was 
 `r death_props_strat %>% pull("District B ci")` and the design effect was 
 `r death_props_strat %>% pull("District B deff") %>% round(digits = 3)`.  
@@ -1506,9 +1508,8 @@ survey_design %>%
   filter(died) %>%  # proportions only among those who died
   tab_survey(cause_of_death, strata = health_district, col_total = TRUE) %>%
   filter(value != "Not Applicable") %>%
-  select("Cause of death" = value, 
-         everything(), 
-         -variable) %>% 
+  select(-variable) %>%
+  rename("Cause of death" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" 
   kable(digits = 1)
@@ -1597,9 +1598,8 @@ survey_design %>%
   filter(died) %>% 
   tab_survey(cause_of_death, strata = age_group) %>%
   filter(value != "Not Applicable") %>%
-  select("Cause of death" = value, 
-         everything(), 
-         -variable) %>%
+  select(-variable) %>% 
+  rename("Cause of death" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" 
   kable(digits = 1)
@@ -1626,9 +1626,8 @@ survey_design %>%
   filter(died) %>% 
   tab_survey(cause_of_death, strata = sex) %>%
   filter(value != "Not Applicable") %>%
-  select("Cause of death" = value, 
-         everything(), 
-         -variable) %>%
+  select(-variable) %>% 
+  rename("Cause of death" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
   kable(digits = 1)
@@ -1813,9 +1812,8 @@ survey_design %>%
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
              strata = age_group, pretty = TRUE) %>%
-  select("Symptom" = value,
-         everything(),
-         -variable) %>%
+  select(-variable) %>%
+  rename("Symptom" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
   kable(digits = 1)
@@ -1842,9 +1840,8 @@ survey_design %>%
   # calculate weighted counts and weighted proportions - stratified by sex!!
   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
              strata = sex, pretty = TRUE) %>%
-  select("Symptom" = value, 
-         everything(), 
-         -variable) %>% 
+  select(-variable) %>%
+  rename("Symptom" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
   kable(digits = 1)
