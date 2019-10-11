@@ -1341,7 +1341,7 @@ CMR <- survey_design %>%
 
 
 During the recall period the weighted number of deaths in the population was 
-`r format(round(death_props$n, digits = 1), big.mark = ","`, which gives a weighted proportion of 
+`r format(round(death_props$n, digits = 1), big.mark = ",")`, which gives a weighted proportion of 
 `r death_props$ci`, and a design effect of
 `r round(death_props$deff, digits = 1)`. 
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
