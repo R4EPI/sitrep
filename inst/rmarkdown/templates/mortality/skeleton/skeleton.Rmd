@@ -1047,7 +1047,7 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   ## alternative. We will only use p.value here. You can include other
   ## columns if you want to report confidence intervals
   mutate(binom = list(broom::tidy(binom.test(n, n_total, proportion_pop)))) %>%
-  unnest() %>% # important for expanding the binom.test data frame
+  unnest(cols = c(binom)) %>% # important for expanding the binom.test data frame
   mutate(proportion_pop = proportion_pop * 100) %>%
 
   ## Adjusting the p-values to correct for false positives 
