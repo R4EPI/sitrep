@@ -54,7 +54,8 @@ required_packages <- c("knitr",       # create output docs
                        "epitrix",     # clean/shape data
                        "dplyr",       # clean/shape data
                        "tidyr",       # clean/shape data
-                       "forcats",     # clean/shape data
+                       "forcats",     # manipulate and rearrange factors
+                       "stringr",     # manipulate texts
                        "ggplot2",     # create plots and charts
                        "ggforce",     # for visualising population flows
                        "sitrep",      # MSF field epi functions
@@ -490,8 +491,8 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ## set specific unrealistic dates to NA
 # study_data_cleaned <- mutate(study_data_cleaned,
-#                            date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
-#                            date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+#                              date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
+#                              date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
 
 ## set inappropriate dates to NA based on rules 
 ## e.g. arrivals before start, departures departures after end
@@ -542,20 +543,20 @@ study_data_cleaned <- study_data_cleaned %>%
 ## create age group variable for under 2 years based on months
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(age_group_mon = age_categories(study_data_cleaned$q156_q3_age_month, 
-                                                 breakers = c(0, 6, 9, 12, 24), 
-                                                 ceiling = TRUE))
+                                        breakers = c(0, 6, 9, 12, 24), 
+                                        ceiling = TRUE))
 
 
 ## alternatively, create an age group variable specify a sequence
 # study_data_cleaned$age_group <- age_categories(study_data_cleaned$age,
-#                                              lower = 0, 
-#                                              upper = 100, 
-#                                              by = 10)
+#                                                lower = 0, 
+#                                                upper = 100, 
+#                                                by = 10)
 
 ## If you already have an age group variable defined, you should manually
 ## arrange the categories
 # study_data_cleaned$age_group <- factor(study_data_cleaned$age_group,
-#                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
+#                                        c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
 
 
 ## to combine different age categories use the following function 
@@ -672,9 +673,9 @@ study_data_cleaned$startcause <- fct_recode(study_data_cleaned$startcause,
 
 ## make sure there are the appropriate levels (names)
 study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
-                                             "Present at end" = "Present at end",
-                                             "Died" = "q137_q35_died_date",
-                                              "Other departure" = "q45_q29_hh_leave_date")
+                                          "Present at end" = "Present at end",
+                                          "Died" = "q137_q35_died_date",
+                                          "Other departure" = "q45_q29_hh_leave_date")
 
 ## month of death --------------------------------------------------------------
 
@@ -682,7 +683,7 @@ study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
 study_data_cleaned <- mutate(study_data_cleaned, 
                              endmonth = factor(months(enddate), 
                                                levels = month.name)
-                             )
+                            )
 
 
 ## time sequence of events -----------------------------------------------------
@@ -726,12 +727,9 @@ It is important that you drop observations before adding survey weights!
 
 ## store the cases that you drop so you can describe them (e.g. non-consenting)
 dropped <- study_data_cleaned %>% 
-  filter((is.na(startdate) | is.na(enddate)) | 
-           !consent)
-## drop the unused rows from the survey data set  
-study_data_cleaned <- study_data_cleaned %>%
-  filter(!(is.na(startdate) | is.na(enddate)) & 
-           consent)
+  filter(!consent | is.na(startdate) | is.na(enddate))
+## use the dropped cases to remove the unused rows from the survey data set  
+study_data_cleaned <- anti_join(study_data_cleaned, dropped, by = names(dropped))
 
 
 ## Drop columns ----------------------------------------------------------------
@@ -779,7 +777,7 @@ study_data_cleaned <- add_weights_strata(x = study_data_cleaned,
 
 ## merge village and household to create a unique household ID 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(hh_id = glue::glue("{village}_{q65_iq4}"))
+  mutate(hh_id = str_glue("{village}_{q65_iq4}"))
 
 
 ## create cluster weights 
@@ -834,7 +832,7 @@ survey_design_simple <- study_data_cleaned %>%
   as_survey_design(ids = 1, # 1 for no cluster ids 
                    weights = NULL, # No weight added
                    strata = NULL # sampling was simple (no strata)
-                   )
+                  )
 
 ## stratified ------------------------------------------------------------------
 
@@ -842,7 +840,7 @@ survey_design_strata <- study_data_cleaned %>%
   as_survey_design(ids = 1, # 1 for no cluster ids 
                    weights = surv_weight_strata, # weight variable created above 
                    strata = health_district # sampling was stratified by district
-                   )
+                  )
 
 ## cluster ---------------------------------------------------------------------
 
@@ -850,7 +848,7 @@ survey_design_cluster <- study_data_cleaned %>%
   as_survey_design(ids = village, # 1 for no cluster ids 
                    weights = surv_weight_cluster, # weight variable created above 
                    strata = NULL # sampling was simple (no strata)
-                   )
+                  )
 
 ## stratified cluster ----------------------------------------------------------
 
@@ -858,7 +856,7 @@ survey_design <- study_data_cleaned %>%
   as_survey_design(ids = village, # 1 for no cluster ids 
                    weights = surv_weight_cluster_strata, # weight variable created above 
                    strata = health_district # sampling was simple (no strata)
-                   )
+                  )
 ```
 
 
@@ -873,7 +871,7 @@ current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r save_cleaned_data, eval = FALSE}
-rio::export(study_data_cleaned, glue::glue("study_data_cleaned_{Sys.Date()}.xlsx"))
+rio::export(study_data_cleaned, str_glue("study_data_cleaned_{Sys.Date()}.xlsx"))
 ```
 
 
@@ -935,7 +933,7 @@ needs to be of the total and missings need to be dropped.
 dropped %>% 
   ## get counts multiple variables with reasons for no consent 
   ## make the proportion of the total, including the missings for each
-  tab_linelist(glue::glue("q53_cq4a_00{0:3}"), 
+  tab_linelist(starts_with("q53_cq4a_"),
                prop_total = TRUE, na.rm = FALSE) %>% 
   ## remove missings from the table 
   filter(!value == "Missing") %>% 
@@ -973,7 +971,7 @@ clustermed <- median(clustersize)
 
 ## get the min and max number of households per cluster
 ## paste these together seperated by a dash 
-clusterrange <- glue::glue_collapse(range(clustersize), sep = "--")
+clusterrange <- str_c(range(clustersize), collapse = "--")
 
 ## get counts of children per household 
 ## do this by cluster as household IDs are only unique within clusters
@@ -985,7 +983,7 @@ hhsize <- study_data_cleaned %>%
 hhmed <- median(hhsize)
 ## get the min and max number of children per household
 ## paste these together seperated by a dash 
-hhrange <- glue::glue_collapse(range(hhsize), sep = "--")
+hhrange <- str_c(range(hhsize), collapse = "--")
 
 ## get standard deviation 
 hhsd <- round(sd(hhsize), digits = 1)
@@ -1088,14 +1086,14 @@ It also pulls the age group with the highest sex ratio.
 ## compute the median age 
 medage <- median(study_data_cleaned$age_in_years)
 ## paste the lower and uper quartile together
-iqr <- glue::glue_collapse(  # basically copy paste together the following
+iqr <- str_c(  # basically copy paste together the following
   ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
     study_data_cleaned$age_in_years, 
     probs = c(0.25, 0.75), 
     na.rm = TRUE), 
   ## between lower and upper place an en-dash
-  sep = "--")
+  collapse = "--")
 
 
 ## compute overall sex ratio 
@@ -1343,7 +1341,7 @@ CMR <- survey_design %>%
 
 
 During the recall period the weighted number of deaths in the population was 
-`r round(death_props$n, digits = 1)`, which gives a weighted proportion of 
+`r format(round(death_props$n, digits = 1), big.mark = ",")`, which gives a weighted proportion of 
 `r death_props$ci`, and a design effect of
 `r round(death_props$deff, digits = 1)`. 
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
@@ -1370,7 +1368,9 @@ Note the posibility of negative confidence intervals if there are low counts
 death_props_strat <- tab_survey(survey_design, died, 
                                 strata = health_district,
                                 deff = TRUE, 
-                                keep = "TRUE")
+                                keep = "TRUE") %>%
+  mutate_at(.vars = vars(ends_with(" n")), 
+            .funs = ~format(round(., digits = 1), big.mark = ","))
 
 ## mortality per 10,000 persons/day with CI
 CMR_strat <- survey_design %>% 
@@ -1378,19 +1378,19 @@ CMR_strat <- survey_design %>%
   ## survey ratio used to account for observation time 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   ## merge confidence intervals for mortality in to one column (do not change to percent)
-  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
+  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE, digits = 1)
 
 
 ```
 
 
 In District A the weighted number of deaths was 
-`r death_props_strat %>% pull("District A n") %>% as.integer(round(digits = 0))`, 
+`r death_props_strat %>% pull("District A n")`, 
 which gives a weighted proportion of 
 `r death_props_strat %>% pull("District A ci")`, and a design effect of
 `r death_props_strat %>% pull("District A deff") %>% round(digits = 3)`.  
 In comparison, the weighted number of deaths in District B was
-`r death_props_strat %>% pull("District B n") %>% as.integer(round(digits = 0))`, 
+`r death_props_strat %>% pull("District B n")`, 
 the weighted proportion was 
 `r death_props_strat %>% pull("District B ci")` and the design effect was 
 `r death_props_strat %>% pull("District B deff") %>% round(digits = 3)`.  
@@ -1508,9 +1508,8 @@ survey_design %>%
   filter(died) %>%  # proportions only among those who died
   tab_survey(cause_of_death, strata = health_district, col_total = TRUE) %>%
   filter(value != "Not Applicable") %>%
-  select("Cause of death" = value, 
-         everything(), 
-         -variable) %>% 
+  select(-variable) %>%
+  rename("Cause of death" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" 
   kable(digits = 1)
@@ -1599,9 +1598,8 @@ survey_design %>%
   filter(died) %>% 
   tab_survey(cause_of_death, strata = age_group) %>%
   filter(value != "Not Applicable") %>%
-  select("Cause of death" = value, 
-         everything(), 
-         -variable) %>%
+  select(-variable) %>% 
+  rename("Cause of death" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" 
   kable(digits = 1)
@@ -1628,9 +1626,8 @@ survey_design %>%
   filter(died) %>% 
   tab_survey(cause_of_death, strata = sex) %>%
   filter(value != "Not Applicable") %>%
-  select("Cause of death" = value, 
-         everything(), 
-         -variable) %>%
+  select(-variable) %>% 
+  rename("Cause of death" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
   kable(digits = 1)
@@ -1668,8 +1665,8 @@ This resulted in `r fmt_count(study_data_cleaned, endcause == "Present at end")`
 individuals who were present at the end of the recall period; for a net change
 in sample population of `r net_change`%.
 
-Below shows the unweighted counts and proportions of 
-arrival reasons during the study period. 
+Below shows the unweighted counts and proportions of arrival reasons during the
+study period. 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// descriptive_start_population \\\
@@ -1689,8 +1686,8 @@ tab_linelist(study_data_cleaned, "startcause", col_total = TRUE) %>%
   kable(digits = 1)
 ```
 
-This shows the unweighted counts and proportions of 
-departure reasons during the study period 
+This shows the unweighted counts and proportions of departure reasons during
+the study period 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// descriptive_end_population \\\
@@ -1815,9 +1812,8 @@ survey_design %>%
   # calculate weighted counts and weighted proportions - stratified by agegroup!!
   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
              strata = age_group, pretty = TRUE) %>%
-  select("Symptom" = value,
-         everything(),
-         -variable) %>%
+  select(-variable) %>%
+  rename("Symptom" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
   kable(digits = 1)
@@ -1844,9 +1840,8 @@ survey_design %>%
   # calculate weighted counts and weighted proportions - stratified by sex!!
   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
              strata = sex, pretty = TRUE) %>%
-  select("Symptom" = value, 
-         everything(), 
-         -variable) %>% 
+  select(-variable) %>%
+  rename("Symptom" = value) %>%
   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
   kable(digits = 1)
