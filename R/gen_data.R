@@ -179,12 +179,25 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
 msf_dict_rename_helper <- function(disease, varnames = "data_element_shortname", copy_to_clipboard = TRUE) {
   # get msf disease specific data dictionary
   dat_dict <- msf_dict(disease = disease, compact = TRUE)
-  dat_dict <- dat_dict[order(dat_dict[[varnames]]), ]
+  # get the outbreak Rmd to check if the variable is optional or required
+  outbreak_file <- available_sitrep_templates(recursive = TRUE, pattern = ".Rmd", full.names = TRUE)
+  outbreak_file <- grep(tolower(disease), outbreak_file, value = TRUE)[[1]]
+  outbreak_file <- readLines(outbreak_file)
+
+  dat_dict[["var_required"]] <- vapply(dat_dict[[varnames]], 
+    FUN = function(i, o) if (any(grepl(paste0("^[^#]*", i), o))) "REQUIRED" else "optional", 
+    FUN.VALUE = character(1), 
+    o = outbreak_file
+  )
+  dat_dict <- dat_dict[order(dat_dict[["var_required"]] != "REQUIRED", 
+                             dat_dict[[varnames]]), ]
   msg <- "## Add the appropriate column names after the equals signs\n\n"
   msg <- paste0(msg, "linelist_cleaned <- rename(linelist_cleaned,\n")
-  the_renames <- sprintf("  %s =   , # %s",
-                         format(dat_dict[[varnames]]),
-                         dat_dict[["data_element_valuetype"]])
+  the_renames <- sprintf("  %s =   , # %s (%s)",
+    format(dat_dict[[varnames]]),
+    format(dat_dict[["data_element_valuetype"]]),
+    dat_dict[["var_required"]]
+  )
   the_renames[length(the_renames)] <- gsub(",", " ", the_renames[length(the_renames)])
   msg <- paste0(msg, paste(the_renames, collapse = "\n"), "\n)\n")
   if (copy_to_clipboard) {
