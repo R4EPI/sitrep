@@ -2,8 +2,7 @@
 #' This function returns a polygon which is split in to regions based on a
 #' supplied vector of names
 #' @param regions A string of names for each region to label the polygon with
-#' @import sf
-#' @import lwgeom
+#' @importFrom sf st_polygon st_make_grid st_intersection st_sf st_set_crs
 #' @references The coordinates used for the polygon are of Vienna, Austria.
 #' based off government data (see [metadata](https://www.data.gv.at/katalog/dataset/stadt-wien_bezirksgrenzenwien))
 #' @export
