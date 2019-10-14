@@ -178,7 +178,8 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
 #' @rdname msf_dict
 msf_dict_rename_helper <- function(disease, varnames = "data_element_shortname", copy_to_clipboard = TRUE) {
   # get msf disease specific data dictionary
-  dat_dict <- msf_dict(disease = disease, tibble = FALSE, compact = TRUE)
+  dat_dict <- msf_dict(disease = disease, compact = TRUE)
+  dat_dict <- dat_dict[order(dat_dict[[varnames]]), ]
   msg <- "## Add the appropriate column names after the equals signs\n\n"
   msg <- paste0(msg, "linelist_cleaned <- rename(linelist_cleaned,\n")
   the_renames <- sprintf("  %s =   , # %s",
