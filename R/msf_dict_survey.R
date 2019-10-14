@@ -51,7 +51,7 @@ msf_dict_survey <- function(disease, name = "MSF-survey-dict.xlsx",
   dat_dict <- dplyr::mutate(dat_dict, option_order_in_set = seq(dplyr::n()))
 
   if (compact) {
-    if (packageVersion("tidyr") > "0.8.99") {
+    if (utils::packageVersion("tidyr") > "0.8.99") {
       dat_dict <- tidyr::nest(dat_dict, options = dplyr::starts_with("option_"))
     } else {
       squished <- tidyr::nest(dat_dict, dplyr::starts_with("option_"), .key = "options")

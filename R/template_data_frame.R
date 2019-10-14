@@ -8,7 +8,7 @@ template_data_frame_categories <- function(dat_dict, numcases, varnames, survey 
   colnames(dis_output) <- dat_dict[[varnames]]
 
 
-  if (packageVersion("tidyr") > "0.8.99") {
+  if (utils::packageVersion("tidyr") > "0.8.99") {
     categories <- tidyr::unnest(dat_dict, cols = "options")
   } else {
     categories <- tidyr::unnest(dat_dict)
