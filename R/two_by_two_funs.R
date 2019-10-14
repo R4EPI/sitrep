@@ -209,7 +209,7 @@ get_chisq_pval <- function(x) {
   # if there are strata, we can apply over that dimension and get the statistic
   # for each. 
   if (ndim == 3) {
-    strat <- apply(x, MARGIN = 3, FUN = chisq.test, correct = FALSE)
+    strat <- apply(x, MARGIN = 3, FUN = stats::chisq.test, correct = FALSE)
     for (i in seq_along(strat)) {
       res$statistic[i + 1L] <- strat[[i]]$statistic
       res$p.value[i + 1L]   <- strat[[i]]$p.value
@@ -294,7 +294,7 @@ ratio_est <- function(N1, D1, N2, D2, measure = "OR", conf = 0.95) {
 
 get_z <- function(conf) {
   alpha <- 1 - ((1 - conf) / 2)
-  z     <- qnorm(alpha, mean = 0, sd = 1)
+  z     <- stats::qnorm(alpha, mean = 0, sd = 1)
   z
 }
 
@@ -375,7 +375,7 @@ mh_irr <- function(arr, conf = 0.95) {
 # pulling out the correct values
 mh_or <- function(arr, conf = 0.95) {
 
-  MH <- mantelhaen.test(arr, conf.level = conf)
+  MH <- stats::mantelhaen.test(arr, conf.level = conf)
   data.frame(ratio = MH$estimate, lower = MH$conf.int[1], upper = MH$conf.int[2])
 
 }

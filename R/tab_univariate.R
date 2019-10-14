@@ -194,8 +194,10 @@ backend_tab_univariate <- function(exposure, outcome, x, perstime = NULL, strata
                            otcm = sum({{outcome}} == TRUE, na.rm = TRUE),
                            tme  = sum({{perstime}}, na.rm = TRUE))
 
-      arr <- tidyr::gather(x_table, variable, value, -{{exposure}}, -{{strata}})
-      arr <- dplyr::arrange(arr, {{strata}}, variable, {{exposure}})
+      arr <- tidyr::gather(x_table, key = "variable", value = "value", 
+                           -{{exposure}}, -{{strata}})
+      arr <- dplyr::arrange(arr, 
+                            {{strata}}, !!quote(variable), {{exposure}})
 
       the_table <- array(arr$value,
                          dim = c(2, 2, 2),

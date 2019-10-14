@@ -141,7 +141,7 @@ msf_dict <- function(disease, name = "MSF-outbreak-dict.xlsx", tibble = TRUE,
 
     squished <- dplyr::group_by(outtie, !! quote(data_element_shortname))
 
-    if (packageVersion("tidyr") > "0.8.99") {
+    if (utils::packageVersion("tidyr") > "0.8.99") {
       squished <- tidyr::nest(squished, options = dplyr::starts_with("option_"))
     } else {
       squished <- tidyr::nest(squished, dplyr::starts_with("option_"), .key = "options")

@@ -43,17 +43,28 @@ however you could also define these yourself.
 }
 \examples{
 # get population counts based on proportion, unstratified
-gen_population(groups = c(1, 2, 3, 4), strata = NULL, proportions = c(0.3, 0.2, 0.4, 0.1))
+gen_population(groups = c(1, 2, 3, 4), 
+               strata = NULL, 
+               proportions = c(0.3, 0.2, 0.4, 0.1))
 
 # get population counts based on proportion, stratified
-gen_population(groups = c(1, 2, 3, 4), strata = c("a", "b"), proportions = c(0.3, 0.2, 0.4, 0.1))
+gen_population(groups = c(1, 2, 3, 4), 
+               strata = c("a", "b"), 
+               proportions = c(0.3, 0.2, 0.4, 0.1))
 
 # get population counts based on counts, unstratified
-gen_population(groups = c(1, 2, 3, 4), strata = NULL, counts = c(20, 10, 30, 40))
+gen_population(groups = c(1, 2, 3, 4), 
+               strata = NULL, 
+               counts = c(20, 10, 30, 40))
 
 # get population counts based on counts, stratified
-gen_population(groups = c(1, 2, 3, 4), strata = c("a", "b"), counts = c(20, 10, 30, 40))
+gen_population(groups = c(1, 2, 3, 4), 
+               strata = c("a", "b"), 
+               counts = c(20, 10, 30, 40))
 
-# get population counts based on counts, stratified - type out counts for each group and strata
-gen_population(groups = c(1, 2, 3, 4), strata = c("a", "b"), counts = c(20, 10, 30, 40, 40, 30, 20, 20))
+# get population counts based on counts, stratified - type out counts
+# for each group and strata
+gen_population(groups = c(1, 2, 3, 4), 
+               strata = c("a", "b"), 
+               counts = c(20, 10, 30, 40, 40, 30, 20, 20))
 }
