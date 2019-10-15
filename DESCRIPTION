@@ -31,6 +31,8 @@ Authors@R:
              role = "ctb"))
 Description: Report templates and helper functions for EPI.
 License: GPL-3
+BugReports: https://github.com/R4EPI/sitrep/issues
+URL: https://r4epis.netlify.com, https://github.com/R4EPI/sitrep
 Depends: R (>= 3.2)
 Imports: 
     anthro,
