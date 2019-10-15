@@ -5,7 +5,8 @@
 #' @param ... columns having zscore indicators
 #'
 #' @include helpers.R
-#' @export
+#' @keywords internal
+#' @noRd
 #' @examples
 #' # A crude example, but it works
 #' stratify_zscores(mtcars, by = "gear", am, vs)
@@ -19,7 +20,7 @@ stratify_zscores <- function(survey_data, by, ...) {
               flagged = sum(.data$flagged, na.rm = TRUE),
               rel = .data$flagged / .data$n,
               ci = list(binom::binom.wilson(.data$flagged, .data$n)[, c("lower", "upper")]))
-    tidyr::unnest(res)
+    tidyr::unnest(res, cols = c("ci"))
   }
   dplyr::bind_rows(
     comput_result(),

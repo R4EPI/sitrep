@@ -27,7 +27,7 @@ The goal of {sitrep} is provide report templates for common epidemiological
 surveys and outbreak reports. The package further contains helper function that
 standardize certain analyses. 
 
-**Detailed information about the project and the templates can be found at <https://r4epis.netlify.com>.**
+**Detailed information about the project and the templates can be found at <https://r4epis.netlify.com>.** An online manual for the functions in {sitrep} can be found at <https://r4epi.github.io/sitrep>. 
 
 
 ## Installation
@@ -45,8 +45,38 @@ And the development version from [GitHub](https://github.com/) with:
 remotes::install_github("R4EPI/sitrep")
 ```
 
+## Available templates
+
+Sitrep has [four outbreak templates](https://r4epis.netlify.com/outbreaks/) and
+[three survey templates](https://r4epis.netlify.com/surveys/) available. These
+templates will generate the following:
+
+1. A word document with the situation report
+2. A plain text markdown document (for conversion to other formats such as HTML or PDF)
+3. A directory with all of the figures produced
+
+You can generate an example template by using the `check_sitrep_templates()`
+function:
+
+```{r check_templates, warning = FALSE, message = FALSE}
+library("sitrep")
+output_dir <- file.path(tempdir(), "sitrep_example")
+dir.create(output_dir)
+
+# view the available templates, categorized by type
+available_sitrep_templates(categorise = TRUE)
+
+# generate the measles outbreak template in the output directory
+check_sitrep_templates("measles_outbreak", path = output_dir)
+
+# view the contents
+list.files(output_dir, recursive = TRUE)
+```
+
 
 Please note that the 'sitrep' project is released with a
 [Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md).
 By contributing to this project, you agree to abide by its terms.
+
+
 

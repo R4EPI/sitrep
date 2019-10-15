@@ -11,7 +11,8 @@
 #' This method is based on the work of Kevin M. Sullivan and Andrew G. Dean
 #' of OpenEpi.
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 sample_size <- function(population_size, expected_prevalence,
                         precision, design_effect, alpha = 0.05) {
   num <- (design_effect * population_size * expected_prevalence *
@@ -33,7 +34,8 @@ sample_size <- function(population_size, expected_prevalence,
 #' Sampling Methods and Sample Size Calculation for the SMART Methodology
 #' <https://www.humanitarianresponse.info/sites/www.humanitarianresponse.info/files/documents/files/Sampling_Paper_June_2012.pdf>
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 sample_size_households <- function(sample_size, avg_hh,
                                    prop_under_5,
                                    frac_6_59, non_response_rate = 0) {
