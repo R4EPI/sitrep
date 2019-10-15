@@ -44,3 +44,9 @@ And the development version from [GitHub](https://github.com/) with:
 # install.packages("remotes")
 remotes::install_github("R4EPI/sitrep")
 ```
+
+
+Please note that the 'sitrep' project is released with a
+[Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md).
+By contributing to this project, you agree to abide by its terms.
+
