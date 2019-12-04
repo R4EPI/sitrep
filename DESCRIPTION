@@ -39,7 +39,7 @@ Imports:
     aweek (>= 1.0.0),
     binom,
     broom,
-    cowplot,
+    patchwork,
     clipr,
     dplyr (>= 0.8.0),
     tidyr (>= 1.0.0),
