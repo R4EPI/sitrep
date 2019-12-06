@@ -63,6 +63,7 @@ required_packages <- c("knitr",       # create output docs
                        "stringr",     # clean text
                        "rio",         # read in data
                        "ggplot2",     # create plots and charts
+                       "patchwork",   # combine plots in one
                        "sitrep",      # MSF field epi functions
                        "linelist",    # Functions for cleaning/standardising data
                        "incidence",   # create epicurves
@@ -1772,17 +1773,11 @@ This chunk prints the AR and CFR with the epicurve.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r epicurve_ar_cfr, warning = FALSE, message = FALSE, fig.height = 10}
 
-nofx <- theme(axis.text.x = element_blank(),
+no_x <- theme(axis.text.x = element_blank(),
               axis.title.x = element_blank())
 
-cowplot::plot_grid(
-  basic_curve + nofx,
-  ar_plot + nofx,
-  cfr_plot,
-  align = "v", # align plots vertically
-  axis = "lr", # only by their left and right margins
-  ncol = 1     # allow only one column
-)
+## use patchwork to stack the three plots on top of one another
+(basic_curve + no_x) / (ar_plot + no_x) / cfr_plot
 ```
 
 
@@ -2171,53 +2166,50 @@ ar <- mutate(ar,
 
 
 # go through each epiweek, fiter and plot the data
-for (i in unique(cases$epiweek)) {
-  this_ar <- filter(ar, epiweek == i)
+for (week in unique(cases$epiweek)) {
+  this_ar <- filter(ar, epiweek == week)
   
-  # map 
+  ## map 
   mapsub <- left_join(map, this_ar, by = c("name" = "Region"))
   
-  # choropleth 
+  ## choropleth 
   map_plot <- ggplot() +
-    # shapefile as polygon
+    ## shapefile as polygon
     geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + 
-    # needed to avoid gridlines being drawn
+    ## needed to avoid gridlines being drawn
     coord_sf(datum = NA) + 
-    # add a scalebar
+    ## add a scalebar
     annotation_scale() + 
-    # color the scale to be perceptually uniform (keep levels)
+    ## color the scale to be perceptually uniform (keep levels)
     scale_fill_brewer(drop = FALSE, 
                     palette = "OrRd", 
                     name = "AR (per 10,000)") +  
-    # remove coordinates and axes
+    ## remove coordinates and axes
     theme_void() 
   
   
-  # plot with the region on the x axis sorted by increasing ar
-  # ar value on the y axis 
+  ## plot with the region on the x axis sorted by increasing ar
+  ## ar value on the y axis 
   barplot <- ggplot(this_ar, aes(x = reorder(Region, `AR (per 10,000)`),
                                  y = `AR (per 10,000)`)) + 
-    # plot as bars (identity = as is)
+    ## plot as bars (identity = as is)
     geom_bar(stat = "identity", col = "black", fill = "red") + 
-     # add CIs
+     ## add CIs
     geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) +
-    # set origin for axes
+    ## set origin for axes
     scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  
-    # add labels to axes and below chart
-    labs(x = "Region", y = "AR (per 10,000)", 
-         captions = str_glue("Source: MSF data from {reporting_week}")) + 
+    ## add labels to axes and below chart
+    labs(x = "Region", y = "AR (per 10,000)") +  
     epicurve_theme
   
   
   
-  # combine the barplot and map plot into one
+  ## combine the barplot and map plot into one with patchwork and add a title
+  ## in the top-left corner and a caption in the bottom-right
   print(
-    cowplot::plot_grid(
-      barplot + labs(title = str_glue("Epiweek: {i}")),
-      map_plot,
-      nrow = 1,
-      align = "h",
-      axis = "tb"
+    barplot + map_plot + plot_annotation(
+         title   = str_glue("Epiweek: {week}"),
+         caption = str_glue("Source: MSF data from {reporting_week}")
     )
   )
 }
