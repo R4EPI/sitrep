@@ -94,7 +94,6 @@ Collate:
     'helpers.R'
     'inline_fun.R'
     'msf_dict_survey.R'
-    'nutrition.R'
     'prettify_tabulation.R'
     'relabel_proportions.R'
     'sample-size.R'
