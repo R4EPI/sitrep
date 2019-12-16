@@ -4,10 +4,19 @@
 \alias{plot_age_pyramid}
 \title{Plot a population pyramid (age-sex) from a dataframe.}
 \usage{
-plot_age_pyramid(data, age_group = "age_group", split_by = "sex",
-  stack_by = split_by, proportional = FALSE, na.rm = FALSE,
-  show_halfway = TRUE, vertical_lines = FALSE,
-  horizontal_lines = TRUE, pyramid = TRUE, pal = NULL)
+plot_age_pyramid(
+  data,
+  age_group = "age_group",
+  split_by = "sex",
+  stack_by = NULL,
+  proportional = FALSE,
+  na.rm = FALSE,
+  show_halfway = TRUE,
+  vertical_lines = FALSE,
+  horizontal_lines = TRUE,
+  pyramid = TRUE,
+  pal = NULL
+)
 }
 \arguments{
 \item{data}{Your dataframe (e.g. linelist)}

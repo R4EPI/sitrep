@@ -64,7 +64,8 @@ Imports:
     survey,
     srvyr,
     stats,
-    utils
+    utils,
+    apyramid
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
@@ -72,10 +73,11 @@ Suggests:
     covr
 Remotes:
   reconhub/linelist
+  R4EPI/apyramid
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Collate: 
     'add_weights_cluster.R'
     'add_weights_strata.R'

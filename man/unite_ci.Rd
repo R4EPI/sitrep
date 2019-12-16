@@ -4,8 +4,16 @@
 \alias{unite_ci}
 \title{Unite estimates and confidence intervals}
 \usage{
-unite_ci(x, col = NULL, ..., remove = TRUE, digits = 2,
-  m100 = TRUE, percent = FALSE, ci = FALSE)
+unite_ci(
+  x,
+  col = NULL,
+  ...,
+  remove = TRUE,
+  digits = 2,
+  m100 = TRUE,
+  percent = FALSE,
+  ci = FALSE
+)
 }
 \arguments{
 \item{x}{a data frame with at least three columns defining an estimate, lower

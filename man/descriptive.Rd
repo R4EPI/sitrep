@@ -5,13 +5,29 @@
 \alias{multi_descriptive}
 \title{Produces counts with respective proportions from specified variables in a dataframe.}
 \usage{
-descriptive(df, counter, grouper = NULL, multiplier = 100,
-  digits = 1, proptotal = FALSE, coltotals = FALSE,
-  rowtotals = FALSE, single_row = FALSE, explicit_missing = TRUE)
+descriptive(
+  df,
+  counter,
+  grouper = NULL,
+  multiplier = 100,
+  digits = 1,
+  proptotal = FALSE,
+  coltotals = FALSE,
+  rowtotals = FALSE,
+  single_row = FALSE,
+  explicit_missing = TRUE
+)
 
-multi_descriptive(df, ..., multiplier = 100, digits = 1,
-  proptotal = FALSE, coltotals = TRUE, .id = "symptom",
-  explicit_missing = TRUE)
+multi_descriptive(
+  df,
+  ...,
+  multiplier = 100,
+  digits = 1,
+  proptotal = FALSE,
+  coltotals = TRUE,
+  .id = "symptom",
+  explicit_missing = TRUE
+)
 }
 \arguments{
 \item{df}{A dataframe (e.g. your linelist)}

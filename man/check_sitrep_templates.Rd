@@ -4,9 +4,15 @@
 \alias{check_sitrep_templates}
 \title{Run the templates found in the sitrep package.}
 \usage{
-check_sitrep_templates(templates = available_sitrep_templates(),
-  path = tempdir(), quiet = FALSE, progress = FALSE,
-  mustwork = FALSE, output_format = NULL, clean = TRUE)
+check_sitrep_templates(
+  templates = available_sitrep_templates(),
+  path = tempdir(),
+  quiet = FALSE,
+  progress = FALSE,
+  mustwork = FALSE,
+  output_format = NULL,
+  clean = TRUE
+)
 }
 \arguments{
 \item{templates}{a vector of templates to create and render}

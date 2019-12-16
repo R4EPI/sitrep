@@ -8,15 +8,33 @@
 \alias{assert_positive_timespan}
 \title{Find the first date beyond a cutoff in several columns}
 \usage{
-find_date_cause(x, ..., period_start = NULL, period_end = NULL,
-  datecol = "start_date", datereason = "start_date_reason",
-  na_fill = "start")
+find_date_cause(
+  x,
+  ...,
+  period_start = NULL,
+  period_end = NULL,
+  datecol = "start_date",
+  datereason = "start_date_reason",
+  na_fill = "start"
+)
 
-find_start_date(x, ..., period_start = NULL, period_end = NULL,
-  datecol = "start_date", datereason = "start_date_reason")
+find_start_date(
+  x,
+  ...,
+  period_start = NULL,
+  period_end = NULL,
+  datecol = "start_date",
+  datereason = "start_date_reason"
+)
 
-find_end_date(x, ..., period_start = NULL, period_end = NULL,
-  datecol = "end_date", datereason = "end_date_reason")
+find_end_date(
+  x,
+  ...,
+  period_start = NULL,
+  period_end = NULL,
+  datecol = "end_date",
+  datereason = "end_date_reason"
+)
 
 constrain_dates(i, period_start, period_end, boundary = "both")
 

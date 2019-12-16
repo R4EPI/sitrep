@@ -5,11 +5,26 @@
 \alias{group_age_categories}
 \title{Create an age group variable}
 \usage{
-age_categories(x, breakers = NA, lower = 0, upper = NA, by = 10,
-  separator = "-", ceiling = FALSE, above.char = "+")
+age_categories(
+  x,
+  breakers = NA,
+  lower = 0,
+  upper = NA,
+  by = 10,
+  separator = "-",
+  ceiling = FALSE,
+  above.char = "+"
+)
 
-group_age_categories(dat, years = NULL, months = NULL, weeks = NULL,
-  days = NULL, one_column = TRUE, drop_empty_overlaps = TRUE)
+group_age_categories(
+  dat,
+  years = NULL,
+  months = NULL,
+  weeks = NULL,
+  days = NULL,
+  one_column = TRUE,
+  drop_empty_overlaps = TRUE
+)
 }
 \arguments{
 \item{x}{Your age variable}
