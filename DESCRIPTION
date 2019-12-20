@@ -72,7 +72,7 @@ Suggests:
     vdiffr,
     covr
 Remotes:
-  reconhub/linelist
+  reconhub/linelist,
   R4EPI/apyramid
 Encoding: UTF-8
 LazyData: true
