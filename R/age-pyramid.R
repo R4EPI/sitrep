@@ -33,7 +33,7 @@
 #' indicating the range of the un-facetted data set. Values of `spit_by` will
 #' show up as labels at top of each facet.
 #'
-#' @importFrom apyramid age_pyramid aggregate_by_age
+#' @importFrom apyramid age_pyramid 
 #' @export
 #' @examples
 #' library(ggplot2)
