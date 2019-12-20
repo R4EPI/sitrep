@@ -56,8 +56,8 @@ descriptive <- function(df, counter, grouper = NULL, multiplier = 100, digits = 
 
 
   # translate the variable names to character
-  counter   <- tidyselect::vars_select(colnames(df), !!enquo(counter))
-  grouper   <- tidyselect::vars_select(colnames(df), !!enquo(grouper))
+  counter   <- tidyselect::vars_select(colnames(df), !!rlang::enquo(counter))
+  grouper   <- tidyselect::vars_select(colnames(df), !!rlang::enquo(grouper))
 
   has_grouper <- length(grouper) == 1
   sym_count   <- rlang::sym(counter)

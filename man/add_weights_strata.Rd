@@ -6,8 +6,14 @@
 For use in surveys where you took a sample population out of a larger
 source population, with a simple-random or stratified survey design.}
 \usage{
-add_weights_strata(x, p, ..., population = population,
-  surv_weight = "surv_weight", surv_weight_ID = "surv_weight_ID")
+add_weights_strata(
+  x,
+  p,
+  ...,
+  population = population,
+  surv_weight = "surv_weight",
+  surv_weight_ID = "surv_weight_ID"
+)
 }
 \arguments{
 \item{x}{a data frame of survey data}

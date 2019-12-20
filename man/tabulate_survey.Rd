@@ -5,14 +5,36 @@
 \alias{tabulate_binary_survey}
 \title{Tabulate survey design objects by a categorical and another stratifying variable}
 \usage{
-tabulate_survey(x, var, strata = NULL, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
-  proptotal = FALSE, rowtotals = FALSE, coltotals = FALSE)
+tabulate_survey(
+  x,
+  var,
+  strata = NULL,
+  pretty = TRUE,
+  wide = TRUE,
+  digits = 1,
+  method = "logit",
+  na.rm = FALSE,
+  deff = FALSE,
+  proptotal = FALSE,
+  rowtotals = FALSE,
+  coltotals = FALSE
+)
 
-tabulate_binary_survey(x, ..., strata = NULL, proptotal = FALSE,
-  keep = NULL, invert = FALSE, pretty = TRUE, wide = TRUE,
-  digits = 1, method = "logit", na.rm = FALSE, deff = FALSE,
-  transpose = NULL)
+tabulate_binary_survey(
+  x,
+  ...,
+  strata = NULL,
+  proptotal = FALSE,
+  keep = NULL,
+  invert = FALSE,
+  pretty = TRUE,
+  wide = TRUE,
+  digits = 1,
+  method = "logit",
+  na.rm = FALSE,
+  deff = FALSE,
+  transpose = NULL
+)
 }
 \arguments{
 \item{x}{a survey design object}

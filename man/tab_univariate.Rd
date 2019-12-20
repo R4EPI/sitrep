@@ -4,9 +4,18 @@
 \alias{tab_univariate}
 \title{Produce odds ratios, risk ratios or incidence rate ratios}
 \usage{
-tab_univariate(x, outcome, ..., perstime = NULL, strata = NULL,
-  measure = "OR", extend_output = TRUE, digits = 3,
-  mergeCI = FALSE, woolf_test = FALSE)
+tab_univariate(
+  x,
+  outcome,
+  ...,
+  perstime = NULL,
+  strata = NULL,
+  measure = "OR",
+  extend_output = TRUE,
+  digits = 3,
+  mergeCI = FALSE,
+  woolf_test = FALSE
+)
 }
 \arguments{
 \item{x}{A data frame}

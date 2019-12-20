@@ -4,10 +4,20 @@
 \alias{add_weights_cluster}
 \title{Add a column of cluster survey weights to a data frame.}
 \usage{
-add_weights_cluster(x, cl, eligible, interviewed, cluster_x = NULL,
-  cluster_cl = NULL, household_x = NULL, household_cl = NULL,
-  ignore_cluster = TRUE, ignore_household = TRUE,
-  surv_weight = "surv_weight", surv_weight_ID = "surv_weight_ID")
+add_weights_cluster(
+  x,
+  cl,
+  eligible,
+  interviewed,
+  cluster_x = NULL,
+  cluster_cl = NULL,
+  household_x = NULL,
+  household_cl = NULL,
+  ignore_cluster = TRUE,
+  ignore_household = TRUE,
+  surv_weight = "surv_weight",
+  surv_weight_ID = "surv_weight_ID"
+)
 }
 \arguments{
 \item{x}{a data frame of survey data}

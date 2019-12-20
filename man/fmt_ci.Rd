@@ -9,17 +9,19 @@
 \alias{merge_pci_df}
 \title{Helper to format confidence interval for text}
 \usage{
-fmt_ci(e = numeric(), l = numeric(), u = numeric(), digits = 2,
-  percent = TRUE)
+fmt_ci(e = numeric(), l = numeric(), u = numeric(), digits = 2, percent = TRUE)
 
-fmt_pci(e = numeric(), l = numeric(), u = numeric(), digits = 2,
-  percent = TRUE)
+fmt_pci(
+  e = numeric(),
+  l = numeric(),
+  u = numeric(),
+  digits = 2,
+  percent = TRUE
+)
 
-fmt_pci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2,
-  percent = TRUE)
+fmt_pci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2, percent = TRUE)
 
-fmt_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2,
-  percent = TRUE)
+fmt_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2, percent = TRUE)
 
 merge_ci_df(x, e = 3, l = e + 1, u = e + 2, digits = 2)
 
@@ -40,13 +42,13 @@ it's treated as a raw value}
 \item{x}{a data frame}
 }
 \value{
-a text string in the format of "e\% (CI l--u)"
+a text string in the format of "e\\% (CI l--u)"
 }
 \description{
 This function is mainly used for placing in the text fields of Rmarkdown
 reports. You can use it by writing it in something like this:
 \preformatted{The CFR for Bamako is `r fmt_pci(case_fatality_rate(10, 50))`}
-which will render like this: "The CFR for Bamako is 20.00\% (CI 11.24--33.04)"
+which will render like this: "The CFR for Bamako is 20.00\\% (CI 11.24--33.04)"
 }
 \examples{
 

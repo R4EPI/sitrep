@@ -7,27 +7,53 @@
 \alias{mortality_rate}
 \title{Rates and Ratios}
 \usage{
-attack_rate(cases, population, conf_level = 0.95, multiplier = 100,
-  mergeCI = FALSE, digits = 2)
+attack_rate(
+  cases,
+  population,
+  conf_level = 0.95,
+  multiplier = 100,
+  mergeCI = FALSE,
+  digits = 2
+)
 
-case_fatality_rate(deaths, population, conf_level = 0.95,
-  multiplier = 100, mergeCI = FALSE, digits = 2)
+case_fatality_rate(
+  deaths,
+  population,
+  conf_level = 0.95,
+  multiplier = 100,
+  mergeCI = FALSE,
+  digits = 2
+)
 
-case_fatality_rate_df(x, deaths, group = NULL, conf_level = 0.95,
-  multiplier = 100, mergeCI = FALSE, digits = 2, add_total = FALSE)
+case_fatality_rate_df(
+  x,
+  deaths,
+  group = NULL,
+  conf_level = 0.95,
+  multiplier = 100,
+  mergeCI = FALSE,
+  digits = 2,
+  add_total = FALSE
+)
 
-mortality_rate(deaths, population, conf_level = 0.95,
-  multiplier = 10^4, mergeCI = FALSE, digits = 2)
+mortality_rate(
+  deaths,
+  population,
+  conf_level = 0.95,
+  multiplier = 10^4,
+  mergeCI = FALSE,
+  digits = 2
+)
 }
 \arguments{
-\item{cases, deaths}{number of cases or deaths in a population. For \code{_df}
+\item{cases, deaths}{number of cases or deaths in a population. For \verb{_df}
 functions, this can be the name of a logical column OR an evaluated
 logical expression (see examples).}
 
 \item{population}{the number of individuals in the population.}
 
 \item{conf_level}{a number representing the confidence level for which to
-calculate the confidence interval. Defaults to 0.95, representing a 95%
+calculate the confidence interval. Defaults to 0.95, representing a 95\%
 confidence interval.}
 
 \item{multiplier}{The base by which to multiply the output:

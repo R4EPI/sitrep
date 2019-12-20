@@ -5,15 +5,39 @@
 \alias{tab_survey}
 \title{Tabulate counts and proportions}
 \usage{
-tab_linelist(x, ..., strata = NULL, keep = TRUE, drop = NULL,
-  na.rm = TRUE, prop_total = FALSE, row_total = FALSE,
-  col_total = FALSE, wide = TRUE, transpose = NULL, digits = 1,
-  pretty = TRUE)
+tab_linelist(
+  x,
+  ...,
+  strata = NULL,
+  keep = TRUE,
+  drop = NULL,
+  na.rm = TRUE,
+  prop_total = FALSE,
+  row_total = FALSE,
+  col_total = FALSE,
+  wide = TRUE,
+  transpose = NULL,
+  digits = 1,
+  pretty = TRUE
+)
 
-tab_survey(x, ..., strata = NULL, keep = TRUE, drop = NULL,
-  na.rm = TRUE, prop_total = FALSE, row_total = FALSE,
-  col_total = FALSE, wide = TRUE, transpose = NULL, digits = 1,
-  method = "logit", deff = FALSE, pretty = TRUE)
+tab_survey(
+  x,
+  ...,
+  strata = NULL,
+  keep = TRUE,
+  drop = NULL,
+  na.rm = TRUE,
+  prop_total = FALSE,
+  row_total = FALSE,
+  col_total = FALSE,
+  wide = TRUE,
+  transpose = NULL,
+  digits = 1,
+  method = "logit",
+  deff = FALSE,
+  pretty = TRUE
+)
 }
 \arguments{
 \item{x}{a \code{\link[=data.frame]{data.frame()}} or \link[srvyr:as_survey_design]{tbl_svy} object}

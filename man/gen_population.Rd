@@ -4,9 +4,14 @@
 \alias{gen_population}
 \title{Generate population counts from estimated population age breakdowns.}
 \usage{
-gen_population(total_pop = 1000, groups = c("0-4", "5-14", "15-29",
-  "30-44", "45+"), strata = c("Male", "Female"), proportions = c(0.079,
-  0.134, 0.139, 0.082, 0.066), counts = NULL, tibble = TRUE)
+gen_population(
+  total_pop = 1000,
+  groups = c("0-4", "5-14", "15-29", "30-44", "45+"),
+  strata = c("Male", "Female"),
+  proportions = c(0.079, 0.134, 0.139, 0.082, 0.066),
+  counts = NULL,
+  tibble = TRUE
+)
 }
 \arguments{
 \item{total_pop}{The overal population count of interest - the default is
