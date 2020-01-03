@@ -239,7 +239,7 @@ tab_general <-  function(x,
   # However, if the user supplies a vector of column names and some do not exist,
   # tidyselect unhelpfully returns nothing 
   #
-  # ಠ_ಠ
+  # >:(
   #
   # so, to give our users something, we wrap this character vector in one_of(),
   # which will warn about which columns were not recognised.
