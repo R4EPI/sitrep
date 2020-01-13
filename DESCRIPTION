@@ -1,7 +1,7 @@
 Type: Package
 Package: sitrep
 Title: Report templates and helper functions for EPI
-Version: 0.1.0
+Version: 0.1.2
 Authors@R: 
     c(person(given = "Dirk",
              family = "Schumacher",
@@ -65,7 +65,8 @@ Imports:
     srvyr,
     stats,
     utils,
-    apyramid
+    apyramid,
+    msfdict
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
@@ -73,7 +74,8 @@ Suggests:
     covr
 Remotes:
   reconhub/linelist,
-  R4EPI/apyramid
+  R4EPI/apyramid,
+  R4EPI/msfdict
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
@@ -89,20 +91,18 @@ Collate:
     'descriptive-table.R'
     'find_breaks.R'
     'find_date_cause.R'
-    'gen_data.R'
     'gen_eligible_interviewed.R'
-    'gen_polygon.R'
     'gen_population.R'
     'helpers.R'
     'inline_fun.R'
-    'msf_dict_survey.R'
+    'msf_dict_rename_helper.R'
+    'msfdict_exports.R'
     'prettify_tabulation.R'
     'relabel_proportions.R'
     'sample-size.R'
     'tab_descriptive.R'
     'tab_univariate.R'
     'tabulate_survey.R'
-    'template_data_frame.R'
     'transpose_pretty.R'
     'two_by_two_funs.R'
     'unite_ci.R'
