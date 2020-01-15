@@ -4,8 +4,6 @@
 #' @param zscore bare name of a numeric vector containing computed zscores
 #' @return a ggplot2 object that is customisable via the ggplot2 package.
 #' @export
-#' @importFrom ggplot2 ggplot aes stat_function geom_density scale_x_continuous scale_y_continuous labs expand_scale stat_density scale_color_manual
-#' @importFrom scales percent_format
 #' @examples
 #' library("ggplot2")
 #' set.seed(9)

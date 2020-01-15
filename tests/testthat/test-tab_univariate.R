@@ -61,29 +61,6 @@ arrt <- as.data.frame.table(arr) %>%
 
 arrt$pt <- 2 # person time
 
-test_that("internal estimate functions works", {
-
-  expect_equivalent(get_ratio_est(arr, "OR")[1:3, 1:3],  (or_expect))
-  expect_equivalent(get_ratio_est(arr, "RR")[1:3, 1:3],  (rr_expect))
-  expect_equivalent(get_ratio_est(iarr, "IRR")[1:4, 1:3], (irr_expect))
-
-})
-
-test_that("MH estimate works" , {
-
-  expect_equivalent(mh_rr(arr),  MH_RR)
-  expect_equivalent(mh_or(arr),  MH_OR)
-  expect_equivalent(mh_irr(iarr), MH_IRR)
-
-})
-
-test_that("woolf p-values work", {
-
-  expect_equivalent(get_woolf_pval(arr, "RR"), RR_woolf)
-  expect_equivalent(get_woolf_pval(arr, "OR"), OR_woolf)
-
-})
-
 
 OR_strata <- tab_univariate(arrt, outcome, risk, strata = old, measure = "OR", woolf_test = TRUE)
 OR_simple <- tab_univariate(arrt, outcome, risk, strata = old, measure = "OR", extend_output = FALSE, mergeCI = TRUE)

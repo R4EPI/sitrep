@@ -25,8 +25,6 @@
 #'   are c(7945, 13391, 13861, 8138, 6665) based on above
 #'   groups for a 100,000 person population.
 #' @param tibble Return data as a tidyverse tibble (default is TRUE)
-#' @importFrom glue glue
-#' @importFrom tibble as_tibble
 #' @export
 #'
 #' @examples

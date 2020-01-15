@@ -65,8 +65,9 @@ Imports:
     srvyr,
     stats,
     utils,
-    apyramid,
-    msfdict
+    apyramid (>= 0.1.0),
+    msfdict,
+    epibuffet
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
@@ -74,21 +75,22 @@ Suggests:
     covr
 Remotes:
   reconhub/linelist,
-  R4EPI/apyramid,
-  R4EPI/msfdict
+  R4EPI/msfdict,
+  R4EPI/epibuffet
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
 Collate: 
+    'sitrep-package.R'
+    'epibuffet_exports.R'
+    'msfdict_exports.R'
     'add_weights_cluster.R'
     'add_weights_strata.R'
     'age-categories.R'
     'age-pyramid.R'
     'cfr.R'
     'check_templates.R'
-    'data_frame_from_2x2.R'
-    'descriptive-table.R'
     'find_breaks.R'
     'find_date_cause.R'
     'gen_eligible_interviewed.R'
@@ -96,14 +98,7 @@ Collate:
     'helpers.R'
     'inline_fun.R'
     'msf_dict_rename_helper.R'
-    'msfdict_exports.R'
-    'prettify_tabulation.R'
     'relabel_proportions.R'
     'sample-size.R'
-    'tab_descriptive.R'
-    'tab_univariate.R'
-    'tabulate_survey.R'
-    'transpose_pretty.R'
-    'two_by_two_funs.R'
     'unite_ci.R'
     'zcurve.R'
