@@ -93,6 +93,7 @@ Collate:
     'find_date_cause.R'
     'gen_eligible_interviewed.R'
     'gen_population.R'
+    'gen_polygon.R'
     'helpers.R'
     'inline_fun.R'
     'msf_dict_rename_helper.R'

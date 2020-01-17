@@ -26,9 +26,3 @@
 #' @rdname msf_dict
 "gen_data"
 
-#' @name gen_polygon
-#' @importFrom msfdict gen_polygon
-#' @export
-#' @rdname msf_dict
-"gen_polygon"
-

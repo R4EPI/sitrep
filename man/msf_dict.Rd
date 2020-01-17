@@ -5,7 +5,6 @@
 \alias{msf_dict_survey}
 \alias{msf_dict}
 \alias{gen_data}
-\alias{gen_polygon}
 \title{Functions re-expored from {msfdict}}
 \format{An object of class \code{function} of length 1.}
 \usage{
@@ -14,8 +13,6 @@ msf_dict_survey
 msf_dict
 
 gen_data
-
-gen_polygon
 }
 \description{
 Functions re-expored from {msfdict}
