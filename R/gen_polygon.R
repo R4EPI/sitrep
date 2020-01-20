@@ -10,7 +10,7 @@
 gen_polygon <- function(regions) {
 
   # get file path
-  path <- system.file("extdata", "coords.csv", package = "msfdict")
+  path <- system.file("extdata", "coords.csv", package = "sitrep")
 
   # read in coordinates as matrix
   coords <- as.matrix(read.csv(path))
