@@ -1,3 +1,8 @@
+# sitrep 0.1.4
+
+* Rename import of {msfdict} to {epidict}
+* Remove duplicate excel files from {epidict}
+
 # sitrep 0.1.3
 
 * `gen_polygon()` has been moved back into this package as it did not really
