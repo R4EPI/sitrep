@@ -19,6 +19,6 @@ Functions re-expored from {msfdict}
 }
 \seealso{
 Dictionaries: \code{\link[msfdict:msf_dict]{msfdict::msf_dict()}}, \code{\link[msfdict:msf_dict_survey]{msfdict::msf_dict_survey()}}\cr
-Generators: \code{\link[msfdict:gen_data]{msfdict::gen_data()}}, \code{\link[msfdict:gen_polygon]{msfdict::gen_polygon()}}
+Generator: \code{\link[msfdict:gen_data]{msfdict::gen_data()}}
 }
 \keyword{datasets}
