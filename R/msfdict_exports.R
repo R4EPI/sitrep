@@ -7,7 +7,7 @@
 #' Functions re-expored from {msfdict}
 #'
 #' @seealso Dictionaries: [msfdict::msf_dict()], [msfdict::msf_dict_survey()]\cr
-#'   Generators: [msfdict::gen_data()], [msfdict::gen_polygon()]
+#'   Generator: [msfdict::gen_data()]
 #' @name msf_dict_survey
 #' @importFrom msfdict msf_dict_survey
 #' @export 
@@ -25,10 +25,4 @@
 #' @export
 #' @rdname msf_dict
 "gen_data"
-
-#' @name gen_polygon
-#' @importFrom msfdict gen_polygon
-#' @export
-#' @rdname msf_dict
-"gen_polygon"
 

@@ -5,7 +5,6 @@
 \alias{msf_dict_survey}
 \alias{msf_dict}
 \alias{gen_data}
-\alias{gen_polygon}
 \title{Functions re-expored from {msfdict}}
 \format{An object of class \code{function} of length 1.}
 \usage{
@@ -14,14 +13,12 @@ msf_dict_survey
 msf_dict
 
 gen_data
-
-gen_polygon
 }
 \description{
 Functions re-expored from {msfdict}
 }
 \seealso{
 Dictionaries: \code{\link[msfdict:msf_dict]{msfdict::msf_dict()}}, \code{\link[msfdict:msf_dict_survey]{msfdict::msf_dict_survey()}}\cr
-Generators: \code{\link[msfdict:gen_data]{msfdict::gen_data()}}, \code{\link[msfdict:gen_polygon]{msfdict::gen_polygon()}}
+Generator: \code{\link[msfdict:gen_data]{msfdict::gen_data()}}
 }
 \keyword{datasets}
