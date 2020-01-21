@@ -1,7 +1,7 @@
 Type: Package
 Package: sitrep
 Title: Report templates and helper functions for EPI
-Version: 0.1.3
+Version: 0.1.4
 Authors@R: 
     c(person(given = "Dirk",
              family = "Schumacher",
@@ -66,7 +66,7 @@ Imports:
     stats,
     utils,
     apyramid,
-    msfdict
+    epidict
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
@@ -75,7 +75,7 @@ Suggests:
 Remotes:
   reconhub/linelist,
   R4EPI/apyramid,
-  R4EPI/msfdict
+  R4EPI/epidict
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
@@ -97,7 +97,7 @@ Collate:
     'helpers.R'
     'inline_fun.R'
     'msf_dict_rename_helper.R'
-    'msfdict_exports.R'
+    'epidict_exports.R'
     'prettify_tabulation.R'
     'relabel_proportions.R'
     'sample-size.R'
