@@ -76,7 +76,8 @@ Suggests:
 Remotes:
   reconhub/linelist,
   R4EPI/apyramid,
-  R4EPI/epidict
+  R4EPI/epidict,
+  R4EPI/epikit
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
