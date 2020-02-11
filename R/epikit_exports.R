@@ -14,7 +14,7 @@
 #' [epikit::fmt_ci_df()], [epikit::fmt_count()], [epikit::fmt_pci()],
 #' [epikit::fmt_pci_df()], [epikit::group_age_categories()],
 #' [epikit::merge_ci_df()], [epikit::merge_pci_df()],
-#' [epikit::mortality_rate()], [epikit::proportion()],
+#' [epikit::mortality_rate()], 
 #' [epikit::rename_redundant()], [epikit::unite_ci()]
 #' 
 #' @name age_categories

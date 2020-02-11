@@ -73,7 +73,7 @@ Exported functions from epikit
 \code{\link[epikit:fmt_ci_df]{epikit::fmt_ci_df()}}, \code{\link[epikit:fmt_count]{epikit::fmt_count()}}, \code{\link[epikit:fmt_pci]{epikit::fmt_pci()}},
 \code{\link[epikit:fmt_pci_df]{epikit::fmt_pci_df()}}, \code{\link[epikit:group_age_categories]{epikit::group_age_categories()}},
 \code{\link[epikit:merge_ci_df]{epikit::merge_ci_df()}}, \code{\link[epikit:merge_pci_df]{epikit::merge_pci_df()}},
-\code{\link[epikit:mortality_rate]{epikit::mortality_rate()}}, \code{\link[epikit:proportion]{epikit::proportion()}},
+\code{\link[epikit:mortality_rate]{epikit::mortality_rate()}},
 \code{\link[epikit:rename_redundant]{epikit::rename_redundant()}}, \code{\link[epikit:unite_ci]{epikit::unite_ci()}}
 }
 \keyword{datasets}

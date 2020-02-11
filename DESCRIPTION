@@ -65,9 +65,9 @@ Imports:
     srvyr,
     stats,
     utils,
-    apyramid,
-    epidict,
-    epikit
+    apyramid (>= 0.1.0),
+    epidict (>= 0.0.0.9001),
+    epikit (>= 0.1.0)
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
