@@ -2,7 +2,7 @@ context("fmt_ci tests")
 
 cfr <- case_fatality_rate(10, 50)
 cfr_expected <- "20.00% (CI 11.24--33.04)"
-pro <- proportion(5, 50)
+pro <- epikit:::proportion(5, 50)
 pro_expected <- "10.00% (CI 4.35--21.36)"
 test_that("fmt_ci.default only accepts numbers", {
   expect_error(fmt_pci(0, 0, 0, "A"))
