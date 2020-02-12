@@ -1,3 +1,9 @@
+# sitrep 0.1.5
+
+* Import {epikit}. This replaces several small formatting functions like 
+  `fmt_ci()` and `rename_redundant()`. It also replaces `age_categories()` and
+  `attack_rate()` etc.
+
 # sitrep 0.1.4
 
 * Rename import of {msfdict} to {epidict}
