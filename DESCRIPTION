@@ -67,7 +67,7 @@ Imports:
     utils,
     apyramid (>= 0.1.0),
     epidict (>= 0.0.0.9001),
-    epikit (>= 0.1.0)
+    epikit
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
