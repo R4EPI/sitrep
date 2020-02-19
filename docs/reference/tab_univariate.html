@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.6</span>
       </span>
     </div>
 
@@ -127,9 +127,18 @@
     <p>Produce odds ratios, risk ratios or incidence rate ratios</p>
     </div>
 
-    <pre class="usage"><span class='fu'>tab_univariate</span>(<span class='no'>x</span>, <span class='no'>outcome</span>, <span class='no'>...</span>, <span class='kw'>perstime</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>measure</span> <span class='kw'>=</span> <span class='st'>"OR"</span>, <span class='kw'>extend_output</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>3</span>,
-  <span class='kw'>mergeCI</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>woolf_test</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>tab_univariate</span>(
+  <span class='no'>x</span>,
+  <span class='no'>outcome</span>,
+  <span class='no'>...</span>,
+  <span class='kw'>perstime</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>measure</span> <span class='kw'>=</span> <span class='st'>"OR"</span>,
+  <span class='kw'>extend_output</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>mergeCI</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>woolf_test</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

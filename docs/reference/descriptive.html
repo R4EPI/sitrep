@@ -80,7 +80,7 @@ function instead." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.6</span>
       </span>
     </div>
 
@@ -129,13 +129,29 @@ function instead." />
 function instead.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>descriptive</span>(<span class='no'>df</span>, <span class='no'>counter</span>, <span class='kw'>grouper</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>multiplier</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>proptotal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>coltotals</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>rowtotals</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>single_row</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>explicit_missing</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+    <pre class="usage"><span class='fu'>descriptive</span>(
+  <span class='no'>df</span>,
+  <span class='no'>counter</span>,
+  <span class='kw'>grouper</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>multiplier</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>proptotal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>coltotals</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>rowtotals</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>single_row</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>explicit_missing</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)
 
-<span class='fu'>multi_descriptive</span>(<span class='no'>df</span>, <span class='no'>...</span>, <span class='kw'>multiplier</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>proptotal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>coltotals</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>.id</span> <span class='kw'>=</span> <span class='st'>"symptom"</span>,
-  <span class='kw'>explicit_missing</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+<span class='fu'>multi_descriptive</span>(
+  <span class='no'>df</span>,
+  <span class='no'>...</span>,
+  <span class='kw'>multiplier</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>proptotal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>coltotals</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>.id</span> <span class='kw'>=</span> <span class='st'>"symptom"</span>,
+  <span class='kw'>explicit_missing</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

@@ -80,7 +80,7 @@ however you could also define these yourself." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.6</span>
       </span>
     </div>
 
@@ -129,9 +129,14 @@ however you could also define these yourself." />
 however you could also define these yourself.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>gen_population</span>(<span class='kw'>total_pop</span> <span class='kw'>=</span> <span class='fl'>1000</span>, <span class='kw'>groups</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"0-4"</span>, <span class='st'>"5-14"</span>, <span class='st'>"15-29"</span>,
-  <span class='st'>"30-44"</span>, <span class='st'>"45+"</span>), <span class='kw'>strata</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Male"</span>, <span class='st'>"Female"</span>), <span class='kw'>proportions</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.079</span>,
-  <span class='fl'>0.134</span>, <span class='fl'>0.139</span>, <span class='fl'>0.082</span>, <span class='fl'>0.066</span>), <span class='kw'>counts</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tibble</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>gen_population</span>(
+  <span class='kw'>total_pop</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
+  <span class='kw'>groups</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"0-4"</span>, <span class='st'>"5-14"</span>, <span class='st'>"15-29"</span>, <span class='st'>"30-44"</span>, <span class='st'>"45+"</span>),
+  <span class='kw'>strata</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Male"</span>, <span class='st'>"Female"</span>),
+  <span class='kw'>proportions</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.079</span>, <span class='fl'>0.134</span>, <span class='fl'>0.139</span>, <span class='fl'>0.082</span>, <span class='fl'>0.066</span>),
+  <span class='kw'>counts</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>tibble</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

@@ -80,7 +80,7 @@ source population, with a cluster survey design." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.6</span>
       </span>
     </div>
 
@@ -129,10 +129,20 @@ source population, with a cluster survey design." />
 source population, with a cluster survey design.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>add_weights_cluster</span>(<span class='no'>x</span>, <span class='no'>cl</span>, <span class='no'>eligible</span>, <span class='no'>interviewed</span>, <span class='kw'>cluster_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cluster_cl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>household_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>household_cl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>ignore_cluster</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>ignore_household</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>surv_weight</span> <span class='kw'>=</span> <span class='st'>"surv_weight"</span>, <span class='kw'>surv_weight_ID</span> <span class='kw'>=</span> <span class='st'>"surv_weight_ID"</span>)</pre>
+    <pre class="usage"><span class='fu'>add_weights_cluster</span>(
+  <span class='no'>x</span>,
+  <span class='no'>cl</span>,
+  <span class='no'>eligible</span>,
+  <span class='no'>interviewed</span>,
+  <span class='kw'>cluster_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cluster_cl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>household_x</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>household_cl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>ignore_cluster</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>ignore_household</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>surv_weight</span> <span class='kw'>=</span> <span class='st'>"surv_weight"</span>,
+  <span class='kw'>surv_weight_ID</span> <span class='kw'>=</span> <span class='st'>"surv_weight_ID"</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

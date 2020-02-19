@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.6</span>
       </span>
     </div>
 
@@ -127,15 +127,39 @@
     <p>Tabulate counts and proportions</p>
     </div>
 
-    <pre class="usage"><span class='fu'>tab_linelist</span>(<span class='no'>x</span>, <span class='no'>...</span>, <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>keep</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>drop</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>prop_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>row_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>col_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>wide</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>transpose</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+    <pre class="usage"><span class='fu'>tab_linelist</span>(
+  <span class='no'>x</span>,
+  <span class='no'>...</span>,
+  <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>keep</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>drop</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>prop_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>row_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>col_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>wide</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>transpose</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)
 
-<span class='fu'>tab_survey</span>(<span class='no'>x</span>, <span class='no'>...</span>, <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>keep</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>drop</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>prop_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>row_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>col_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>wide</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>transpose</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"logit"</span>, <span class='kw'>deff</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+<span class='fu'>tab_survey</span>(
+  <span class='no'>x</span>,
+  <span class='no'>...</span>,
+  <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>keep</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>drop</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>prop_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>row_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>col_total</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>wide</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>transpose</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"logit"</span>,
+  <span class='kw'>deff</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -238,8 +262,12 @@ then there will be separate columns for each strata for the counts and
 proportions. Survey data will report confidence intervals.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='no'>have_packages</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='st'>"dplyr"</span>) <span class='kw'>&amp;&amp;</span> <span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='st'>"linelist"</span>)
-<span class='kw'>if</span> (<span class='no'>have_packages</span>) { <span class='fu'><a href='https://rdrr.io/r/base/source.html'>withAutoprint</a></span>({
+    <pre class="examples"><div class='input'><span class='no'>have_packages</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='st'>"dplyr"</span>) <span class='kw'>&amp;&amp;</span> <span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='st'>"linelist"</span>)</div><div class='output co'>#&gt; <span class='message'>Loading required package: dplyr</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Attaching package: ‘dplyr’</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:stats’:</span>
+#&gt; <span class='message'></span>
+#&gt; <span class='message'>    filter, lag</span></div><div class='output co'>#&gt; <span class='message'>The following objects are masked from ‘package:base’:</span>
+#&gt; <span class='message'></span>
+#&gt; <span class='message'>    intersect, setdiff, setequal, union</span></div><div class='output co'>#&gt; <span class='message'>Loading required package: linelist</span></div><div class='input'><span class='kw'>if</span> (<span class='no'>have_packages</span>) { <span class='fu'><a href='https://rdrr.io/r/base/source.html'>withAutoprint</a></span>({
 
 <span class='co'># Simulating linelist data</span>
 
@@ -306,9 +334,13 @@ proportions. Survey data will report confidence intervals.</p>
 #&gt; </span><span style='color: #555555;'>4</span><span> sex       Male                62             34.6     38            31.4   100
 #&gt; </span><span style='color: #555555;'>5</span><span> sex       Female              62             34.6     46            38.0   108
 #&gt; </span><span style='color: #555555;'>6</span><span> sex       Unknown/unspe…      55             30.7     37            30.6    92</div><div class='input'>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>srvyr</span>)
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>survey</span>)
-<span class='no'>have_survey_packages</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='st'>"survey"</span>) <span class='kw'>&amp;&amp;</span> <span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='st'>"srvyr"</span>)
+<span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>srvyr</span>)</div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Attaching package: ‘srvyr’</span></div><div class='output co'>#&gt; <span class='message'>The following object is masked from ‘package:stats’:</span>
+#&gt; <span class='message'></span>
+#&gt; <span class='message'>    filter</span></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/library.html'>library</a></span>(<span class='no'>survey</span>)</div><div class='output co'>#&gt; <span class='message'>Loading required package: grid</span></div><div class='output co'>#&gt; <span class='message'>Loading required package: Matrix</span></div><div class='output co'>#&gt; <span class='message'>Loading required package: survival</span></div><div class='output co'>#&gt; <span class='message'></span>
+#&gt; <span class='message'>Attaching package: ‘survey’</span></div><div class='output co'>#&gt; <span class='message'>The following object is masked from ‘package:graphics’:</span>
+#&gt; <span class='message'></span>
+#&gt; <span class='message'>    dotchart</span></div><div class='input'><span class='no'>have_survey_packages</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='st'>"survey"</span>) <span class='kw'>&amp;&amp;</span> <span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='st'>"srvyr"</span>)
 <span class='kw'>if</span> (<span class='no'>have_survey_packages</span>) { <span class='fu'><a href='https://rdrr.io/r/base/source.html'>withAutoprint</a></span>({
 <span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='no'>api</span>)
 
@@ -323,9 +355,9 @@ proportions. Survey data will report confidence intervals.</p>
 <span class='co'># making things pretty</span>
 <span class='no'>s</span> <span class='kw'>%&gt;%</span>
   <span class='co'># wrap all "n" variables in braces (note space before n).</span>
-  <span class='fu'><a href='rename_redundant.html'>augment_redundant</a></span>(<span class='st'>" (n)"</span> <span class='kw'>=</span> <span class='st'>" n"</span>) <span class='kw'>%&gt;%</span>
+  <span class='fu'><a href='epikit-exports.html'>augment_redundant</a></span>(<span class='st'>" (n)"</span> <span class='kw'>=</span> <span class='st'>" n"</span>) <span class='kw'>%&gt;%</span>
   <span class='co'># relabel all columns containing "prop" to "% (95% CI)"</span>
-  <span class='fu'><a href='rename_redundant.html'>rename_redundant</a></span>(<span class='st'>"% (95% CI)"</span>    <span class='kw'>=</span> <span class='no'>ci</span>,
+  <span class='fu'><a href='epikit-exports.html'>rename_redundant</a></span>(<span class='st'>"% (95% CI)"</span>    <span class='kw'>=</span> <span class='no'>ci</span>,
                    <span class='st'>"Design Effect"</span> <span class='kw'>=</span> <span class='no'>deff</span>)
 
 <span class='co'># long data</span>
@@ -359,7 +391,7 @@ proportions. Survey data will report confidence intervals.</p>
 #&gt;   </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>    </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>     </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span> 
 #&gt; </span><span style='color: #555555;'>1</span><span> awards   No    </span><span style='text-decoration: underline;'>1</span><span>194. 27.0%…    0.768  513. 68.0%…    0.388  529. 52.0%…
 #&gt; </span><span style='color: #555555;'>2</span><span> awards   Yes   </span><span style='text-decoration: underline;'>3</span><span>227. 73.0%…    0.319  242. 32.0%…    0.308  489. 48.0%…
-#&gt; </span><span style='color: #555555;'>3</span><span> awards   Total </span><span style='text-decoration: underline;'>4</span><span>421. </span><span style='color: #BB0000;'>NA</span><span>       </span><span style='color: #BB0000;'>NA</span><span>      755. </span><span style='color: #BB0000;'>NA</span><span>       </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='text-decoration: underline;'>1</span><span>018. </span><span style='color: #BB0000;'>NA</span><span>    
+#&gt; </span><span style='color: #555555;'>3</span><span> awards   Total </span><span style='text-decoration: underline;'>4</span><span>421. NA (N…   </span><span style='color: #BB0000;'>NA</span><span>      755. NA (N…   </span><span style='color: #BB0000;'>NA</span><span>     </span><span style='text-decoration: underline;'>1</span><span>018. NA (N…
 #&gt; </span><span style='color: #555555;'># … with 2 more variables: `M deff` </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, `Total n` </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
 #&gt; &gt; s %&gt;% augment_redundant(` (n)` = " n") %&gt;% rename_redundant(`% (95% CI)` = ci, 
 #&gt; +     `Design Effect` = deff)
@@ -368,7 +400,7 @@ proportions. Survey data will report confidence intervals.</p>
 #&gt;   </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>    </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>                  </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>   </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span>       
 #&gt; </span><span style='color: #555555;'>1</span><span> awards   No      </span><span style='text-decoration: underline;'>1</span><span>194. 27.0% (19.1…           0.768    513. 68.0% (53.5…
 #&gt; </span><span style='color: #555555;'>2</span><span> awards   Yes     </span><span style='text-decoration: underline;'>3</span><span>227. 73.0% (63.3…           0.319    242. 32.0% (20.3…
-#&gt; </span><span style='color: #555555;'>3</span><span> awards   Total   </span><span style='text-decoration: underline;'>4</span><span>421. </span><span style='color: #BB0000;'>NA</span><span>                    </span><span style='color: #BB0000;'>NA</span><span>        755. </span><span style='color: #BB0000;'>NA</span><span>          
+#&gt; </span><span style='color: #555555;'>3</span><span> awards   Total   </span><span style='text-decoration: underline;'>4</span><span>421. NA (NA--NA)           </span><span style='color: #BB0000;'>NA</span><span>        755. NA (NA--NA) 
 #&gt; </span><span style='color: #555555;'># … with 5 more variables: `Design Effect` </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, `M (n)` </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, `% (95%
 #&gt; #   CI)` </span><span style='color: #555555;font-style: italic;'>&lt;chr&gt;</span><span style='color: #555555;'>, `Design Effect` </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span style='color: #555555;'>, `Total (n)` </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
 #&gt; &gt; surv %&gt;% tab_survey(awards, strata = stype, wide = FALSE)

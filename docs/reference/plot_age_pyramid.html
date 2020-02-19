@@ -79,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.6</span>
       </span>
     </div>
 
@@ -127,10 +127,19 @@
     <p>Plot a population pyramid (age-sex) from a dataframe.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plot_age_pyramid</span>(<span class='no'>data</span>, <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='st'>"age_group"</span>, <span class='kw'>split_by</span> <span class='kw'>=</span> <span class='st'>"sex"</span>,
-  <span class='kw'>stack_by</span> <span class='kw'>=</span> <span class='no'>split_by</span>, <span class='kw'>proportional</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>show_halfway</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>vertical_lines</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>horizontal_lines</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>pyramid</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>pal</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_age_pyramid</span>(
+  <span class='no'>data</span>,
+  <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='st'>"age_group"</span>,
+  <span class='kw'>split_by</span> <span class='kw'>=</span> <span class='st'>"sex"</span>,
+  <span class='kw'>stack_by</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>proportional</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>show_halfway</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>vertical_lines</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>horizontal_lines</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>pyramid</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>pal</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -230,7 +239,7 @@ show up as labels at top of each facet.</p>
 <span class='no'>dat2</span>[<span class='fl'>1</span>, <span class='fl'>1</span>] <span class='kw'>&lt;-</span> <span class='fl'>NA</span>
 <span class='no'>dat2</span>[<span class='fl'>2</span>, <span class='fl'>2</span>] <span class='kw'>&lt;-</span> <span class='fl'>NA</span>
 <span class='no'>dat2</span>[<span class='fl'>3</span>, <span class='fl'>3</span>] <span class='kw'>&lt;-</span> <span class='fl'>NA</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>ap</span>   <span class='kw'>&lt;-</span> <span class='fu'>plot_age_pyramid</span>(<span class='no'>dat2</span>, <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='no'>AGE</span>))</div><div class='output co'>#&gt; <span class='warning'>Warning: removing 1 observations with missing values between the sex and sex columns.</span></div><div class='img'><img src='plot_age_pyramid-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>ap</span>   <span class='kw'>&lt;-</span> <span class='fu'>plot_age_pyramid</span>(<span class='no'>dat2</span>, <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='no'>AGE</span>, <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))</div><div class='output co'>#&gt; <span class='warning'>Warning: removing 1 observations with missing values between the sex and sex columns.</span></div><div class='output co'>#&gt; <span class='warning'>Warning: removing 1 observations with missing values from the AGE column.</span></div><div class='img'><img src='plot_age_pyramid-4.png' alt='' width='700' height='433' /></div><div class='input'>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>ap</span>   <span class='kw'>&lt;-</span> <span class='fu'>plot_age_pyramid</span>(<span class='no'>dat2</span>, <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='no'>AGE</span>))</div><div class='img'><img src='plot_age_pyramid-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='no'>ap</span>   <span class='kw'>&lt;-</span> <span class='fu'>plot_age_pyramid</span>(<span class='no'>dat2</span>, <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='no'>AGE</span>, <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>))</div><div class='output co'>#&gt; <span class='warning'>Warning: 2 missing rows were removed (1 values from `AGE` and 1 values from `sex`).</span></div><div class='img'><img src='plot_age_pyramid-4.png' alt='' width='700' height='433' /></div><div class='input'>
 <span class='co'># Stratify by case definition and customize with ggplot2</span>
 <span class='no'>ap</span>   <span class='kw'>&lt;-</span> <span class='fu'>plot_age_pyramid</span>(<span class='no'>dat</span>, <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='no'>AGE</span>, <span class='kw'>split_by</span> <span class='kw'>=</span> <span class='no'>ill</span>) +
   <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span>(<span class='kw'>base_size</span> <span class='kw'>=</span> <span class='fl'>16</span>) +
@@ -256,7 +265,7 @@ show up as labels at top of each facet.</p>
 <span class='co'># empty group levels will still be displayed</span>
 <span class='no'>dat3</span> <span class='kw'>&lt;-</span> <span class='no'>dat2</span>
 <span class='no'>dat3</span>[<span class='no'>dat</span>$<span class='no'>AGE</span> <span class='kw'>==</span> <span class='st'>"[0,5)"</span>, <span class='st'>"sex"</span>] <span class='kw'>&lt;-</span> <span class='fl'>NA</span>
-<span class='fu'>plot_age_pyramid</span>(<span class='no'>dat3</span>, <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='no'>AGE</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: removing 10 observations with missing values between the sex and sex columns.</span></div><div class='img'><img src='plot_age_pyramid-8.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme_get.html'>theme_set</a></span>(<span class='no'>old</span>)</div></pre>
+<span class='fu'>plot_age_pyramid</span>(<span class='no'>dat3</span>, <span class='kw'>age_group</span> <span class='kw'>=</span> <span class='no'>AGE</span>)</div><div class='img'><img src='plot_age_pyramid-8.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme_get.html'>theme_set</a></span>(<span class='no'>old</span>)</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
