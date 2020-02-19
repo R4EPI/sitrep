@@ -1,3 +1,8 @@
+# sitrep 0.1.6
+
+ * Preferrentially use `matchmaker::match_df()` over 
+   `linelist::clean_variable_spelling()`.
+
 # sitrep 0.1.5
 
 * Import {epikit}. This replaces several small formatting functions like 
