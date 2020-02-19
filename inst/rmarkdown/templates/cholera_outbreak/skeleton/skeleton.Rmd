@@ -233,7 +233,7 @@ colnames(linelist_cleaned) <- cleaned_colnames
 ## Standardising values --------------------------------------------------------
 ## This step fixes the values so that you can read them.
 ## values like 1/0 will be recoded as "Yes" / "No" based on the dictionary
-linelist_cleaned <- matchmaker::match_df(linelist_cleaned
+linelist_cleaned <- matchmaker::match_df(linelist_cleaned,
   dict  = linelist_dict,
   from  = "option_code",
   to    = "option_name",
