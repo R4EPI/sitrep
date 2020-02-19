@@ -80,7 +80,7 @@ instead." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.6</span>
       </span>
     </div>
 
@@ -129,14 +129,36 @@ instead." />
 instead.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>tabulate_survey</span>(<span class='no'>x</span>, <span class='no'>var</span>, <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>wide</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"logit"</span>, <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>deff</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>proptotal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>rowtotals</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>coltotals</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
+    <pre class="usage"><span class='fu'>tabulate_survey</span>(
+  <span class='no'>x</span>,
+  <span class='no'>var</span>,
+  <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>wide</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"logit"</span>,
+  <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>deff</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>proptotal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>rowtotals</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>coltotals</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)
 
-<span class='fu'>tabulate_binary_survey</span>(<span class='no'>x</span>, <span class='no'>...</span>, <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>proptotal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>keep</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>invert</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>wide</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"logit"</span>, <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>deff</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>transpose</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
+<span class='fu'>tabulate_binary_survey</span>(
+  <span class='no'>x</span>,
+  <span class='no'>...</span>,
+  <span class='kw'>strata</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>proptotal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>keep</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>invert</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>pretty</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>wide</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>digits</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>method</span> <span class='kw'>=</span> <span class='st'>"logit"</span>,
+  <span class='kw'>na.rm</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>deff</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>transpose</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -239,7 +261,7 @@ If there is no stratification, the results will produce a single-row table</p></
     <p>a long or wide tibble with tabulations n, ci, and deff</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='rename_redundant.html'>rename_redundant()</a></code>, <code><a href='rename_redundant.html'>augment_redundant()</a></code></p></div>
+    <div class='dont-index'><p><code><a href='epikit-exports.html'>rename_redundant()</a></code>, <code><a href='epikit-exports.html'>augment_redundant()</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
