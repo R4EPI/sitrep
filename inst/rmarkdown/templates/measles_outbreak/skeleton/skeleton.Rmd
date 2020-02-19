@@ -65,7 +65,8 @@ required_packages <- c("knitr",       # create output docs
                        "ggplot2",     # create plots and charts
                        "patchwork",   # combine plots in one
                        "sitrep",      # MSF field epi functions
-                       "linelist",    # Functions for cleaning/standardising data
+                       "linelist",    # Functions for cleaning/standardising data/dates
+                       "matchmaker",  # dictionary-based standardization of variables
                        "incidence",   # create epicurves
                        "aweek",       # define epi weeks
                        "epitrix",     # epi helpers and tricks
@@ -210,8 +211,7 @@ the full-text value.
 
 ## MSF measles Dictionary ----------------------------------------------------------
 ## get MSF standard dictionary for measles 
-linelist_dict <- msf_dict("Measles", compact = FALSE) %>%
-  select(option_code, option_name, everything())
+linelist_dict <- msf_dict("Measles", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
 # View(linelist_dict) 
@@ -233,12 +233,13 @@ colnames(linelist_cleaned) <- cleaned_colnames
 ## Standardising values --------------------------------------------------------
 ## This step fixes the values so that you can read them.
 ## values like 1/0 will be recoded as "Yes" / "No" based on the dictionary
-
-linelist_cleaned <- clean_variable_spelling(linelist_cleaned,
-                                            wordlists = filter(linelist_dict,
-                                                               !is.na(option_code)),
-                                            spelling_vars = "data_element_shortname",
-                                            sort_by = "option_order_in_set")
+linelist_cleaned <- matchmaker::match_df(linelist_cleaned
+  dict  = linelist_dict,
+  from  = "option_code",
+  to    = "option_name",
+  by    = "data_element_shortname",
+  order = "option_order_in_set"
+)
 ```
 
 
