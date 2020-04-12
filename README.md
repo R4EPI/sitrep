@@ -27,19 +27,31 @@ at <https://r4epis.netlify.com>.** An online manual for the functions in
 
 ## Installation
 
-You can install the released version of sitrep from
-[CRAN](https://CRAN.R-project.org) with:
+The **{sitrep}** package, developed by MSF and partners, is stored on
+the website GitHub. Therefore, the procedure to install these packages
+have one extra step required.
+
+To install **sitrep** from GitHub you must first install the **drat**
+package.
 
 ``` r
+install.packages("drat", repos = "https://cran.rstudio.com")
+```
+
+Once **drat** is installed, use its `addRepo()` function to add the
+“R4EPI” project to the list of valid repositories. This command below
+will install the [latest release of the **{sitrep}**
+package](https://github.com/R4EPI/sitrep/releases) and also install any
+packages necessary for use of the templates that are not currently
+installed on your machine.
+
+``` r
+drat::addRepo("R4EPI")
 install.packages("sitrep")
 ```
 
-And the development version from [GitHub](https://github.com/) with:
-
-``` r
-# install.packages("remotes")
-remotes::install_github("R4EPI/sitrep")
-```
+If you are getting errors, check the [frequently asked
+questions](https://r4epis.netlify.com/faq/).
 
 ## Available templates
 
@@ -64,50 +76,18 @@ dir.create(output_dir)
 # view the available templates, categorized by type
 available_sitrep_templates(categorise = TRUE)
 #> $outbreak
-#> [1] "ajs_outbreak"        "cholera_outbreak"    "measles_outbreak"   
-#> [4] "meningitis_outbreak"
+#> [1] "ajs_outbreak"        "cholera_outbreak"    "measles_outbreak"    "meningitis_outbreak"
 #> 
 #> $survey
 #> [1] "mortality"   "nutrition"   "vaccination"
 
 # generate the measles outbreak template in the output directory
 check_sitrep_templates("measles_outbreak", path = output_dir)
-#> [1] "/tmp/RtmpkK0upp/sitrep_example"
+#> [1] "/var/folders/qd/dpdhfsz12wb3c7wz0xdm6dbm0000gn/T//RtmpXHUQ8P/sitrep_example"
 
 # view the contents
 list.files(output_dir, recursive = TRUE)
-#>  [1] "measles_outbreak_files/figure-docx/age_pyramid-1.png"              
-#>  [2] "measles_outbreak_files/figure-docx/bar_attack_rate_by_region-1.png"
-#>  [3] "measles_outbreak_files/figure-docx/biweekly_epicurve-1.png"        
-#>  [4] "measles_outbreak_files/figure-docx/choropleth_maps-1.png"          
-#>  [5] "measles_outbreak_files/figure-docx/epicurve_ar_cfr-1.png"          
-#>  [6] "measles_outbreak_files/figure-docx/epicurve-1.png"                 
-#>  [7] "measles_outbreak_files/figure-docx/incidence_by_case_def-1.png"    
-#>  [8] "measles_outbreak_files/figure-docx/incidence_by_gender-1.png"      
-#>  [9] "measles_outbreak_files/figure-docx/incidence_by_sex_facility-1.png"
-#> [10] "measles_outbreak_files/figure-docx/incidence_by_vax_status-1.png"  
-#> [11] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-1.png"     
-#> [12] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-10.png"    
-#> [13] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-11.png"    
-#> [14] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-12.png"    
-#> [15] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-13.png"    
-#> [16] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-14.png"    
-#> [17] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-15.png"    
-#> [18] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-16.png"    
-#> [19] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-17.png"    
-#> [20] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-18.png"    
-#> [21] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-19.png"    
-#> [22] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-2.png"     
-#> [23] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-20.png"    
-#> [24] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-3.png"     
-#> [25] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-4.png"     
-#> [26] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-5.png"     
-#> [27] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-6.png"     
-#> [28] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-7.png"     
-#> [29] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-8.png"     
-#> [30] "measles_outbreak_files/figure-docx/map_for_loop_epiweek-9.png"     
-#> [31] "measles_outbreak.md"                                               
-#> [32] "measles_outbreak.Rmd"
+#> [1] "measles_outbreak.Rmd"
 ```
 
 Please note that the ‘sitrep’ project is released with a [Contributor

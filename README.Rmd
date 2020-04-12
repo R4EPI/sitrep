@@ -32,18 +32,23 @@ standardize certain analyses.
 
 ## Installation
 
-You can install the released version of sitrep from [CRAN](https://CRAN.R-project.org) with:
+The **{sitrep}** package, developed by MSF and partners, is stored on the website GitHub. Therefore, the procedure to install these packages have one extra step required. 
+
+To install **sitrep** from GitHub you must first install the **drat** package.
 
 ``` r
+install.packages("drat", repos = "https://cran.rstudio.com")
+```
+
+Once **drat** is installed, use its `addRepo()` function to add the "R4EPI" project to the list of valid repositories.
+This command below will install the [latest release of the **{sitrep}** package](https://github.com/R4EPI/sitrep/releases) and also install any packages necessary for use of the templates that are not currently installed on your machine.
+
+```r
+drat::addRepo("R4EPI")
 install.packages("sitrep")
 ```
-
-And the development version from [GitHub](https://github.com/) with:
-
-``` r
-# install.packages("remotes")
-remotes::install_github("R4EPI/sitrep")
-```
+ 
+If you are getting errors, check the [frequently asked questions](https://r4epis.netlify.com/faq/).
 
 ## Available templates
 
