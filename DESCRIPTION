@@ -73,7 +73,8 @@ Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
     vdiffr,
-    covr
+    covr, 
+    summarytools
 Remotes:
   reconhub/linelist,
   R4EPI/apyramid,

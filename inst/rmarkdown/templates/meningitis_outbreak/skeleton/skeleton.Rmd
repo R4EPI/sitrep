@@ -519,6 +519,10 @@ summary(linelist_cleaned)
 ## you can run this for any column -- just replace the column name
 unique(linelist_cleaned$patient_origin) 
 
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
+# summarytools::dfSummary(linelist_cleaned) %>%
+#   summarytools::view()
 ```
 
 
