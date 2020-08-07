@@ -593,7 +593,8 @@ This chunk will help you set up and clean your date variables.
 ## If not, comment this section out and use the below.
 
 ## make sure all date variables are formatted as dates 
-DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
+DATEVARS <- linelist_dict %>% 
+  filter(data_element_valuetype == "DATE") %>%
   filter(data_element_shortname %in% names(linelist_cleaned)) %>% 
   ## filter to match the column names of your data
   pull(data_element_shortname) 
