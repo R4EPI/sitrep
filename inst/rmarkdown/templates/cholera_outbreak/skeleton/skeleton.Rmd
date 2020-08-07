@@ -176,7 +176,7 @@ If you didn't use the standardized data dictionary, go to read_nonDHIS_data.
 
 ## Excel file ------------------------------------------------------------------
 ## For a specific sheet, use "which"
-# linelist_raw <- rio::import(here::here("linelist.xlsx"), which = "Sheet1")
+# linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), which = "Sheet1")
 
 
 
@@ -186,7 +186,7 @@ If you didn't use the standardized data dictionary, go to read_nonDHIS_data.
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
 
-# linelist_raw <- xl.read.file(here::here("linelist.xlsx"),
+# linelist_raw <- xl.read.file(here::here("Data", "linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 ``` 
@@ -256,13 +256,13 @@ If you have already loaded data from DHIS2, go to read_population_data.
 
 ## Excel file ------------------------------------------------------------------
 ## to read in a specific sheet use "which"
-# linelist_raw <- rio::import(here::here("linelist.xlsx"), which = "Sheet1")
+# linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), which = "Sheet1")
 
 
 
 ## Excel file -- Specific range ------------------------------------------------
 ## you can specify a range in an excel sheet.
-# linelist_raw <- rio::import(here::here("linelist.xlsx"), range = "B2:J102")
+# linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), range = "B2:J102")
 
 
 
@@ -272,18 +272,18 @@ If you have already loaded data from DHIS2, go to read_population_data.
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
 
-# linelist_raw <- xl.read.file(here::here("linelist.xlsx"),
+# linelist_raw <- xl.read.file(here::here("Data", "linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
 
 ## CSV file --------------------------------------------------------------------
-# linelist_raw <- rio::import(here::here("linelist.csv"))
+# linelist_raw <- rio::import(here::here("Data", "linelist.csv"))
 
 
 
 ## Stata data file -------------------------------------------------------------
-# linelist_raw <- rio::import(here::here("linelist.dat"))
+# linelist_raw <- rio::import(here::here("Data", "linelist.dat"))
 ```
 
 
@@ -397,7 +397,7 @@ If you have more specific proportions, you can use them below.
 ## This step reads in your population data from Excel.
 ## You may need to rename your columns.
 
-# population_data <- rio::import(here::here("population.xlsx"), which = "Sheet1")
+# population_data <- rio::import(here::here("Data", "population.xlsx"), which = "Sheet1")
 
 ## repeat preparation steps as appropriate
 
@@ -482,7 +482,7 @@ linelist.
 ## You may need to rename your columns.
 
 ## to read in a specific sheet use "which"
-# lab_data <- rio::import(here::here("labresults.xlsx"), which = "Sheet1")
+# lab_data <- rio::import(here::here("Data", "labresults.xlsx"), which = "Sheet1")
 
 ## repeat preparation steps as appropriate
 ## make sure your unique ID variable name matches!
@@ -948,7 +948,7 @@ This automatically names your file "linelist_cleaned_DATE", where DATE is the
 current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r save_cleaned_data}
-# rio::export(linelist_cleaned, str_glue("linelist_cleaned_{Sys.Date()}.xlsx"))
+# rio::export(linelist_cleaned, here::here("Data", str_glue("linelist_cleaned_{Sys.Date()}.xlsx")))
 ```
 
 
