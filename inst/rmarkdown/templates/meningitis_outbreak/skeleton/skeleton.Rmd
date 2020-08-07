@@ -791,7 +791,8 @@ linelist_cleaned <- linelist_cleaned %>%
 #   mutate(patient_origin = case_when(
 #     patient_origin == "Valliages D"       ~ "Village D",
 #     patient_origin == "VillageD"          ~ "Village D",
-#     patient_origin == "Town C"            ~ "Village C"
+#     patient_origin == "Town C"            ~ "Village C",
+#     TRUE ~ as.character(patient_origin))
 #   ))
 
 
