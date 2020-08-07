@@ -415,7 +415,7 @@ If you have more specific proportions, you can use them below.
 # population_data_region <- gen_population(
 #   groups = c("Village A", "Village B", "Village C", "Village D"),
 #   counts = c(10000, 20000, 15000, 5000),
-#   strata = NULL) %>%               # do not stratify by gender
+#   strata = NULL) %>%               # do not stratify
 #   rename(patient_origin = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
 #          population = n)
 
@@ -459,7 +459,7 @@ population_data_age_months <- gen_population(total_pop = 5000,
 population_data_region <- gen_population(total_pop = 5000,         # set the total population
   groups = c("Village A", "Village B", "Village C", "Village D"),  # set the groups
   proportions = c(0.221, 0.174, 0.355, 0.245),                     # set the proportions for each group
-  strata = NULL) %>%               # do not stratify by gender
+  strata = NULL) %>%               # do not stratify
   rename(patient_origin = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
          population = n)
 
