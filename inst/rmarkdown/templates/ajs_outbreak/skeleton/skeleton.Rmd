@@ -744,10 +744,8 @@ includes numeric, factor, and character vectors.
 ## You can adapt this step to create other calculated variables
 
 ## create number of days under observation
-linelist_cleaned <- mutate(linelist_cleaned, 
-                           obs_days = as.numeric(date_of_exit - 
-                                                   date_of_consultation_admission))
-
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
 
 
 ## Factor (categorical) variables ----------------------------------------------
