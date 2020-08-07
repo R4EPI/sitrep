@@ -1282,11 +1282,12 @@ by age group. If you have no deaths reported, the table will not be useful.
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
   case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
+  ## fill in 0 where category levels not represented (to ensure all levels show)
   tidyr::complete(age_group, 
                   fill = list(deaths = 0, 
                               population = 0, 
                               cfr = 0, 
-                              ci = 0)) %>% # Ensure all levels are represented
+                              ci = 0)) %>% 
   rename("Age group" = age_group, 
          "Deaths" = deaths, 
          "Cases" = population, 
