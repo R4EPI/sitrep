@@ -2186,8 +2186,11 @@ ar <- mutate(ar,
                                          breakers = breakers))
 
 
+## define the last four weeks available in your dataset
+which_weeks <- tail(unique(cases$epiweek), n = 4)
+
 # go through each epiweek, fiter and plot the data
-for (week in unique(cases$epiweek)) {
+for (week in which_weeks) {
   this_ar <- filter(ar, epiweek == week)
   
   ## map 
