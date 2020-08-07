@@ -1981,7 +1981,7 @@ Consider facet wrapping by a larger unit if you have many regions (eg if you
 have patients from 10+ villages, you may want to show your tables by health
 zone)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Attack rage per 10,000 population by region 
+Attack rate per 10,000 population by region 
 
 ```{r attack_rate_by_region, warning = FALSE}
 
