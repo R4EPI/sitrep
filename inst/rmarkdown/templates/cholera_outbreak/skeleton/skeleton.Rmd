@@ -1845,6 +1845,7 @@ linelist_cleaned %>%
              col_total = TRUE,
              row_total = TRUE) %>% 
   select(-variable) %>%
+  rename("Week" = value) %>%
   rename_redundant("%" = proportion) %>%
   augment_redundant(" (n)" = " n$") %>%
   kable(digits = 1)
