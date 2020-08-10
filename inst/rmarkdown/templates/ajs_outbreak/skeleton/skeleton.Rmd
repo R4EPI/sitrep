@@ -1076,6 +1076,28 @@ This chunk creates an age/sex pyramid of your cases.
 ```
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// age_pyramid_months \\\
+--------------------------------------------------------------------------------
+
+This chunk creates an age/sex pyramid of your cases under 2 years of age, by 
+month groupings. Uncomment the below code to use
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r age_pyramid_months, warning=FALSE}
+# ## plot age pyramid by month groups, for observations under 2 years
+# filter(linelist_cleaned, age_years < 2) %>%
+#   plot_age_pyramid(age_group = "age_group_mon",
+#                    split_by = "sex") +
+#                   # stack_by = "case_def") +
+#   labs(y = "Cases (n)", x = "Age group (months)") + # change axis  labels (nb. x/y flip)
+#   theme(legend.position = "bottom",     # move legend to bottom
+#         legend.title = element_blank(), # remove title
+#         text = element_text(size = 18)  # change text size
+#        )
+```
+
+
 
 Of the patients, `r fmt_count(linelist_cleaned, patient_facility_type == "Outpatient")` were seen as outpatients and `r fmt_count(linelist_cleaned, patient_facility_type == "Inpatient")` were inpatients. Among inpatients, the median number of days admitted was `r median(linelist_cleaned$obs_days, na.rm = T)`, 
 with a range between `r min(linelist_cleaned$obs_days, na.rm = T)` and `r max(linelist_cleaned$obs_days, na.rm = T)` days.
