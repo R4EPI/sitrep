@@ -1485,7 +1485,7 @@ inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = "Monday week"
 
 
 # plot your epicurve
-basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
+basic_curve <- plot(inc_week_7, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_7)) + 
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   # add labels to axes and below chart
   epicurve_labels +
@@ -1525,7 +1525,7 @@ inc_week_14 <- incidence(linelist_cleaned$date_of_onset, interval = "2 Monday we
 
 
 # plot your epicurve
-plot(inc_week_14, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_14)) + 
+plot(inc_week_14, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_14)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   epicurve_labels +
@@ -1577,7 +1577,7 @@ inc_week_7_sex_fac <- linelist_cleaned %>%
 
 
 
-plot(inc_week_7_sex_fac, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_sex_fac)) + 
+plot(inc_week_7_sex_fac, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_7_sex_fac)) + 
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   epicurve_labels +
   epicurve_theme
@@ -1597,7 +1597,7 @@ defined case definition variable.
 inc_week_7_casedef <- incidence(linelist_cleaned$date_of_onset, 
                                 interval = "Monday week", 
                                 groups = linelist_cleaned$case_def)
-plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
+plot(inc_week_7_casedef, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
   scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
   # add labels to axes and below chart
   epicurve_labels +
@@ -1621,7 +1621,7 @@ inc_week_7_vax <- with(linelist_cleaned,
                                  groups = previously_vaccinated)
                       )
 
-plot(inc_week_7_vax, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_vax)) + 
+plot(inc_week_7_vax, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_7_vax)) + 
   scale_y_continuous(expand = c(0,0)) +  # set origin for axes
   # add labels to axes and below chart
   epicurve_labels +
