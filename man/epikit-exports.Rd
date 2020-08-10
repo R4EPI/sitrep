@@ -22,7 +22,45 @@
 \alias{rename_redundant}
 \alias{unite_ci}
 \title{Exported functions from epikit}
-\format{An object of class \code{function} of length 1.}
+\format{
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+}
 \usage{
 age_categories
 
@@ -67,13 +105,13 @@ Exported functions from epikit
 }
 \seealso{
 \code{\link[epikit:age_categories]{epikit::age_categories()}}, \code{\link[epikit:attack_rate]{epikit::attack_rate()}},
-\code{\link[epikit:augment_redundant]{epikit::augment_redundant()}}, \code{\link[epikit:case_fatality_rate]{epikit::case_fatality_rate()}},
-\code{\link[epikit:case_fatality_rate_df]{epikit::case_fatality_rate_df()}}, \code{\link[epikit:dots_to_charlist]{epikit::dots_to_charlist()}},
+\code{\link[epikit:rename_redundant]{epikit::augment_redundant()}}, \code{\link[epikit:attack_rate]{epikit::case_fatality_rate()}},
+\code{\link[epikit:attack_rate]{epikit::case_fatality_rate_df()}}, \code{\link[epikit:dots_to_charlist]{epikit::dots_to_charlist()}},
 \code{\link[epikit:fac_from_num]{epikit::fac_from_num()}}, \code{\link[epikit:find_breaks]{epikit::find_breaks()}}, \code{\link[epikit:fmt_ci]{epikit::fmt_ci()}},
-\code{\link[epikit:fmt_ci_df]{epikit::fmt_ci_df()}}, \code{\link[epikit:fmt_count]{epikit::fmt_count()}}, \code{\link[epikit:fmt_pci]{epikit::fmt_pci()}},
-\code{\link[epikit:fmt_pci_df]{epikit::fmt_pci_df()}}, \code{\link[epikit:group_age_categories]{epikit::group_age_categories()}},
-\code{\link[epikit:merge_ci_df]{epikit::merge_ci_df()}}, \code{\link[epikit:merge_pci_df]{epikit::merge_pci_df()}},
-\code{\link[epikit:mortality_rate]{epikit::mortality_rate()}},
+\code{\link[epikit:fmt_ci]{epikit::fmt_ci_df()}}, \code{\link[epikit:fmt_count]{epikit::fmt_count()}}, \code{\link[epikit:fmt_ci]{epikit::fmt_pci()}},
+\code{\link[epikit:fmt_ci]{epikit::fmt_pci_df()}}, \code{\link[epikit:age_categories]{epikit::group_age_categories()}},
+\code{\link[epikit:unite_ci]{epikit::merge_ci_df()}}, \code{\link[epikit:unite_ci]{epikit::merge_pci_df()}},
+\code{\link[epikit:attack_rate]{epikit::mortality_rate()}},
 \code{\link[epikit:rename_redundant]{epikit::rename_redundant()}}, \code{\link[epikit:unite_ci]{epikit::unite_ci()}}
 }
 \keyword{datasets}
