@@ -949,6 +949,57 @@ obs_start <- as.Date(first_week)
 ```
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// duplicates \\\
+--------------------------------------------------------------------------------
+
+This chunk removes duplicate cases based on case_number, sex and age_group. 
+(you can edit to use whichever unique identifiers you think relevant)
+
+There are two options for this. Option 1 simply keeps the first occurence of a 
+duplicated case. 
+Option 2 gives you the ability to create a TRUE/FALSE variable to flag rows that
+are duplicated - giving you more flexibility around browsing which ones to drop. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r duplicates}
+
+## option 1: only keep the first occurence of duplicate case 
+
+linelist_cleaned <- linelist_cleaned %>% 
+  ## find duplicates based on case number, sex and age group 
+  ## only keep the first occurence 
+  distinct(case_number, sex, age_group, .keep_all = TRUE)
+
+
+# ## option 2: create flagging variables for duplicates (then use to browse)
+# 
+# linelist_cleaned <- linelist_cleaned %>% 
+#   ## choose which variables to use for finding unique rows 
+#   group_by(case_number, sex, age_group) %>% 
+#   mutate(
+#     ## get the number of times duplicate occurs 
+#     num_dupes = n(), 
+#     duped = if_else(num_dupes > 1 , TRUE, FALSE)
+#   )
+# 
+# ## browse duplicates based on flagging variables 
+# linelist_cleaned %>% 
+#   ## only keep rows that are duplicated
+#   filter(duped) %>% 
+#   ## arrange by variables of interest 
+#   arrange(case_number, sex, age_group) %>% 
+#   View()
+# 
+# ## filter duplicates to only keep the row with the earlier entry 
+# linelist_cleaned %>% 
+#   ## choose which variables to use for finding unique rows 
+#   group_by(case_number, sex, age_group) %>% 
+#   ## sort to have the earliest date by person first
+#   arrange(date_of_consultation_admission) %>% 
+#   ## only keep the earliest row 
+#   slice(1)
+```
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// save_cleaned_data \\\
