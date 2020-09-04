@@ -180,11 +180,20 @@ add_weights_cluster <- function(x, cl,
 
 
   # check if there are duplicate cluster names (i.e. counted twice) - throws error
-  dup_clus <- cl[duplicated(cl[,clus_id_cl]) , clus_id_cl]
+  dup_clus <- cl[duplicated(cl[ , clus_id_cl]) , clus_id_cl]
 
   if (nrow(dup_clus) > 0) {
     cll   <- match.call()
     stop(glue::glue("Cluster names are duplicated in {clus_id_cl} variable of {cll[['cl']]} dataset"))
+  }
+
+  # check how many cluster names in the study data match cluster counts data
+  matching_clusters <- unique(x[[clus_id_x]][which(!x[[clus_id_x]] %in% cl[[clus_id_cl]])])
+
+  if (length(matching_clusters) > 0) {
+    cll <- match.call()
+    warning(glue::glue("The following cluster names in the {clus_id_x} variable are not in the {cll[['cl']]} dataset: ",
+                       glue::glue_collapse(matching_clusters, sep = ",")))
   }
 
 
