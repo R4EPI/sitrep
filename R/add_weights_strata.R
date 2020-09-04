@@ -59,6 +59,7 @@ add_weights_strata <- function(x, p, ...,
                                surv_weight = "surv_weight",
                                surv_weight_ID = "surv_weight_ID") {
 
+  ## define vars and throw error if not existant
   pop <- tidyselect::vars_select(names(p), {{population}}, .strict = FALSE)
   if (length(pop) == 0) {
     cll   <- match.call()
