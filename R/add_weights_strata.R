@@ -64,7 +64,7 @@ add_weights_strata <- function(x, p, ...,
   if (length(pop) == 0) {
     cll   <- match.call()
     ppltn <- rlang::as_name(rlang::enquo(population))
-    stop(glue::glue("{ppltn} is not one of the columns of {cll[['p']]}"))
+    stop(glue::glue("{ppltn} is not one of the columns of {cll[['p']]}, check spelling"))
   } else {
     population      <- rlang::ensym(pop)
   }
