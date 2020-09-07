@@ -77,9 +77,9 @@ Suggests:
 Remotes:
   reconhub/linelist,
   R4EPI/apyramid,
-  R4EPI/epibuffet@znk-fix-15,
+  R4EPI/epibuffet,
   R4EPI/epidict,
-  R4EPI/epikit@znk-use-name-repair
+  R4EPI/epikit
 Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
