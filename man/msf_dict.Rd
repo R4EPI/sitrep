@@ -6,7 +6,13 @@
 \alias{msf_dict}
 \alias{gen_data}
 \title{Functions re-expored from {epidict}}
-\format{An object of class \code{function} of length 1.}
+\format{
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+
+An object of class \code{function} of length 1.
+}
 \usage{
 msf_dict_survey
 
@@ -18,7 +24,7 @@ gen_data
 Functions re-expored from {epidict}
 }
 \seealso{
-Dictionaries: \code{\link[epidict:msf_dict]{epidict::msf_dict()}}, \code{\link[epidict:msf_dict_survey]{epidict::msf_dict_survey()}}\cr
+Dictionaries: \code{\link[epidict:msf_dict]{epidict::msf_dict()}}, \code{\link[epidict:msf_dict]{epidict::msf_dict_survey()}}\cr
 Generator: \code{\link[epidict:gen_data]{epidict::gen_data()}}
 }
 \keyword{datasets}
