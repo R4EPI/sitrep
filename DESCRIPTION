@@ -78,8 +78,7 @@ Remotes:
   reconhub/linelist,
   R4EPI/apyramid,
   R4EPI/epibuffet,
-  R4EPI/epidict,
-  R4EPI/epikit
+  R4EPI/epidict
 Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
