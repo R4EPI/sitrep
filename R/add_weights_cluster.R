@@ -186,12 +186,13 @@ add_weights_cluster <- function(x, cl,
   }
 
   # check how many cluster names in the study data match cluster counts data
-  matching_clusters <- unique(x[[clus_id_x]][which(!x[[clus_id_x]] %in% cl[[clus_id_cl]])])
+  non_matching_clusters <- !x[[clus_id_x]] %in% cl[[clus_id_cl]]
 
-  if (length(matching_clusters) > 0) {
+  if (any(non_matching_clusters)) {
+    nm_cluster_names <- unique(x[[clus_id_x]][non_matching_clusters])
     cll <- match.call()
     warning(glue::glue("The following cluster names in the {clus_id_x} variable are not in the {cll[['cl']]} dataset: ",
-                       glue::glue_collapse(matching_clusters, sep = ",")))
+                       glue::glue_collapse(nm_cluster_names, sep = ",")))
   }
 
 
