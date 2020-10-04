@@ -266,7 +266,7 @@ colnames(study_data_cleaned) <- cleaned_colnames
 
 ## create a unique identifier by combining indeces of the two levels 
 # study_data_cleaned <- study_data_cleaned %>% 
-#   mutate(uid = str_c({index}, "_", {index_y}))
+#   mutate(uid = str_glue("{index}_{index_y}"))
 
 ```
 
