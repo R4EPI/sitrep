@@ -85,21 +85,21 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 /// read_fake_data \\\
 --------------------------------------------------------------------------------
 To play with this template, you can create fake data based off data
-dictionary used for Dharma.
+dictionary used for Kobo.
 Comment out this chunk when you are using real data.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_fake_data, warning = FALSE, message = FALSE}
 
 
-## generates MSF standard dictionary for Dharma 
+## generates MSF standard dictionary for Kobo 
 study_data_dict <- msf_dict_survey("Mortality")
 
 
 ## generates a fake dataset for use as an example in this template
 ## this dataset already has household and individual levels merged
 study_data_raw <- gen_data(dictionary = "Mortality",
-                           varnames   = "column_name",
+                           varnames   = "name",
                            numcases   = 1000)
 ```
 
@@ -108,26 +108,26 @@ study_data_raw <- gen_data(dictionary = "Mortality",
 You should load your data as a linelist, where each row is one person. 
 
 There are two options for reading data:
-- Your data is from Dharma: use read_DHARMA_data
-- Your data is NOT FROM Dharma and in Excel, CSV, or Stata format: 
-use read_nonDHARMA_data
+- Your data is from Kobo: use read_kobo_data
+- Your data is NOT FROM Kobo and in Excel, CSV, or Stata format: 
+use read_non_kobo_data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// read_DHARMA_data \\\
+/// read_kobo_data \\\
 --------------------------------------------------------------------------------
-This section is for data collected with Dharma.
+This section is for data collected with Kobo. 
 It uses the standardized MSF data dictionary.
 
-If you didn't use the standardized data dictionary, go to read_nonDHARMA_data.
+If you didn't use the standardized data dictionary, go to read_non_kobo_data.
 
 Generally, survey datasets will have two levels:
 One for household and one for individual (to combine see merge_data_levels).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r read_DHARMA_data, warning = FALSE, message = FALSE}
+```{r read_kobo_data, warning = FALSE, message = FALSE}
 
 ### Read in data ---------------------------------------------------------------
 
@@ -136,11 +136,11 @@ One for household and one for individual (to combine see merge_data_levels).
 
 ## read in household data sheet
 # study_data_hh <- rio::import(here::here("mortality_survey.xlsx"), 
-#                               which = "Level 0 Named", na = ".")
+#                               which = "mortality_survey_erb", na = "")
 
 ## read in individual level data sheet
 # study_data_indiv <- rio::import(here::here("mortality_survey.xlsx", 
-#                               which = "Level 1 Named", na = ".")
+#                               which = "r1", na = "")
 
 
 ## Excel file with password ----------------------------------------------------
@@ -150,23 +150,23 @@ One for household and one for individual (to combine see merge_data_levels).
 # library(excel.link)
 
 # study_data_hh <- xl.read.file(here::here("mortality_survey.xlsx"),
-#                              xl.sheet = "Level 0 Named",
+#                              xl.sheet = "mortality_survey_erb",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
 # study_data_indiv <- xl.read.file(here::here("mortality_survey.xlsx"),
-#                              xl.sheet = "Level 1 Named",
+#                              xl.sheet = "r1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 ```
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// read_nonDHARMA_data \\\
+/// read_non_kobo_data \\\
 --------------------------------------------------------------------------------
-This section is for data not from Dharma. 
-If you have already loaded data from Dharma, go to merge_data_levels
+This section is for data not from Kobo.  
+If you have already loaded data from Kobo, go to merge_data_levels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r read_nonDHIS_data, warning = FALSE, message = FALSE}
+```{r read_non_kobo_data, warning = FALSE, message = FALSE}
 
 ## Excel file ------------------------------------------------------------------
 ## to read in a specific sheet use "which"
@@ -200,41 +200,44 @@ these levels will need to be merged in to one dataset.
 
 This is done using a unique identifier for the household 
 (which has to be repeated for each row in the individuals dataset) 
-For a Dharma dataset this variable is "fact_0_id".
+For a Kobo dataset this variable is "_index" at the household level, which 
+matches the "_parent_index" at the individual level.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r merge_data_levels}
 
-## make sure each individual has the ID 
-## (equivalent of excel drag downwards to fill blanks)
-# study_data_indiv <- study_data_indiv %>% fill(fact_0_id)
-
 ## join the individual and household data to form a complete data set
-#study_data_raw <- left_join(study_data_hh, study_data_indiv, by = "fact_0_id")
+#study_data_raw <- left_join(study_data_hh, study_data_indiv, by = c("_index" = "_parent_index"))
+
 ```
 
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// prep_DHARMA_data \\\
+/// prep_kobo_data \\\
 --------------------------------------------------------------------------------
 This section is to import your data dictionary and standardise variable names. 
 
-The Dharma data dictionary has variable names
-in the column_name column. Possible values for each variable are
-specified in choice_code and choice_name columns. 
-Code has the shortened value and Name has the full-text value.
+The Kobo data dictionary has variable names
+in the "name" column of the survey sheet. Possible values for each variable are
+specified in choices sheet. 
+In the choices tab, "name" has the shortened value and the "label::english" and 
+"label::french" columns have the appropriate long versions. 
+
+Using the msf_dict_survey function to import a Kobo dictionary excel file will 
+re-format this for you so it can be used easily to recode. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
-```{r prep_DHARMA_data}
+```{r prep_kobo_data}
 
 ## Data dictionary -------------------------------------------------------------
 
 
-## read in data dictionary
-# study_data_dict <- rio::import("mortality_survey.xlsx",
-#                                which = "Data Dictionary")
+## read in a kobo data dictionary
+## important to specify template is FALSE (otherwise you get the generic dict)
+# study_data_dict <- msf_dict_survey(name = here::here("mortality_survey_dict.xlsx"), 
+#                                    template = FALSE)
 
 ## look at the dictionary by uncommenting the line below
 # View(study_data_dict) 
@@ -247,19 +250,24 @@ Code has the shortened value and Name has the full-text value.
 ## make a copy of your orginal dataset and name it study_data_cleaned
 study_data_cleaned <- study_data_raw
 
+## Sometimes you want to rename specific variables
+## For example we want to add details to violance_natur_other
+## This is because otherwise it will be duplicated after we clean names below
+## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
+## You can add multiple column name recodes by simply separating them with a comma
+study_data_cleaned <- rename(study_data_cleaned,
+                             violence_nature_other_details    =  violence_nature_other)
+
 ## define clean variable names using clean_labels from the epitrix package. 
 cleaned_colnames <- epitrix::clean_labels(colnames(study_data_cleaned))
 
 ## overwrite variable names with defined clean names
 colnames(study_data_cleaned) <- cleaned_colnames 
 
-## Some of the names outputed from Dharma are very long
-## In this example, we rename variables for "sex" and "age_in_years"
-## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
+## create a unique identifier by combining indeces of the two levels 
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate(uid = str_c({index}, "_", {index_y}))
 
-study_data_cleaned <- rename(study_data_cleaned, 
-                             sex          = q4_q6_sex,
-                             age_in_years = q155_q5_age_year)
 ```
 
 
@@ -277,7 +285,7 @@ from proportions.
 
 Below we show basic examples for reading data and entering counts - as well as 
 a more complex version using proportions to get the age/sex breakdown in 
-two seperate regions. (Useful if doing a stratified survey)
+two separate regions. (Useful if doing a stratified survey)
 
 Comment out the options you are not using.
 
@@ -285,7 +293,7 @@ Make sure that the groups fit those in your survey data!
 
 Age group proportions are from the OCBA population denominators tool v1. The
 proportions below are for sub-Saharan Africa in 2019. They are only an estimate!
-If you have more specific proportions, you can use them below.
+If you have more specific proportions/data, you can use them below.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
@@ -333,7 +341,7 @@ population_data_age_district_a <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "District A")           # add a column to identify region 
+  mutate(health_district = "District_A")           # add a column to identify region 
 
 
 ## generate population data by age groups in years for district B
@@ -344,7 +352,7 @@ population_data_age_district_b <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "District B")           # add a column to identify region 
+  mutate(health_district = "District_B")           # add a column to identify region 
 
 
 
@@ -374,8 +382,11 @@ each cluster.
 
 ```{r cluster_counts}
 
-cluster_counts <- tibble(cluster = c("Village A", "Village B", "Village C", "Village D"), 
-                         households = c(700, 400, 600, 500))
+cluster_counts <- tibble(cluster = c("Village_1", "Village_2", "Village_3", "Village_4", 
+                                     "Village_5", "Village_6", "Village_7", "Village_8",
+                                     "Village_9", "Village_10"), 
+                         households = c(700, 400, 600, 500, 300, 
+                                        800, 700, 400, 500, 500))
 ```
 
 
@@ -404,13 +415,14 @@ summary(study_data_raw)
 
 ## view unique values contained in variables 
 ## you can run this for any column -- just replace the column name
-unique(study_data_raw$q4_q6_sex)
+unique(study_data_raw$sex)
 
 ## check for logical date inconsistencies 
 ## for example check deaths before births and return corresponding IDs
+## unique ID is generated in the prepare_kobo_data chunk (need to uncomment)
 study_data_raw %>% 
-  filter(q137_q35_died_date < q88_q33_born_date) %>% 
-  select("fact_0_id")
+  filter(death_date < birthday_date) %>% 
+  select("uid")
 ```
 
 
@@ -430,7 +442,7 @@ The chunks are:
 - factor_vars        -- helps clean factor variables
 - obvservation_time  -- calculates person-time based on start/end cause dates
 - remove_unused_data -- dropping unused rows/columns
-- survey_weights     -- claculating survey weights according to study design
+- survey_weights     -- calculating survey weights according to study design
 - survey_design      -- create a survey object for weighted analysis 
 
 You must adapt this section according to your data!
@@ -447,15 +459,15 @@ This chunk will help you set up and clean your date variables.
 
 ```{r standardise_dates}
 
-## DHARMA standard data --------------------------------------------------------
-## If you got your data from Dharma, use this portion of the code.
+## Kobo standard data --------------------------------------------------------
+## If you got your data from Kobo, use this portion of the code.
 ## If not, comment this section out and use the below.
 
 ## make sure all date variables are formatted as dates 
-DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
-  filter(column_name %in% names(study_data_cleaned)) %>% 
+DATEVARS <- filter(study_data_dict, type == "date") %>% 
+  filter(name %in% names(study_data_cleaned)) %>% 
   ## filter to match the column names of your data
-  pull(column_name) # select date vars
+  pull(name) # select date vars
 
 ## change to dates 
 ## use the guess_dates() function to make a first pass at date variables.
@@ -464,8 +476,8 @@ study_data_cleaned <- study_data_cleaned %>%
             error_tolerance = 0.5)
 
 
-## Non-DHARMA data -------------------------------------------------------------
-## Use this section if you did not have Dharma data. 
+## Non-Kobo data -------------------------------------------------------------
+## Use this section if you did not have Kobo data. 
 
 ## use the guess_dates() function to make a first pass at date variables.
 # study_data_cleaned <- study_data_cleaned %>%
@@ -491,27 +503,24 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ## set specific unrealistic dates to NA
 # study_data_cleaned <- mutate(study_data_cleaned,
-#                              date_of_onset < as.Date("2017-11-01") ~ as.Date(NA), 
-#                              date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+#                              death_date < as.Date("2017-11-01") ~ as.Date(NA), 
+#                              death_date == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
 
 ## set inappropriate dates to NA based on rules 
 ## e.g. arrivals before start, departures departures after end
 # study_data_cleaned <- study_data_cleaned %>%
-#   mutate(q114_q16_date_arrival_camp = ifelse(q114_q16_date_arrival_camp < recall_start, 
+#   mutate(arrived_date = ifelse(arrived_date < recall_start, 
 #                                              as.Date(NA), 
-#                                              q114_q16_date_arrival_camp),
-#          q41_q25_hh_arrive_date = ifelse(q41_q25_hh_arrive_date < recall_start, 
-#                                          as.Date(NA),  
-#                                          q41_q25_hh_arrive_date),
-#          q88_q33_born_date = ifelse(q88_q33_born_date < recall_start, 
+#                                              arrived_date),
+#          birthday_date = ifelse(birthday_date < recall_start, 
 #                                     as.Date(NA),
-#                                     q88_q33_born_date),
-#          q45_q29_hh_leave_date = ifelse(q45_q29_hh_leave_date > recall_end, 
+#                                     birthday_date),
+#          left_date = ifelse(left_date > recall_end, 
 #                                         as.Date(NA),
-#                                         q45_q29_hh_leave_date),
-#          q137_q35_died_date = ifelse(q137_q35_died_date > recall_end,
+#                                         left_date),
+#          death_date = ifelse(death_date > recall_end,
 #                                      as.Date(NA),
-#                                      q137_q35_died_date)
+#                                      death_date)
 #          )
 ```
 
@@ -532,19 +541,24 @@ This chunk will help you set up your age group variable.
 
 ## make sure age is an integer 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(age_in_years = as.integer(age_in_years))
+  mutate(age_years = as.integer(age_years))
 
 ## create an age group variable by specifying categorical breaks (of years)
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(age_group = age_categories(age_in_years, 
+  mutate(age_group = age_categories(age_years, 
                                     breakers = c(0, 3, 15, 30, 45)
                                     ))
 
 ## create age group variable for under 2 years based on months
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(age_group_mon = age_categories(study_data_cleaned$q156_q3_age_month, 
+  mutate(age_group_mon = if_else(
+    ## if months <= 24 then calculated age groups 
+    age_months_calc <= 24, 
+    age_categories(study_data_cleaned$age_months_calc, 
                                         breakers = c(0, 6, 9, 12, 24), 
-                                        ceiling = TRUE))
+                                        ceiling = TRUE), 
+    ## otherwise set new variable to missing
+    factor(NA)))
 
 
 ## alternatively, create an age group variable specify a sequence
@@ -581,34 +595,34 @@ This chunk will help you clean factor variables.
 ## create a new variable called consent 
 ## where the old one is yes place TRUE in the new one
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(consent = q49_cq3 == "Yes")
-
+  mutate(consent = consent == "yes")
 
 
 ## Change a yes/no variable in to TRUE/FALSE
 ## create a new variable called died 
 ## where the old one is yes place TRUE in the new one
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(died = q136_q34_died == "Yes")
+  mutate(died = died == "yes")
 
 ## Set the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(cause_of_death = factor(q138_q36_died_cause,
-                                 levels = c("Malaria/fever", "Diarrhoea", "Respiratory",
-                                            "Trauma/accident", "Pregnancy-related", 
-                                            "Violence", "Outbreak disease (specify)", 
-                                            "Malnutrition", "Unknown", "Other (specify)")))
+  mutate(cause = factor(cause,
+                        levels = c("malaria_fever", "diarrhoea", 
+                                   "respiratory_infection", "trauma_accident", 
+                                   "during_pregnancy", "during_after_delivery",
+                                   "violence", "dont_know", "other")))
+
 ## explicitly replace NA of a factor
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(cause_of_death = fct_explicit_na(cause_of_death, na_level = "Not Applicable"))
+  mutate(cause = fct_explicit_na(cause, na_level = "Not Applicable"))
 
-
-## replace missing values in Dharma multi-choice questions to "" so that we can
+## if you had a multi-choice question and the missing values were given as a "."
+## replace missing values in multi-choice questions to "" so that we can
 ## filter them out later.
-study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(.vars = vars(contains("symptom")), # all variables that contain the word "symptom"
-            .funs = ~fct_explicit_na(as.character(.), "") # replace missing values with "" 
-           ) 
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate_at(.vars = vars(contains("violence")), # all variables that contain the word "violence"
+#             .funs = ~fct_explicit_na(as.character(.), "") # replace missing values with "" 
+#            ) 
 ```
 
 
@@ -638,9 +652,8 @@ if applicable (e.g. departures, deaths)
 study_data_cleaned <- study_data_cleaned %>%
   ## choose earliest date entered in survey
   ## from births, household arrivals, and camp arrivals 
-  find_start_date("q88_q33_born_date",
-                  "q41_q25_hh_arrive_date",
-                  "q114_q16_date_arrival_camp",
+  find_start_date("birthday_date",
+                  "arrived_date",
                   period_start = "recall_start",
                   period_end   = "recall_end",
                   datecol      = "startdate",
@@ -648,17 +661,17 @@ study_data_cleaned <- study_data_cleaned %>%
                  ) %>%
   ## choose earliest date entered in survey
   ## from camp departures, death and end of the study
-  find_end_date("q45_q29_hh_leave_date",
-                "q137_q35_died_date",
+  find_end_date("left_date",
+                "death_date",
                 period_start = "recall_start",
                 period_end   = "recall_end",
                 datecol      = "enddate",
                 datereason   = "endcause" 
                ) %>%
   ## label those that were present at the start/end (except births/deaths)
-  mutate(startcause = if_else(startdate == recall_start & startcause != "q88_q33_born_date",
+  mutate(startcause = if_else(startdate == recall_start & startcause != "birthday_date",
                               "Present at start", startcause)) %>%
-  mutate(endcause = if_else(enddate == recall_end & endcause != "q137_q35_died_date", 
+  mutate(endcause = if_else(enddate == recall_end & endcause != "death_date", 
                             "Present at end", endcause))
 
 ## fix factor levels -----------------------------------------------------------
@@ -666,24 +679,23 @@ study_data_cleaned <- study_data_cleaned %>%
 ## make sure there are the appropriate levels (names)
 study_data_cleaned$startcause <- fct_recode(study_data_cleaned$startcause,
                                             "Present at start" = "Present at start",
-                                            "Born" = "q88_q33_born_date",
-                                            "Other arrival" = "q114_q16_date_arrival_camp",
-                                            "Other arrival" = "q41_q25_hh_arrive_date"
+                                            "Born" = "birthday_date",
+                                            "Other arrival" = "arrived_date"
                                            )
 
 ## make sure there are the appropriate levels (names)
 study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
                                           "Present at end" = "Present at end",
-                                          "Died" = "q137_q35_died_date",
-                                          "Other departure" = "q45_q29_hh_leave_date")
+                                          "Died" = "death_date",
+                                          "Other departure" = "left_date")
 
 ## month of death --------------------------------------------------------------
 
 ## create a variable for month of end (used for deaths by month)
-study_data_cleaned <- mutate(study_data_cleaned, 
-                             endmonth = factor(months(enddate), 
-                                               levels = month.name)
-                            )
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(endmonth = factor(months(enddate), 
+                           levels = month.name)
+         )
 
 
 ## time sequence of events -----------------------------------------------------
@@ -693,7 +705,7 @@ study_data_cleaned <- mutate(study_data_cleaned,
 check_dates <- assert_positive_timespan(study_data_cleaned, startdate, enddate)
 
 ## return the unique identifiers which have negative observation time 
-# check_dates$fact_0_id
+# check_dates$uid
 
 ## observation time ------------------------------------------------------------
 
