@@ -574,7 +574,9 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 ## to combine different age categories use the following function 
-## this prioritises the smaller unit, i.e. if given months and years, will return months first
+## this prioritises the smaller unit, meaning:
+## it will order your age_category from smallest to largest unit 
+## i.e. days first then months then years (depending on which are given)
 study_data_cleaned <- group_age_categories(study_data_cleaned, 
                                            years  = age_group,
                                            months = age_group_mon)
@@ -594,6 +596,8 @@ This chunk will help you clean factor variables.
 ## Change a yes/no variable in to TRUE/FALSE
 ## create a new variable called consent 
 ## where the old one is yes place TRUE in the new one
+## (this could also be done with the if_else or case_when function - 
+## but this option is shorter)
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(consent = consent == "yes")
 
@@ -658,6 +662,7 @@ if applicable (e.g. departures, deaths)
 
 ## Find start and end dates/causes ---------------------------------------------
 
+## create new variables for start and end dates/causes
 study_data_cleaned <- study_data_cleaned %>%
   ## choose earliest date entered in survey
   ## from births, household arrivals, and camp arrivals 
@@ -1048,7 +1053,8 @@ ag <- tab_linelist(study_data_cleaned, "age_group") %>%
   mutate(age_group = fct_inorder(age_group))
 
 ## counts and props of the source population
-propcount <- group_by(population_data_age, age_group) %>%
+propcount <- population_data_age %>% 
+  group_by(age_group) %>%
     tally(population) %>%
     mutate(proportion = n / sum(n))
 
