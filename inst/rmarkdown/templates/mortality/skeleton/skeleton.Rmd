@@ -1825,17 +1825,17 @@ Note that empty rows (those with "") are dropped and the method (xlogit) is
 the US CDC SUDAAN method for calculating CIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r weighted_symptoms_reported_age, warning = FALSE}
-
-survey_design %>%                  
-  filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
-  # calculate weighted counts and weighted proportions - stratified by agegroup!!
-  tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
-             strata = age_group, pretty = TRUE) %>%
-  select(-variable) %>%
-  rename("Symptom" = value) %>%
-  augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
-  kable(digits = 1)
+# 
+# survey_design %>%                  
+#   filter(sick == "yes") %>% # filter for those who were sick in last 2 weeks
+#   # calculate weighted counts and weighted proportions - stratified by agegroup!!
+#   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
+#              strata = age_group, pretty = TRUE) %>%
+#   select(-variable) %>%
+#   rename("Symptom" = value) %>%
+#   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
+#   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
+#   kable(digits = 1)
 ```
 
 
@@ -1854,16 +1854,16 @@ the US CDC SUDAAN method for calculating CIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r weighted_symptoms_reported_sex}
 
-survey_design %>%                  
-  filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
-  # calculate weighted counts and weighted proportions - stratified by sex!!
-  tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
-             strata = sex, pretty = TRUE) %>%
-  select(-variable) %>%
-  rename("Symptom" = value) %>%
-  augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
-  kable(digits = 1)
+# survey_design %>%                  
+#   filter(sick == "yes") %>% # filter for those who were sick in last 2 weeks
+#   # calculate weighted counts and weighted proportions - stratified by sex!!
+#   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
+#              strata = sex, pretty = TRUE) %>%
+#   select(-variable) %>%
+#   rename("Symptom" = value) %>%
+#   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
+#   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
+#   kable(digits = 1)
 
 ```
 
