@@ -337,22 +337,22 @@ If you have more specific proportions/data, you can use them below.
 population_data_age_district_a <- gen_population(total_pop = 10000, # set total population 
   groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set groups
   proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set proportions for each group
-  strata      = c("Male", "Female")) %>%           # stratify by gender
+  strata      = c("male", "female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "District_A")           # add a column to identify region 
+  mutate(health_district = "district_a")           # add a column to identify region 
 
 
 ## generate population data by age groups in years for district B
 population_data_age_district_b <- gen_population(total_pop = 10000, # set total population 
   groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set groups
   proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set proportions for each group
-  strata      = c("Male", "Female")) %>%           # stratify by gender
+  strata      = c("male", "female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "District_B")           # add a column to identify region 
+  mutate(health_district = "district_b")           # add a column to identify region 
 
 
 
@@ -382,9 +382,9 @@ each cluster.
 
 ```{r cluster_counts}
 
-cluster_counts <- tibble(cluster = c("Village_1", "Village_2", "Village_3", "Village_4", 
-                                     "Village_5", "Village_6", "Village_7", "Village_8",
-                                     "Village_9", "Village_10"), 
+cluster_counts <- tibble(cluster = c("village_1", "village_2", "village_3", "village_4", 
+                                     "village_5", "village_6", "village_7", "village_8",
+                                     "village_9", "village_10"), 
                          households = c(700, 400, 600, 500, 300, 
                                         800, 700, 400, 500, 500))
 ```
@@ -604,6 +604,15 @@ study_data_cleaned <- study_data_cleaned %>%
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(died = died == "yes")
 
+
+## create a character variable based off groups of a different variable 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(health_district = case_when(
+    cluster_number %in% c(1:5) ~ "district_a", 
+    TRUE ~ "district_b"
+  ))
+
+
 ## Set the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
   mutate(cause = factor(cause,
@@ -737,9 +746,10 @@ It is important that you drop observations before adding survey weights!
 ```{r remove_unused_data}
 ## Drop unused rows  -----------------------------------------------------------
 
-## store the cases that you drop so you can describe them (e.g. non-consenting)
+## store the cases that you drop so you can describe them (e.g. non-consenting 
+## or wrong village/cluster)
 dropped <- study_data_cleaned %>% 
-  filter(!consent | is.na(startdate) | is.na(enddate))
+  filter(!consent | is.na(startdate) | is.na(enddate) | village_name == "other")
 ## use the dropped cases to remove the unused rows from the survey data set  
 study_data_cleaned <- anti_join(study_data_cleaned, dropped, by = names(dropped))
 
@@ -787,19 +797,20 @@ study_data_cleaned <- add_weights_strata(x = study_data_cleaned,
 
 ## cluster ---------------------------------------------------------------------
 
-## merge village and household to create a unique household ID 
+## get the number of people of individuals interviewed per household 
+## adds a variable with counts of the household (parent) index variable
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(hh_id = str_glue("{village}_{q65_iq4}"))
+  add_count(index, name = "interviewed")
 
 
 ## create cluster weights 
 study_data_cleaned <- add_weights_cluster(x = study_data_cleaned, 
                                           cl = cluster_counts, 
-                                          eligible = eligible, 
+                                          eligible = member_number, 
                                           interviewed = interviewed, 
-                                          cluster_x = village, 
+                                          cluster_x = village_name, 
                                           cluster_cl = cluster, 
-                                          household_x = hh_id, 
+                                          household_x = index, 
                                           household_cl = households, 
                                           surv_weight = "surv_weight_cluster", 
                                           surv_weight_ID = "surv_weight_ID_cluster", 
@@ -857,7 +868,7 @@ survey_design_strata <- study_data_cleaned %>%
 ## cluster ---------------------------------------------------------------------
 
 survey_design_cluster <- study_data_cleaned %>% 
-  as_survey_design(ids = village, # 1 for no cluster ids 
+  as_survey_design(ids = village_name, # cluster ids 
                    weights = surv_weight_cluster, # weight variable created above 
                    strata = NULL # sampling was simple (no strata)
                   )
@@ -865,9 +876,9 @@ survey_design_cluster <- study_data_cleaned %>%
 ## stratified cluster ----------------------------------------------------------
 
 survey_design <- study_data_cleaned %>% 
-  as_survey_design(ids = village, # 1 for no cluster ids 
+  as_survey_design(ids = village_name, # cluster ids 
                    weights = surv_weight_cluster_strata, # weight variable created above 
-                   strata = health_district # sampling was simple (no strata)
+                   strata = health_district # sampling was stratified by district
                   )
 ```
 
@@ -914,13 +925,13 @@ num_clus <- study_data_cleaned %>%
 ## get counts of number households 
 num_hh <- study_data_cleaned %>% 
   ## get unique houses by cluster
-  distinct(cluster_number, q65_iq4) %>% 
+  distinct(cluster_number, household_number) %>% 
   ## get number of rounds (count how many unique)
   nrow()
 ```
 
 
-We included `r num_hh` households accross `r num_clus` clusters in this survey analysis. 
+We included `r num_hh` households across `r num_clus` clusters in this survey analysis. 
 
 
 Among the `r nrow(dropped)` individuals excluded from the survey analysis, 
@@ -936,19 +947,15 @@ for lack of consent. The reasons for no consent are shown below.
 
 This chunk will create a table of dropped individuals by reason for no consent. 
 
-Note that these reasons are spread over multiple columns, thus the proportion
-needs to be of the total and missings need to be dropped. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 ```{r consent_reasons}
 ## using the dataset with dropped individuals 
 dropped %>% 
-  ## get counts multiple variables with reasons for no consent 
-  ## make the proportion of the total, including the missings for each
-  tab_linelist(starts_with("q53_cq4a_"),
+  ## get counts of reasons for no consent 
+  ## make the proportion of the total, including the missings
+  tab_linelist(no_consent_reason,
                prop_total = TRUE, na.rm = FALSE) %>% 
-  ## remove missings from the table 
-  filter(!value == "Missing") %>% 
   ## drop variable column and rename others
   select("Reason" = value, 
          "n" = n, 
@@ -973,7 +980,7 @@ From these create medians and standard deviations.
 ## get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
   ## trim data to only unique households within each cluster
-  distinct(cluster_number, q65_iq4) %>%
+  distinct(cluster_number, household_number) %>%
   ## count the number of households within each cluster
   count(cluster_number) %>% 
   pull(n)
@@ -988,7 +995,7 @@ clusterrange <- str_c(range(clustersize), collapse = "--")
 ## get counts of children per household 
 ## do this by cluster as household IDs are only unique within clusters
 hhsize <- study_data_cleaned %>% 
-  count(cluster_number, q65_iq4) %>%
+  count(cluster_number, household_number) %>%
   pull(n) 
 
 ## get median number of children per household
@@ -1026,7 +1033,7 @@ You could similarly repeat this looking at distributions by sex.
 Note that these p-values are just indicative, and a descriptive discussion (or
 visualisation with age-pyramids below) of the distributions in your study sample 
 compared to the source population is more
-important that the binomial test itself. This is because increasing sample size
+important than the binomial test itself. This is because increasing sample size
 will more often than not lead to differences that may be irrelevant after weighting
 your data. 
 
@@ -1072,9 +1079,9 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   select(
     "Age group" = age_group,
     "Study population (n)" = n,
-    "%" = proportion,
+    "Study population (%)" = proportion,
     "Source population (n)" = n_pop,
-    "%" = proportion_pop,
+    "Source population (%)" = proportion_pop,
     "P-value" = p.value
   ) %>%
   kable(digits = 1)
@@ -1096,12 +1103,12 @@ It also pulls the age group with the highest sex ratio.
 
 ```{r median_age_sex_ratios}
 ## compute the median age 
-medage <- median(study_data_cleaned$age_in_years)
+medage <- median(study_data_cleaned$age_years)
 ## paste the lower and uper quartile together
 iqr <- str_c(  # basically copy paste together the following
   ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
-    study_data_cleaned$age_in_years, 
+    study_data_cleaned$age_years, 
     probs = c(0.25, 0.75), 
     na.rm = TRUE), 
   ## between lower and upper place an en-dash
@@ -1112,14 +1119,14 @@ iqr <- str_c(  # basically copy paste together the following
 sex_ratio <- study_data_cleaned %>% 
   count(sex) %>% 
   spread(sex, n) %>%
-  mutate(ratio = round(Male/Female, digits = 1)) %>%
+  mutate(ratio = round(male/female, digits = 1)) %>%
   pull(ratio)
 
 ## compute sex ratios by age group 
 sex_ratio_age <- study_data_cleaned %>% 
   count(age_group, sex) %>% 
   spread(sex, n) %>%
-  mutate(ratio = round(Male/Female, digits = 1)) %>%
+  mutate(ratio = round(male/female, digits = 1)) %>%
   select(age_group, ratio)
 
 ## sort table by ascending ratio then select the lowest (first)
@@ -1142,13 +1149,13 @@ it will then pull the age group with the highest proportion of pregnant women.
 
 pregnant_women_in_data <- study_data_cleaned %>% 
   ## filter for only women in the data
-  filter(sex == "Female") %>%
-  ## tabulate age group, stratifiying by pregnancy status
-  tab_linelist(age_group, strata = q152_q7_pregnant) %>%
+  filter(sex == "female") %>%
+  ## tabulate age group, stratifying by pregnancy status
+  tab_linelist(age_group, strata = pregnant) %>%
   ## select and rename the variables we need
   select(age_group  = "value",
-         n          = "Yes n",
-         proportion = "Yes proportion") %>%
+         n          = "yes n",
+         proportion = "yes proportion") %>%
   ## arrange proportions in descending order
   arrange(desc(proportion)) %>%
   ## grab the first row
@@ -1158,19 +1165,19 @@ pregnant_women_in_data <- study_data_cleaned %>%
 
 
 Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
-`r fmt_count(study_data_cleaned, sex == "Female")` females and 
-`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
+`r fmt_count(study_data_cleaned, sex == "female")` females and 
+`r fmt_count(study_data_cleaned, sex == "male")` males (unweighted). The male to
 female ratio was `r sex_ratio` in the surveyed population. The lowest male to
 female ratio was `r min_sex_ratio_age$ratio` in the 
 `r min_sex_ratio_age$age_group` year age group.
 The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under five years of age made up 
-`r fmt_count(study_data_cleaned, age_in_years < 5)`of the surveyed individuals.
+`r fmt_count(study_data_cleaned, age_years < 5)`of the surveyed individuals.
 The highest number of surveyed indivduals (unweighted) were in the 
 `r table(study_data_cleaned$age_group) %>% which.max() %>% names()`
 year age group.
 The number of surveyed women who were pregnant was 
-`r fmt_count(study_data_cleaned, sex == "Female" & q152_q7_pregnant == "Yes")`. 
+`r fmt_count(study_data_cleaned, sex == "female" & pregnant == "yes")`. 
 The highest proportion of pregnant women was among the 
 `r pregnant_women_in_data$age_group` year age group, at 
 `r round(pregnant_women_in_data$proportion, 1)`%.
@@ -1197,10 +1204,10 @@ tab_linelist(study_data_cleaned, age_group,
              prop_total = TRUE) %>%
   ## select and rename column names appropriately
   select("Age"              = "value",
-         "Female cases (n)" = "Female n",
-         "%"                = "Female proportion",
-         "Male cases (n)"   = "Male n",
-         "%"                = "Male proportion",
+         "Female cases (n)" = "female n",
+         "Female cases (%)" = "female proportion",
+         "Male cases (n)"   = "male n",
+         "Male cases (%)"   = "male proportion",
          "Total") %>%
   kable(digits = 1)
 ```
@@ -1230,10 +1237,10 @@ tab_linelist(study_data_cleaned, age_category,
              prop_total = TRUE) %>%
   ## select and rename column names appropriately
   select("Age"              = "value",
-         "Female cases (n)" = "Female n",
-         "%"                = "Female proportion",
-         "Male cases (n)"   = "Male n",
-         "%"                = "Male proportion",
+         "Female cases (n)" = "female n",
+         "Female cases (%)" = "female proportion",
+         "Male cases (n)"   = "male n",
+         "Male cases (%)"   = "male proportion",
          "Total") %>%
   kable(digits = 1)
 ```
@@ -1334,7 +1341,7 @@ The below chunk calculate values that are displayed inline
 This will calculate weighted counts and proportions of deaths as well as 
 the mortality per 10,000 person-days using the survey_design object. 
 
-Note the posibility of negative confidence intervals if there are low counts
+Note the possibility of negative confidence intervals if there are low counts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r CMR, warning = FALSE, message = FALSE}
@@ -1370,7 +1377,7 @@ This will calculate weighted counts and proportions of deaths as well as
 the mortality per 10,000 person-days using the survey_design object, stratified
 by health district. 
 
-Note the posibility of negative confidence intervals if there are low counts
+Note the possibility of negative confidence intervals if there are low counts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
@@ -1397,19 +1404,19 @@ CMR_strat <- survey_design %>%
 
 
 In District A the weighted number of deaths was 
-`r death_props_strat %>% pull("District A n")`, 
+`r death_props_strat %>% pull("district_a n")`, 
 which gives a weighted proportion of 
-`r death_props_strat %>% pull("District A ci")`, and a design effect of
-`r death_props_strat %>% pull("District A deff") %>% round(digits = 3)`.  
+`r death_props_strat %>% pull("district_a ci")`, and a design effect of
+`r death_props_strat %>% pull("district_a deff") %>% round(digits = 3)`.  
 In comparison, the weighted number of deaths in District B was
-`r death_props_strat %>% pull("District B n")`, 
+`r death_props_strat %>% pull("district_b n")`, 
 the weighted proportion was 
-`r death_props_strat %>% pull("District B ci")` and the design effect was 
-`r death_props_strat %>% pull("District B deff") %>% round(digits = 3)`.  
+`r death_props_strat %>% pull("district_b ci")` and the design effect was 
+`r death_props_strat %>% pull("district_b deff") %>% round(digits = 3)`.  
 The crude mortality rate in District A was 
-`r CMR_strat %>% filter(health_district == "District A") %>% pull(Mortality)`
+`r CMR_strat %>% filter(health_district == "district_a") %>% pull(Mortality)`
 deaths per 10000 person-days and in District B was 
-`r CMR_strat %>% filter(health_district == "District B") %>% pull(Mortality)`
+`r CMR_strat %>% filter(health_district == "district_b") %>% pull(Mortality)`
 
 
 
@@ -1424,7 +1431,7 @@ using the survey_design object.
 
 This makes a bar plot with whiskers for CIs. 
 
-Note the posibility of negative confidence intervals if there are low counts; 
+Note the possibility of negative confidence intervals if there are low counts; 
 and that those negatives are set to zero. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
@@ -1475,24 +1482,24 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ## weighted counts and proportions by cause of death 
 cause_of_death_prop <- survey_design %>% 
   filter(died) %>%  # proportions only among those who died
-  tab_survey(cause_of_death) %>%
-  select(cause_of_death = value, n, ci) %>%
-  mutate(cause_of_death = fct_inorder(cause_of_death))
+  tab_survey(cause) %>%
+  select(cause = value, n, ci) %>%
+  mutate(cause = fct_inorder(cause))
 
 ## weighted cause-specific mortality ratios
 cause_of_death_mort <- survey_design %>% 
   filter(died) %>%  # proportions only among those who died
-  group_by(cause_of_death) %>% 
+  group_by(cause) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
 
 ## Join the counts, props and mortality ratios together
-dplyr::left_join(cause_of_death_prop, cause_of_death_mort, by = "cause_of_death") %>% 
+dplyr::left_join(cause_of_death_prop, cause_of_death_mort, by = "cause") %>% 
   ## merge confidence intervals for mortality in to one column 
   ## (do not change to percent)
   unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"),
            m100 = FALSE, percent = FALSE) %>%
-  filter(cause_of_death != "Not Applicable") %>%
-  rename("Cause of death" = cause_of_death,
+  filter(cause != "Not Applicable") %>%
+  rename("Cause of death" = cause,
          "Deaths (n)" = n,
          "% (95% CI)" = ci
         ) %>% 
@@ -1518,7 +1525,7 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 survey_design %>% 
   filter(died) %>%  # proportions only among those who died
-  tab_survey(cause_of_death, strata = health_district, col_total = TRUE) %>%
+  tab_survey(cause, strata = health_district, col_total = TRUE) %>%
   filter(value != "Not Applicable") %>%
   select(-variable) %>%
   rename("Cause of death" = value) %>%
@@ -1548,16 +1555,16 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 survey_design %>% 
   filter(died) %>%  # proportions only among those who died
-  group_by(cause_of_death, health_district) %>% 
+  group_by(cause, health_district) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   unite_ci("mort", starts_with("mortality"),
            m100 = FALSE, percent = FALSE) %>% 
-  pivot_wider(id_cols = cause_of_death,     # choose variable for rows
+  pivot_wider(id_cols = cause,     # choose variable for rows
               names_from = health_district, # choose variable for columns 
               values_from = mort) %>%       # choose what goes in cells
-  select("Cause of death" = cause_of_death, 
-         "District A MR (95%CI)" = "District A", 
-         "District B MR (95%CI)" = "District B") %>% 
+  select("Cause of death" = cause, 
+         "District A MR (95%CI)" = "district_a", 
+         "District B MR (95%CI)" = "district_b") %>% 
   kable(digits = 1)
 ```
 
@@ -1572,7 +1579,7 @@ The below chunk calculate values that are displayed inline
 This will calculate weighted mortality ratios per 10,000 person-days by gender 
 using the survey_design object. 
 
-Note the posibility of negative confidence intervals if there are low counts
+Note the possibility of negative confidence intervals if there are low counts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r gender_CMR}
@@ -1583,8 +1590,8 @@ cause_of_death_sex <- survey_design %>%
   ## merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
 
-male_mortality   <- cause_of_death_sex %>% filter(sex == "Male") %>% pull(mortality)
-female_mortality <- cause_of_death_sex %>% filter(sex == "Female") %>% pull(mortality)
+male_mortality   <- cause_of_death_sex %>% filter(sex == "male") %>% pull(mortality)
+female_mortality <- cause_of_death_sex %>% filter(sex == "female") %>% pull(mortality)
 ```
 
 The gender specific mortality rate was `r female_mortality` deaths/10,000 persons/day amongst females and
@@ -1608,7 +1615,7 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 survey_design %>% 
   filter(died) %>% 
-  tab_survey(cause_of_death, strata = age_group) %>%
+  tab_survey(cause, strata = age_group) %>%
   filter(value != "Not Applicable") %>%
   select(-variable) %>% 
   rename("Cause of death" = value) %>%
@@ -1636,7 +1643,7 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 survey_design %>% 
   filter(died) %>% 
-  tab_survey(cause_of_death, strata = sex) %>%
+  tab_survey(cause, strata = sex) %>%
   filter(value != "Not Applicable") %>%
   select(-variable) %>% 
   rename("Cause of death" = value) %>%
@@ -1792,15 +1799,15 @@ the US CDC SUDAAN method for calculating CIs
 
 ```{r weighted_symptoms_reported}
 
-survey_design %>%                  
-  filter(q18_q8_sick == "Yes") %>% # filter for those who were sick in last 2 weeks
-  # calculate weighted counts and weighted proportions 
-  tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2) %>%
-  select("Symptom" = value,
-         "N reported" = n,
-         "% (95% CI)" = ci
-        ) %>%
-  kable(digits = 1)
+# survey_design %>%                  
+#   filter(sick == "yes") %>% # filter for those who were sick in last 2 weeks
+#   # calculate weighted counts and weighted proportions 
+#   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2) %>%
+#   select("Symptom" = value,
+#          "N reported" = n,
+#          "% (95% CI)" = ci
+#         ) %>%
+#   kable(digits = 1)
 ```
 
 
