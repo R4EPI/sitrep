@@ -609,6 +609,19 @@ study_data_cleaned <- study_data_cleaned %>%
   mutate(died = died == "yes")
 
 
+## Recode character variables
+## This step shows how to fix misspellings in the geographic region variable.
+## Ideally, you want these values to match and population data!
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate(village_name = case_when(
+#     village_name == "Valliages 1"       ~ "village 1",
+#     village_name == "Village1"          ~ "village 1",
+#     village_name == "Town 3"            ~ "village 3"
+#     village_name == "Town3"             ~ "village 3",
+#     TRUE ~ as.character(village_name))
+#   ))
+
+
 ## create a character variable based off groups of a different variable 
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(health_district = case_when(
