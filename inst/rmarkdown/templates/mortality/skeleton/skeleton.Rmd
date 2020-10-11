@@ -1359,6 +1359,9 @@ death_props <- tab_survey(survey_design, died, deff = TRUE, keep = "TRUE")
 CMR <- survey_design %>% 
   ## survey ratio used to account for observation time 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  ## if negative CIs set to zero
+  mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
   ## merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
   pull("Mortality")
@@ -1402,6 +1405,9 @@ CMR_strat <- survey_design %>%
   group_by(health_district) %>% 
   ## survey ratio used to account for observation time 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  ## if negative CIs set to zero
+  mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp))
   ## merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE, digits = 1)
 
@@ -1496,7 +1502,10 @@ cause_of_death_prop <- survey_design %>%
 cause_of_death_mort <- survey_design %>% 
   filter(died) %>%  # proportions only among those who died
   group_by(cause) %>% 
-  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) 
+  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  ## if negative CIs set to zero
+  mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp))
 
 ## Join the counts, props and mortality ratios together
 dplyr::left_join(cause_of_death_prop, cause_of_death_mort, by = "cause") %>% 
@@ -1563,6 +1572,9 @@ survey_design %>%
   filter(died) %>%  # proportions only among those who died
   group_by(cause, health_district) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  ## if negative CIs set to zero
+  mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
   unite_ci("mort", starts_with("mortality"),
            m100 = FALSE, percent = FALSE) %>% 
   pivot_wider(id_cols = cause,     # choose variable for rows
@@ -1593,6 +1605,9 @@ Note the possibility of negative confidence intervals if there are low counts
 cause_of_death_sex <- survey_design %>% 
   group_by(sex) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  ## if negative CIs set to zero
+  mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
   ## merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
 
