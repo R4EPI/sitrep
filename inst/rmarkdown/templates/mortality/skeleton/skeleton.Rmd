@@ -962,7 +962,7 @@ current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r save_cleaned_data, eval = FALSE}
-rio::export(study_data_cleaned, str_glue("study_data_cleaned_{Sys.Date()}.xlsx"))
+rio::export(study_data_cleaned, here::here("Data", str_glue("study_data_cleaned_{Sys.Date()}.xlsx")))
 ```
 
 
