@@ -1282,7 +1282,8 @@ plot_age_pyramid(study_data_cleaned,
                  age_group = "age_group", 
                  split_by = "sex",
                  stack_by = "health_district",
-                 proportion = TRUE) + 
+                 proportion = TRUE, 
+                 pal = c("red", "blue")) + 
   labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
