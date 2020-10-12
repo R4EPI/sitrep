@@ -423,6 +423,11 @@ unique(study_data_raw$sex)
 study_data_raw %>% 
   filter(death_date < birthday_date) %>% 
   select("uid")
+
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
+# summarytools::dfSummary(study_data_cleaned) %>%
+#   summarytools::view()
 ```
 
 
@@ -753,7 +758,7 @@ You can also use this section to create temporary datasets so you can review
 specific variables or rows.
 
 You may want to drop rows with missing IDs (i.e. blank rows from excel) 
-simply add a !is.na(fact_0_id) if using a dharma dataset.
+simply add a !is.na(uid) if using a Kobo dataset.
 You will also want to drop those rows where both the start and enddate occur
 outside of your recall period! 
 If your check_dates shows rows with negative obs time - 
