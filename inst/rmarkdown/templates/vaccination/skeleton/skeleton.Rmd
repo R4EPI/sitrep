@@ -574,6 +574,33 @@ study_data_cleaned <- study_data_cleaned %>%
 study_data_cleaned <- group_age_categories(study_data_cleaned, 
                                          years = age_group, 
                                          months = age_group_mon)
+
+
+## years since diagnosis variable ----------------------------------------------
+
+## adapt age at diagnosis and then create a new time_since variable
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    ## change the age at diagnosis variable to be in years 
+    age_diagnosis = age_diagnosis / 12, 
+    ## change those less than 1 year to be 0
+    age_diagnosis = if_else(age_diagnosis < 1, 
+                                 0, 
+                                 age_diagnosis), 
+    ## calculate the years between current age and age at diagnosis
+    time_since = age_years - age_diagnosis)
+
+
+## create a grouping variable for years since diagnosis
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(time_since_group = age_categories(time_since,
+               lower = 0, upper = 5, by = 1))
+
+## fix the labels for years under five
+study_data_cleaned <- study_data_cleaned %>% 
+  ## remove what comes after a dash (i.e. repeated year)
+  mutate(time_since_group = str_remove(time_since_group, "-.*"))
+    
 ```
 
 
@@ -1587,4 +1614,64 @@ survey_design %>%
          "% (95% CI)" = ci) %>%
   kable(digits = 1)
 ```
+
+## Measles infection 
+
+Weighted counts and proportions for previous diagnosis of measles
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// measles_diagnosis \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of counts proportions for whether 
+children have a previous diagnosis of measles
+
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for ratios. These should be interpreted
+as if no deaths or recoded to zero (impossible to have negative deaths). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r measles_diagnosis}
+
+survey_design %>% 
+  tab_survey(diagnosis_disease) %>%
+  ## rename columns appropriately
+  select("Previous diagnosis" = value, 
+         "n" = n , 
+         "% (95% CI)" = ci) %>%
+  kable(digits = 1)
+
+```
+
+Weighted counts and proportions for years since previous diagnosis of measles, 
+among those who reported previous measles diagnosis
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// time_since_diagnosis \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of counts proportions for time since  
+children had a previous diagnosis of measles (i.e. difference in current age 
+and age at infection)
+
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for ratios. These should be interpreted
+as if no deaths or recoded to zero (impossible to have negative deaths). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r time_since_diagnosis}
+
+
+survey_design %>% 
+  filter(diagnosis_disease == "yes") %>% 
+  tab_survey(time_since_group) %>%
+  ## rename columns appropriately
+  select("Years since diagnosis" = value, 
+         "n" = n , 
+         "% (95% CI)" = ci) %>%
+  kable(digits = 1)
+
+```
+
+
 
