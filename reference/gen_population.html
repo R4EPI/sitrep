@@ -91,7 +91,7 @@ however you could also define these yourself." />
       <ul class="nav navbar-nav">
         <li>
   <a href="https://r4epis.netlify.com">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -105,7 +105,7 @@ however you could also define these yourself." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/R4EPI/sitrep">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -132,14 +132,14 @@ however you could also define these yourself." />
 however you could also define these yourself.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>gen_population</span>(
-  total_pop = <span class='fl'>1000</span>,
-  groups = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"0-4"</span>, <span class='st'>"5-14"</span>, <span class='st'>"15-29"</span>, <span class='st'>"30-44"</span>, <span class='st'>"45+"</span>),
-  strata = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Male"</span>, <span class='st'>"Female"</span>),
-  proportions = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.079</span>, <span class='fl'>0.134</span>, <span class='fl'>0.139</span>, <span class='fl'>0.082</span>, <span class='fl'>0.066</span>),
-  counts = <span class='kw'>NULL</span>,
-  tibble = <span class='fl'>TRUE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>gen_population</span><span class='op'>(</span>
+  total_pop <span class='op'>=</span> <span class='fl'>1000</span>,
+  groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"0-4"</span>, <span class='st'>"5-14"</span>, <span class='st'>"15-29"</span>, <span class='st'>"30-44"</span>, <span class='st'>"45+"</span><span class='op'>)</span>,
+  strata <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Male"</span>, <span class='st'>"Female"</span><span class='op'>)</span>,
+  proportions <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.079</span>, <span class='fl'>0.134</span>, <span class='fl'>0.139</span>, <span class='fl'>0.082</span>, <span class='fl'>0.066</span><span class='op'>)</span>,
+  counts <span class='op'>=</span> <span class='cn'>NULL</span>,
+  tibble <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -189,76 +189,76 @@ groups for a 100,000 person population.</p></td>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># get population counts based on proportion, unstratified</span>
-<span class='fu'>gen_population</span>(groups = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>), 
-               strata = <span class='kw'>NULL</span>, 
-               proportions = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.3</span>, <span class='fl'>0.2</span>, <span class='fl'>0.4</span>, <span class='fl'>0.1</span>))
-</div><div class='output co'>#&gt; <span style='color: #555555;'># A tibble: 4 x 3</span><span>
+<span class='fu'>gen_population</span><span class='op'>(</span>groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span><span class='op'>)</span>, 
+               strata <span class='op'>=</span> <span class='cn'>NULL</span>, 
+               proportions <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.3</span>, <span class='fl'>0.2</span>, <span class='fl'>0.4</span>, <span class='fl'>0.1</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 4 × 3</span>
 #&gt;   groups proportions     n
-#&gt;    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>       </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #555555;'>1</span><span>      1         0.3   300
-#&gt; </span><span style='color: #555555;'>2</span><span>      2         0.2   200
-#&gt; </span><span style='color: #555555;'>3</span><span>      3         0.4   400
-#&gt; </span><span style='color: #555555;'>4</span><span>      4         0.1   100</div><div class='input'>
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>       <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'>1</span>      1         0.3   300
+#&gt; <span style='color: #BCBCBC;'>2</span>      2         0.2   200
+#&gt; <span style='color: #BCBCBC;'>3</span>      3         0.4   400
+#&gt; <span style='color: #BCBCBC;'>4</span>      4         0.1   100</div><div class='input'>
 <span class='co'># get population counts based on proportion, stratified</span>
-<span class='fu'>gen_population</span>(groups = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>), 
-               strata = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a"</span>, <span class='st'>"b"</span>), 
-               proportions = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.3</span>, <span class='fl'>0.2</span>, <span class='fl'>0.4</span>, <span class='fl'>0.1</span>))
+<span class='fu'>gen_population</span><span class='op'>(</span>groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span><span class='op'>)</span>, 
+               strata <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span><span class='op'>)</span>, 
+               proportions <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.3</span>, <span class='fl'>0.2</span>, <span class='fl'>0.4</span>, <span class='fl'>0.1</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='warning'>Warning: Given proportions (or counts) is not the same as</span>
 #&gt; <span class='warning'>groups multiplied by strata length, they will be repeated to match</span></div><div class='output co'>#&gt; <span class='warning'>Warning: The sum of given proportions is more than 5% away from 100% </span>
-#&gt; <span class='warning'>If the intention was to provide proportions by strata then ignore this message</span></div><div class='output co'>#&gt; </span><span style='color: #555555;'># A tibble: 8 x 4</span><span>
+#&gt; <span class='warning'>If the intention was to provide proportions by strata then ignore this message</span></div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 8 × 4</span>
 #&gt;   groups strata proportions     n
-#&gt;    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;fct&gt;</span><span>        </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #555555;'>1</span><span>      1 a              0.3   300
-#&gt; </span><span style='color: #555555;'>2</span><span>      2 a              0.2   200
-#&gt; </span><span style='color: #555555;'>3</span><span>      3 a              0.4   400
-#&gt; </span><span style='color: #555555;'>4</span><span>      4 a              0.1   100
-#&gt; </span><span style='color: #555555;'>5</span><span>      1 b              0.3   300
-#&gt; </span><span style='color: #555555;'>6</span><span>      2 b              0.2   200
-#&gt; </span><span style='color: #555555;'>7</span><span>      3 b              0.4   400
-#&gt; </span><span style='color: #555555;'>8</span><span>      4 b              0.1   100</div><div class='input'>
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;fct&gt;</span>        <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'>1</span>      1 a              0.3   300
+#&gt; <span style='color: #BCBCBC;'>2</span>      2 a              0.2   200
+#&gt; <span style='color: #BCBCBC;'>3</span>      3 a              0.4   400
+#&gt; <span style='color: #BCBCBC;'>4</span>      4 a              0.1   100
+#&gt; <span style='color: #BCBCBC;'>5</span>      1 b              0.3   300
+#&gt; <span style='color: #BCBCBC;'>6</span>      2 b              0.2   200
+#&gt; <span style='color: #BCBCBC;'>7</span>      3 b              0.4   400
+#&gt; <span style='color: #BCBCBC;'>8</span>      4 b              0.1   100</div><div class='input'>
 <span class='co'># get population counts based on counts, unstratified</span>
-<span class='fu'>gen_population</span>(groups = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>), 
-               strata = <span class='kw'>NULL</span>, 
-               counts = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>20</span>, <span class='fl'>10</span>, <span class='fl'>30</span>, <span class='fl'>40</span>))
-</div><div class='output co'>#&gt; </span><span style='color: #555555;'># A tibble: 4 x 3</span><span>
+<span class='fu'>gen_population</span><span class='op'>(</span>groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span><span class='op'>)</span>, 
+               strata <span class='op'>=</span> <span class='cn'>NULL</span>, 
+               counts <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>20</span>, <span class='fl'>10</span>, <span class='fl'>30</span>, <span class='fl'>40</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 4 × 3</span>
 #&gt;   groups proportions     n
-#&gt;    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>       </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #555555;'>1</span><span>      1         0.2    20
-#&gt; </span><span style='color: #555555;'>2</span><span>      2         0.1    10
-#&gt; </span><span style='color: #555555;'>3</span><span>      3         0.3    30
-#&gt; </span><span style='color: #555555;'>4</span><span>      4         0.4    40</div><div class='input'>
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>       <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'>1</span>      1         0.2    20
+#&gt; <span style='color: #BCBCBC;'>2</span>      2         0.1    10
+#&gt; <span style='color: #BCBCBC;'>3</span>      3         0.3    30
+#&gt; <span style='color: #BCBCBC;'>4</span>      4         0.4    40</div><div class='input'>
 <span class='co'># get population counts based on counts, stratified</span>
-<span class='fu'>gen_population</span>(groups = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>), 
-               strata = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a"</span>, <span class='st'>"b"</span>), 
-               counts = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>20</span>, <span class='fl'>10</span>, <span class='fl'>30</span>, <span class='fl'>40</span>))
+<span class='fu'>gen_population</span><span class='op'>(</span>groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span><span class='op'>)</span>, 
+               strata <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span><span class='op'>)</span>, 
+               counts <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>20</span>, <span class='fl'>10</span>, <span class='fl'>30</span>, <span class='fl'>40</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='warning'>Warning: Given proportions (or counts) is not the same as</span>
-#&gt; <span class='warning'>groups multiplied by strata length, they will be repeated to match</span></div><div class='output co'>#&gt; </span><span style='color: #555555;'># A tibble: 8 x 4</span><span>
+#&gt; <span class='warning'>groups multiplied by strata length, they will be repeated to match</span></div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 8 × 4</span>
 #&gt;   groups strata proportions     n
-#&gt;    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;fct&gt;</span><span>        </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #555555;'>1</span><span>      1 a             0.1     20
-#&gt; </span><span style='color: #555555;'>2</span><span>      2 a             0.05    10
-#&gt; </span><span style='color: #555555;'>3</span><span>      3 a             0.15    30
-#&gt; </span><span style='color: #555555;'>4</span><span>      4 a             0.2     40
-#&gt; </span><span style='color: #555555;'>5</span><span>      1 b             0.1     20
-#&gt; </span><span style='color: #555555;'>6</span><span>      2 b             0.05    10
-#&gt; </span><span style='color: #555555;'>7</span><span>      3 b             0.15    30
-#&gt; </span><span style='color: #555555;'>8</span><span>      4 b             0.2     40</div><div class='input'>
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;fct&gt;</span>        <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'>1</span>      1 a             0.1     20
+#&gt; <span style='color: #BCBCBC;'>2</span>      2 a             0.05    10
+#&gt; <span style='color: #BCBCBC;'>3</span>      3 a             0.15    30
+#&gt; <span style='color: #BCBCBC;'>4</span>      4 a             0.2     40
+#&gt; <span style='color: #BCBCBC;'>5</span>      1 b             0.1     20
+#&gt; <span style='color: #BCBCBC;'>6</span>      2 b             0.05    10
+#&gt; <span style='color: #BCBCBC;'>7</span>      3 b             0.15    30
+#&gt; <span style='color: #BCBCBC;'>8</span>      4 b             0.2     40</div><div class='input'>
 <span class='co'># get population counts based on counts, stratified - type out counts</span>
 <span class='co'># for each group and strata</span>
-<span class='fu'>gen_population</span>(groups = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>), 
-               strata = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"a"</span>, <span class='st'>"b"</span>), 
-               counts = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>20</span>, <span class='fl'>10</span>, <span class='fl'>30</span>, <span class='fl'>40</span>, <span class='fl'>40</span>, <span class='fl'>30</span>, <span class='fl'>20</span>, <span class='fl'>20</span>))
-</div><div class='output co'>#&gt; </span><span style='color: #555555;'># A tibble: 8 x 4</span><span>
+<span class='fu'>gen_population</span><span class='op'>(</span>groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span><span class='op'>)</span>, 
+               strata <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"a"</span>, <span class='st'>"b"</span><span class='op'>)</span>, 
+               counts <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>20</span>, <span class='fl'>10</span>, <span class='fl'>30</span>, <span class='fl'>40</span>, <span class='fl'>40</span>, <span class='fl'>30</span>, <span class='fl'>20</span>, <span class='fl'>20</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; <span style='color: #949494;'># A tibble: 8 × 4</span>
 #&gt;   groups strata proportions     n
-#&gt;    </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;fct&gt;</span><span>        </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span> </span><span style='color: #555555;font-style: italic;'>&lt;dbl&gt;</span><span>
-#&gt; </span><span style='color: #555555;'>1</span><span>      1 a           0.095</span><span style='text-decoration: underline;'>2</span><span>    20
-#&gt; </span><span style='color: #555555;'>2</span><span>      2 a           0.047</span><span style='text-decoration: underline;'>6</span><span>    10
-#&gt; </span><span style='color: #555555;'>3</span><span>      3 a           0.143     30
-#&gt; </span><span style='color: #555555;'>4</span><span>      4 a           0.190     40
-#&gt; </span><span style='color: #555555;'>5</span><span>      1 b           0.190     40
-#&gt; </span><span style='color: #555555;'>6</span><span>      2 b           0.143     30
-#&gt; </span><span style='color: #555555;'>7</span><span>      3 b           0.095</span><span style='text-decoration: underline;'>2</span><span>    20
-#&gt; </span><span style='color: #555555;'>8</span><span>      4 b           0.095</span><span style='text-decoration: underline;'>2</span><span>    20</div></span></pre>
+#&gt;    <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;fct&gt;</span>        <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span> <span style='color: #949494; font-style: italic;'>&lt;dbl&gt;</span>
+#&gt; <span style='color: #BCBCBC;'>1</span>      1 a           0.095<span style='text-decoration: underline;'>2</span>    20
+#&gt; <span style='color: #BCBCBC;'>2</span>      2 a           0.047<span style='text-decoration: underline;'>6</span>    10
+#&gt; <span style='color: #BCBCBC;'>3</span>      3 a           0.143     30
+#&gt; <span style='color: #BCBCBC;'>4</span>      4 a           0.190     40
+#&gt; <span style='color: #BCBCBC;'>5</span>      1 b           0.190     40
+#&gt; <span style='color: #BCBCBC;'>6</span>      2 b           0.143     30
+#&gt; <span style='color: #BCBCBC;'>7</span>      3 b           0.095<span style='text-decoration: underline;'>2</span>    20
+#&gt; <span style='color: #BCBCBC;'>8</span>      4 b           0.095<span style='text-decoration: underline;'>2</span>    20</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -274,7 +274,7 @@ groups for a 100,000 person population.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

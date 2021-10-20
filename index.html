@@ -45,7 +45,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="https://r4epis.netlify.com">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -59,7 +59,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/R4EPI/sitrep">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -87,14 +87,12 @@
 <a href="#installation" class="anchor"></a>Installation</h2>
 <p>The <strong>{sitrep}</strong> package, developed by MSF and partners, is stored on the website GitHub. Therefore, the procedure to install these packages have one extra step required.</p>
 <p>To install <strong>sitrep</strong> from GitHub you must first install the <strong>drat</strong> package.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"drat"</span>, repos = <span class="st">"https://cran.rstudio.com"</span>)
-</pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"drat"</span>, repos <span class="op">=</span> <span class="st">"https://cran.rstudio.com"</span><span class="op">)</span></code></pre></div>
 <p>Once <strong>drat</strong> is installed, use its <code>addRepo()</code> function to add the “R4EPI” project to the list of valid repositories. This command below will install the <a href="https://github.com/R4EPI/sitrep/releases">latest release of the <strong>{sitrep}</strong> package</a> and also install any packages necessary for use of the templates that are not currently installed on your machine.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit">
-<span class="kw">drat</span>::<span class="fu">addRepo</span>(<span class="st">"R4EPI"</span>)
-<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"sitrep"</span>)
-</pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">drat</span><span class="fu">::</span><span class="fu">addRepo</span><span class="op">(</span><span class="st">"R4EPI"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span><span class="op">(</span><span class="st">"sitrep"</span><span class="op">)</span></code></pre></div>
 <p>If you are getting errors, check the <a href="https://r4epis.netlify.com/faq/">frequently asked questions</a>.</p>
 </div>
 <div id="available-templates" class="section level2">
@@ -107,13 +105,13 @@
 <li>A directory with all of the figures produced</li>
 </ol>
 <p>You can generate an example template by using the <code><a href="reference/check_sitrep_templates.html">check_sitrep_templates()</a></code> function:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit">
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st"><a href="https://r4epis.netlify.com">"sitrep"</a></span>)
-<span class="kw">output_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempdir</a></span>(), <span class="st">"sitrep_example"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span>(<span class="kw">output_dir</span>)
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://r4epis.netlify.com">"sitrep"</a></span><span class="op">)</span>
+<span class="va">output_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"sitrep_example"</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="va">output_dir</span><span class="op">)</span>
 
 <span class="co"># view the available templates, categorized by type</span>
-<span class="fu"><a href="reference/available_sitrep_templates.html">available_sitrep_templates</a></span>(categorise = <span class="fl">TRUE</span>)
+<span class="fu"><a href="reference/available_sitrep_templates.html">available_sitrep_templates</a></span><span class="op">(</span>categorise <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt; $outbreak</span>
 <span class="co">#&gt; [1] "ajs_outbreak"        "cholera_outbreak"    "measles_outbreak"    "meningitis_outbreak"</span>
 <span class="co">#&gt; </span>
@@ -121,13 +119,12 @@
 <span class="co">#&gt; [1] "mortality"   "nutrition"   "vaccination"</span>
 
 <span class="co"># generate the measles outbreak template in the output directory</span>
-<span class="fu"><a href="reference/check_sitrep_templates.html">check_sitrep_templates</a></span>(<span class="st">"measles_outbreak"</span>, path = <span class="kw">output_dir</span>)
+<span class="fu"><a href="reference/check_sitrep_templates.html">check_sitrep_templates</a></span><span class="op">(</span><span class="st">"measles_outbreak"</span>, path <span class="op">=</span> <span class="va">output_dir</span><span class="op">)</span>
 <span class="co">#&gt; [1] "/var/folders/qd/dpdhfsz12wb3c7wz0xdm6dbm0000gn/T//RtmpXHUQ8P/sitrep_example"</span>
 
 <span class="co"># view the contents</span>
-<span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span>(<span class="kw">output_dir</span>, recursive = <span class="fl">TRUE</span>)
-<span class="co">#&gt; [1] "measles_outbreak.Rmd"</span>
-</pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="va">output_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="co">#&gt; [1] "measles_outbreak.Rmd"</span></code></pre></div>
 <p>Please note that the ‘sitrep’ project is released with a <a href="CODE_OF_CONDUCT.html">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
 </div>
 </div>
@@ -188,7 +185,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

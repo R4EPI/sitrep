@@ -91,7 +91,7 @@ source population, with a cluster survey design." />
       <ul class="nav navbar-nav">
         <li>
   <a href="https://r4epis.netlify.com">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -105,7 +105,7 @@ source population, with a cluster survey design." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/R4EPI/sitrep">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -132,20 +132,20 @@ source population, with a cluster survey design." />
 source population, with a cluster survey design.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>add_weights_cluster</span>(
-  <span class='kw'>x</span>,
-  <span class='kw'>cl</span>,
-  <span class='kw'>eligible</span>,
-  <span class='kw'>interviewed</span>,
-  cluster_x = <span class='kw'>NULL</span>,
-  cluster_cl = <span class='kw'>NULL</span>,
-  household_x = <span class='kw'>NULL</span>,
-  household_cl = <span class='kw'>NULL</span>,
-  ignore_cluster = <span class='fl'>TRUE</span>,
-  ignore_household = <span class='fl'>TRUE</span>,
-  surv_weight = <span class='st'>"surv_weight"</span>,
-  surv_weight_ID = <span class='st'>"surv_weight_ID"</span>
-)</pre>
+    <pre class="usage"><span class='fu'>add_weights_cluster</span><span class='op'>(</span>
+  <span class='va'>x</span>,
+  <span class='va'>cl</span>,
+  <span class='va'>eligible</span>,
+  <span class='va'>interviewed</span>,
+  cluster_x <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cluster_cl <span class='op'>=</span> <span class='cn'>NULL</span>,
+  household_x <span class='op'>=</span> <span class='cn'>NULL</span>,
+  household_cl <span class='op'>=</span> <span class='cn'>NULL</span>,
+  ignore_cluster <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  ignore_household <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  surv_weight <span class='op'>=</span> <span class='st'>"surv_weight"</span>,
+  surv_weight_ID <span class='op'>=</span> <span class='st'>"surv_weight_ID"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -239,39 +239,39 @@ will simply be:</p><pre>1 * 1 * (individuals eligible in each household) / (indi
 
 <span class='co'># define a fake dataset of survey data</span>
 <span class='co'># including household and individual information</span>
-<span class='kw'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(stringsAsFactors=<span class='fl'>FALSE</span>,
-         cluster = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>,
-                     <span class='st'>"Village A"</span>, <span class='st'>"Village B"</span>, <span class='st'>"Village B"</span>, <span class='st'>"Village B"</span>),
-    household_id = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span>),
-      eligible_n = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>3</span>),
-      surveyed_n = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>3</span>),
-   individual_id = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>),
-         age_grp = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"0-10"</span>, <span class='st'>"20-30"</span>, <span class='st'>"30-40"</span>, <span class='st'>"50-60"</span>, <span class='st'>"50-60"</span>, <span class='st'>"20-30"</span>,
-                     <span class='st'>"50-60"</span>, <span class='st'>"30-40"</span>),
-             sex = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Male"</span>, <span class='st'>"Female"</span>, <span class='st'>"Male"</span>, <span class='st'>"Female"</span>, <span class='st'>"Female"</span>, <span class='st'>"Male"</span>,
-                     <span class='st'>"Female"</span>, <span class='st'>"Female"</span>),
-         outcome = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Y"</span>, <span class='st'>"Y"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"Y"</span>)
-)
+<span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>stringsAsFactors<span class='op'>=</span><span class='cn'>FALSE</span>,
+         cluster <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>,
+                     <span class='st'>"Village A"</span>, <span class='st'>"Village B"</span>, <span class='st'>"Village B"</span>, <span class='st'>"Village B"</span><span class='op'>)</span>,
+    household_id <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span><span class='op'>)</span>,
+      eligible_n <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>3</span><span class='op'>)</span>,
+      surveyed_n <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>3</span><span class='op'>)</span>,
+   individual_id <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span><span class='op'>)</span>,
+         age_grp <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"0-10"</span>, <span class='st'>"20-30"</span>, <span class='st'>"30-40"</span>, <span class='st'>"50-60"</span>, <span class='st'>"50-60"</span>, <span class='st'>"20-30"</span>,
+                     <span class='st'>"50-60"</span>, <span class='st'>"30-40"</span><span class='op'>)</span>,
+             sex <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Male"</span>, <span class='st'>"Female"</span>, <span class='st'>"Male"</span>, <span class='st'>"Female"</span>, <span class='st'>"Female"</span>, <span class='st'>"Male"</span>,
+                     <span class='st'>"Female"</span>, <span class='st'>"Female"</span><span class='op'>)</span>,
+         outcome <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Y"</span>, <span class='st'>"Y"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"Y"</span><span class='op'>)</span>
+<span class='op'>)</span>
 
 <span class='co'># define a fake dataset of cluster listings</span>
 <span class='co'># including cluster names and number of households</span>
-<span class='kw'>cl</span> <span class='op'>&lt;-</span> <span class='kw'>tibble</span>::<span class='fu'><a href='https://tibble.tidyverse.org/reference/tribble.html'>tribble</a></span>(
-     <span class='op'>~</span><span class='kw'>cluster</span>, <span class='op'>~</span><span class='kw'>n_houses</span>,
+<span class='va'>cl</span> <span class='op'>&lt;-</span> <span class='fu'>tibble</span><span class='fu'>::</span><span class='fu'><a href='https://tibble.tidyverse.org/reference/tribble.html'>tribble</a></span><span class='op'>(</span>
+     <span class='op'>~</span><span class='va'>cluster</span>, <span class='op'>~</span><span class='va'>n_houses</span>,
   <span class='st'>"Village A"</span>,        <span class='fl'>23</span>,
   <span class='st'>"Village B"</span>,        <span class='fl'>42</span>,
   <span class='st'>"Village C"</span>,        <span class='fl'>56</span>,
   <span class='st'>"Village D"</span>,        <span class='fl'>38</span>
-)
+<span class='op'>)</span>
 
 
 <span class='co'># add weights to a cluster sample</span>
 <span class='co'># include weights for cluster, household and individual levels</span>
-<span class='fu'>add_weights_cluster</span>(<span class='kw'>x</span>, cl = <span class='kw'>cl</span>, 
-                    eligible = <span class='kw'>eligible_n</span>, 
-                    interviewed = <span class='kw'>surveyed_n</span>,
-                    cluster_cl = <span class='kw'>cluster</span>, household_cl = <span class='kw'>n_houses</span>,
-                    cluster_x = <span class='kw'>cluster</span>,  household_x = <span class='kw'>household_id</span>,
-                    ignore_cluster = <span class='fl'>FALSE</span>, ignore_household = <span class='fl'>FALSE</span>)
+<span class='fu'>add_weights_cluster</span><span class='op'>(</span><span class='va'>x</span>, cl <span class='op'>=</span> <span class='va'>cl</span>, 
+                    eligible <span class='op'>=</span> <span class='va'>eligible_n</span>, 
+                    interviewed <span class='op'>=</span> <span class='va'>surveyed_n</span>,
+                    cluster_cl <span class='op'>=</span> <span class='va'>cluster</span>, household_cl <span class='op'>=</span> <span class='va'>n_houses</span>,
+                    cluster_x <span class='op'>=</span> <span class='va'>cluster</span>,  household_x <span class='op'>=</span> <span class='va'>household_id</span>,
+                    ignore_cluster <span class='op'>=</span> <span class='cn'>FALSE</span>, ignore_household <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;     cluster household_id eligible_n surveyed_n individual_id age_grp    sex
 #&gt; 1 Village A            1          6          4             1    0-10   Male
 #&gt; 2 Village A            1          6          4             2   20-30 Female
@@ -294,12 +294,12 @@ will simply be:</p><pre>1 * 1 * (individuals eligible in each household) / (indi
 <span class='co'># add weights to a cluster sample</span>
 <span class='co'># ignore weights for cluster and household level (set equal to 1)</span>
 <span class='co'># only include weights at individual level</span>
-<span class='fu'>add_weights_cluster</span>(<span class='kw'>x</span>, cl = <span class='kw'>cl</span>, 
-                    eligible = <span class='kw'>eligible_n</span>, 
-                    interviewed = <span class='kw'>surveyed_n</span>,
-                    cluster_cl = <span class='kw'>cluster</span>, household_cl = <span class='kw'>n_houses</span>,
-                    cluster_x = <span class='kw'>cluster</span>,  household_x = <span class='kw'>household_id</span>,
-                    ignore_cluster = <span class='fl'>TRUE</span>, ignore_household = <span class='fl'>TRUE</span>)
+<span class='fu'>add_weights_cluster</span><span class='op'>(</span><span class='va'>x</span>, cl <span class='op'>=</span> <span class='va'>cl</span>, 
+                    eligible <span class='op'>=</span> <span class='va'>eligible_n</span>, 
+                    interviewed <span class='op'>=</span> <span class='va'>surveyed_n</span>,
+                    cluster_cl <span class='op'>=</span> <span class='va'>cluster</span>, household_cl <span class='op'>=</span> <span class='va'>n_houses</span>,
+                    cluster_x <span class='op'>=</span> <span class='va'>cluster</span>,  household_x <span class='op'>=</span> <span class='va'>household_id</span>,
+                    ignore_cluster <span class='op'>=</span> <span class='cn'>TRUE</span>, ignore_household <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;     cluster household_id eligible_n surveyed_n individual_id age_grp    sex
 #&gt; 1 Village A            1          6          4             1    0-10   Male
 #&gt; 2 Village A            1          6          4             2   20-30 Female
@@ -334,7 +334,7 @@ will simply be:</p><pre>1 * 1 * (individuals eligible in each household) / (indi
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

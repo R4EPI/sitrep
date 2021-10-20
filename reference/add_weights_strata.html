@@ -95,7 +95,7 @@ population by surveyed counts in the sample population." />
       <ul class="nav navbar-nav">
         <li>
   <a href="https://r4epis.netlify.com">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -109,7 +109,7 @@ population by surveyed counts in the sample population." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/R4EPI/sitrep">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -138,14 +138,14 @@ source population, with a simple-random or stratified survey design.</h1>
 population by surveyed counts in the sample population.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>add_weights_strata</span>(
-  <span class='kw'>x</span>,
-  <span class='kw'>p</span>,
-  <span class='kw'>...</span>,
-  population = <span class='kw'>population</span>,
-  surv_weight = <span class='st'>"surv_weight"</span>,
-  surv_weight_ID = <span class='st'>"surv_weight_ID"</span>
-)</pre>
+    <pre class="usage"><span class='fu'>add_weights_strata</span><span class='op'>(</span>
+  <span class='va'>x</span>,
+  <span class='va'>p</span>,
+  <span class='va'>...</span>,
+  population <span class='op'>=</span> <span class='va'>population</span>,
+  surv_weight <span class='op'>=</span> <span class='st'>"surv_weight"</span>,
+  surv_weight_ID <span class='op'>=</span> <span class='st'>"surv_weight_ID"</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -187,34 +187,34 @@ to match the weights to the correct subset of the pouplation.</p></td>
     <pre class="examples"><div class='input'>
 <span class='co'># define a fake dataset of survey data</span>
 <span class='co'># including household and individual information</span>
-<span class='kw'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(stringsAsFactors=<span class='fl'>FALSE</span>,
-         cluster = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>,
-                     <span class='st'>"Village A"</span>, <span class='st'>"Village B"</span>, <span class='st'>"Village B"</span>, <span class='st'>"Village B"</span>),
-    household_id = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span>),
-     eligibile_n = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>3</span>),
-      surveyed_n = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>3</span>),
-   individual_id = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>),
-         age_grp = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"0-10"</span>, <span class='st'>"20-30"</span>, <span class='st'>"30-40"</span>, <span class='st'>"50-60"</span>, <span class='st'>"50-60"</span>, <span class='st'>"20-30"</span>,
-                     <span class='st'>"50-60"</span>, <span class='st'>"30-40"</span>),
-             sex = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Male"</span>, <span class='st'>"Female"</span>, <span class='st'>"Male"</span>, <span class='st'>"Female"</span>, <span class='st'>"Female"</span>, <span class='st'>"Male"</span>,
-                     <span class='st'>"Female"</span>, <span class='st'>"Female"</span>),
-         outcome = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"Y"</span>, <span class='st'>"Y"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"Y"</span>)
-)
+<span class='va'>x</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>stringsAsFactors<span class='op'>=</span><span class='cn'>FALSE</span>,
+         cluster <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>, <span class='st'>"Village A"</span>,
+                     <span class='st'>"Village A"</span>, <span class='st'>"Village B"</span>, <span class='st'>"Village B"</span>, <span class='st'>"Village B"</span><span class='op'>)</span>,
+    household_id <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>2</span><span class='op'>)</span>,
+     eligibile_n <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>6</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>3</span><span class='op'>)</span>,
+      surveyed_n <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>3</span><span class='op'>)</span>,
+   individual_id <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>4</span>, <span class='fl'>1</span>, <span class='fl'>2</span>, <span class='fl'>3</span><span class='op'>)</span>,
+         age_grp <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"0-10"</span>, <span class='st'>"20-30"</span>, <span class='st'>"30-40"</span>, <span class='st'>"50-60"</span>, <span class='st'>"50-60"</span>, <span class='st'>"20-30"</span>,
+                     <span class='st'>"50-60"</span>, <span class='st'>"30-40"</span><span class='op'>)</span>,
+             sex <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Male"</span>, <span class='st'>"Female"</span>, <span class='st'>"Male"</span>, <span class='st'>"Female"</span>, <span class='st'>"Female"</span>, <span class='st'>"Male"</span>,
+                     <span class='st'>"Female"</span>, <span class='st'>"Female"</span><span class='op'>)</span>,
+         outcome <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Y"</span>, <span class='st'>"Y"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"N"</span>, <span class='st'>"Y"</span><span class='op'>)</span>
+<span class='op'>)</span>
 
 <span class='co'># define a fake population data set</span>
 <span class='co'># including age group, sex, counts and proportions</span>
-<span class='kw'>p</span> <span class='op'>&lt;-</span> <span class='kw'>sitrep</span>::<span class='fu'><a href='gen_population.html'>gen_population</a></span>(total = <span class='fl'>10000</span>,
-  groups = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"0-10"</span>, <span class='st'>"10-20"</span>, <span class='st'>"20-30"</span>, <span class='st'>"30-40"</span>, <span class='st'>"40-50"</span>, <span class='st'>"50-60"</span>),
-  proportions = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>0.1</span>, <span class='fl'>0.2</span>, <span class='fl'>0.3</span>, <span class='fl'>0.4</span>, <span class='fl'>0.2</span>, <span class='fl'>0.1</span>))
+<span class='va'>p</span> <span class='op'>&lt;-</span> <span class='fu'>sitrep</span><span class='fu'>::</span><span class='fu'><a href='gen_population.html'>gen_population</a></span><span class='op'>(</span>total <span class='op'>=</span> <span class='fl'>10000</span>,
+  groups <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"0-10"</span>, <span class='st'>"10-20"</span>, <span class='st'>"20-30"</span>, <span class='st'>"30-40"</span>, <span class='st'>"40-50"</span>, <span class='st'>"50-60"</span><span class='op'>)</span>,
+  proportions <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.1</span>, <span class='fl'>0.2</span>, <span class='fl'>0.3</span>, <span class='fl'>0.4</span>, <span class='fl'>0.2</span>, <span class='fl'>0.1</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='warning'>Warning: Given proportions (or counts) is not the same as</span>
 #&gt; <span class='warning'>groups multiplied by strata length, they will be repeated to match</span></div><div class='output co'>#&gt; <span class='warning'>Warning: The sum of given proportions is more than 5% away from 100% </span>
 #&gt; <span class='warning'>If the intention was to provide proportions by strata then ignore this message</span></div><div class='input'>
   <span class='co'># make sure col names match survey dataset</span>
-<span class='kw'>p</span> <span class='op'>&lt;-</span> <span class='kw'>dplyr</span>::<span class='fu'><a href='https://dplyr.tidyverse.org/reference/rename.html'>rename</a></span>(<span class='kw'>p</span>, age_grp = <span class='kw'>groups</span>, sex = <span class='kw'>strata</span>, population = <span class='kw'>n</span>)
+<span class='va'>p</span> <span class='op'>&lt;-</span> <span class='fu'>dplyr</span><span class='fu'>::</span><span class='fu'><a href='https://dplyr.tidyverse.org/reference/rename.html'>rename</a></span><span class='op'>(</span><span class='va'>p</span>, age_grp <span class='op'>=</span> <span class='va'>groups</span>, sex <span class='op'>=</span> <span class='va'>strata</span>, population <span class='op'>=</span> <span class='va'>n</span><span class='op'>)</span>
 
 <span class='co'># add weights to a stratified simple random sample</span>
 <span class='co'># weight based on age group and sex</span>
-<span class='fu'>add_weights_strata</span>(<span class='kw'>x</span>, p = <span class='kw'>p</span>, <span class='kw'>age_grp</span>, <span class='kw'>sex</span>, population = <span class='kw'>population</span>)
+<span class='fu'>add_weights_strata</span><span class='op'>(</span><span class='va'>x</span>, p <span class='op'>=</span> <span class='va'>p</span>, <span class='va'>age_grp</span>, <span class='va'>sex</span>, population <span class='op'>=</span> <span class='va'>population</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;     cluster household_id eligibile_n surveyed_n individual_id age_grp    sex
 #&gt; 1 Village A            1           6          4             1    0-10   Male
 #&gt; 2 Village A            1           6          4             2   20-30 Female
@@ -249,7 +249,7 @@ to match the weights to the correct subset of the pouplation.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

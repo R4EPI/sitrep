@@ -91,7 +91,7 @@ is either before or after a cutoff date, inclusive." />
       <ul class="nav navbar-nav">
         <li>
   <a href="https://r4epis.netlify.com">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -105,7 +105,7 @@ is either before or after a cutoff date, inclusive." />
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/R4EPI/sitrep">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -132,37 +132,37 @@ is either before or after a cutoff date, inclusive." />
 is either before or after a cutoff date, inclusive.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>find_date_cause</span>(
-  <span class='kw'>x</span>,
-  <span class='kw'>...</span>,
-  period_start = <span class='kw'>NULL</span>,
-  period_end = <span class='kw'>NULL</span>,
-  datecol = <span class='st'>"start_date"</span>,
-  datereason = <span class='st'>"start_date_reason"</span>,
-  na_fill = <span class='st'>"start"</span>
-)
+    <pre class="usage"><span class='fu'>find_date_cause</span><span class='op'>(</span>
+  <span class='va'>x</span>,
+  <span class='va'>...</span>,
+  period_start <span class='op'>=</span> <span class='cn'>NULL</span>,
+  period_end <span class='op'>=</span> <span class='cn'>NULL</span>,
+  datecol <span class='op'>=</span> <span class='st'>"start_date"</span>,
+  datereason <span class='op'>=</span> <span class='st'>"start_date_reason"</span>,
+  na_fill <span class='op'>=</span> <span class='st'>"start"</span>
+<span class='op'>)</span>
 
-<span class='fu'>find_start_date</span>(
-  <span class='kw'>x</span>,
-  <span class='kw'>...</span>,
-  period_start = <span class='kw'>NULL</span>,
-  period_end = <span class='kw'>NULL</span>,
-  datecol = <span class='st'>"start_date"</span>,
-  datereason = <span class='st'>"start_date_reason"</span>
-)
+<span class='fu'>find_start_date</span><span class='op'>(</span>
+  <span class='va'>x</span>,
+  <span class='va'>...</span>,
+  period_start <span class='op'>=</span> <span class='cn'>NULL</span>,
+  period_end <span class='op'>=</span> <span class='cn'>NULL</span>,
+  datecol <span class='op'>=</span> <span class='st'>"start_date"</span>,
+  datereason <span class='op'>=</span> <span class='st'>"start_date_reason"</span>
+<span class='op'>)</span>
 
-<span class='fu'>find_end_date</span>(
-  <span class='kw'>x</span>,
-  <span class='kw'>...</span>,
-  period_start = <span class='kw'>NULL</span>,
-  period_end = <span class='kw'>NULL</span>,
-  datecol = <span class='st'>"end_date"</span>,
-  datereason = <span class='st'>"end_date_reason"</span>
-)
+<span class='fu'>find_end_date</span><span class='op'>(</span>
+  <span class='va'>x</span>,
+  <span class='va'>...</span>,
+  period_start <span class='op'>=</span> <span class='cn'>NULL</span>,
+  period_end <span class='op'>=</span> <span class='cn'>NULL</span>,
+  datecol <span class='op'>=</span> <span class='st'>"end_date"</span>,
+  datereason <span class='op'>=</span> <span class='st'>"end_date_reason"</span>
+<span class='op'>)</span>
 
-<span class='fu'>constrain_dates</span>(<span class='kw'>i</span>, <span class='kw'>period_start</span>, <span class='kw'>period_end</span>, boundary = <span class='st'>"both"</span>)
+<span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>i</span>, <span class='va'>period_start</span>, <span class='va'>period_end</span>, boundary <span class='op'>=</span> <span class='st'>"both"</span><span class='op'>)</span>
 
-<span class='fu'>assert_positive_timespan</span>(<span class='kw'>x</span>, <span class='kw'>date_start</span>, <span class='kw'>date_end</span>)</pre>
+<span class='fu'>assert_positive_timespan</span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>date_start</span>, <span class='va'>date_end</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -213,14 +213,14 @@ boundary will be set to NA.</p></td>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>d</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span>(
-  s1 = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='st'>"2013-01-01"</span>) <span class='op'>+</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span>))),
-  s2 = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='st'>"2013-02-01"</span>) <span class='op'>+</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span>))),
-  s3 = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='st'>"2013-01-10"</span>) <span class='op'>-</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span>))),
-  ps = <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='st'>"2012-12-31"</span>),
-  pe = <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span>(<span class='st'>"2013-01-09"</span>)
-)
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='kw'>dd</span> <span class='op'>&lt;-</span> <span class='fu'>find_date_cause</span>(<span class='kw'>d</span>, <span class='kw'>s1</span>, <span class='kw'>s2</span>, <span class='kw'>s3</span>, period_start = <span class='kw'>ps</span>, period_end = <span class='kw'>pe</span>))
+    <pre class="examples"><div class='input'><span class='va'>d</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>
+  s1 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-01"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
+  s2 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-02-01"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
+  s3 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-10"</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
+  ps <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2012-12-31"</span><span class='op'>)</span>,
+  pe <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-09"</span><span class='op'>)</span>
+<span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>dd</span> <span class='op'>&lt;-</span> <span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s1</span>, <span class='va'>s2</span>, <span class='va'>s3</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;    start_date start_date_reason         s1         s2         s3         ps
 #&gt; 1  2013-01-01                s1 2013-01-01 2013-02-01 2013-01-10 2012-12-31
 #&gt; 2  2013-01-02                s1 2013-01-02 2013-02-02 2013-01-09 2012-12-31
@@ -248,10 +248,10 @@ boundary will be set to NA.</p></td>
 #&gt; 10 2013-01-09
 #&gt; 11 2013-01-09
 #&gt; 12 2013-01-09
-#&gt; 13 2013-01-09</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span>(<span class='kw'>bb</span> <span class='op'>&lt;-</span> <span class='fu'>find_date_cause</span>(<span class='kw'>d</span>, <span class='kw'>s1</span>, <span class='kw'>s2</span>, <span class='kw'>s3</span>, period_start = <span class='kw'>ps</span>, period_end = <span class='kw'>pe</span>,
-                            na_fill = <span class='st'>"end"</span>, 
-                            datecol = <span class='st'>"enddate"</span>,
-                            datereason = <span class='st'>"endcause"</span>))
+#&gt; 13 2013-01-09</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>bb</span> <span class='op'>&lt;-</span> <span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s1</span>, <span class='va'>s2</span>, <span class='va'>s3</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span>,
+                            na_fill <span class='op'>=</span> <span class='st'>"end"</span>, 
+                            datecol <span class='op'>=</span> <span class='st'>"enddate"</span>,
+                            datereason <span class='op'>=</span> <span class='st'>"endcause"</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;       enddate endcause         s1         s2         s3         ps         pe
 #&gt; 1  2013-01-01       s1 2013-01-01 2013-02-01 2013-01-10 2012-12-31 2013-01-09
 #&gt; 2  2013-01-02       s1 2013-01-02 2013-02-02 2013-01-09 2012-12-31 2013-01-09
@@ -265,7 +265,7 @@ boundary will be set to NA.</p></td>
 #&gt; 10 2013-01-09       s1 2013-01-10 2013-02-10 2013-01-01 2012-12-31 2013-01-09
 #&gt; 11 2013-01-09       s1 2013-01-11 2013-02-11 2012-12-31 2012-12-31 2013-01-09
 #&gt; 12       &lt;NA&gt;          2012-01-01 2012-01-01 2012-01-01 2012-12-31 2013-01-09
-#&gt; 13 2013-01-09       s1 2014-01-01 2014-01-01 2014-01-01 2012-12-31 2013-01-09</div><div class='input'><span class='fu'>find_date_cause</span>(<span class='kw'>d</span>, <span class='kw'>s3</span>, <span class='kw'>s2</span>, <span class='kw'>s1</span>, period_start = <span class='kw'>ps</span>, period_end = <span class='kw'>pe</span>)
+#&gt; 13 2013-01-09       s1 2014-01-01 2014-01-01 2014-01-01 2012-12-31 2013-01-09</div><div class='input'><span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s3</span>, <span class='va'>s2</span>, <span class='va'>s1</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;            s1         s2 start_date start_date_reason         s3         ps
 #&gt; 1  2013-01-01 2013-02-01 2013-01-01                s1 2013-01-10 2012-12-31
 #&gt; 2  2013-01-02 2013-02-02 2013-01-09                s3 2013-01-09 2012-12-31
@@ -295,10 +295,10 @@ boundary will be set to NA.</p></td>
 #&gt; 12 2013-01-09
 #&gt; 13 2013-01-09</div><div class='input'>
 <span class='co'># works</span>
-<span class='fu'>assert_positive_timespan</span>(<span class='kw'>dd</span>, <span class='kw'>start_date</span>, <span class='kw'>pe</span>)
+<span class='fu'>assert_positive_timespan</span><span class='op'>(</span><span class='va'>dd</span>, <span class='va'>start_date</span>, <span class='va'>pe</span><span class='op'>)</span>
 
 <span class='co'># returns a warning because the last date isn't later than the start_date</span>
-<span class='fu'>assert_positive_timespan</span>(<span class='kw'>dd</span>, <span class='kw'>start_date</span>, <span class='kw'>s2</span>)
+<span class='fu'>assert_positive_timespan</span><span class='op'>(</span><span class='va'>dd</span>, <span class='va'>start_date</span>, <span class='va'>s2</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; <span class='warning'>Warning: 2 rows had negative timespans</span></div><div class='output co'>#&gt;    start_date start_date_reason         s1         s2         s3         ps
 #&gt; 12 2012-12-31                s1 2012-01-01 2012-01-01 2012-01-01 2012-12-31
 #&gt; NA       &lt;NA&gt;              &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;
@@ -306,11 +306,11 @@ boundary will be set to NA.</p></td>
 #&gt; 12 2013-01-09
 #&gt; NA       &lt;NA&gt;</div><div class='input'>
 
-<span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span>(<span class='kw'>d</span>, <span class='fu'>constrain_dates</span>(<span class='kw'>s1</span>, <span class='kw'>ps</span>, <span class='kw'>pe</span>))
+<span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s1</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;  [1] "2013-01-01" "2013-01-02" "2013-01-03" "2013-01-04" "2013-01-05"
 #&gt;  [6] "2013-01-06" "2013-01-07" "2013-01-08" "2013-01-09" NA          
-#&gt; [11] NA           NA           NA          </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span>(<span class='kw'>d</span>, <span class='fu'>constrain_dates</span>(<span class='kw'>s2</span>, <span class='kw'>ps</span>, <span class='kw'>pe</span>))
-</div><div class='output co'>#&gt;  [1] NA NA NA NA NA NA NA NA NA NA NA NA NA</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span>(<span class='kw'>d</span>, <span class='fu'>constrain_dates</span>(<span class='kw'>s3</span>, <span class='kw'>ps</span>, <span class='kw'>pe</span>))
+#&gt; [11] NA           NA           NA          </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s2</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt;  [1] NA NA NA NA NA NA NA NA NA NA NA NA NA</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s3</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span>
 </div><div class='output co'>#&gt;  [1] NA           "2013-01-09" "2013-01-08" "2013-01-07" "2013-01-06"
 #&gt;  [6] "2013-01-05" "2013-01-04" "2013-01-03" "2013-01-02" "2013-01-01"
 #&gt; [11] "2012-12-31" NA           NA          </div><div class='input'>
@@ -330,7 +330,7 @@ boundary will be set to NA.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
