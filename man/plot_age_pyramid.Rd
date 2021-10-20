@@ -53,8 +53,8 @@ a population pyramid (non-binary variables cannot form a pyramid). If
 \code{FALSE}, a pyramid will not form.}
 
 \item{pal}{a color palette function or vector of colors to be passed to
-\code{\link[ggplot2:scale_fill_manual]{ggplot2::scale_fill_manual()}} defaults to the first "qual" palette from
-\code{\link[ggplot2:scale_fill_brewer]{ggplot2::scale_fill_brewer()}}.}
+\code{\link[ggplot2:scale_manual]{ggplot2::scale_fill_manual()}} defaults to the first "qual" palette from
+\code{\link[ggplot2:scale_brewer]{ggplot2::scale_fill_brewer()}}.}
 }
 \description{
 Plot a population pyramid (age-sex) from a dataframe.

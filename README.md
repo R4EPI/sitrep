@@ -4,17 +4,10 @@
 # sitrep
 
 <!-- badges: start -->
-
-[![Travis build
-status](https://travis-ci.org/R4EPI/sitrep.svg?branch=master)](https://travis-ci.org/R4EPI/sitrep)
-[![AppVeyor build
-status](https://ci.appveyor.com/api/projects/status/github/R4EPI/sitrep?branch=master&svg=true)](https://ci.appveyor.com/project/R4EPI/sitrep)
-[![Codecov test
-coverage](https://codecov.io/gh/R4EPI/sitrep/branch/master/graph/badge.svg)](https://codecov.io/gh/R4EPI/sitrep?branch=master)
-[![Lifecycle:
-maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
-[![CRAN
-status](https://www.r-pkg.org/badges/version/sitrep)](https://CRAN.R-project.org/package=sitrep)
+[![R build status](https://github.com/R4EPI/sitrep/workflows/R-CMD-check/badge.svg)](https://github.com/R4EPI/sitrep/actions)
+[![Codecov test coverage](https://codecov.io/gh/R4EPI/sitrep/branch/master/graph/badge.svg)](https://codecov.io/gh/R4EPI/sitrep?branch=master)
+[![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
+[![CRAN status](https://www.r-pkg.org/badges/version/sitrep)](https://CRAN.R-project.org/package=sitrep)
 <!-- badges: end -->
 
 The goal of {sitrep} is provide report templates for common

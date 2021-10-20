@@ -1,7 +1,7 @@
 Type: Package
 Package: sitrep
 Title: Report templates and helper functions for EPI
-Version: 0.1.6
+Version: 0.1.7
 Authors@R: 
     c(person(given = "Dirk",
              family = "Schumacher",
@@ -53,11 +53,10 @@ Imports:
     epitrix,
     glue,
     here,
-    incidence (>= 1.7.0),
+    incidence (>= 1.7.2),
     knitr,
     linelist,
     matchmaker,
-    outbreaks,
     scales,
     rio,
     rmarkdown,
@@ -67,6 +66,7 @@ Imports:
     stats,
     utils,
     apyramid (>= 0.1.0),
+    epibuffet (>= 0.0.0.9005),
     epidict (>= 0.0.0.9001),
     epikit
 Suggests:
@@ -78,20 +78,19 @@ Suggests:
 Remotes:
   reconhub/linelist,
   R4EPI/apyramid,
-  R4EPI/epidict,
-  R4EPI/epikit
+  R4EPI/epibuffet,
+  R4EPI/epidict
 Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.0
 Collate: 
+    'sitrep-package.R'
     'add_weights_cluster.R'
     'add_weights_strata.R'
     'age-pyramid.R'
     'check_templates.R'
-    'data_frame_from_2x2.R'
-    'descriptive-table.R'
     'find_date_cause.R'
     'gen_eligible_interviewed.R'
     'gen_population.R'
@@ -99,11 +98,6 @@ Collate:
     'msf_dict_rename_helper.R'
     'epidict_exports.R'
     'epikit_exports.R'
-    'prettify_tabulation.R'
+    'epibuffet_exports.R'
     'sample-size.R'
-    'tab_descriptive.R'
-    'tab_univariate.R'
-    'tabulate_survey.R'
-    'transpose_pretty.R'
-    'two_by_two_funs.R'
     'zcurve.R'
