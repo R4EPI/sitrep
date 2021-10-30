@@ -132,14 +132,15 @@ add_weights_cluster <- function(x, cl,
   indiv_eli  <- tidyselect::vars_select(colnames(x),  {{eligible}}, .strict = FALSE)
   indiv_surv <- tidyselect::vars_select(colnames(x),  {{interviewed}}, .strict = FALSE)
 
+  # pull the environment from which this was called (i.e. the function)
+  cll   <- match.call()
+
   ## checks (errors / warnings)
 
   # check if variables are in datasets (spelling) - throws error
 
   # for cluster dataset
   if (length(clus_id_cl) == 0) {
-    # pull the environment from which this was called (i.e. the function)
-    cll   <- match.call()
 
     # put the variable of interest in quotations
     ppltn <- rlang::as_name(rlang::enquo(cluster_cl))
@@ -148,40 +149,34 @@ add_weights_cluster <- function(x, cl,
   }
 
   if (length(hh_id_cl) == 0) {
-    cll   <- match.call()
     ppltn <- rlang::as_name(rlang::enquo(household_cl))
     stop(glue::glue("{ppltn} is not one of the columns in {cll[['cl']]}, check spelling"))
   }
 
   # for study dataset
   if (length(clus_id_x) == 0) {
-    cll   <- match.call()
     ppltn <- rlang::as_name(rlang::enquo(cluster_x))
     stop(glue::glue("{ppltn} is not one of the columns in {cll[['x']]}, check spelling"))
   }
 
   if (length(hh_id_x) == 0) {
-    cll   <- match.call()
     ppltn <- rlang::as_name(rlang::enquo(household_x))
     stop(glue::glue("{ppltn} is not one of the columns in {cll[['x']]}, check spelling"))
   }
 
   if (length(indiv_eli) == 0) {
-    cll   <- match.call()
     ppltn <- rlang::as_name(rlang::enquo(eligible))
     stop(glue::glue("{ppltn} is not one of the columns in {cll[['x']]}, check spelling"))
   }
 
   if (length(indiv_surv) == 0) {
-    cll   <- match.call()
     ppltn <- rlang::as_name(rlang::enquo(interviewed))
     stop(glue::glue("{ppltn} is not one of the columns in {cll[['x']]}, check spelling"))
   }
 
 
   # check if there are duplicate cluster names (i.e. counted twice) - throws error
-  if (any(duplicated(cl[[clus_id_cl]])) {
-    cll   <- match.call()
+  if (any(duplicated(cl[[clus_id_cl]]))) {
     stop(glue::glue("Cluster names are duplicated in {clus_id_cl} variable of {cll[['cl']]} dataset"))
   }
 
@@ -190,7 +185,6 @@ add_weights_cluster <- function(x, cl,
 
   if (any(non_matching_clusters)) {
     nm_cluster_names <- unique(x[[clus_id_x]][non_matching_clusters])
-    cll <- match.call()
     warning(glue::glue("The following cluster names in the {clus_id_x} variable are not in the {cll[['cl']]} dataset: ",
                        glue::glue_collapse(nm_cluster_names, sep = ",")))
   }
