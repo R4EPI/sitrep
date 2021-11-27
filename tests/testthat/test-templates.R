@@ -5,7 +5,7 @@ test_that("templates can be built", {
   skip_if_offline() 
   skip_on_cran()
   avail <- available_sitrep_templates(full.names = TRUE)
-  p     <- file.path(tempdir(), "template_tests", as.character(Sys.time()))
+  p     <- file.path(tempdir(), "template_tests", format(Sys.time(), "%F%H%M%S"))
   dir.create(p, recursive = TRUE)
 
   for (i in avail) {

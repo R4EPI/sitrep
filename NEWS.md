@@ -1,3 +1,9 @@
+# sitrep 0.1.7
+
+* Import {epibuffet}. This replaces the `tab_linelist()`, `tab_survey()`,
+  and `tab_univariate()` funcitons. 
+* Remove `outbreaks` from imports.
+
 # sitrep 0.1.6
 
  * Preferrentially use `matchmaker::match_df()` over 
