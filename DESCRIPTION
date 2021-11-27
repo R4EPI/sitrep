@@ -68,7 +68,7 @@ Imports:
     stats,
     utils,
     apyramid (>= 0.1.0),
-    epibuffet (>= 0.0.0.9005),
+    epitabulate (>= 0.0.0.9005),
     epidict (>= 0.0.0.9001),
     epikit
 Suggests:
@@ -80,7 +80,7 @@ Suggests:
 Remotes:
   reconhub/linelist,
   R4EPI/apyramid,
-  R4EPI/epibuffet,
+  R4EPI/epitabulate,
   R4EPI/epidict
 Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
@@ -93,4 +93,4 @@ Collate:
     'check_templates.R'
     'epidict_exports.R'
     'epikit_exports.R'
-    'epibuffet_exports.R'
+    'epitabulate_exports.R'
