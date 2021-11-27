@@ -217,67 +217,78 @@ indicating the range of the un-facetted data set. Values of <code>spit_by</code>
 show up as labels at top of each facet.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span>
-<span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme_get.html'>theme_set</a></span><span class='op'>(</span><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_classic</a></span><span class='op'>(</span>base_size <span class='op'>=</span> <span class='fl'>18</span><span class='op'>)</span><span class='op'>)</span>
-
-<span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>2018</span><span class='op'>-</span><span class='fl'>01</span><span class='op'>-</span><span class='fl'>15</span><span class='op'>)</span>
-<span class='va'>ages</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cut.html'>cut</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>80</span>, <span class='fl'>150</span>, replace <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>,
-            breaks <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>5</span>, <span class='fl'>10</span>, <span class='fl'>30</span>, <span class='fl'>90</span><span class='op'>)</span>, right <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
-<span class='va'>sex</span>  <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Female"</span>, <span class='st'>"Male"</span><span class='op'>)</span>, <span class='fl'>150</span>, replace <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
-<span class='va'>gender</span> <span class='op'>&lt;-</span> <span class='va'>sex</span>
-<span class='va'>gender</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='st'>"NB"</span>
-<span class='va'>ill</span>  <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"case"</span>, <span class='st'>"non-case"</span><span class='op'>)</span>, <span class='fl'>150</span>, replace <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>
-<span class='va'>dat</span>  <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>AGE              <span class='op'>=</span> <span class='va'>ages</span>,
-                   sex              <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>sex</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Male"</span>, <span class='st'>"Female"</span><span class='op'>)</span><span class='op'>)</span>,
-                   gender           <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>gender</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Male"</span>, <span class='st'>"NB"</span>, <span class='st'>"Female"</span><span class='op'>)</span><span class='op'>)</span>,
-                   ill              <span class='op'>=</span> <span class='va'>ill</span>,
-                   stringsAsFactors <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span>
-
-<span class='co'># Create the age pyramid, stratifying by sex</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span>   <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='img'><img src='plot_age_pyramid-1.png' alt='' width='700' height='433' /></div><div class='input'>
-<span class='co'># Create the age pyramid, stratifying by gender, which can include non-binary</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>apg</span>  <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span>, split_by <span class='op'>=</span> <span class='va'>gender</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='img'><img src='plot_age_pyramid-2.png' alt='' width='700' height='433' /></div><div class='input'>
-<span class='co'># Remove NA categories with na.rm = TRUE</span>
-<span class='va'>dat2</span> <span class='op'>&lt;-</span> <span class='va'>dat</span>
-<span class='va'>dat2</span><span class='op'>[</span><span class='fl'>1</span>, <span class='fl'>1</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='cn'>NA</span>
-<span class='va'>dat2</span><span class='op'>[</span><span class='fl'>2</span>, <span class='fl'>2</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='cn'>NA</span>
-<span class='va'>dat2</span><span class='op'>[</span><span class='fl'>3</span>, <span class='fl'>3</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='cn'>NA</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span>   <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat2</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='warning'>Warning: 2 missing rows were removed (1 values from `AGE` and 1 values from `sex`).</span></div><div class='img'><img src='plot_age_pyramid-3.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span>   <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat2</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span>, na.rm <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='warning'>Warning: 2 missing rows were removed (1 values from `AGE` and 1 values from `sex`).</span></div><div class='img'><img src='plot_age_pyramid-4.png' alt='' width='700' height='433' /></div><div class='input'>
-<span class='co'># Stratify by case definition and customize with ggplot2</span>
-<span class='va'>ap</span>   <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span>, split_by <span class='op'>=</span> <span class='va'>ill</span><span class='op'>)</span> <span class='op'>+</span>
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span><span class='op'>(</span>base_size <span class='op'>=</span> <span class='fl'>16</span><span class='op'>)</span> <span class='op'>+</span>
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>labs</a></span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Age groups by case definition"</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span><span class='op'>)</span>
-</div><div class='img'><img src='plot_age_pyramid-5.png' alt='' width='700' height='433' /></div><div class='input'>
-<span class='co'># Stratify by multiple factors</span>
-<span class='va'>ap</span> <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>,
-                       age_group <span class='op'>=</span> <span class='va'>AGE</span>,
-                       split_by <span class='op'>=</span> <span class='va'>sex</span>,
-                       stack_by <span class='op'>=</span> <span class='va'>ill</span>,
-                       vertical_lines <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span> <span class='op'>+</span>
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>labs</a></span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Age groups by case definition and sex"</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span><span class='op'>)</span>
-</div><div class='img'><img src='plot_age_pyramid-6.png' alt='' width='700' height='433' /></div><div class='input'>
-<span class='co'># Display proportions</span>
-<span class='va'>ap</span> <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>,
-                       age_group <span class='op'>=</span> <span class='va'>AGE</span>,
-                       split_by <span class='op'>=</span> <span class='va'>sex</span>,
-                       stack_by <span class='op'>=</span> <span class='va'>ill</span>,
-                       proportional <span class='op'>=</span> <span class='cn'>TRUE</span>,
-                       vertical_lines <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span> <span class='op'>+</span>
-  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>labs</a></span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Age groups by case definition and sex"</span><span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span><span class='op'>)</span>
-</div><div class='img'><img src='plot_age_pyramid-7.png' alt='' width='700' height='433' /></div><div class='input'>
-<span class='co'># empty group levels will still be displayed</span>
-<span class='va'>dat3</span> <span class='op'>&lt;-</span> <span class='va'>dat2</span>
-<span class='va'>dat3</span><span class='op'>[</span><span class='va'>dat</span><span class='op'>$</span><span class='va'>AGE</span> <span class='op'>==</span> <span class='st'>"[0,5)"</span>, <span class='st'>"sex"</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='cn'>NA</span>
-<span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat3</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='warning'>Warning: 11 missing rows were removed (1 values from `AGE` and 10 values from `sex`).</span></div><div class='img'><img src='plot_age_pyramid-8.png' alt='' width='700' height='433' /></div><div class='input'><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme_get.html'>theme_set</a></span><span class='op'>(</span><span class='va'>old</span><span class='op'>)</span>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='kw'><a href='https://rdrr.io/r/base/library.html'>library</a></span><span class='op'>(</span><span class='va'><a href='https://ggplot2.tidyverse.org'>ggplot2</a></span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>old</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme_get.html'>theme_set</a></span><span class='op'>(</span><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_classic</a></span><span class='op'>(</span>base_size <span class='op'>=</span> <span class='fl'>18</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/Random.html'>set.seed</a></span><span class='op'>(</span><span class='fl'>2018</span><span class='op'>-</span><span class='fl'>01</span><span class='op'>-</span><span class='fl'>15</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>ages</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/cut.html'>cut</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>80</span>, <span class='fl'>150</span>, replace <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span>,</span>
+<span class='r-in'>            breaks <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span>, <span class='fl'>5</span>, <span class='fl'>10</span>, <span class='fl'>30</span>, <span class='fl'>90</span><span class='op'>)</span>, right <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>sex</span>  <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Female"</span>, <span class='st'>"Male"</span><span class='op'>)</span>, <span class='fl'>150</span>, replace <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>gender</span> <span class='op'>&lt;-</span> <span class='va'>sex</span></span>
+<span class='r-in'><span class='va'>gender</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='st'>"NB"</span></span>
+<span class='r-in'><span class='va'>ill</span>  <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/sample.html'>sample</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"case"</span>, <span class='st'>"non-case"</span><span class='op'>)</span>, <span class='fl'>150</span>, replace <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></span>
+<span class='r-in'><span class='va'>dat</span>  <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>AGE              <span class='op'>=</span> <span class='va'>ages</span>,</span>
+<span class='r-in'>                   sex              <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>sex</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Male"</span>, <span class='st'>"Female"</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span class='r-in'>                   gender           <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/factor.html'>factor</a></span><span class='op'>(</span><span class='va'>gender</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Male"</span>, <span class='st'>"NB"</span>, <span class='st'>"Female"</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span class='r-in'>                   ill              <span class='op'>=</span> <span class='va'>ill</span>,</span>
+<span class='r-in'>                   stringsAsFactors <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Create the age pyramid, stratifying by sex</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span>   <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-plt img'><img src='plot_age_pyramid-1.png' alt='' width='700' height='433' /></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Create the age pyramid, stratifying by gender, which can include non-binary</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>apg</span>  <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span>, split_by <span class='op'>=</span> <span class='va'>gender</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-plt img'><img src='plot_age_pyramid-2.png' alt='' width='700' height='433' /></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Remove NA categories with na.rm = TRUE</span></span>
+<span class='r-in'><span class='va'>dat2</span> <span class='op'>&lt;-</span> <span class='va'>dat</span></span>
+<span class='r-in'><span class='va'>dat2</span><span class='op'>[</span><span class='fl'>1</span>, <span class='fl'>1</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='cn'>NA</span></span>
+<span class='r-in'><span class='va'>dat2</span><span class='op'>[</span><span class='fl'>2</span>, <span class='fl'>2</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='cn'>NA</span></span>
+<span class='r-in'><span class='va'>dat2</span><span class='op'>[</span><span class='fl'>3</span>, <span class='fl'>3</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='cn'>NA</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span>   <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat2</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>2 missing rows were removed (1 values from `AGE` and 1 values from `sex`).</span>
+<span class='r-plt img'><img src='plot_age_pyramid-3.png' alt='' width='700' height='433' /></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span>   <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat2</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span>, na.rm <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>2 missing rows were removed (1 values from `AGE` and 1 values from `sex`).</span>
+<span class='r-plt img'><img src='plot_age_pyramid-4.png' alt='' width='700' height='433' /></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Stratify by case definition and customize with ggplot2</span></span>
+<span class='r-in'><span class='va'>ap</span>   <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span>, split_by <span class='op'>=</span> <span class='va'>ill</span><span class='op'>)</span> <span class='op'>+</span></span>
+<span class='r-in'>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/ggtheme.html'>theme_bw</a></span><span class='op'>(</span>base_size <span class='op'>=</span> <span class='fl'>16</span><span class='op'>)</span> <span class='op'>+</span></span>
+<span class='r-in'>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>labs</a></span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Age groups by case definition"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span><span class='op'>)</span></span>
+<span class='r-plt img'><img src='plot_age_pyramid-5.png' alt='' width='700' height='433' /></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Stratify by multiple factors</span></span>
+<span class='r-in'><span class='va'>ap</span> <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>,</span>
+<span class='r-in'>                       age_group <span class='op'>=</span> <span class='va'>AGE</span>,</span>
+<span class='r-in'>                       split_by <span class='op'>=</span> <span class='va'>sex</span>,</span>
+<span class='r-in'>                       stack_by <span class='op'>=</span> <span class='va'>ill</span>,</span>
+<span class='r-in'>                       vertical_lines <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span> <span class='op'>+</span></span>
+<span class='r-in'>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>labs</a></span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Age groups by case definition and sex"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span><span class='op'>)</span></span>
+<span class='r-plt img'><img src='plot_age_pyramid-6.png' alt='' width='700' height='433' /></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># Display proportions</span></span>
+<span class='r-in'><span class='va'>ap</span> <span class='op'>&lt;-</span> <span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat</span>,</span>
+<span class='r-in'>                       age_group <span class='op'>=</span> <span class='va'>AGE</span>,</span>
+<span class='r-in'>                       split_by <span class='op'>=</span> <span class='va'>sex</span>,</span>
+<span class='r-in'>                       stack_by <span class='op'>=</span> <span class='va'>ill</span>,</span>
+<span class='r-in'>                       proportional <span class='op'>=</span> <span class='cn'>TRUE</span>,</span>
+<span class='r-in'>                       vertical_lines <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span> <span class='op'>+</span></span>
+<span class='r-in'>  <span class='fu'><a href='https://ggplot2.tidyverse.org/reference/labs.html'>labs</a></span><span class='op'>(</span>title <span class='op'>=</span> <span class='st'>"Age groups by case definition and sex"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>ap</span><span class='op'>)</span></span>
+<span class='r-plt img'><img src='plot_age_pyramid-7.png' alt='' width='700' height='433' /></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># empty group levels will still be displayed</span></span>
+<span class='r-in'><span class='va'>dat3</span> <span class='op'>&lt;-</span> <span class='va'>dat2</span></span>
+<span class='r-in'><span class='va'>dat3</span><span class='op'>[</span><span class='va'>dat</span><span class='op'>$</span><span class='va'>AGE</span> <span class='op'>==</span> <span class='st'>"[0,5)"</span>, <span class='st'>"sex"</span><span class='op'>]</span> <span class='op'>&lt;-</span> <span class='cn'>NA</span></span>
+<span class='r-in'><span class='fu'>plot_age_pyramid</span><span class='op'>(</span><span class='va'>dat3</span>, age_group <span class='op'>=</span> <span class='va'>AGE</span><span class='op'>)</span></span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>11 missing rows were removed (1 values from `AGE` and 10 values from `sex`).</span>
+<span class='r-plt img'><img src='plot_age_pyramid-8.png' alt='' width='700' height='433' /></span>
+<span class='r-in'><span class='fu'><a href='https://ggplot2.tidyverse.org/reference/theme_get.html'>theme_set</a></span><span class='op'>(</span><span class='va'>old</span><span class='op'>)</span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

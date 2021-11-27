@@ -213,108 +213,116 @@ boundary will be set to NA.</p></td>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='va'>d</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span>
-  s1 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-01"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
-  s2 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-02-01"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
-  s3 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-10"</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
-  ps <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2012-12-31"</span><span class='op'>)</span>,
-  pe <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-09"</span><span class='op'>)</span>
-<span class='op'>)</span>
-<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>dd</span> <span class='op'>&lt;-</span> <span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s1</span>, <span class='va'>s2</span>, <span class='va'>s3</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;    start_date start_date_reason         s1         s2         s3         ps
-#&gt; 1  2013-01-01                s1 2013-01-01 2013-02-01 2013-01-10 2012-12-31
-#&gt; 2  2013-01-02                s1 2013-01-02 2013-02-02 2013-01-09 2012-12-31
-#&gt; 3  2013-01-03                s1 2013-01-03 2013-02-03 2013-01-08 2012-12-31
-#&gt; 4  2013-01-04                s1 2013-01-04 2013-02-04 2013-01-07 2012-12-31
-#&gt; 5  2013-01-05                s1 2013-01-05 2013-02-05 2013-01-06 2012-12-31
-#&gt; 6  2013-01-06                s1 2013-01-06 2013-02-06 2013-01-05 2012-12-31
-#&gt; 7  2013-01-07                s1 2013-01-07 2013-02-07 2013-01-04 2012-12-31
-#&gt; 8  2013-01-08                s1 2013-01-08 2013-02-08 2013-01-03 2012-12-31
-#&gt; 9  2013-01-09                s1 2013-01-09 2013-02-09 2013-01-02 2012-12-31
-#&gt; 10 2013-01-01                s3 2013-01-10 2013-02-10 2013-01-01 2012-12-31
-#&gt; 11 2012-12-31                s3 2013-01-11 2013-02-11 2012-12-31 2012-12-31
-#&gt; 12 2012-12-31                s1 2012-01-01 2012-01-01 2012-01-01 2012-12-31
-#&gt; 13       &lt;NA&gt;                   2014-01-01 2014-01-01 2014-01-01 2012-12-31
-#&gt;            pe
-#&gt; 1  2013-01-09
-#&gt; 2  2013-01-09
-#&gt; 3  2013-01-09
-#&gt; 4  2013-01-09
-#&gt; 5  2013-01-09
-#&gt; 6  2013-01-09
-#&gt; 7  2013-01-09
-#&gt; 8  2013-01-09
-#&gt; 9  2013-01-09
-#&gt; 10 2013-01-09
-#&gt; 11 2013-01-09
-#&gt; 12 2013-01-09
-#&gt; 13 2013-01-09</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>bb</span> <span class='op'>&lt;-</span> <span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s1</span>, <span class='va'>s2</span>, <span class='va'>s3</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span>,
-                            na_fill <span class='op'>=</span> <span class='st'>"end"</span>, 
-                            datecol <span class='op'>=</span> <span class='st'>"enddate"</span>,
-                            datereason <span class='op'>=</span> <span class='st'>"endcause"</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;       enddate endcause         s1         s2         s3         ps         pe
-#&gt; 1  2013-01-01       s1 2013-01-01 2013-02-01 2013-01-10 2012-12-31 2013-01-09
-#&gt; 2  2013-01-02       s1 2013-01-02 2013-02-02 2013-01-09 2012-12-31 2013-01-09
-#&gt; 3  2013-01-03       s1 2013-01-03 2013-02-03 2013-01-08 2012-12-31 2013-01-09
-#&gt; 4  2013-01-04       s1 2013-01-04 2013-02-04 2013-01-07 2012-12-31 2013-01-09
-#&gt; 5  2013-01-05       s1 2013-01-05 2013-02-05 2013-01-06 2012-12-31 2013-01-09
-#&gt; 6  2013-01-06       s1 2013-01-06 2013-02-06 2013-01-05 2012-12-31 2013-01-09
-#&gt; 7  2013-01-07       s1 2013-01-07 2013-02-07 2013-01-04 2012-12-31 2013-01-09
-#&gt; 8  2013-01-08       s1 2013-01-08 2013-02-08 2013-01-03 2012-12-31 2013-01-09
-#&gt; 9  2013-01-09       s1 2013-01-09 2013-02-09 2013-01-02 2012-12-31 2013-01-09
-#&gt; 10 2013-01-09       s1 2013-01-10 2013-02-10 2013-01-01 2012-12-31 2013-01-09
-#&gt; 11 2013-01-09       s1 2013-01-11 2013-02-11 2012-12-31 2012-12-31 2013-01-09
-#&gt; 12       &lt;NA&gt;          2012-01-01 2012-01-01 2012-01-01 2012-12-31 2013-01-09
-#&gt; 13 2013-01-09       s1 2014-01-01 2014-01-01 2014-01-01 2012-12-31 2013-01-09</div><div class='input'><span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s3</span>, <span class='va'>s2</span>, <span class='va'>s1</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;            s1         s2 start_date start_date_reason         s3         ps
-#&gt; 1  2013-01-01 2013-02-01 2013-01-01                s1 2013-01-10 2012-12-31
-#&gt; 2  2013-01-02 2013-02-02 2013-01-09                s3 2013-01-09 2012-12-31
-#&gt; 3  2013-01-03 2013-02-03 2013-01-08                s3 2013-01-08 2012-12-31
-#&gt; 4  2013-01-04 2013-02-04 2013-01-07                s3 2013-01-07 2012-12-31
-#&gt; 5  2013-01-05 2013-02-05 2013-01-06                s3 2013-01-06 2012-12-31
-#&gt; 6  2013-01-06 2013-02-06 2013-01-05                s3 2013-01-05 2012-12-31
-#&gt; 7  2013-01-07 2013-02-07 2013-01-04                s3 2013-01-04 2012-12-31
-#&gt; 8  2013-01-08 2013-02-08 2013-01-03                s3 2013-01-03 2012-12-31
-#&gt; 9  2013-01-09 2013-02-09 2013-01-02                s3 2013-01-02 2012-12-31
-#&gt; 10 2013-01-10 2013-02-10 2013-01-01                s3 2013-01-01 2012-12-31
-#&gt; 11 2013-01-11 2013-02-11 2012-12-31                s3 2012-12-31 2012-12-31
-#&gt; 12 2012-01-01 2012-01-01 2012-12-31                s3 2012-01-01 2012-12-31
-#&gt; 13 2014-01-01 2014-01-01       &lt;NA&gt;                   2014-01-01 2012-12-31
-#&gt;            pe
-#&gt; 1  2013-01-09
-#&gt; 2  2013-01-09
-#&gt; 3  2013-01-09
-#&gt; 4  2013-01-09
-#&gt; 5  2013-01-09
-#&gt; 6  2013-01-09
-#&gt; 7  2013-01-09
-#&gt; 8  2013-01-09
-#&gt; 9  2013-01-09
-#&gt; 10 2013-01-09
-#&gt; 11 2013-01-09
-#&gt; 12 2013-01-09
-#&gt; 13 2013-01-09</div><div class='input'>
-<span class='co'># works</span>
-<span class='fu'>assert_positive_timespan</span><span class='op'>(</span><span class='va'>dd</span>, <span class='va'>start_date</span>, <span class='va'>pe</span><span class='op'>)</span>
-
-<span class='co'># returns a warning because the last date isn't later than the start_date</span>
-<span class='fu'>assert_positive_timespan</span><span class='op'>(</span><span class='va'>dd</span>, <span class='va'>start_date</span>, <span class='va'>s2</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; <span class='warning'>Warning: 2 rows had negative timespans</span></div><div class='output co'>#&gt;    start_date start_date_reason         s1         s2         s3         ps
-#&gt; 12 2012-12-31                s1 2012-01-01 2012-01-01 2012-01-01 2012-12-31
-#&gt; NA       &lt;NA&gt;              &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;
-#&gt;            pe
-#&gt; 12 2013-01-09
-#&gt; NA       &lt;NA&gt;</div><div class='input'>
-
-<span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s1</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;  [1] "2013-01-01" "2013-01-02" "2013-01-03" "2013-01-04" "2013-01-05"
-#&gt;  [6] "2013-01-06" "2013-01-07" "2013-01-08" "2013-01-09" NA          
-#&gt; [11] NA           NA           NA          </div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s2</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;  [1] NA NA NA NA NA NA NA NA NA NA NA NA NA</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s3</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span>
-</div><div class='output co'>#&gt;  [1] NA           "2013-01-09" "2013-01-08" "2013-01-07" "2013-01-06"
-#&gt;  [6] "2013-01-05" "2013-01-04" "2013-01-03" "2013-01-02" "2013-01-01"
-#&gt; [11] "2012-12-31" NA           NA          </div><div class='input'>
-</div></pre>
+    <pre class="examples"><span class='r-in'><span class='va'>d</span> <span class='op'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/r/base/data.frame.html'>data.frame</a></span><span class='op'>(</span></span>
+<span class='r-in'>  s1 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-01"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span class='r-in'>  s2 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-02-01"</span><span class='op'>)</span> <span class='op'>+</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span class='r-in'>  s3 <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-10"</span><span class='op'>)</span> <span class='op'>-</span> <span class='fl'>0</span><span class='op'>:</span><span class='fl'>10</span>, <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"2012-01-01"</span>, <span class='st'>"2014-01-01"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span class='r-in'>  ps <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2012-12-31"</span><span class='op'>)</span>,</span>
+<span class='r-in'>  pe <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"2013-01-09"</span><span class='op'>)</span></span>
+<span class='r-in'><span class='op'>)</span></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>dd</span> <span class='op'>&lt;-</span> <span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s1</span>, <span class='va'>s2</span>, <span class='va'>s3</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>    start_date start_date_reason         s1         s2         s3         ps</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 1  2013-01-01                s1 2013-01-01 2013-02-01 2013-01-10 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 2  2013-01-02                s1 2013-01-02 2013-02-02 2013-01-09 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 3  2013-01-03                s1 2013-01-03 2013-02-03 2013-01-08 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 4  2013-01-04                s1 2013-01-04 2013-02-04 2013-01-07 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 5  2013-01-05                s1 2013-01-05 2013-02-05 2013-01-06 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 6  2013-01-06                s1 2013-01-06 2013-02-06 2013-01-05 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 7  2013-01-07                s1 2013-01-07 2013-02-07 2013-01-04 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 8  2013-01-08                s1 2013-01-08 2013-02-08 2013-01-03 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 9  2013-01-09                s1 2013-01-09 2013-02-09 2013-01-02 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 10 2013-01-01                s3 2013-01-10 2013-02-10 2013-01-01 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 11 2012-12-31                s3 2013-01-11 2013-02-11 2012-12-31 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 12 2012-12-31                s1 2012-01-01 2012-01-01 2012-01-01 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 13       &lt;NA&gt;                   2014-01-01 2014-01-01 2014-01-01 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>            pe</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 1  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 2  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 3  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 4  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 5  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 6  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 7  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 8  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 9  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 10 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 11 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 12 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 13 2013-01-09</span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>bb</span> <span class='op'>&lt;-</span> <span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s1</span>, <span class='va'>s2</span>, <span class='va'>s3</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span>,</span>
+<span class='r-in'>                            na_fill <span class='op'>=</span> <span class='st'>"end"</span>, </span>
+<span class='r-in'>                            datecol <span class='op'>=</span> <span class='st'>"enddate"</span>,</span>
+<span class='r-in'>                            datereason <span class='op'>=</span> <span class='st'>"endcause"</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>       enddate endcause         s1         s2         s3         ps         pe</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 1  2013-01-01       s1 2013-01-01 2013-02-01 2013-01-10 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 2  2013-01-02       s1 2013-01-02 2013-02-02 2013-01-09 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 3  2013-01-03       s1 2013-01-03 2013-02-03 2013-01-08 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 4  2013-01-04       s1 2013-01-04 2013-02-04 2013-01-07 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 5  2013-01-05       s1 2013-01-05 2013-02-05 2013-01-06 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 6  2013-01-06       s1 2013-01-06 2013-02-06 2013-01-05 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 7  2013-01-07       s1 2013-01-07 2013-02-07 2013-01-04 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 8  2013-01-08       s1 2013-01-08 2013-02-08 2013-01-03 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 9  2013-01-09       s1 2013-01-09 2013-02-09 2013-01-02 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 10 2013-01-09       s1 2013-01-10 2013-02-10 2013-01-01 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 11 2013-01-09       s1 2013-01-11 2013-02-11 2012-12-31 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 12       &lt;NA&gt;          2012-01-01 2012-01-01 2012-01-01 2012-12-31 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 13 2013-01-09       s1 2014-01-01 2014-01-01 2014-01-01 2012-12-31 2013-01-09</span>
+<span class='r-in'><span class='fu'>find_date_cause</span><span class='op'>(</span><span class='va'>d</span>, <span class='va'>s3</span>, <span class='va'>s2</span>, <span class='va'>s1</span>, period_start <span class='op'>=</span> <span class='va'>ps</span>, period_end <span class='op'>=</span> <span class='va'>pe</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>            s1         s2 start_date start_date_reason         s3         ps</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 1  2013-01-01 2013-02-01 2013-01-01                s1 2013-01-10 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 2  2013-01-02 2013-02-02 2013-01-09                s3 2013-01-09 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 3  2013-01-03 2013-02-03 2013-01-08                s3 2013-01-08 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 4  2013-01-04 2013-02-04 2013-01-07                s3 2013-01-07 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 5  2013-01-05 2013-02-05 2013-01-06                s3 2013-01-06 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 6  2013-01-06 2013-02-06 2013-01-05                s3 2013-01-05 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 7  2013-01-07 2013-02-07 2013-01-04                s3 2013-01-04 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 8  2013-01-08 2013-02-08 2013-01-03                s3 2013-01-03 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 9  2013-01-09 2013-02-09 2013-01-02                s3 2013-01-02 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 10 2013-01-10 2013-02-10 2013-01-01                s3 2013-01-01 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 11 2013-01-11 2013-02-11 2012-12-31                s3 2012-12-31 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 12 2012-01-01 2012-01-01 2012-12-31                s3 2012-01-01 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 13 2014-01-01 2014-01-01       &lt;NA&gt;                   2014-01-01 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>            pe</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 1  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 2  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 3  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 4  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 5  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 6  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 7  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 8  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 9  2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 10 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 11 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 12 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 13 2013-01-09</span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># works</span></span>
+<span class='r-in'><span class='fu'>assert_positive_timespan</span><span class='op'>(</span><span class='va'>dd</span>, <span class='va'>start_date</span>, <span class='va'>pe</span><span class='op'>)</span></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='co'># returns a warning because the last date isn't later than the start_date</span></span>
+<span class='r-in'><span class='fu'>assert_positive_timespan</span><span class='op'>(</span><span class='va'>dd</span>, <span class='va'>start_date</span>, <span class='va'>s2</span><span class='op'>)</span></span>
+<span class='r-wrn co'><span class='r-pr'>#&gt;</span> <span class='warning'>Warning: </span>2 rows had negative timespans</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>    start_date start_date_reason         s1         s2         s3         ps</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 12 2012-12-31                s1 2012-01-01 2012-01-01 2012-01-01 2012-12-31</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> NA       &lt;NA&gt;              &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;       &lt;NA&gt;</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>            pe</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> 12 2013-01-09</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> NA       &lt;NA&gt;</span>
+<span class='r-in'></span>
+<span class='r-in'></span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s1</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [1] "2013-01-01" "2013-01-02" "2013-01-03" "2013-01-04" "2013-01-05"</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [6] "2013-01-06" "2013-01-07" "2013-01-08" "2013-01-09" NA          </span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [11] NA           NA           NA          </span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s2</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [1] NA NA NA NA NA NA NA NA NA NA NA NA NA</span>
+<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/with.html'>with</a></span><span class='op'>(</span><span class='va'>d</span>, <span class='fu'>constrain_dates</span><span class='op'>(</span><span class='va'>s3</span>, <span class='va'>ps</span>, <span class='va'>pe</span><span class='op'>)</span><span class='op'>)</span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [1] NA           "2013-01-09" "2013-01-08" "2013-01-07" "2013-01-06"</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span>  [6] "2013-01-05" "2013-01-04" "2013-01-03" "2013-01-02" "2013-01-01"</span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> [11] "2012-12-31" NA           NA          </span>
+<span class='r-in'></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
