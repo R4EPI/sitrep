@@ -1,8 +1,7 @@
 # These functions have been re-exported from the {epitabulate} package. They were
 # previously part of the sitrep package, but have been moved into their own
 # separate package for maintenance. By re-exporting them, the user does not
-# see much of a difference. This is different than the {apyramid} package where
-# we use the function internally as it has modified syntax.
+# see much of a difference.
 
 #' Functions re-expored from {epitabulate}
 #'
