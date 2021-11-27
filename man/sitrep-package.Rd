@@ -4,9 +4,9 @@
 \name{sitrep-package}
 \alias{sitrep}
 \alias{sitrep-package}
-\title{sitrep: Report templates and helper functions for EPI}
+\title{sitrep: Report templates and helper functions for applied epidemiology}
 \description{
-Report templates and helper functions for EPI.
+Report templates and helper functions for applied epidemiology
 }
 \seealso{
 Useful links:
@@ -23,7 +23,7 @@ Useful links:
 Authors:
 \itemize{
   \item Dirk Schumacher \email{mai@dirk-schumacher.net}
-  \item Alex Spina
+  \item Alexander Spina \email{alexfspina@gmail.com} (\href{https://orcid.org/0000-0001-8425-1867}{ORCID})
   \item Kate Doyle
   \item Chris Jarvis
   \item Lukas Richter

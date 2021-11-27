@@ -1,6 +1,6 @@
 Type: Package
 Package: sitrep
-Title: Report templates and helper functions for EPI
+Title: Report templates and helper functions for applied epidemiology
 Version: 0.1.7
 Authors@R: 
     c(person(given = "Dirk",
@@ -11,8 +11,10 @@ Authors@R:
              family = "Kamvar",
              role = c("aut", "cre"),
              email = "zkamvar@gmail.com"),
-      person(given = "Alex",
+      person(given = "Alexander",
              family = "Spina",
+             email = "alexfspina@gmail.com", 
+             comment = c(ORCID = "0000-0001-8425-1867"),
              role = "aut"),
       person(given = "Kate",
              family = "Doyle",
@@ -29,7 +31,7 @@ Authors@R:
       person(given = "Neale",
              family = "Batra",
              role = "ctb"))
-Description: Report templates and helper functions for EPI.
+Description: Report templates and helper functions for applied epidemiology
 License: GPL-3
 BugReports: https://github.com/R4EPI/sitrep/issues
 URL: https://r4epis.netlify.com, https://github.com/R4EPI/sitrep
