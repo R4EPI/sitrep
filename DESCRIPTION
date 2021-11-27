@@ -84,20 +84,11 @@ Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Collate: 
     'sitrep-package.R'
-    'add_weights_cluster.R'
-    'add_weights_strata.R'
     'age-pyramid.R'
     'check_templates.R'
-    'find_date_cause.R'
-    'gen_eligible_interviewed.R'
-    'gen_population.R'
-    'gen_polygon.R'
-    'msf_dict_rename_helper.R'
     'epidict_exports.R'
     'epikit_exports.R'
     'epibuffet_exports.R'
-    'sample-size.R'
-    'zcurve.R'
