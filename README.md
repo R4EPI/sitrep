@@ -29,14 +29,14 @@ An online manual for the functions in {sitrep} can be found at
 
 {sitrep} includes a number of other *R* packages which facilitate
 specific analysis:  
-[{epitabulate}](r4epi.github.io/epitabulate): Tables for epidemiological
-analysis  
-[{epidict}](r4epi.github.io/epidict): Epidemiology data dictionaries and
-random data generators  
-[{epikit}](r4epi.github.io/epikit): Miscellaneous helper tools for
-epidemiologists  
-[{apyramid}](r4epi.github.io/apyramid): Age pyramid construction and
-plotting
+[{epitabulate}](https://r4epi.github.io/epitabulate): Tables for
+epidemiological analysis  
+[{epidict}](https://r4epi.github.io/epidict): Epidemiology data
+dictionaries and random data generators  
+[{epikit}](https://r4epi.github.io/epikit): Miscellaneous helper tools
+for epidemiologists  
+[{apyramid}](https://r4epi.github.io/apyramid): Age pyramid construction
+and plotting
 
 ## Installation
 
@@ -103,7 +103,7 @@ available_sitrep_templates(categorise = TRUE)
 
 # generate the measles outbreak template in the output directory
 check_sitrep_templates("measles_outbreak", path = output_dir)
-#> [1] "C:\\Users\\Spina\\AppData\\Local\\Temp\\RtmpovWWC5/sitrep_example"
+#> [1] "C:\\Users\\Spina\\AppData\\Local\\Temp\\RtmpgTPWRw/sitrep_example"
 
 # view the contents
 list.files(output_dir, recursive = TRUE)
