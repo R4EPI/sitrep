@@ -1,7 +1,7 @@
 Type: Package
 Package: sitrep
-Title: Report templates and helper functions for EPI
-Version: 0.1.7
+Title: Report templates and helper functions for applied epidemiology
+Version: 0.1.8
 Authors@R: 
     c(person(given = "Dirk",
              family = "Schumacher",
@@ -10,9 +10,12 @@ Authors@R:
       person(given = "Zhian N.",
              family = "Kamvar",
              role = c("aut", "cre"),
-             email = "zkamvar@gmail.com"),
-      person(given = "Alex",
+             email = "zkamvar@gmail.com",
+             comment = c(ORCID = "0000-0003-1458-7108")), 
+      person(given = "Alexander",
              family = "Spina",
+             email = "alexfspina@gmail.com", 
+             comment = c(ORCID = "0000-0001-8425-1867"),
              role = "aut"),
       person(given = "Kate",
              family = "Doyle",
@@ -29,7 +32,7 @@ Authors@R:
       person(given = "Neale",
              family = "Batra",
              role = "ctb"))
-Description: Report templates and helper functions for EPI.
+Description: Report templates and helper functions for applied epidemiology
 License: GPL-3
 BugReports: https://github.com/R4EPI/sitrep/issues
 URL: https://r4epis.netlify.com, https://github.com/R4EPI/sitrep
@@ -66,7 +69,7 @@ Imports:
     stats,
     utils,
     apyramid (>= 0.1.0),
-    epibuffet (>= 0.0.0.9005),
+    epitabulate (>= 0.0.0.9005),
     epidict (>= 0.0.0.9001),
     epikit
 Suggests:
@@ -78,26 +81,17 @@ Suggests:
 Remotes:
   reconhub/linelist,
   R4EPI/apyramid,
-  R4EPI/epibuffet,
+  R4EPI/epitabulate,
   R4EPI/epidict
 Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Collate: 
     'sitrep-package.R'
-    'add_weights_cluster.R'
-    'add_weights_strata.R'
-    'age-pyramid.R'
     'check_templates.R'
-    'find_date_cause.R'
-    'gen_eligible_interviewed.R'
-    'gen_population.R'
-    'gen_polygon.R'
-    'msf_dict_rename_helper.R'
+    'apyramid_exports.R'
     'epidict_exports.R'
     'epikit_exports.R'
-    'epibuffet_exports.R'
-    'sample-size.R'
-    'zcurve.R'
+    'epitabulate_exports.R'

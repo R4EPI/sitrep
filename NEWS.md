@@ -1,3 +1,6 @@
+# sitrep 0.1.8
+* Move functions to other packages and then re-export (@aspina #134)
+
 # sitrep 0.1.7
 
 * Import {epibuffet}. This replaces the `tab_linelist()`, `tab_survey()`,
