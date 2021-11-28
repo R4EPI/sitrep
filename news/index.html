@@ -81,7 +81,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.8</span>
       </span>
     </div>
 
@@ -124,6 +124,13 @@
       <small>Source: <a href='https://github.com/R4EPI/sitrep/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="sitrep-018" class="section level1">
+<h1 class="page-header" data-toc-text="0.1.8">
+<a href="#sitrep-018" class="anchor"></a>sitrep 0.1.8</h1>
+<ul>
+<li>Move functions to other packages and then re-export (<a href='https://github.com/aspina'>@aspina</a> <a href='https://github.com/R4EPI/sitrep/issues/134'>#134</a>)</li>
+</ul>
+</div>
     <div id="sitrep-017" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.7">
 <a href="#sitrep-017" class="anchor"></a>sitrep 0.1.7</h1>
@@ -143,7 +150,7 @@
 <h1 class="page-header" data-toc-text="0.1.5">
 <a href="#sitrep-015" class="anchor"></a>sitrep 0.1.5</h1>
 <ul>
-<li>Import {epikit}. This replaces several small formatting functions like <code><a href="../reference/age_categories.html">fmt_ci()</a></code> and <code><a href="../reference/age_categories.html">rename_redundant()</a></code>. It also replaces <code><a href="../reference/age_categories.html">age_categories()</a></code> and <code><a href="../reference/age_categories.html">attack_rate()</a></code> etc.</li>
+<li>Import {epikit}. This replaces several small formatting functions like <code><a href="../reference/add_weights_cluster.html">fmt_ci()</a></code> and <code><a href="../reference/add_weights_cluster.html">rename_redundant()</a></code>. It also replaces <code><a href="../reference/add_weights_cluster.html">age_categories()</a></code> and <code><a href="../reference/add_weights_cluster.html">attack_rate()</a></code> etc.</li>
 </ul>
 </div>
     <div id="sitrep-014" class="section level1">
@@ -159,21 +166,21 @@
 <a href="#sitrep-013" class="anchor"></a>sitrep 0.1.3</h1>
 <ul>
 <li>
-<code><a href="../reference/gen_polygon.html">gen_polygon()</a></code> has been moved back into this package as it did not really belong in {msfdict}. Note that this should not affect the user experience. (<a href='https://github.com/zkamvar'>@zkamvar</a>, <a href='https://github.com/R4EPI/sitrep/issues/235'>#235</a>)</li>
+<code><a href="../reference/add_weights_cluster.html">gen_polygon()</a></code> has been moved back into this package as it did not really belong in {msfdict}. Note that this should not affect the user experience. (<a href='https://github.com/zkamvar'>@zkamvar</a>, <a href='https://github.com/R4EPI/sitrep/issues/235'>#235</a>)</li>
 </ul>
 </div>
     <div id="sitrep-012" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.2">
 <a href="#sitrep-012" class="anchor"></a>sitrep 0.1.2</h1>
 <ul>
-<li>Import {msfdict}. The <code><a href="../reference/msf_dict_survey.html">msf_dict()</a></code>, <code><a href="../reference/msf_dict_survey.html">msf_dict_survey()</a></code>, <code><a href="../reference/msf_dict_survey.html">gen_data()</a></code> and <code><a href="../reference/gen_polygon.html">gen_polygon()</a></code> functions (and all associated internal functions) were moved to the {msfdict} package and re-exported (<a href='https://github.com/zkamvar'>@zkamvar</a>, <a href='https://github.com/R4EPI/sitrep/issues/228'>#228</a>)</li>
+<li>Import {msfdict}. The <code><a href="../reference/msf_dict.html">msf_dict()</a></code>, <code><a href="../reference/msf_dict.html">msf_dict_survey()</a></code>, <code><a href="../reference/msf_dict.html">gen_data()</a></code> and <code><a href="../reference/add_weights_cluster.html">gen_polygon()</a></code> functions (and all associated internal functions) were moved to the {msfdict} package and re-exported (<a href='https://github.com/zkamvar'>@zkamvar</a>, <a href='https://github.com/R4EPI/sitrep/issues/228'>#228</a>)</li>
 </ul>
 </div>
     <div id="sitrep-011" class="section level1">
 <h1 class="page-header" data-toc-text="0.1.1">
 <a href="#sitrep-011" class="anchor"></a>sitrep 0.1.1</h1>
 <ul>
-<li>Import {apyramid}. Code from <code><a href="../reference/plot_age_pyramid.html">plot_age_pyramid()</a></code> was moved to the {apyramid} package, which is currently on GitHub, but soon to be on CRAN (<a href='https://github.com/zkamvar'>@zkamvar</a>, <a href='https://github.com/R4EPI/sitrep/issues/225'>#225</a>)</li>
+<li>Import {apyramid}. Code from <code>plot_age_pyramid()</code> was moved to the {apyramid} package, which is currently on GitHub, but soon to be on CRAN (<a href='https://github.com/zkamvar'>@zkamvar</a>, <a href='https://github.com/R4EPI/sitrep/issues/225'>#225</a>)</li>
 <li>Removed erroneous emoji in comments that was causing errors in Windows installations (<a href='https://github.com/zkamvar'>@zkamvar</a>, <a href='https://github.com/R4EPI/sitrep/issues/227'>#227</a>)</li>
 <li>NOTE: this release on GitHub was not associated with a formal version change.</li>
 </ul>
@@ -199,7 +206,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Dirk Schumacher, Zhian N. Kamvar, Alex Spina, Kate Doyle, Chris Jarvis, Lukas Richter.</p>
+  <p>Developed by Dirk Schumacher, Zhian N. Kamvar, Alexander Spina, Kate Doyle, Chris Jarvis, Lukas Richter.</p>
 </div>
 
 <div class="pkgdown">

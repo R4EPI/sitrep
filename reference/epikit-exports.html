@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Exported functions from epikit — age_categories • sitrep</title>
+<title>Exported functions from epikit — add_weights_cluster • sitrep</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,7 @@
 
 
 
-<meta property="og:title" content="Exported functions from epikit — age_categories" />
+<meta property="og:title" content="Exported functions from epikit — add_weights_cluster" />
 <meta property="og:description" content="Exported functions from epikit" />
 
 
@@ -82,7 +82,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.8</span>
       </span>
     </div>
 
@@ -130,7 +130,13 @@
     <p>Exported functions from epikit</p>
     </div>
 
-    <pre class="usage"><span class='va'>age_categories</span>
+    <pre class="usage"><span class='va'>add_weights_cluster</span>
+
+<span class='va'>add_weights_strata</span>
+
+<span class='va'>age_categories</span>
+
+<span class='va'>assert_positive_timespan</span>
 
 <span class='va'>attack_rate</span>
 
@@ -140,11 +146,19 @@
 
 <span class='va'>case_fatality_rate_df</span>
 
+<span class='va'>constrain_dates</span>
+
 <span class='va'>dots_to_charlist</span>
 
 <span class='va'>fac_from_num</span>
 
 <span class='va'>find_breaks</span>
+
+<span class='va'>find_date_cause</span>
+
+<span class='va'>find_end_date</span>
+
+<span class='va'>find_start_date</span>
 
 <span class='va'>fmt_ci</span>
 
@@ -156,6 +170,10 @@
 
 <span class='va'>fmt_pci_df</span>
 
+<span class='va'>gen_polygon</span>
+
+<span class='va'>gen_population</span>
+
 <span class='va'>group_age_categories</span>
 
 <span class='va'>merge_ci_df</span>
@@ -166,7 +184,9 @@
 
 <span class='va'>rename_redundant</span>
 
-<span class='va'>unite_ci</span></pre>
+<span class='va'>unite_ci</span>
+
+<span class='va'>zcurve</span></pre>
 
 
     <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
@@ -190,17 +210,31 @@
 <p>An object of class <code>function</code> of length 1.</p>
 <p>An object of class <code>function</code> of length 1.</p>
 <p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
+<p>An object of class <code>function</code> of length 1.</p>
     <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <div class='dont-index'><p><code><a href='https://r4epi.github.io/epikit/reference/age_categories.html'>epikit::age_categories()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/attack_rate.html'>epikit::attack_rate()</a></code>,
-<code><a href='https://r4epi.github.io/epikit/reference/rename_redundant.html'>epikit::augment_redundant()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/attack_rate.html'>epikit::case_fatality_rate()</a></code>,
-<code><a href='https://r4epi.github.io/epikit/reference/attack_rate.html'>epikit::case_fatality_rate_df()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/dots_to_charlist.html'>epikit::dots_to_charlist()</a></code>,
-<code><a href='https://r4epi.github.io/epikit/reference/fac_from_num.html'>epikit::fac_from_num()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/find_breaks.html'>epikit::find_breaks()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/fmt_ci.html'>epikit::fmt_ci()</a></code>,
+    <div class='dont-index'><p><code><a href='https://r4epi.github.io/epikit/reference/add_weights_cluster.html'>epikit::add_weights_cluster()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/add_weights_strata.html'>epikit::add_weights_strata()</a></code>,
+<code><a href='https://r4epi.github.io/epikit/reference/age_categories.html'>epikit::age_categories()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/find_date_cause.html'>epikit::assert_positive_timespan()</a></code>,
+<code><a href='https://r4epi.github.io/epikit/reference/attack_rate.html'>epikit::attack_rate()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/rename_redundant.html'>epikit::augment_redundant()</a></code>,
+<code><a href='https://r4epi.github.io/epikit/reference/attack_rate.html'>epikit::case_fatality_rate()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/attack_rate.html'>epikit::case_fatality_rate_df()</a></code>,
+<code><a href='https://r4epi.github.io/epikit/reference/find_date_cause.html'>epikit::constrain_dates()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/dots_to_charlist.html'>epikit::dots_to_charlist()</a></code>,
+<code><a href='https://r4epi.github.io/epikit/reference/fac_from_num.html'>epikit::fac_from_num()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/find_breaks.html'>epikit::find_breaks()</a></code>,
+<code><a href='https://r4epi.github.io/epikit/reference/find_date_cause.html'>epikit::find_date_cause()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/find_date_cause.html'>epikit::find_end_date()</a></code>,
+<code><a href='https://r4epi.github.io/epikit/reference/find_date_cause.html'>epikit::find_start_date()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/fmt_ci.html'>epikit::fmt_ci()</a></code>,
 <code><a href='https://r4epi.github.io/epikit/reference/fmt_ci.html'>epikit::fmt_ci_df()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/fmt_count.html'>epikit::fmt_count()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/fmt_ci.html'>epikit::fmt_pci()</a></code>,
 <code><a href='https://r4epi.github.io/epikit/reference/fmt_ci.html'>epikit::fmt_pci_df()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/age_categories.html'>epikit::group_age_categories()</a></code>,
 <code><a href='https://r4epi.github.io/epikit/reference/unite_ci.html'>epikit::merge_ci_df()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/unite_ci.html'>epikit::merge_pci_df()</a></code>,
-<code><a href='https://r4epi.github.io/epikit/reference/attack_rate.html'>epikit::mortality_rate()</a></code>,
-<code><a href='https://r4epi.github.io/epikit/reference/rename_redundant.html'>epikit::rename_redundant()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/unite_ci.html'>epikit::unite_ci()</a></code></p></div>
+<code><a href='https://r4epi.github.io/epikit/reference/attack_rate.html'>epikit::mortality_rate()</a></code>,<code><a href='https://r4epi.github.io/epikit/reference/rename_redundant.html'>epikit::rename_redundant()</a></code>,
+<code><a href='https://r4epi.github.io/epikit/reference/unite_ci.html'>epikit::unite_ci()</a></code>, <code><a href='https://r4epi.github.io/epikit/reference/zcurve.html'>epikit::zcurve()</a></code></p></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -213,7 +247,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Dirk Schumacher, Zhian N. Kamvar, Alex Spina, Kate Doyle, Chris Jarvis, Lukas Richter.</p>
+  <p>Developed by Dirk Schumacher, Zhian N. Kamvar, Alexander Spina, Kate Doyle, Chris Jarvis, Lukas Richter.</p>
 </div>
 
 <div class="pkgdown">
