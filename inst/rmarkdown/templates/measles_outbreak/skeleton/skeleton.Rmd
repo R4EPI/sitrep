@@ -588,10 +588,22 @@ This chunk will help you set up and clean your date variables.
 ## If not, comment this section out and use the below.
 
 ## make sure all date variables are formatted as dates 
+## get the names of variables which are dates
 DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
   filter(data_element_shortname %in% names(linelist_cleaned)) %>% 
   ## filter to match the column names of your data
   pull(data_element_shortname) 
+
+## find if there are date variables which are completely empty
+## (otherwise the linelist package does not work)
+EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
+  is.na(study_data_cleaned[[.x]])
+  )) %>% 
+  unlist() %>% 
+  which()
+
+## remove exclude the names of variables which are completely emptys
+DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 
 ## change to dates 
 linelist_cleaned <- linelist_cleaned %>%
