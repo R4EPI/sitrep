@@ -770,6 +770,51 @@ study_data_cleaned <- study_data_cleaned %>%
 ```
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// labelling_data \\\
+--------------------------------------------------------------------------------
+
+We can use the labelled package to add tags to our variable names and values.  
+This means that we can have both coded values and a cleaner written out form of
+variable names and values; this makes our code easier to write but our output 
+cleaner to look at (because we can use labels in tables/figures).
+
+So for example our variable name would be "sex" but the label would be "Sex", and
+the values would be "m" and "f" but the label would be "Male" and "Female".
+This corresponds to the option_name and option_label in kobo dictionaries.
+
+Currently, value labels cant be used for analysis so we will just recode using 
+the matchmaker package. Variable labels can be used and so we will used the 
+labelled package for that. 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r labelling_data}
+
+## label variable names with labelled 
+## recode values with matchmaker (because value labels cant be used for analysis). 
+
+library(labelled)
+
+study_data_cleaned %>% 
+set_variable_labels(
+    age = "Age (years)",
+    sex = "Sex",
+    age_group = "Age group (years)",
+  )
+
+
+checking <- msf_dict_survey(disease = "Mortality", compact = FALSE)
+
+matchmaker::match_df(study_data_cleaned, 
+                      checking, 
+                      from = "option_name", 
+                      to = "option_label_french", 
+                      by = "name", 
+                      order = "option_order_in_set")
+
+```
+
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// remove_unused_data \\\
@@ -1143,17 +1188,16 @@ your data.
 
 ```{r descriptive_sampling_bias, warning = FALSE}
 ## counts and props of the study population
-ag <- tab_linelist(study_data_cleaned, "age_group") %>%
-  mutate(n_total = sum(n)) %>%
-  select(-variable) %>%
-  rename(age_group = value) %>%
-  mutate(age_group = fct_inorder(age_group))
+ag <- tabyl(study_data_cleaned, age_group, show_na = FALSE) %>% 
+  mutate(n_total = sum(n), 
+         age_group = fct_inorder(age_group))
+
 
 ## counts and props of the source population
 propcount <- population_data_age %>% 
   group_by(age_group) %>%
     tally(population) %>%
-    mutate(proportion = n / sum(n))
+    mutate(percent = n / sum(n))
 
 ## bind together the columns of two tables, group by age, and perform a 
 ## binomial test to see if n/total is significantly different from population
@@ -1166,9 +1210,11 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   ## will add the variables p.value, parameter, conf.low, conf.high, method, and
   ## alternative. We will only use p.value here. You can include other
   ## columns if you want to report confidence intervals
-  mutate(binom = list(broom::tidy(binom.test(n, n_total, proportion_pop)))) %>%
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, percent_pop)))) %>%
   unnest(cols = c(binom)) %>% # important for expanding the binom.test data frame
-  mutate(proportion_pop = proportion_pop * 100) %>%
+  mutate(
+    across(.cols = contains("percent"), 
+            .fns = ~.x * 100)) %>%
 
   ## Adjusting the p-values to correct for false positives 
   ## (because testing multiple age groups). This will only make 
@@ -1182,12 +1228,14 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   select(
     "Age group" = age_group,
     "Study population (n)" = n,
-    "Study population (%)" = proportion,
+    "Study population (%)" = percent,
     "Source population (n)" = n_pop,
-    "Source population (%)" = proportion_pop,
+    "Source population (%)" = percent_pop,
     "P-value" = p.value
   ) %>%
   kable(digits = 1)
+  
+
 ```
 
 
@@ -1252,17 +1300,18 @@ it will then pull the age group with the highest proportion of pregnant women.
 
 pregnant_women_in_data <- study_data_cleaned %>% 
   ## filter for only women in the data
-  filter(sex == "female") %>%
-  ## tabulate age group, stratifying by pregnancy status
-  tab_linelist(age_group, strata = pregnant) %>%
-  ## select and rename the variables we need
-  select(age_group  = "value",
-         n          = "yes n",
-         proportion = "yes proportion") %>%
+  filter(sex == "female") %>% 
+  ## get counts (ignore missings)
+  tabyl(age_group, pregnant, show_na = FALSE) %>%
+  ## add in percentages based on column totals
+  adorn_percentages(denominator = "col") %>% 
+  ## format percentages
+  adorn_pct_formatting() %>% 
   ## arrange proportions in descending order
-  arrange(desc(proportion)) %>%
+  arrange(desc(yes)) %>% 
   ## grab the first row
   slice(1)
+
 ```
 
 
@@ -1283,7 +1332,7 @@ The number of surveyed women who were pregnant was
 `r fmt_count(study_data_cleaned, sex == "female" & pregnant == "yes")`. 
 The highest proportion of pregnant women was among the 
 `r pregnant_women_in_data$age_group` year age group, at 
-`r round(pregnant_women_in_data$proportion, 1)`%.
+`r pregnant_women_in_data$yes`.
 
 Unweighted age distribution of population by year age group and gender.
 
@@ -1300,19 +1349,31 @@ to change this, set proptotal = FALSE
 
 ```{r describe_by_age_group_and_sex}
 
-tab_linelist(study_data_cleaned, age_group, 
-             strata     = sex, 
-             row_total  = TRUE,
-             col_total  = TRUE,
-             prop_total = TRUE) %>%
+study_data_cleaned %>% 
+  ## cross-tabulate counts
+  tabyl(age_group, sex) %>% 
+  ## add row and column totals
+  adorn_totals(where = "both") %>%
+  ## convert to proportions
+  adorn_percentages(denominator = "all") %>% 
+  ## convert to percentages
+  adorn_pct_formatting() %>% 
+  ## display as: "count (percent)"
+  adorn_ns(position = "front") %>% 
   ## select and rename column names appropriately
-  select("Age"              = "value",
-         "Female cases (n)" = "female n",
-         "Female cases (%)" = "female proportion",
-         "Male cases (n)"   = "male n",
-         "Male cases (%)"   = "male proportion",
-         "Total") %>%
+  select("Age"         = "age_group",
+         "Female n(%)" = "female",
+         "Male n(%)"   = "male",
+         "Total") %>% 
   kable(digits = 1)
+
+
+tbl_cross(study_data_cleaned, 
+          row = age_group, 
+          col = sex, 
+          percent = "cell", 
+          )
+
 ```
 
 
