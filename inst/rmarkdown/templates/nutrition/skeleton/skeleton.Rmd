@@ -518,17 +518,21 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 ## change to dates 
 ## use the guess_dates() function to make a first pass at date variables.
 study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(DATEVARS, linelist::guess_dates, 
-            error_tolerance = 0.5)
-
+  study_data_cleaned <- study_data_cleaned %>%
+  mutate(
+    across(.cols = all_of(DATEVARS),
+           .fns = ~linelist::guess_dates(.x,
+                                         error_tolerance = 0.5)))
 
 ## Non-DHARMA data -------------------------------------------------------------
 ## Use this section if you did not have Dharma data. 
 
 ## use the guess_dates() function to make a first pass at date variables.
 # study_data_cleaned <- study_data_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
-#             error_tolerance = 0.5)
+#   mutate(
+#     across(.cols = matches("date|Date"),
+#            .fns  = ~linelist::guess_dates(.x, 
+#                                   error_tolerance = 0.5)))
 
 ## Fix wrong dates ------------------------------------------------------------- 
 
@@ -667,9 +671,13 @@ study_data_cleaned <- study_data_cleaned %>%
 ## replace missing values in Dharma multi-choice questions to "" so that we can
 ## filter them out later.
 study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(.vars = vars(contains("q53")), # all variables that contain the word "q53"
-            .funs = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
-           ) 
+  mutate(
+    across(
+      .cols = contains("q53"), # all variables that contain the word "q53"
+      .fns = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
+      ) 
+    )
+    
 ```
 
 
@@ -721,8 +729,12 @@ study_data_cleaned <- study_data_cleaned %>%
   ## set flagged children to NA for each of the indicator variables
     ## if the flag for this indicator is not missing and is 1 then set indicator vars to NA
     ## else leave the indicator variable as it was
-  mutate_at(.vars = vars(gam_whz, mam_whz, sam_whz), # select the indicator variables
-            .funs = ~if_else(!is.na(fwfl) & fwfl == 1, NA, .)) # NA if flagged, else leave as is
+  mutate(
+    across(
+      .cols = vars(gam_whz, mam_whz, sam_whz), # select the indicator variables
+      .fns = ~if_else(!is.na(fwfl) & fwfl == 1, NA, .)) # NA if flagged, else leave as is
+    )
+    
 
 
 
@@ -739,10 +751,12 @@ study_data_cleaned <- study_data_cleaned %>%
   ## set flagged children to NA for each of the indicator variables
     ## if the flag for this indicator is not missing and is 1 then set indicator vars to NA
     ## else leave the indicator variable as it was
-  mutate_at(.vars = vars(stunting_haz, 
+  mutate(
+    across(
+      .cols = c(stunting_haz, 
                          moderate_stunting_haz, 
                          severe_stunting_haz), # select the indicator variables
-            .funs = ~if_else(!is.na(flen) & flen == 1, NA, .)) # NA if flagged, else leave as is
+      .funs = ~if_else(!is.na(flen) & flen == 1, NA, .))) # NA if flagged, else leave as is
 
 
 
@@ -759,10 +773,12 @@ study_data_cleaned <- study_data_cleaned %>%
   ## set flagged children to NA for each of the indicator variables
     ## if the flag for this indicator is not missing and is 1 then set indicator vars to NA
     ## else leave the indicator variable as it was
-  mutate_at(.vars = vars(underweight_waz, 
-                         moderate_underweight_waz, 
-                         severe_underweight_waz), # select the indicator variables
-            .funs = ~if_else(!is.na(fwei) & fwei == 1, NA, .)) # NA if flagged, else leave as is
+  mutate(
+    across(
+      .cols = c(underweight_waz, 
+                moderate_underweight_waz, 
+                severe_underweight_waz), # select the indicator variables
+      .fns = ~if_else(!is.na(fwei) & fwei == 1, NA, .))) # NA if flagged, else leave as is
 
 
 
@@ -804,16 +820,20 @@ indicators <- c(WHZ, HAZ, WAZ, MUAC)
 
 ## turn all indicators in to factors 
 study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(.vars = vars(indicators), # all variables named in indicators
-            .funs = factor # turn into a factor
-           ) 
+  mutate(
+    across(
+      .cols = all_of(indicators), # all variables named in indicators
+      .fns = factor # turn into a factor
+      )) 
 
 
 ## turn all flags in to TRUE/FALSE variables
 study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(.vars = vars(c("fwei", "flen", "fwfl")), # names of flag variables
-            .funs = as.logical # turn in to logical
-           )
+  mutate(
+    across(
+      .cols = all_of(c("fwei", "flen", "fwfl")), # names of flag variables
+      .fns = as.logical # turn in to logical
+      ))
 
 ```
 

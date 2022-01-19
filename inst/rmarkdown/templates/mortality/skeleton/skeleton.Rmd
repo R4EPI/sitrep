@@ -489,8 +489,10 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 ## change to dates 
 ## use the guess_dates() function to make a first pass at date variables.
 study_data_cleaned <- study_data_cleaned %>%
-  mutate_at(DATEVARS, linelist::guess_dates, 
-            error_tolerance = 0.5)
+  mutate(
+    across(.cols = all_of(DATEVARS),
+           .fns = ~linelist::guess_dates(.x,
+                                         error_tolerance = 0.5)))
 
 
 ## Non-Kobo data -------------------------------------------------------------
@@ -498,8 +500,10 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ## use the guess_dates() function to make a first pass at date variables.
 # study_data_cleaned <- study_data_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
-#             error_tolerance = 0.5)
+#   mutate(
+#     across(.cols = matches("date|Date"),
+#            .fns  = ~linelist::guess_dates(.x, 
+#                                   error_tolerance = 0.5)))
 
 
 ## Define recall period --------------------------------------------------------
@@ -663,9 +667,14 @@ study_data_cleaned <- study_data_cleaned %>%
 ## replace missing values in multi-choice questions to "" so that we can
 ## filter them out later.
 # study_data_cleaned <- study_data_cleaned %>%
-#   mutate_at(.vars = vars(contains("violence")), # all variables that contain the word "violence"
-#             .funs = ~fct_explicit_na(as.character(.), "") # replace missing values with "" 
-#            ) 
+#   mutate(
+#     across(
+#       .cols = contains("violence"), # all variables that contain the word "violence"
+#       .fns = ~fct_explicit_na(as.character(.), "") # replace missing values with ""
+#       )
+#     )
+
+  
 ```
 
 
@@ -1478,8 +1487,9 @@ death_props_strat <- tab_survey(survey_design, died,
                                 strata = health_district,
                                 deff = TRUE, 
                                 keep = "TRUE") %>%
-  mutate_at(.vars = vars(ends_with(" n")), 
-            .funs = ~format(round(., digits = 1), big.mark = ","))
+  mutate(
+    across(.cols = ends_with(" n"), 
+            .fns = ~format(round(., digits = 1), big.mark = ",")))
 
 ## mortality per 10,000 persons/day with CI
 CMR_strat <- survey_design %>% 

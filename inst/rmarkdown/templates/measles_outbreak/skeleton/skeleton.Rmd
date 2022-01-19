@@ -607,8 +607,10 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 
 ## change to dates 
 linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(DATEVARS, linelist::guess_dates,
-            error_tolerance = 0.5)
+    mutate(
+      across(.cols = all_of(DATEVARS),
+           .fns = ~linelist::guess_dates(.x,
+                                         error_tolerance = 0.5)))
 
 
 
@@ -617,8 +619,10 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ## use the guess_dates() function to make a first pass at date variables.
 # linelist_cleaned <- linelist_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
-#           error_tolerance = 0.5)
+#   mutate(
+#     across(.cols = matches("date|Date"),
+#            .fns  = ~linelist::guess_dates(.x, 
+#                                   error_tolerance = 0.5)))
 
 ## once you have run guess_dates(), take a look at your date variables.
 ## here is an example:
@@ -805,16 +809,18 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ## standardize options
 # linelist_cleaned <- linelist_cleaned %>%  
-#      mutate_at(vars(change_yn), forcats::fct_recode,   
-#      Yes = "y",  
-#      Yes = "Y",  
-#      Yes = "yes",  
-#      Yes = "1",   
-#      No  = "n",  
-#      No  = "N",  
-#      No  = "no",  
-#      No  = "0",  
-#    )     
+#   mutate(
+#     across(
+#       .cols = all_of(change_yn),
+#       .fns = ~forcats::fct_recode(.x,
+#                                   Yes = "y",
+#                                   Yes = "Y",
+#                                   Yes = "yes",
+#                                   Yes = "1",
+#                                   No  = "n",
+#                                   No  = "N",
+#                                   No  = "no",
+#                                   No  = "0"))) 
 
 
 
@@ -876,12 +882,14 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ## Change the order of levels of multiple categorical variables at the same time
 linelist_cleaned <- linelist_cleaned %>%
-  mutate_at(vars(
-           # Looks for variables beginning with "prescribed"
-            starts_with("prescribed")),          
-            fct_relevel,
-            # Sets order of levels
-            "Yes", "No")
+  mutate(
+    across(
+      # Looks for variables beginning with "prescribed"
+      .cols = starts_with("prescribed"),  
+      # Sets order of levels
+      .fns = ~fct_relevel(.x, 
+                          levels = c("Yes", "No"))))
+
 ```
 
 
