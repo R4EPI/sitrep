@@ -57,7 +57,8 @@ required_packages <- c("knitr",       # create output docs
                        "forcats",     # manipulate and rearrange factors
                        "stringr",     # manipulate texts
                        "ggplot2",     # create plots and charts
-                       "ggforce",     # for visualising population flows
+                       "ggforce",     # for visualising population flows, 
+                       "apyramid",    # plotting age pyramids
                        "sitrep",      # MSF field epi functions
                        "survey",      # for survey functions
                        "srvyr",       # dplyr wrapper for survey package
@@ -1394,19 +1395,11 @@ to change this, set proptotal = FALSE
 
 ```{r describe_by_age_category_and_sex}
 
-tab_linelist(study_data_cleaned, age_category, 
-             strata     = sex, 
-             row_total  = TRUE,
-             col_total  = TRUE,
-             prop_total = TRUE) %>%
-  ## select and rename column names appropriately
-  select("Age"              = "value",
-         "Female cases (n)" = "female n",
-         "Female cases (%)" = "female proportion",
-         "Male cases (n)"   = "male n",
-         "Male cases (%)"   = "male proportion",
-         "Total") %>%
-  kable(digits = 1)
+tbl_cross(study_data_cleaned, 
+          row = age_category, 
+          col = sex, 
+          percent = "cell", 
+          )
 ```
 
 
@@ -1425,10 +1418,10 @@ of your cases.
 
 ```{r age_pyramid, warning=FALSE}
 
-plot_age_pyramid(study_data_cleaned, 
-                 age_group = "age_group", 
-                 split_by = "sex",
-                 proportion = TRUE) + 
+age_pyramid(study_data_cleaned, 
+            age_group, 
+            split_by = sex, 
+            proportional = TRUE) + 
   labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
@@ -1453,11 +1446,11 @@ either sex or gender in any of your survey strata.
 
 ```{r age_pyramid_strata, warning=FALSE}
 
-plot_age_pyramid(study_data_cleaned, 
-                 age_group = "age_group", 
-                 split_by = "sex",
-                 stack_by = "health_district",
-                 proportion = TRUE, 
+age_pyramid(study_data_cleaned, 
+                 age_group, 
+                 split_by = sex,
+                 stack_by = health_district,
+                 proportional = TRUE, 
                  pal = c("red", "blue")) + 
   labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
@@ -1483,11 +1476,11 @@ sample and source population distributions by binomial test).
 
 ```{r age_pyramid_survey, warning=FALSE}
 
-plot_age_pyramid(survey_design,
-                 age_group = "age_group",
-                 split_by = "sex", 
+age_pyramid(survey_design,
+                 age_group,
+                 split_by = sex, 
                  proportion = TRUE) +
-  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  labs(y = "Proportion (weighted)", x = "Age group (years)") + # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
