@@ -51,7 +51,7 @@ options(knitr.kable.NA = "-")
 required_packages <- c("knitr",       # create output docs
                        "here",        # find your files
                        "rio",         # for importing data
-                       "epitrix",     # clean/shape data
+                       "janitor",     # clean/shape data
                        "dplyr",       # clean/shape data
                        "tidyr",       # clean/shape data
                        "forcats",     # manipulate and rearrange factors
@@ -258,13 +258,12 @@ study_data_cleaned <- study_data_raw
 study_data_cleaned <- rename(study_data_cleaned,
                              violence_nature_other_details    =  violence_nature_other)
 
-## define clean variable names using clean_labels from the epitrix package. 
-cleaned_colnames <- epitrix::clean_labels(colnames(study_data_cleaned))
-
-## overwrite variable names with defined clean names
-colnames(study_data_cleaned) <- cleaned_colnames 
+## define clean variable names using clean_names from the janitor package. 
+study_data_cleaned <- janitor::clean_names(study_data_cleaned)
 
 ## create a unique identifier by combining indeces of the two levels 
+## x and y are added on to the end of variables that are duplicated 
+## (in this case, parent and child index)
 # study_data_cleaned <- study_data_cleaned %>% 
 #   mutate(uid = str_glue("{index}_{index_y}"))
 
