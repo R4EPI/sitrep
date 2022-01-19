@@ -60,7 +60,8 @@ required_packages <- c("knitr",       # create output docs
                        "ggforce",     # for visualising population flows
                        "sitrep",      # MSF field epi functions
                        "survey",      # for survey functions
-                       "srvyr"        # dplyr wrapper for survey package
+                       "srvyr",       # dplyr wrapper for survey package
+                       "gtsummary"    # produce tables
                        )
 
 for (pkg in required_packages) {
@@ -1045,17 +1046,23 @@ This chunk will create a table of dropped individuals by reason for no consent.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
 
 ```{r consent_reasons}
+
 ## using the dataset with dropped individuals 
 dropped %>% 
-  ## get counts of reasons for no consent 
-  ## make the proportion of the total, including the missings
-  tab_linelist(no_consent_reason,
-               prop_total = TRUE, na.rm = FALSE) %>% 
-  ## drop variable column and rename others
-  select("Reason" = value, 
-         "n" = n, 
-         "%" = proportion) %>% 
-  kable(digits = 1)
+  ## only keep reasons for no consent 
+  select(no_consent_reason) %>% 
+  ## make NAs a factor level called missing
+  ## to make the proportion of the total, including the missings
+  mutate(no_consent_reason = fct_explicit_na(no_consent_reason,
+                                             na_level = "Missing")) %>%
+  ## get counts and proportions 
+  tbl_summary() %>% 
+  ## update the table header
+  modify_header(label = "") %>% 
+  ## make variable names bold 
+  bold_labels()
+
+
 ```
 
 
