@@ -573,10 +573,10 @@ study_data_cleaned <- study_data_cleaned %>%
 ## create age group variable for under 2 years based on months
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(age_group_mon = if_else(
-    ## if months <= 24 then calculated age groups 
-    age_months_calc <= 24, 
-    age_categories(study_data_cleaned$age_months_calc, 
-                                        breakers = c(0, 6, 9, 12, 24), 
+    ## if months <= 12 then calculated age groups 
+    age_months <= 12, 
+    age_categories(study_data_cleaned$age_months, 
+                                        breakers = c(0, 6, 9, 12), 
                                         ceiling = TRUE), 
     ## otherwise set new variable to missing
     factor(NA)))
@@ -654,10 +654,11 @@ study_data_cleaned <- study_data_cleaned %>%
 ## Set the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
   mutate(cause = factor(cause,
-                        levels = c("malaria_fever", "diarrhoea", 
+                        levels = c("fever_malaria", "diarrhoea", 
                                    "respiratory_infection", "trauma_accident", 
-                                   "during_pregnancy", "during_after_delivery",
-                                   "violence", "dont_know", "other")))
+                                   "during_pregnancy", "during_delivery",
+                                   "post_partum", "violence", "dont_know", 
+                                   "other")))
 
 ## explicitly replace NA of a factor
 study_data_cleaned <- study_data_cleaned %>%
@@ -705,8 +706,8 @@ if applicable (e.g. departures, deaths)
 study_data_cleaned <- study_data_cleaned %>%
   ## choose earliest date entered in survey
   ## from births, household arrivals, and camp arrivals 
-  find_start_date("birthday_date",
-                  "arrived_date",
+  find_start_date("date_birth",
+                  "date_arrived",
                   period_start = "recall_start",
                   period_end   = "recall_end",
                   datecol      = "startdate",
@@ -714,8 +715,8 @@ study_data_cleaned <- study_data_cleaned %>%
                  ) %>%
   ## choose earliest date entered in survey
   ## from camp departures, death and end of the study
-  find_end_date("left_date",
-                "death_date",
+  find_end_date("date_left",
+                "date_death",
                 period_start = "recall_start",
                 period_end   = "recall_end",
                 datecol      = "enddate",
@@ -732,15 +733,15 @@ study_data_cleaned <- study_data_cleaned %>%
 ## make sure there are the appropriate levels (names)
 study_data_cleaned$startcause <- fct_recode(study_data_cleaned$startcause,
                                             "Present at start" = "Present at start",
-                                            "Born" = "birthday_date",
-                                            "Other arrival" = "arrived_date"
+                                            "Born" = "date_birth",
+                                            "Other arrival" = "date_arrived"
                                            )
 
 ## make sure there are the appropriate levels (names)
 study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
                                           "Present at end" = "Present at end",
-                                          "Died" = "death_date",
-                                          "Other departure" = "left_date")
+                                          "Died" = "date_death",
+                                          "Other departure" = "date_left")
 
 ## month of death --------------------------------------------------------------
 
@@ -988,7 +989,7 @@ current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r save_cleaned_data, eval = FALSE}
-rio::export(study_data_cleaned, here::here("Data", str_glue("study_data_cleaned_{Sys.Date()}.xlsx")))
+rio::export(study_data_cleaned, here::here("data", str_glue("study_data_cleaned_{Sys.Date()}.xlsx")))
 ```
 
 
