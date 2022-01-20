@@ -1484,10 +1484,7 @@ Note the possibility of negative confidence intervals if there are low counts
 
 ```{r CMR, warning = FALSE, message = FALSE}
 
-## weighted counts and proportion of dead
-death_props <- tab_survey(survey_design, died, deff = TRUE, keep = "TRUE")
-
-
+## define temporary functions (TODO make these proper wrappers)
 confidence_intervals <- function(data, variable, by, ...) {
   
   ## calculate confidence intervals using survey::svyciprop 
@@ -1513,7 +1510,7 @@ design_effect <- function(data, variable, by, ...) {
   
 }
 
-
+## weighted counts and proportion of dead
 death_props <- survey_design %>% 
   select(died) %>% 
   tbl_svysummary() %>% 
@@ -1579,6 +1576,29 @@ death_props_strat <- tab_survey(survey_design, died,
   mutate(
     across(.cols = ends_with(" n"), 
             .fns = ~format(round(., digits = 1), big.mark = ",")))
+
+
+
+survey_design %>% 
+  # select(died, health_district) %>% 
+  tbl_svysummary(by = died, 
+                 include = c(died, health_district)) %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+  add_stat(fns = everything() ~ confidence_intervals) %>% 
+  ## add in deff 
+  add_stat(fns = everything() ~ design_effect) %>% 
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_0 ~ "**Weighted Count (n)**",
+      add_stat_1 ~ "**95%CI**", 
+      add_stat_2 ~ "**Deff**"
+    )
+    )
+
 
 ## mortality per 10,000 persons/day with CI
 CMR_strat <- survey_design %>% 
