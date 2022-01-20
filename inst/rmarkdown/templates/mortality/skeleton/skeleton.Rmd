@@ -1103,11 +1103,8 @@ dropped %>%
                                              na_level = "Missing")) %>%
   ## get counts and proportions 
   tbl_summary() %>% 
-  ## update the table header
-  modify_header(label = "") %>% 
   ## make variable names bold 
   bold_labels()
-
 
 ```
 
@@ -1345,35 +1342,17 @@ This chunk will create an unweighted table of survey individuals by age group
 and sex.
 
 Note that proportions are of the total sample (not within each gender) 
-to change this, set proptotal = FALSE
+to change this, set percent = "column"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r describe_by_age_group_and_sex}
 
+# get cross tabulated counts and proportions
 study_data_cleaned %>% 
-  ## cross-tabulate counts
-  tabyl(age_group, sex) %>% 
-  ## add row and column totals
-  adorn_totals(where = "both") %>%
-  ## convert to proportions
-  adorn_percentages(denominator = "all") %>% 
-  ## convert to percentages
-  adorn_pct_formatting() %>% 
-  ## display as: "count (percent)"
-  adorn_ns(position = "front") %>% 
-  ## select and rename column names appropriately
-  select("Age"         = "age_group",
-         "Female n(%)" = "female",
-         "Male n(%)"   = "male",
-         "Total") %>% 
-  kable(digits = 1)
-
-
-tbl_cross(study_data_cleaned, 
-          row = age_group, 
-          col = sex, 
-          percent = "cell", 
-          )
+  tbl_cross( 
+    row = age_group, 
+    col = sex, 
+    percent = "cell")
 
 ```
 
@@ -1390,16 +1369,17 @@ This chunk will create an unweighted table of survey individuals by age category
 and sex (i.e. a breakdown by months and years combined).
 
 Note that proportions are of the total sample (not within each gender) 
-to change this, set proptotal = FALSE
+to change this, set percent = "column"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r describe_by_age_category_and_sex}
 
-tbl_cross(study_data_cleaned, 
-          row = age_category, 
-          col = sex, 
-          percent = "cell", 
-          )
+# get cross tabulated counts and proportions
+study_data_cleaned %>% 
+  tbl_cross( 
+    row = age_category, 
+    col = sex, 
+    percent = "cell")
 ```
 
 
@@ -1422,7 +1402,7 @@ age_pyramid(study_data_cleaned,
             age_group, 
             split_by = sex, 
             proportional = TRUE) + 
-  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  labs(y = "Proportion", x = "Age group (years)") +    # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -1452,7 +1432,7 @@ age_pyramid(study_data_cleaned,
                  stack_by = health_district,
                  proportional = TRUE, 
                  pal = c("red", "blue")) + 
-  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  labs(y = "Proportion", x = "Age group (years)") +    # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -1507,6 +1487,52 @@ Note the possibility of negative confidence intervals if there are low counts
 ## weighted counts and proportion of dead
 death_props <- tab_survey(survey_design, died, deff = TRUE, keep = "TRUE")
 
+
+confidence_intervals <- function(data, variable, by, ...) {
+  
+  ## calculate confidence intervals using survey::svyciprop 
+  props <- svyciprop(as.formula(paste0( "~" , variable)),
+              data, na.rm = TRUE)
+  
+  ## extract the confidence intervals 
+  as.numeric(confint(props) * 100) %>% ## make numeric and multiply for percentage
+    round(., digits = 1) %>%           ## round to one digit
+    c(.) %>%                           ## extract the numbers from matrix
+    paste0(., collapse = "-")          ## combine to single character
+}
+
+design_effect <- function(data, variable, by, ...) {
+  
+  ## design effect using survey::svymean 
+  deffs <- svymean(as.formula(paste0( "~" , variable)), 
+          data, na.rm = TRUE, deff = TRUE)
+  
+  ## pull using deff and only keep the TRUE column 
+  ## (need better workaround for other var types
+  deffs <- deff(deffs)[[TRUE]]
+  
+}
+
+
+death_props <- survey_design %>% 
+  select(died) %>% 
+  tbl_svysummary() %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+  add_stat(fns = everything() ~ confidence_intervals) %>% 
+  ## add in deff 
+  add_stat(fns = everything() ~ design_effect) %>% 
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_0 ~ "**Weighted Count (n)**",
+      add_stat_1 ~ "**95%CI**", 
+      add_stat_2 ~ "**Deff**"
+    )
+    )
+
 ## mortality per 10,000 persons/day with CI
 CMR <- survey_design %>% 
   ## survey ratio used to account for observation time 
@@ -1520,10 +1546,11 @@ CMR <- survey_design %>%
 ```
 
 
-During the recall period the weighted number of deaths in the population was 
-`r format(round(death_props$n, digits = 1), big.mark = ",")`, which gives a weighted proportion of 
-`r death_props$ci`, and a design effect of
-`r round(death_props$deff, digits = 1)`. 
+During the recall period the weighted number and proportion of deaths in the 
+population was `r inline_text(death_props, variable = "died",  column = "stat_0")`,
+with a weighted confidence interval of
+`r inline_text(death_props, variable = "died",  column = "add_stat_1")`, and a 
+design effect of `r inline_text(death_props, variable = "died",  column = "add_stat_2")`.
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
 
 
