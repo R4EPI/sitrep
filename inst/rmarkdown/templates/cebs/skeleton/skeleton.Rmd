@@ -265,7 +265,7 @@ For a KoBo dataset this variable is "event_id".
 
 This section is for data from KoBo that you loaded in read_KoBo_data.
 
-If you didn't use KoBo data, go to read_Excel_data.
+If you didn't use KoBo data, go to read_nonKoBo_data.
 
 This step shows you the data dictionary. The data dictionary has variable names
 in the data_element_shortname column. Possible values for each variable are
@@ -305,14 +305,14 @@ cebs_cleaned <- matchmaker::match_df(cebs_cleaned,
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// read_Excel_data \\\
+/// read_nonKoBo_data \\\
 --------------------------------------------------------------------------------
 
 This section is for data not from KoBo.
 If you have already loaded data from KoBo, go to xxx
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r read_Excel_data, warning = FALSE, message = FALSE}
+```{r read_nonKoBo_data, warning = FALSE, message = FALSE}
 
 ## Excel file ------------------------------------------------------------------
 ## to read in a specific sheet use "which"
@@ -323,7 +323,7 @@ If you have already loaded data from KoBo, go to xxx
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// prep_Excel_data \\\
+/// prep_nonKoBo_data \\\
 --------------------------------------------------------------------------------
 
 This section is for data not from KoBo 
@@ -344,7 +344,7 @@ specified in code and name columns. Code has the shortened value and Name has
 the full-text value.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r prep_Excel_data, warning = FALSE, message = FALSE}
+```{r prep_nonKoBo_data, warning = FALSE, message = FALSE}
 ## MSF CEBS Dictionary ----------------------------------------------------------
 ## get MSF standard dictionary for CEBS 
 # cebs_dict <- msf_dict("CEBS", compact = FALSE) %>%
@@ -439,24 +439,17 @@ specific variables or rows.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r remove_unused_data}
 ## Drop unused rows  -----------------------------------------------------------
-## This step removes blank rows that don't have both a date of admission and ID
-## number.
+## This step removes blank rows that don't have both a date of signal and event 
+## ID.
 cebs_cleaned <- cebs_cleaned %>% 
-  filter(!is.na(case_number) & !is.na(date_of_consultation_admission)) 
+  filter(!is.na(event_id) & !is.na(date_signal)) 
 
 
 ## Drop columns ----------------------------------------------------------------
 ## OPTIONAL: This step shows you how you can remove certain variables.
 
 # cebs_cleaned <- cebs_cleaned %>%
-#   select(-c(msf_involvement, treatment_facility_site))
-
-
-## OPTIONAL: if you want to inspect certain variables, you can select these by
-## name or column number. This example creates a reduced dataset for the first
-## three columns, age_years, and sex.
-
-# linelist_reduced <- select(cebs_cleaned, c(1:3, "age_years", "sex"))
+#   select(-c(var1, var2))
 
 ```
 
@@ -471,7 +464,6 @@ of the chunk to re-run all the code chunks up to the current one.
 
 The chunks are:
 - standardise_dates -- will set up and clean dates.
-- create_age_group  -- creates the age group variables from age
 - create_vars       -- creates variables based on other variables
 - factor_vars       -- helps clean factor variables
 - vector_vars       -- creates groups of variables for easy use
@@ -488,12 +480,12 @@ You must adapt this section according to your data!
 This chunk will help you set up and clean your date variables.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r standardise_dates}
-## DHIS2 standard data ---------------------------------------------------------
-## If you got your data from DHIS2, use this portion of the code.
+## KoBo standard data ---------------------------------------------------------
+## If you got your data from KoBo, use this portion of the code.
 ## If not, comment this section out and use the below.
 
 ## make sure all date variables are formatted as dates 
-DATEVARS <- linelist_dict %>% 
+DATEVARS <- cebs_dict %>% 
   filter(data_element_valuetype == "DATE") %>%
   filter(data_element_shortname %in% names(cebs_cleaned)) %>% 
   ## filter to match the column names of your data
@@ -506,7 +498,7 @@ cebs_cleaned <- cebs_cleaned %>%
 
 
 
-## Non-DHIS2 data --------------------------------------------------------------
+## Non-KoBo data --------------------------------------------------------------
 ## Use this section if you did not have DHIS2 data. 
 
 ## use the guess_dates() function to make a first pass at date variables.
@@ -516,17 +508,17 @@ cebs_cleaned <- cebs_cleaned %>%
 
 ## once you have run guess_dates(), take a look at your date variables.
 ## here is an example:
-# table(cebs_cleaned$date_of_consultation_admission)
+# table(cebs_cleaned$date_signal)
 
 
 ## Some dates will be unrealistic or wrong.
 ## Here is an example of how to manually fix dates. 
 ## Look at your data and edit as needed.
 # cebs_cleaned <- mutate(cebs_cleaned,
-#                            date_of_onset = case_when(
-#                              date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA),
-#                              date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
-#                              TRUE                                   ~ date_of_onset
+#                            date_signal = case_when(
+#                              date_signal < as.Date("2017-11-01")  ~ as.Date(NA),
+#                              date_signal == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
+#                              TRUE                                   ~ date_signal
 #                            ))
   
 
@@ -535,97 +527,10 @@ cebs_cleaned <- cebs_cleaned %>%
 ## This step creates an epiweek variable from the date of onset.
 ## You can use date_of_consultation_admission if you are missing many date_of_onset.
 
-cebs_cleaned$epiweek <- aweek::date2week(cebs_cleaned$date_of_onset, 
+cebs_cleaned$epiweek <- aweek::date2week(cebs_cleaned$date_signal, 
                                              floor_day = TRUE, 
                                              factor = TRUE)
 
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// create_age_group \\\ 
---------------------------------------------------------------------------------
-
-This chunk will help you set up your age group variable.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r create_age_group}
-
-## Age group variables ----------------------------------------------------------
-## This step shows you how to create categorical variables from numeric variables.
-## We have some intermediate steps on the way.
-
-
-## OPTIONAL: add under 2 years to the age_years variable
-## data dictionary defines that under 2s dont have year filled in (but months/days instead)
-cebs_cleaned <- cebs_cleaned %>% 
-  mutate(age_months = case_when(
-    is.na(age_years) & is.na(age_months) ~ as.numeric(age_days / 30), 
-    TRUE                                 ~ as.numeric(age_months)
-  ),
-    age_years = case_when(
-    is.na(age_years) & is.na(age_months) ~ as.numeric(age_days / 365.25),
-    is.na(age_years)                     ~ as.numeric(age_months / 12),
-    TRUE                                 ~ as.numeric(age_years)
-  ))
-
-
-## OPTIONAL: change those who are above or below a certain age to NA
-# cebs_cleaned <- mutate(cebs_cleaned,
-#                            age_years = case_when(
-#                              is.na(age_years) ~ NA_integer_,
-#                              age_years < 0   ~ NA_integer_,
-#                              age_years > 120 ~ NA_integer_,
-#                              TRUE            ~ as.integer(age_years) #Preserves other values
-#                            ))
-
-## OPTIONAL: create an age_months variable from decimal years variable
-# cebs_cleaned <- mutate(cebs_cleaned,
-#                            age_months = case_when(
-#                              age_years < 5 ~ age_years * 12
-#                              )) 
-
-
-## create age group variable for under 5 years based on months
-cebs_cleaned$age_group_mon <- age_categories(cebs_cleaned$age_months, 
-                                                 breakers = c(0, 6, 9, 12, 23), 
-                                                 ceiling = TRUE)
-
-## create an age group variable by specifying categorical breaks
-cebs_cleaned$age_group <- age_categories(cebs_cleaned$age_years, 
-                                             breakers = c(0, 2, 15, 30, 45))
-
-## alternatively, create an age group variable by specifying a sequence
-## this creates age groups for every ten years between 0 and 100.
-# cebs_cleaned$age_group <- age_categories(cebs_cleaned$age,
-#                                              lower = 0, 
-#                                              upper = 100, 
-#                                              by = 10)
-
-## If you already have an age group variable defined, you should manually
-## arrange the categories in order.
-# cebs_cleaned$age_group <- factor(cebs_cleaned$age_group,
-#                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
-
-
-## to combine different age categories use the following function 
-## this prioritises the smaller unit, i.e. if given months and years, will return months first
-## generally, these delineations are NOT used for AJS.
-##
-# cebs_cleaned <- group_age_categories(cebs_cleaned, 
-#                                          years = age_group, 
-#                                          months = age_group_mon)
-## drop the 0-2 years age level! (need to fix group_age_categories)
-# cebs_cleaned <- cebs_cleaned %>% 
-#   mutate(age_category = factor(age_category, 
-#                                 levels = c("0-5 months",
-#                                            "6-8 months",
-#                                            "9-11 months",
-#                                            "12-23 months",
-#                                            "2-14 years",
-#                                            "15-29 years",
-#                                            "30-44 years", 
-#                                            "45+ years")))
 ```
 
 
