@@ -5,3 +5,9 @@
 ^\.Rproj\.user$
 ^README\.Rmd$
 ^examples
+^codecov\.yml$
+^\.github$
+^docs
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

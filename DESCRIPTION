@@ -1,63 +1,97 @@
 Type: Package
 Package: sitrep
-Title: Report templates and helper functions for EPI
-Version: 0.1.0
-Authors@R: c(person("Dirk", "Schumacher", email = "mai@dirk-schumacher.net",
-                    role = c("aut", "cre")))
-Description: Report templates and helper functions for EPI.
-License: MIT + file LICENSE
+Title: Report templates and helper functions for applied epidemiology
+Version: 0.1.8
+Authors@R: 
+    c(person(given = "Dirk",
+             family = "Schumacher",
+             role = "aut",
+             email = "mai@dirk-schumacher.net"),
+      person(given = "Zhian N.",
+             family = "Kamvar",
+             role = c("aut", "cre"),
+             email = "zkamvar@gmail.com",
+             comment = c(ORCID = "0000-0003-1458-7108")), 
+      person(given = "Alexander",
+             family = "Spina",
+             email = "alexfspina@gmail.com", 
+             comment = c(ORCID = "0000-0001-8425-1867"),
+             role = "aut"),
+      person(given = "Kate",
+             family = "Doyle",
+             role = "aut"),
+      person(given = "Chris",
+             family = "Jarvis",
+             role = "aut"),
+      person(given = "Lukas",
+             family = "Richter",
+             role = "aut"),
+      person(given = "Annick",
+             family = "Lenglet",
+             role = "cph"),
+      person(given = "Neale",
+             family = "Batra",
+             role = "ctb"))
+Description: Report templates and helper functions for applied epidemiology
+License: GPL-3
+BugReports: https://github.com/R4EPI/sitrep/issues
+URL: https://r4epis.netlify.com, https://github.com/R4EPI/sitrep
+Depends: R (>= 3.2)
 Imports: 
+    anthro,
+    aweek (>= 1.0.0),
     binom,
-    cowplot,
+    broom,
+    patchwork,
     clipr,
-    dplyr (>= 0.7),
-    epitools,
-    epitrix,
-    forcats,
-    ggplot2,
+    dplyr (>= 0.8.0),
+    tidyr (>= 1.0.0),
+    rlang (>= 0.4.0),
+    ggplot2 (>= 3.0.0),
     ggspatial,
+    purrr,
+    tibble,
+    tidyselect,
+    forcats,
+    epitrix,
+    glue,
     here,
-    incidence,
-    ISOweek,
+    incidence (>= 1.7.2),
     knitr,
-    lwgeom,
-    outbreaks,
-    raster,
-    rio,
-    rlang,
-    rmarkdown,
+    linelist,
+    matchmaker,
     scales,
+    rio,
+    rmarkdown,
     sf,
     survey,
     srvyr,
-    tibble,
-    huxtable,
-    tidyr
+    stats,
+    utils,
+    apyramid (>= 0.1.0),
+    epitabulate (>= 0.0.0.9005),
+    epidict (>= 0.0.0.9001),
+    epikit
 Suggests:
-    testthat
+    testthat (>= 2.1.0),
+    sessioninfo,
+    vdiffr,
+    covr, 
+    summarytools
 Remotes:
-    dirkschumacher/anthro
+  reconhub/linelist,
+  R4EPI/apyramid,
+  R4EPI/epitabulate,
+  R4EPI/epidict
+Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Collate: 
-    'age-categories.R'
-    'age-pyramid.R'
-    'cfr.R'
-    'descriptive-table.R'
-    'find_breaks.R'
-    'gen_data.R'
-    'gen_polygon.R'
-    'gen_population.R'
-    'helpers.R'
-    'inline_fun.R'
-    'msf_dict_survey.R'
-    'nutrition.R'
-    'population_weights.R'
-    'sample-size.R'
-    'survey.R'
-    'tabulate_survey.R'
-    'unite_ci.R'
-    'univariate-analysis.R'
-    'zcurve.R'
+    'sitrep-package.R'
+    'check_templates.R'
+    'apyramid_exports.R'
+    'epidict_exports.R'
+    'epikit_exports.R'
+    'epitabulate_exports.R'
