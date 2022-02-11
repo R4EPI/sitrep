@@ -204,7 +204,7 @@ use read_Excel_data
 --------------------------------------------------------------------------------
 
 This section is for data from KoBo.
-It uses the standardized MSF data dictionary.
+It uses the standardised MSF data dictionary.
 If you didn't use the standardized data dictionary, go to read_Excel_data.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
@@ -545,12 +545,18 @@ includes numeric, factor, and character vectors.
 ```{r create_vars}
 
 ## Numeric variables -----------------------------------------------------------
-## This step creates a variable for number of days under observation.
+## This step creates numeric variables related to timeliness of CEBS activities
 ## You can adapt this step to create other calculated variables
 
-## create number of days under observation
+## create timeliness-related variables
 cebs_cleaned <- cebs_cleaned %>%
-  mutate(obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
+  ## Time in days to verify a signal
+  mutate(verification_time = as.numeric(date_verification - date_signal)) %>% 
+  ## Time in days to risk assess a signal after verification
+  mutate(assessment_time = as.numeric(date_assessment - date_verification)) %>% 
+  ## Time in days to response after risk assessment
+  mutate(response_time = as.numeric(date_response_started - date_assessment))
+
 
 
 ## Factor (categorical) variables ----------------------------------------------
@@ -558,79 +564,23 @@ cebs_cleaned <- cebs_cleaned %>%
 ## This step creates a variable from another character/factor variable
 ## You can adapt this step to create other calculated variables
 
-## The variable DIED will be binary (TRUE/FALSE) -- if patient died or not
-## if your variable is named ("Dead on arrival", "Dead in facility"), use this
-cebs_cleaned$DIED <- str_detect(cebs_cleaned$exit_status, "Dead")
+## The variable ALERT will be binary (TRUE/FALSE) -- if an alert was declared 
+## or not
+cebs_cleaned$ALERT <- str_detect(cebs_cleaned$exit_status, "1")
   
-## use this version for coded values (e.g. "DOA", "DD")
-# cebs_cleaned$DIED <- cebs_cleaned$exit_status %in% c("DD", "DOA")
-
-
-
-## Create a new grouping for exit status variable 
-cebs_cleaned <- cebs_cleaned %>% 
-  mutate(exit_status2 = case_when(
-    exit_status %in% c("Dead on arrival", "Dead in facility") ~ "Died",
-    exit_status %in% c("Transferred (to an MSF facility)", 
-                       "Transferred (to External Facility)")  ~ "Transferred",
-    exit_status == "Discharged home"                          ~ "Discharged",
-    exit_status == "Left against medical advice"              ~ "Left"
-  ))
-
-
 
 ## Recode character variables -------------------------------------------------
 ## This step shows how to fix misspellings in the geographic region variable.
 ## Ideally, you want these values to match your shapefile and population data!
 
 # cebs_cleaned <- cebs_cleaned %>%
-#   mutate(patient_origin = case_when(
-#     patient_origin == "Valliages D"       ~ "Village D",
-#     patient_origin == "VillageD"          ~ "Village D",
-#     patient_origin == "Town C"            ~ "Village C",
-#     TRUE ~ as.character(patient_origin))
+#   mutate(location_signal = case_when(
+#     location_signal == "Valliages D"       ~ "Village D",
+#     location_signal == "VillageD"          ~ "Village D",
+#     location_signal == "Town C"            ~ "Village C",
+#     TRUE ~ as.character(location_signal))
 #   ))
 
-
-
-## sometimes, coding is inconsistent across variables -- for example, "Yes" / "No"
-## may be coded as Y, y, yes, 1 / N, n, no, 0. You can change them all at once!
-## Create a list of the variables you want to change, and run the following.
-## You may need to edit this code if options are different in your data.
-
-## create list of variables
-# change_yn <- c("headache", "fever", "vomiting")
-
-## standardize options
-# cebs_cleaned <- cebs_cleaned %>%  
-#      mutate_at(vars(change_yn), forcats::fct_recode,   
-#      Yes = "y",  
-#      Yes = "Y",  
-#      Yes = "yes",  
-#      Yes = "1",   
-#      No  = "n",  
-#      No  = "N",  
-#      No  = "no",  
-#      No  = "0",  
-#    )     
-
-
-
-## Create a variable based on rules from other simple character variables
-## If you have access to lab results, you can create a case definition variable 
-## the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
-## starting from the specific to the general
-## TRUE assigns all remaining rows 
-## You MUST modify this section to match your case definition. The below
-## uses positive RDT for Confirmed and epi link only for Probable.
-
-cebs_cleaned <- cebs_cleaned %>%
-  mutate(case_def = case_when(
-    is.na(hep_e_rdt) & is.na(other_cases_in_hh)           ~ NA_character_,
-    hep_e_rdt == "Positive"                               ~ "Confirmed",
-    hep_e_rdt != "Positive" & other_cases_in_hh == "Yes"  ~ "Probable",
-    TRUE                                                  ~ "Suspected"
-  ))
 ```
   
 
@@ -672,61 +622,6 @@ cebs_cleaned <- cebs_cleaned %>%
 ```
 
 
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// vector_vars \\\
---------------------------------------------------------------------------------
-
-This chunk creates groups of variables that you might want to use together. That
-way, if you want to run the same function over these variables, you can run it
-all at once. For example, you may want to look at frequency of all symptoms at
-the same time.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r vector_vars}
-
-
-# create a grouping of all symptoms 
-SYMPTOMS <- c("history_of_fever", 
-              "fever",
-              "nausea_anorexia",
-              "vomiting",
-              "epigastric_pain_heartburn",
-              "generalized_itch",
-              "headache",
-              "joint_pains",
-              "diarrhoea",
-              "bleeding", 
-              "convulsions",
-              "mental_state",
-              "other_symptoms"  
-              )
-
-
-
-# create a grouping of all lab tests 
-LABS <- c("hep_b_rdt", 
-          "hep_c_rdt",
-          "hep_e_rdt",
-          "test_hepatitis_a",
-          "test_hepatitis_b",
-          "test_hepatitis_c",
-          "test_hepatitis_e_igg",
-          "test_hepatitis_e_igm" ,
-          "test_hepatitis_e_genotype",
-          "test_hepatitis_e_virus",
-          "malaria_rdt_at_admission",
-          "malaria_blood_film", 
-          "dengue",
-          "dengue_rdt", 
-          "yellow_fever",
-          "typhoid",
-          "chikungunya_onyongnyong", 
-          "ebola_marburg",
-          "lassa_fever",
-          "other_arthropod_transmitted_virus", 
-          "other_pathogen"
-          )
-```
 
 
 
