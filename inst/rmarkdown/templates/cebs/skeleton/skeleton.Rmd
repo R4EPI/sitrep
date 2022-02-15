@@ -1,5 +1,5 @@
 ---
-title: "CEBS"
+title: "EWAR situation report and monitoring"
 output: 
   word_document:
     keep_md: true
@@ -7,9 +7,9 @@ output:
 
 # Introduction to this template
 
-This is a template which can be used to create an automated CEBS sitrep
+This is a template which can be used to create an automated EWAR situation report and for routine monitoring purposes
 
-- It is organised by time, place and person. 
+- The situation report is organised by time and place
 For a more detailed explanation of this template, please visit https://r4epis.netlify.app/
 - Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 - Text within <! > will not show in your final document. These comments are used
@@ -329,7 +329,7 @@ If you have already loaded data from KoBo, go to xxx
 This section is for data not from KoBo 
 If you have already loaded data from KoBo, go to XXX.
 
-It is more difficult to prepare the nonDHIS data. You can do it! It will just
+It is more difficult to prepare the nonKoBo data. You can do it! It will just
 take a little more work.
 
 Checklist to update this script to match your data:
@@ -465,8 +465,6 @@ of the chunk to re-run all the code chunks up to the current one.
 The chunks are:
 - standardise_dates -- will set up and clean dates.
 - create_vars       -- creates variables based on other variables
-- factor_vars       -- helps clean factor variables
-- vector_vars       -- creates groups of variables for easy use
 
 
 You must adapt this section according to your data!
@@ -581,46 +579,9 @@ cebs_cleaned$ALERT <- str_detect(cebs_cleaned$exit_status, "1")
 #     TRUE ~ as.character(location_signal))
 #   ))
 
+
 ```
   
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// factor_vars \\\
---------------------------------------------------------------------------------
-
-This chunk will help you clean factor variables.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r factor_vars}
-
-# Force missing values to NA
-# important for sex to generate age pyramids
-cebs_cleaned$sex <- fct_recode(cebs_cleaned$sex, 
-                                   NULL = "Unknown/unspecified")
-
-
-# change the order of levels in a single categorical variable 
-# This orders the levels -- since in all figures / tables, 0-4 should come
-# before 4-24, etc
-cebs_cleaned <- cebs_cleaned %>% 
-  mutate(time_to_death = factor(time_to_death, 
-                                levels = c("0-4 hours", 
-                                           ">4-24 hours", 
-                                           ">24-48 hours", 
-                                           ">48 hours")))
-
-
-
-# Change the order of levels of multiple categorical variables at the same time
-cebs_cleaned <- cebs_cleaned %>%
-  mutate_at(vars(
-           # Looks for variables beginning with "test"
-            starts_with("test")),          
-            fct_relevel,
-            # Sets order of levels
-            "Positive", "Negative", "Not done")
-```
-
 
 
 
@@ -653,7 +614,7 @@ obs_start <- as.Date(first_week)
 /// duplicates \\\
 --------------------------------------------------------------------------------
 
-This chunk removes duplicate cases based on case_number, sex and age_group. 
+This chunk removes duplicate signals based on signal_type, date_signal and CHWinitials. 
 (you can edit to use whichever unique identifiers you think relevant)
 
 There are two options for this. Option 1 simply keeps the first occurence of a 
@@ -664,19 +625,19 @@ are duplicated - giving you more flexibility around browsing which ones to drop.
 
 ```{r duplicates}
 
-## option 1: only keep the first occurence of duplicate case 
+## option 1: only keep the first occurrence of duplicate case 
 
 cebs_cleaned <- cebs_cleaned %>% 
-  ## find duplicates based on case number, sex and age group 
-  ## only keep the first occurence 
-  distinct(case_number, sex, age_group, .keep_all = TRUE)
+  ## find duplicates based on signal_type, date_signal, initials 
+  ## only keep the first occurrence 
+  distinct(signal_type, date_signal, initials, .keep_all = TRUE)
 
 
 # ## option 2: create flagging variables for duplicates (then use to browse)
 # 
 # cebs_cleaned <- cebs_cleaned %>% 
 #   ## choose which variables to use for finding unique rows 
-#   group_by(case_number, sex, age_group) %>% 
+#   group_by(signal_type, date_signal, initials) %>% 
 #   mutate(
 #     ## get the number of times duplicate occurs 
 #     num_dupes = n(), 
@@ -694,9 +655,9 @@ cebs_cleaned <- cebs_cleaned %>%
 # ## filter duplicates to only keep the row with the earlier entry 
 # cebs_cleaned %>% 
 #   ## choose which variables to use for finding unique rows 
-#   group_by(case_number, sex, age_group) %>% 
+#   group_by(signal_type, date_signal, initials) %>% 
 #   ## sort to have the earliest date by person first
-#   arrange(date_of_consultation_admission) %>% 
+#   arrange(date_signal) %>% 
 #   ## only keep the earliest row 
 #   slice(1)
 ```
@@ -713,1061 +674,47 @@ current date.
 # rio::export(cebs_cleaned, here::here("Data", str_glue("cebs_cleaned_{Sys.Date()}.xlsx")))
 ```
 
-
-
-
-
-
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 After adjusting and running the above code, you will have a clean dataset.
 This marks the start of the ANALYSIS portion of the template.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
-
-### Person
+### Routine EWAR SitRep
+#### Recommendations
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This section focuses on who is affected - total, by sex, by age.
-There is code to include:
-- A bar chart of case numbers of incidence by age group.
-- Attack rate (AR)
-- Number of deaths (in suspected and confirmed cases)
-- Mortality rates
-- Case fatality ratio (CFR)
+Add relevant recommendations based on interpretation of data presented in the report
+Include this paragraph in the body of the email when sharing the SitRep
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-
-
-From the start of the outbreak up until `r reporting_week` there were a 
-total of `r nrow(cebs_cleaned)` cases. There were
-`r fmt_count(cebs_cleaned, sex == "Female")` females and
-`r fmt_count(cebs_cleaned, sex == "Male")` males. 
-
-The most affected age group was `r tab_linelist(cebs_cleaned, age_group) %>% slice(which.max(n)) %>% pull(value)` years. 
-
-
-
-#### Demographics 
-
-Cases by age group and definition 
+#### Time
+##### Overview of EBS performance indicators
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_by_age_group_and_def \\\
---------------------------------------------------------------------------------
+Include this summary table when sharing the Sitrep
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-This chunk will create a table of cases by age group and case definition.
-You can only use this chunk if you have lab results and have defined a case
-definition variable.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r describe_by_age_group_and_def}
+```{r time_overview_table}
 
-tab_linelist(cebs_cleaned, 
-             # rows as age groups, with case_def as strata (columns)
-             age_group, strata = case_def, 
-             # we want row totals and column totals
-             col_total = TRUE, row_total = TRUE) %>%
-  
-  # removes the column called variable (which just says "age_group" in this case)
-  select(-variable) %>%
-  
-  # renames the column called value to Age group
-  rename("Age group" = value) %>%
-  
-  # there are several columns called "proportion" - renames them to %
-  rename_redundant("%" = proportion) %>%
-  
-  # any time there is a column that says n, we replace that with "cases (n)"
-  augment_redundant(" cases (n)" = " n$") %>%
-  
-  # makes the table easy to read with only 2 decimal places
-  kable(digits = 1)
 ```
 
 
-  
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// total_props_agegroup_sex \\\
---------------------------------------------------------------------------------
-
-You can also show cases by proportion of the total population by sex and age.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Cases by age group and sex 
-```{r total_props_agegroup_sex}
-tab_linelist(cebs_cleaned, 
-             age_group, strata = sex,
-             col_total = TRUE, row_total = TRUE, prop_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Age group" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" cases (n)" = " n$") %>%
-  kable(digits = 1)
-```
-
-  
-Age pyramid 
-
-There were `r fmt_count(cebs_cleaned, is.na(sex)| sex == "Unknown/unspecified")` cases missing information on sex and `r fmt_count(cebs_cleaned, is.na(age_group))` missing age group.
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// age_pyramid \\\
---------------------------------------------------------------------------------
-
-This chunk creates an age/sex pyramid of your cases.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r age_pyramid, warning=FALSE}
- plot_age_pyramid(cebs_cleaned,
-                  age_group = "age_group", 
-                  split_by = "sex") + 
-  labs(y = "Cases (n)", x = "Age group") + # change axis  labels
-  theme(legend.position = "bottom",     # move legend to bottom
-        legend.title = element_blank(), # remove title
-        text = element_text(size = 18)  # change text size
-       )
-```
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// age_pyramid_months \\\
---------------------------------------------------------------------------------
-
-This chunk creates an age/sex pyramid of your cases under 2 years of age, by 
-month groupings. Uncomment the below code to use
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r age_pyramid_months, warning=FALSE}
-# ## plot age pyramid by month groups, for observations under 2 years
-# filter(cebs_cleaned, age_years < 2) %>%
-#   plot_age_pyramid(age_group = "age_group_mon",
-#                    split_by = "sex") +
-#                   # stack_by = "case_def") +
-#   labs(y = "Cases (n)", x = "Age group (months)") + # change axis  labels (nb. x/y flip)
-#   theme(legend.position = "bottom",     # move legend to bottom
-#         legend.title = element_blank(), # remove title
-#         text = element_text(size = 18)  # change text size
-#        )
-```
-
-
-
-Of the patients, `r fmt_count(cebs_cleaned, patient_facility_type == "Outpatient")` were seen as outpatients and `r fmt_count(cebs_cleaned, patient_facility_type == "Inpatient")` were inpatients. Among inpatients, the median number of days admitted was `r median(cebs_cleaned$obs_days, na.rm = T)`, 
-with a range between `r min(cebs_cleaned$obs_days, na.rm = T)` and `r max(cebs_cleaned$obs_days, na.rm = T)` days.
-
-
-
-Cases by symptoms
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_by_symptoms \\\
---------------------------------------------------------------------------------
-
-This chunk gives the counts and proportions for all of the variables in SYMPTOMS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r describe_by_symptoms}
-
-tab_linelist(cebs_cleaned, SYMPTOMS, keep = "Yes") %>% 
-  select(-value) %>%
-  # fix the way symptoms are displayed
-  # str_replace_all switches underscore for space in the variable column
-  # str_to_sentence makes the first letter capital, and all others lowercase
-  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
-  # rename accordingly
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
-```
-
-
-
-Cases by lab results 
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_by_labs \\\
---------------------------------------------------------------------------------
-
-
-This chunk gives the counts and proportions for all of the variables in LABS.
-If you do not have lab results, comment out this chunk.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r describe_by_labs}
-
-tab_linelist(cebs_cleaned, LABS, 
-             transpose = "value") %>% 
-  # fix the way lab test names are displayed
-  # str_replace_all switches underscore for space in the variable column
-  # str_to_sentence makes the first letter capital, and all others lowercase
-  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
-  # rename accordingly
-  rename("Lab test" = variable) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+##### Verified signals by type over time
+```{r time_verified_signals_type_table}
 
 ```
 
 
 
-
-#### Case fatality ratio 
-
-Of `r fmt_count(cebs_cleaned, patient_facility_type == "Inpatient")` inpatients, there have been `r fmt_count(cebs_cleaned, str_detect(exit_status, "Dead"), patient_facility_type == "Inpatient")` deaths, of which 
-`r fmt_count(cebs_cleaned, exit_status == "Dead on arrival")` 
-were dead on arrival. 
-
-Among inpatients who died, the time to death is shown below. 
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_time_to_death \\\
---------------------------------------------------------------------------------
-
-If you have the time_to_death available, you can use this chunk to describe when
-inpatients died. If not, comment it out.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r describe_time_to_death, warning = FALSE, message = FALSE}
-filter(cebs_cleaned, DIED, patient_facility_type == "Inpatient") %>% 
-  tab_linelist(time_to_death, col_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Time (hours)" = value, 
-         "Deaths (n)" = n, 
-         "%" = proportion) %>% 
-  kable(digits = 1)
-```
-
-
-
-The case fatality ratio among inpatients with known outcomes is below.
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// overall_cfr \\\
---------------------------------------------------------------------------------
-
-This chunk gives the case fatality ratio among inpatients with outcomes.
-If you have no deaths reported, the table will not be useful.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r overall_cfr, warning = FALSE, message = FALSE}
-# use arguments from above to produce overal CFR
-cebs_cleaned %>% 
-  filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, mergeCI = TRUE) %>%
-  rename("Deaths" = deaths,
-         "Cases" = population,
-         "CFR (%)" = cfr,
-         "95%CI" = ci) %>%
-  kable(digits = 1)
+##### Alerts by type over time
+```{r time_alerts_type_figure}
 
 ```
 
 
-The case fatality ratio by sex among inpatients with known outcomes is below. 
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// cfr_by_sex \\\
---------------------------------------------------------------------------------
 
-This chunk gives the case fatality ratio among inpatients with outcomes, divided
-by sex. If you have no deaths reported, the table will not be useful.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r cfr_by_sex, warning = FALSE, message = FALSE}
-cebs_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  mutate(sex = forcats::fct_explicit_na(sex, "-")) %>%
-  case_fatality_rate_df(deaths = DIED, group = sex, mergeCI = TRUE, add_total = TRUE) %>%
-  rename("Sex" = sex, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1)
-```
+#### Place
 
-
-
-CFR by age group among inpatients with known outcomes
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// cfr_by_age_group \\\
---------------------------------------------------------------------------------
-
-This chunk gives the case fatality ratio among inpatients with outcomes, divided
-by age group. If you have no deaths reported, the table will not be useful.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r cfr_by_age_group, warning = FALSE, message = FALSE}
-
-cebs_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
-  ## fill in 0 where category levels not represented (to ensure all levels show)
-  tidyr::complete(age_group, 
-                  fill = list(deaths = 0, 
-                              population = 0, 
-                              cfr = 0, 
-                              ci = 0)) %>% 
-  rename("Age group" = age_group, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1)
-```
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// cfr_by_case_def \\\
---------------------------------------------------------------------------------
-
-This chunk gives the case fatality ratio among inpatients with outcomes, divided
-by case definition. You must have lab results or a case definition defined to
-use this. If you have no deaths, the table will not be useful.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r cfr_by_case_def, warning = FALSE, message = FALSE}
-
-# cebs_cleaned %>%
-#   filter(patient_facility_type == "Inpatient") %>%
-#   case_fatality_rate_df(deaths = DIED, group = case_def, 
-#                         mergeCI = TRUE, add_total = TRUE) %>%
-#   rename("Case definition" = case_def,
-#          "Deaths" = deaths,
-#          "Cases" = population,
-#          "CFR (%)" = cfr,
-#          "95%CI" = ci) %>%
-#   knitr::kable(digits = 1)
-```
-
-
-
-#### Attack rate
-
-The attack rate per 10,000 population is below (based on available population data available for the catchment area/region of interest). 
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// collect_variables \\\
---------------------------------------------------------------------------------
-
-This defines your population by summing up the population by age group.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r collect_variables}
-# define population 
-population <- sum(population_data_age$population)
-```
-
-
-
-Below gives the attack rate per 10,000 population (N = `r format(population, big.mark = ",")`)
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-///attack_rate \\\
---------------------------------------------------------------------------------
-
-This chunk calculates the attack rate and then shows you the confidence
-intervals.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r attack_rate}
-ar <- attack_rate(nrow(cebs_cleaned), population, multiplier = 10000)
-
-ar %>%
-  merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
-  rename("Cases (n)" = cases, 
-         "Population" = population, 
-         "AR (per 10,000)" = ar, 
-         "95%CI" = ci) %>% 
-  select(-Population) %>% # drop the population column as it is not changing
-  knitr::kable(digits = 1, align = "r")
-```
-
-Here, we can see that the attack rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
-
-To give attack rate by age group, with appropriate population denominators, use the following code. 
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// attack_rate_by_agegroup \\\
---------------------------------------------------------------------------------
-
-This chunk calculates the attack rate by age group and then gives a table of
-attack rate by group.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r attack_rate_by_agegroup, warning = FALSE}
-
-cases <- count(cebs_cleaned, age_group) %>%    # cases for each age_group
-  left_join(population_data_age, by = "age_group") # merge population data 
-
-
-# attack rate for each group
-attack_rate(cases$n, cases$population, multiplier = 10000, mergeCI = TRUE) %>% 
-  # add the epiweek column to table
-  bind_cols(select(cases, age_group), .) %>% 
-  rename("Age group" = age_group, 
-         "Cases (n)" = cases, 
-         "Population" = population, 
-         "AR (per 10,000)" = ar, 
-         "95%CI" = ci) %>% 
-  kable(digits = 1, format.args = list(big.mark = ",")) # set thousands separator
-```
-
-
-
-#### Mortality attributable to AJS
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This section can only be used if you are in a closed population (eg refugee camp).
-The assumptions don't hold in an open/community setting.
-
-This chunk calculates the attack rate by age group and then gives a table of
-attack rate by group.
-
-This section gives mortality rates attributable to AJS in a closed population. 
-It does not calculate all-cause mortality. It assumes that all AJS deaths are 
-among inpatients.
-
-This demonstrates three ways of calculating mortality rate based on 
-catchment population (twice) and based on hospital population. 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// collect_variables_rates \\\
---------------------------------------------------------------------------------
-
-This chunk calculates key variables to do mortality rate.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r collect_variables_rates}
-
-# count number of deaths 
-deaths <- sum(cebs_cleaned$DIED)
-
-# outbreak duration in days 
-obs_time <- as.numeric(obs_end - obs_start)
-
-# patient observation time 
-pat_obs_time <- cebs_cleaned %>% 
-  filter(!is.na(exit_status)) %>% 
-  summarise(days = sum(obs_days)) %>%
-  pull(days)
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// mortality_rate \\\
---------------------------------------------------------------------------------
-
-To produce a mortality rate (attribuatble to AJS) per 10,000 people use the
-following code chunk. This assumes that you are capturing every AJS death in
-your population.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Mortality rate attributable to AJS per 10,000 population
-```{r mortality_rate}
-
-mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
-  rename("Deaths" = deaths, 
-         "Population" = population, 
-         "Mortality (per 10,000)" = `mortality per 10 000`, 
-         "95%CI" = ci) %>% 
-  kable(digits = 1)
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// mortality_rate_CMR \\\
---------------------------------------------------------------------------------
-
-To produce a crude mortality rate attributable to AJS per 10,000 people per 
-day, use the folowing code chunk. 
-
-This assumes that you are capturing every AJS death in your population and 
-that your population remains stable over the time period of interest. 
-
-In this situation the time period of interest is from the beginning of the 
-epiweek your first case occured in, until the last day of the epiweek you are 
-currently reporting on. (see this presentation (https://www.odi.org/sites/odi.org.uk/files/odi-assets/events-presentations/776.pdf) for more detail)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Crude mortality rate attributable to AJS per 10,000 population per day
-
-```{r mortality_rate_CMR}
-
-mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) %>%
-  rename("Deaths" = deaths, 
-         "Person-days" = population, 
-         "Mortality (per 10,000/day)" = `mortality per 10 000`, 
-         "95%CI" = ci) %>% 
-  kable(digits = 1)
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// mortality_rate_patients \\\
---------------------------------------------------------------------------------
-
-Alternatively, if you are unsure whether your hospital deaths are
-representative of the wider population, use the following code chunk. 
-This uses the person days of cases in your linelist with a known outcome. 
-However, this will give you an unreasonably high mortality rate, as 
-those in hospital will only be the most severely affected. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Mortality rate attributable to AJS per 10,000 patients per day
-
-```{r mortality_rate_patients}
-mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
-  rename("Deaths" = deaths, 
-         "Person-days" = population, 
-         "Mortality (per 10,000/day)" = `mortality per 10 000`, 
-         "95%CI" = ci) %>% 
-  kable(digits = 1)
-```
-
-
-
-
-
-
-### Time
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This section focuses on the when of the outbreak:
-- When did cases fall ill?
-- Are numbers increasing or decreasing?
-
-There is code to include an epi curve.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-There were `r fmt_count(cebs_cleaned, is.na(date_of_onset))` cases missing dates of onset.
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// epicurve \\\
---------------------------------------------------------------------------------
-
-# This chunk will calculate weekly incidence and plot your epicurve.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r epicurve, message = FALSE}
-
-# count cases for each week of outbreak
-# you can change the start of your week (eg "Sunday week", "Saturday week")
-inc_week_7 <- incidence(cebs_cleaned$date_of_onset, interval = "Monday week")
-
-
-# plot your epicurve
-basic_curve <- plot(inc_week_7, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_7)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  # add labels to axes and below chart
-  epicurve_labels +
-  # change visuals of dates and remove legend title
-  epicurve_theme
-
-# show your plot (stored for later use) 
-basic_curve
-
-## if the outbreak has been going on for a while, your x-axis might look messy.
-## to reduce the number of labels, uncomment the below.
-## you can customize the number of breaks by changing n_breaks
-## you can also use months for your break (here in three-month intervals)
-
-# basic_curve + scale_x_incidence(inc_week_7, n_breaks = 6)
-# basic_curve + scale_x_date(breaks = "3 months", date_labels = "%b %Y")
-
-
-```
-
-The peak of the outbreak was in `r date2week(find_peak(inc_week_7), floor_day = TRUE)`
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// biweekly_epicurve \\\
---------------------------------------------------------------------------------
-
-If needed, you can plot a biweekly epicurve. You can also do this by month,
-quarter, or year. You can change the start of your week as needed.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r biweekly_epicurve, message = FALSE}
-
-# create case counts for two week groups of your outbreak overall
-inc_week_14 <- incidence(cebs_cleaned$date_of_onset, interval = "2 Monday weeks")
-
-
-# plot your epicurve
-plot(inc_week_14, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_14)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  # add labels to axes and below chart
-  epicurve_labels +
-  # change visuals of dates and remove legend title
-  epicurve_theme
-
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// incidence_by_gender \\\
---------------------------------------------------------------------------------
-
-You can plot weekly incidence by gender using this chunk.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r incidence_by_gender, message = FALSE}
-
-# get counts by gender
-inc_week_7_gender <- incidence(cebs_cleaned$date_of_onset, 
-                               interval = "Monday week", 
-                               groups = cebs_cleaned$sex)
-
-plot(inc_week_7_gender, 
-     show_cases = FALSE, # this removes black borders
-     border = "black", 
-     n_breaks = nrow(inc_week_7_gender)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  epicurve_labels +
-  epicurve_theme
-
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// incidence_by_case_def \\\
---------------------------------------------------------------------------------
-
-This chunk shows the weekly incidence by case definition. You must have a
-defined case definition variable.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r incidence_by_case_def, message = FALSE}
-inc_week_7_casedef <- incidence(cebs_cleaned$date_of_onset, 
-                                interval = "Monday week", 
-                                groups = cebs_cleaned$case_def)
-plot(inc_week_7_casedef, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  # add labels to axes and below chart
-  epicurve_labels +
-  # change visuals of dates, remove legend title and move legend to bottom
-  epicurve_theme
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// incidence_by_water_source \\\
---------------------------------------------------------------------------------
-
-You can similarly stratify your incidence by water source (or any other
-categorical variable!).
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r incidence_by_water_source, message = FALSE}
-inc_week_7_water <- incidence(cebs_cleaned$date_of_onset, 
-                              interval = "Monday week", 
-                              groups = cebs_cleaned$water_source)
-
-
-plot(inc_week_7_water, show_cases = FALSE, border = "black", 
-     n_breaks = nrow(inc_week_7_water)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  epicurve_labels +
-  epicurve_theme
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// incidence_by_sex_facility \\\
---------------------------------------------------------------------------------
-
-This chunk limits the data to only inpatients, then stratifies by sex.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Cases by week of onset among inpatients by sex 
-
-```{r incidence_by_sex_facility, message = FALSE}
-inc_week_7_sex_fac <- cebs_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  with(incidence(date_of_onset, interval = "Monday week", groups = sex))
-
-
-
-plot(inc_week_7_sex_fac, show_cases = FALSE, border = "black", n_breaks = nrow(inc_week_7_sex_fac)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  epicurve_labels +
-  epicurve_theme
-
-```
-
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// attack_rate_per_week \\\
---------------------------------------------------------------------------------
-
-This chunk creates a table of attack rate by week
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Attack rate per 10,000 population by week 
-
-```{r attack_rate_per_week, warning = FALSE, message = FALSE}
-# counts and cumulative counts by week
-cases <- cebs_cleaned %>%
-  arrange(date_of_onset) %>%        # arrange by date of onset
-  count(epiweek, .drop = FALSE) %>% # count all epiweeks and include zero counts
-  mutate(cumulative = cumsum(n))    # add a cumulative sum
-
-
-# attack rate for each week
-ar <- attack_rate(cases$n, population, multiplier = 10000) %>% 
-  bind_cols(select(cases, epiweek), .) # add the epiweek column to table
-
-
-ar %>%
-  merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
-  rename("Epiweek" = epiweek, 
-         "Cases (n)" = cases, 
-         "Population" = population, 
-         "AR (per 10,000)" = ar, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
-```
- 
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// cumulative_attack_rate_per_week \\\
---------------------------------------------------------------------------------
-
-This chunk calculates the cumulative attack rate per week.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Cumulative attack rate per 10,000 population per week
-
-```{r cumulative_attack_rate_per_week}
-
-attack_rate(cases$cumulative, population, multiplier = 10000) %>% 
-  bind_cols(select(cases, epiweek), .) %>% # add the epiweek column to table
-  merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
-  rename("Epiweek" = epiweek, 
-         "Cases (n)" = cases, 
-         "Population" = population, 
-         "AR (per 10,000)" = ar, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// cumulative_attack_rate_per_week \\\
---------------------------------------------------------------------------------
-
-This chunk calculates the CFR among inpatients as a proportion per week.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Case fatality ratio as a proportion among inpatients by week
-
-```{r cfr_per_week, warning = FALSE, message = FALSE}
-
-# calculate CFR among inpatients by week
-cfr <- cebs_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(str_detect(exit_status, "Dead"), group = epiweek)
-
-
-cfr %>%
-  merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
-  rename("Epiweek" = epiweek, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You could plot the AR (in the population) and CFR (among inpatients only)
-together with the epicurve by epiweek.
-
-We will do this in three steps: 
-- creating the AR graph (ar_line_graph)
-- creating the CFR graph (cfr_line_graph)
-- combining and plotting 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// ar_line_graph \\\
---------------------------------------------------------------------------------
-
-This chunk sets up the AR graph. (It does not print the graph automatically.)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r ar_line_graph}
-
-ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
-  # add confidence intervals as a ribbon
-  geom_ribbon(aes(ymin = lower, ymax = upper), 
-              color = "blue",  fill = "blue", 
-              linetype = 2, alpha = 0.2, show.legend = FALSE) +
-  # add AR as a line
-  geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
-  # set origin for axes
-  scale_y_continuous(expand = c(0, 0)) +
-  # scale the x axis the same as the incidence curve. Expand forces it to align. 
-  incidence::scale_x_incidence(inc_week_7, 
-                               n_breaks = nrow(inc_week_7), 
-                               expand = c(0, 7 * 1.5)) +
-  # add labels to axes and below chart
-  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 10,000)") + 
-  # change visuals of dates and remove legend title
-  epicurve_theme
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// cfr_line_graph \\\
---------------------------------------------------------------------------------
-
-This chunk sets up the CFR graph. (It does not print the graph automatically.)
-If you do not have any deaths in your data set, this will not show anything.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r cfr_line_graph}
-
-cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
-  # add confidence intervals as a ribbon
-  geom_ribbon(aes(ymin = lower, ymax = upper), 
-              color = "red", fill = "red", 
-              linetype = 2, alpha = 0.2, show.legend = FALSE) +
-  # add CFR as a line
-  geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
-  # set origin for axes
-  scale_y_continuous(expand = c(0, 0)) +  
-  # scale the x axis the same as the incidence curve. Expand forces it to align. 
-  incidence::scale_x_incidence(inc_week_7, 
-                               n_breaks = nrow(inc_week_7), 
-                               expand = c(0, 7 * 1.5)) +
-  # add labels to axes and below chart
-  labs(x = "Calendar week", y = "CFR [95% CI]", 
-       subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
-  # change visuals of dates and remove legend title
-  epicurve_theme 
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// epicurve_ar_cfr \\\
---------------------------------------------------------------------------------
-
-This chunk prints the AR and CFR with the epicurve.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r epicurve_ar_cfr, warning = FALSE, message = FALSE, fig.height = 10}
-
-no_x <- theme(axis.text.x = element_blank(),
-              axis.title.x = element_blank())
-
-## use patchwork to stack the three plots on top of one another
-(basic_curve + no_x) / (ar_plot + no_x) / cfr_plot
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_admissions_by_epiweek \\\
---------------------------------------------------------------------------------
-
-This chunk creates a table showing inpatient admissions by  case definition 
-and epiweek.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Inpatient admissions by case definition and week  
-
-```{r describe_admissions_by_epiweek, warning = FALSE}
-
-cebs_cleaned %>% 
-  filter(patient_facility_type == "Inpatient") %>%
-  tab_linelist(epiweek, strata = case_def,
-             col_total = TRUE,
-             row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Week" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_admissions_by_epiweek \\\
---------------------------------------------------------------------------------
-
-This chunk creates a table showing inpatient exits by type per epiweek.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Inpatient discharges by reason for exit and week 
-
-```{r describe_exits_by_epiweek, warning = FALSE}
-
-cebs_cleaned %>% 
-  filter(patient_facility_type == "Inpatient") %>%
-  tab_linelist(epiweek, strata = exit_status2, 
-               col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Week" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
-```
-
-
-
-
-
-
-### Place 
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This section focuses on the where of the outbreak: what area is affected, how
-many villages, and so on.
-
-There is code to include maps based on distribution of cases. You must have a
-shapefile to create this map.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-
-#### Descriptive
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_by_region_facility \\\
---------------------------------------------------------------------------------
-
-This chunk creates a basic table of the number and percent of cases by region
-and by facility. If you only have one facility, you can remove the strata.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Cases by region and facility type
-
-```{r describe_by_region_facility}
-
-tab_linelist(cebs_cleaned, patient_origin, 
-             strata = patient_facility_type,
-             col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Region" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
-```
-
-  
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_by_region_outcome \\\
---------------------------------------------------------------------------------
-
-This chunk creates a basic table of the outcomes among inpatients by region.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Inpatient discharges by reason for exit and region 
-
-```{r describe_by_region_outcome, warning = FALSE}
-
-tab_linelist(filter(cebs_cleaned,
-                    patient_facility_type == "Inpatient"),
-             patient_origin, strata = exit_status2,
-             col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Region" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// attack_rate_by_region \\\
---------------------------------------------------------------------------------
-
-If you do not have a shapefile, you may want to calculate attack rates by
-region.
-
-Consider facet wrapping by a larger unit if you have many regions (eg if you
-have patients from 10+ villages, you may want to show your tables by health
-zone)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Attack rate per 10,000 population by region 
-
-```{r attack_rate_by_region, warning = FALSE}
-
-# count cases by region
-cases <- count(cebs_cleaned, patient_origin) %>%
-  # add in population data
-  left_join(population_data_region, by = "patient_origin") 
-
-
-# calculate attack rate for region
-ar_region <- attack_rate(cases$n, cases$population, multiplier = 10000) %>% 
-  # add the region column to table
-  bind_cols(select(cases, patient_origin), .) %>% 
-  rename("Region" = patient_origin, 
-         "Cases (n)" = cases, 
-         "Population" = population, 
-         "AR (per 10,000)" = ar, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper) 
-
-ar_region %>% 
-  merge_ci_df(e = 4) %>% # merge lower and upper CI in to one column 
-  rename("95%CI" = ci) %>%  # rename single 95%CI column
-  kable(digits = 1, align = "r", format.args = list(big.mark = ",")) # set thousands separator
-```
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// bar_attack_rate_by_region \\\
---------------------------------------------------------------------------------
-
-You can then plot the above table on a bar plot. AR is on the y-axis, and it
-will show regions in descending order by AR.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r bar_attack_rate_by_region, warning = FALSE}
-
-ggplot(ar_region, aes(x = reorder(Region, `AR (per 10,000)`),
-               y = `AR (per 10,000)`)) +
-  # plot as bars (identity = as is)
-  geom_bar(stat = "identity", col = "black", fill = "red") + 
-  # add CIs
-  geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) +
-  # set origin for axes
-  scale_y_continuous(expand = c(0,0)) +  
-  # add labels to axes and below chart
-  labs(x = "Region", y = "AR (per 10,000)", 
-       captions = str_glue("Source: MSF data from {reporting_week}")) + 
-  epicurve_theme
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// mortality_rate_region \\\
---------------------------------------------------------------------------------
-
-You could also calculate mortality rate by region (check the mortality code
-chunk in Person section for assumptions).
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-Mortality rate per 10,000 population by region 
-
-```{r mortality_rate_region, warning = FALSE}
-
-deaths <- group_by(cebs_cleaned, patient_origin) %>%
-  filter(str_detect(exit_status, "Dead")) %>% 
-  summarise(deaths = n()) %>% # count deaths by region
-  left_join(population_data_region, by = "patient_origin") # merge population data 
-
-mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
-  # add the region column to table
-  bind_cols(select(deaths, patient_origin), .) %>% 
-  merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
-  rename("Region" = patient_origin, 
-         "Deaths" = deaths, 
-         "Population" = population, 
-         "Mortality (per 10,000)" = `mortality per 10 000`, 
-         "95%CI" = ci) %>% 
-  kable(digits = 1)
-```
-
-
-
-
-#### Maps 
+<!-- #### Maps  -->
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// read_shapefiles \\\
 --------------------------------------------------------------------------------
@@ -1783,7 +730,7 @@ Your coordinate reference system needs to be WGS84.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r read_shapefiles, message=FALSE}
 ## fake map data - DELETE if you are using real data
-map <- gen_polygon(regions = unique(cebs_cleaned$patient_origin))
+map <- gen_polygon(regions = unique(cebs_cleaned$location_signal))
 
 
 ## read in shapefile
@@ -1798,42 +745,72 @@ map <- gen_polygon(regions = unique(cebs_cleaned$patient_origin))
 ```
 
 
+##### Verified signals by type by location - table
+```{r place_verified_signals_type_table}
 
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// dot_map \\\
---------------------------------------------------------------------------------
+```
 
-If you have the coordinates for your cases, you can create a dot map showing
-where the cases are.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r dot_map, message=FALSE}
-# ggplot() +
-#   # load shapefile
-#   geom_sf(data = map, col = "grey50") + 
-#   # add in case coordinates
-#   geom_point(mapping = aes(x = lat, y = lon), 
-#              data = cebs_cleaned)
+##### Verified signals by type by location - map
+```{r place_verified_signals_type_map}
+
+## Create a categories of ARs by region ----------------------------------------
+
+# define maximum
+max_ar    <- max(ar_region$`Upper 95%CI`, na.rm = TRUE) # define your highest AR
+
+# create groups - one group will be 0 only, then up to 4 more groups evenly
+# divided to maximum
+breakers <- as.integer(c(
+                         # include zero as a standalone group
+                         0, 
+                         # 1 to 4 divisions, snapping the boundaries to the nearest 100
+                         find_breaks(n = max_ar, breaks = 4, snap = 100)
+             ))
+
+## create a categorical variable using the age_categories function 
+## (we aren't using ages - but it functions the same way!)
+ar_map <- mutate(ar_region, 
+             categories = age_categories(`AR (per 10,000)`, 
+                                         breakers = breakers))
+
+
+
+## Join table to shapefile -----------------------------------------------------
+mapsub <- left_join(map, ar_map, by = c("name" = "Region"))
+
+
+
+## Plot cases or AR by geography -----------------------------------------------
+
+## you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 10,000)`
+ggplot() +
+  # shapefile as polygon
+  geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + 
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() + 
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") + 
+  # label polygons
+  geom_sf_text(data = mapsub, aes(label = name), colour = "grey50") + 
+  # remove coordinates and axes
+  theme_void() 
+
+
 ```
 
 
+##### Alerts by type by location - table
+```{r place_alerts_type_table}
 
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// choropleth_maps \\\
---------------------------------------------------------------------------------
+```
 
-Once you have loaded your shapefile, you can map the case counts or attack rates.
 
-You will want to make your counts or AR categorical. R will not do this
-automatically (unlike QGIS or ArcGIS).
-
-This chunk will walk you through several steps:
-- Create table with categories of counts or ARs by region.
-- Join your table with your shapefile.
-- Choose which variable you will use.
-
-Make sure you delete or comment out the section you are not using.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r choropleth_maps, message = FALSE, warning = FALSE}
+##### Alerts by type by location
+```{r place_alerts_type_map}
 
 ## Create a categories of ARs by region ----------------------------------------
 
@@ -1883,117 +860,40 @@ ggplot() +
 
 ```
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can delete the following if not doing a routine monitoring of the data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
+
+### Monitoring and Evaluation of surveillance attributes
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// map_for_loop_epiweek \\\
---------------------------------------------------------------------------------
-
-This chunk will create a map and barplot by week.
-
-You need to:
-- Decide if you want to show counts, AR, or categories of counts/AR.
-- Define categories for your variable.
-- Replace `Cases (n)` and `AR (per 10,000)` or "categories", appropriately.
-
-
-If you have a lot of map regions, you may want to use facet_wrap to show
-sub-units.
+This section focuses on the following quantitative surveillance attributes
+There is code to examine the following:
+- Characteristics of signals, events, alerts and responses.
+- The usefulness of surveillance system
+- The timeliness of verification, risk assessment and response
+- The representativeness of the surveillance system
+- The completeness of various variables
+- The positive predictive value of signals
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r map_for_loop_epiweek, message = FALSE, warning = FALSE, fig.width = 12}
+```{r set_start}
 
-## Prepare data ---------------------------------------------------------------
+## Identify the start week for monitoring/evaluation period
+start_week <- aweek::as.aweek("2020-W04")
 
-# change region variable to a factor so that zero counts can be included
-cebs_cleaned$patient_origin <- as.factor(cebs_cleaned$patient_origin)
-
-
-# case counts
-cases <- cebs_cleaned %>% 
-  group_by(epiweek) %>%
-  count(patient_origin, .drop = FALSE) %>%   # cases for each week by region
-  left_join(population_data_region, by = "patient_origin")    # merge population data 
-
-
-# attack rate for region
-ar <- attack_rate(cases$n, cases$population, multiplier = 10000) %>% 
-  # add the region column to table
-  bind_cols(select(cases, epiweek, patient_origin), .) %>% 
-  rename("Region" = patient_origin, 
-         "Cases (n)" = cases, 
-         "Population" = population, 
-         "AR (per 10,000)" = ar, 
-         "Lower 95%CI" = lower,
-         "Upper 95%CI" = upper)
-
-
-# define the maximum number of cases / max AR for the color palette 
-max_cases <- max(cases$n, na.rm = TRUE) 
-max_ar    <- max(ar$`Upper 95%CI`, na.rm = TRUE)
-
-
-# define breaks for standardising color palette
-breakers <- as.integer(c(0, # include zero as a standalone group
-             find_breaks(max_ar, breaks = 4, snap = 100) # four breaks rounded to nearest 100
-             ))
-
-
-# add a categorical variable for AR
-# (replace with `Cases (n)` if you want to map cases)
-ar <- mutate(ar, 
-             categories = age_categories(`AR (per 10,000)`, 
-                                         breakers = breakers))
-
-## define the last four weeks available in your dataset
-which_weeks <- tail(unique(cases$epiweek), n = 4)
-
-# go through each epiweek, fiter and plot the data
-for (week in which_weeks) {
-  this_ar <- filter(ar, epiweek == week)
-  
-  ## map 
-  mapsub <- left_join(map, this_ar, by = c("name" = "Region"))
-  
-  ## choropleth 
-  map_plot <- ggplot() +
-    ## shapefile as polygon
-    geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + 
-    ## needed to avoid gridlines being drawn
-    coord_sf(datum = NA) + 
-    ## add a scalebar
-    annotation_scale() + 
-    ## color the scale to be perceptually uniform (keep levels)
-    scale_fill_brewer(drop = FALSE, 
-                    palette = "OrRd", 
-                    name = "AR (per 10,000)") +  
-    ## remove coordinates and axes
-    theme_void() 
-  
-  
-  ## plot with the region on the x axis sorted by increasing ar
-  ## ar value on the y axis 
-  barplot <- ggplot(this_ar, aes(x = reorder(Region, `AR (per 10,000)`),
-                                 y = `AR (per 10,000)`)) + 
-    ## plot as bars (identity = as is)
-    geom_bar(stat = "identity", col = "black", fill = "red") + 
-     ## add CIs
-    geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) +
-    ## set origin for axes
-    scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  
-    ## add labels to axes and below chart
-    labs(x = "Region", y = "AR (per 10,000)") +  
-    epicurve_theme
-  
-  
-  
-  ## combine the barplot and map plot into one with patchwork and add a title
-  ## in the top-left corner and a caption in the bottom-right
-  print(
-    barplot + map_plot + plot_annotation(
-         title   = str_glue("Epiweek: {week}"),
-         caption = str_glue("Source: MSF data from {reporting_week}")
-    )
-  )
-}
 ```
+
+
+
+#### Characteristics of surveillance data collected
+
+During the evaluation period, there were `r fmt_count(filter(ebs_cleaned, epiweek >= start_week & epiweek <= reporting_week), is.na(date_signal)== F)`, `r fmt_count(filter(ebs_cleaned, epiweek >= start_week & epiweek <= reporting_week), is.na(event_id)== F)`, `r fmt_count(filter(ebs_cleaned, epiweek >= start_week & epiweek <= reporting_week), ALERT == TRUE)`,  `r fmt_count(filter(ebs_cleaned, epiweek >= start_week & epiweek <= reporting_week), response_undertaken == "y")` signals collected, events identified, alerts reported and responses conducted, respectively.
+
+
+
+
+
+
+
 
