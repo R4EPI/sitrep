@@ -7,7 +7,8 @@ output:
 
 # Introduction to this template
 
-This is a template which can be used to create an automated EWAR situation report and for routine monitoring purposes
+This is a template which can be used to create an automated EWAR situation report
+and for routine monitoring purposes
 
 - The situation report is organised by time and place
 For a more detailed explanation of this template, please visit https://r4epis.netlify.app/
@@ -177,15 +178,22 @@ epicurve_labels <- labs(x = "Calendar week",
 --------------------------------------------------------------------------------
 
 
-To play with this template, you can create fake data. Comment out this chunk
-when you are using real data.
+To play with this template, you can create fake data based off the KoBo data
+dictionary. Comment out this chunk when you are using real data.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r read_fake_data, warning = FALSE, message = FALSE}
 
-cebs_raw <- gen_data("CEBS")
 
+## generates MSF standard dictionary for KoBo
+study_data_dict <- msf_dict_survey("EWAR")
+
+
+## generates a fake dataset for use as an example in this template
+cebs_raw <- gen_data(dictionary = "EWAR",
+                           varnames   = "name",
+                           numcases   = 1000)
 ```
-
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
