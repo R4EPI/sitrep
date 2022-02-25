@@ -161,7 +161,7 @@ Monday.
 aweek::set_week_start("Monday")
 
 ## set current week 
-reporting_week <- aweek::as.aweek("2022-W04")
+reporting_week <- aweek::as.aweek("2018-W15")
 
 ## sets the labels in ggplot for the epicurves
 epicurve_labels <- labs(x = "Calendar week", 
@@ -186,13 +186,13 @@ dictionary. Comment out this chunk when you are using real data.
 
 
 ## generates MSF standard dictionary for KoBo
-study_data_dict <- msf_dict_survey("EWAR")
+ewar_data_dict <- msf_dict_survey("EWAR")
 
 
 ## generates a fake dataset for use as an example in this template
-cebs_raw <- gen_data(dictionary = "EWAR",
+ewar_raw <- gen_data(dictionary = "EWAR",
                            varnames   = "name",
-                           numcases   = 1000)
+                           numcases   = 400)
 ```
 
 
@@ -260,7 +260,7 @@ For a KoBo dataset this variable is "event_id".
 ```{r merge_data_sets}
 
 ## join the signal and risk assessment
-# cebs_raw <- left_join(signal_raw, risk_assess_raw, by = "event_id") %>% 
+# ewar_raw <- left_join(signal_raw, risk_assess_raw, by = "event_id") %>% 
               ## join the combined forms with the response form
               # left_join(response_raw, by = "event_id")
 ```
@@ -283,31 +283,20 @@ the full-text value.
 
 ```{r prep_KoBo_data, warning = FALSE, message = FALSE}
 
-## MSF CEBS Dictionary ----------------------------------------------------------
-## get MSF standard dictionary for CEBS
-cebs_dict <- msf_dict("AJS", compact = FALSE)
+## MSF ewar Dictionary ----------------------------------------------------------
+## get MSF standard dictionary for ewar
+ewar_dict <- msf_dict_survey("EWAR", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
-# View(cebs_dict) 
+# View(ewar_dict) 
 
 
 
 ## Clean column names ----------------------------------------------------------
-## make a copy of your orginal dataset and name it cebs_cleaned
-cebs_cleaned <- cebs_raw
+## make a copy of your original dataset and name it ewar_cleaned
+ewar_cleaned <- ewar_raw
 
 
-
-## Standardising values --------------------------------------------------------
-## This step fixes the values so that you can read them.
-## values like 1/0 will be recoded as "Yes" / "No" based on the dictionary
-cebs_cleaned <- matchmaker::match_df(cebs_cleaned,
-  dict  = linelist_dict,
-  from  = "option_code",
-  to    = "option_name",
-  by    = "data_element_shortname",
-  order = "option_order_in_set"
-)
 ```
 
 
@@ -324,7 +313,7 @@ If you have already loaded data from KoBo, go to xxx
 
 ## Excel file ------------------------------------------------------------------
 ## to read in a specific sheet use "which"
-# cebs_raw <- rio::import(here::here("Data", "cebs.xlsx"), which = "Sheet1")
+# ewar_raw <- rio::import(here::here("Data", "ewar.xlsx"), which = "Sheet1")
 
 ```
 
@@ -353,20 +342,20 @@ the full-text value.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r prep_nonKoBo_data, warning = FALSE, message = FALSE}
-## MSF CEBS Dictionary ----------------------------------------------------------
-## get MSF standard dictionary for CEBS 
-# cebs_dict <- msf_dict("CEBS", compact = FALSE) %>%
+## MSF ewar Dictionary ----------------------------------------------------------
+## get MSF standard dictionary for ewar 
+# ewar_dict <- msf_dict("ewar", compact = FALSE) %>%
 #   select(option_code, option_name, everything())
 
 ## look at the standard dictionary by uncommenting the line below
-# View(cebs_dict) 
+# View(ewar_dict) 
 
 ## You will need to recode your variables to match the data dictionary. This is
 ## addressed below.
 
 
-## make a copy of your orginal dataset and name it cebs_cleaned
-# cebs_cleaned <- linelist_raw
+## make a copy of your orginal dataset and name it ewar_cleaned
+# ewar_cleaned <- ewar_raw
 
 
 
@@ -378,7 +367,7 @@ the full-text value.
 ## AJS dictionary. This will copy a rename command like the one above to your
 ## clipboard.
 
-# msf_dict_rename_helper("CEBS")
+# msf_dict_rename_helper("ewar")
 
 ## Paste the result below and your column names to the matching variable.
 ## Be careful! You still need to be aware of what each variable means and what
@@ -394,7 +383,7 @@ the full-text value.
 ## "sex" and "age_years". 
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME).
 
-# cebs_cleaned <- rename(cebs_cleaned, 
+# ewar_cleaned <- rename(ewar_cleaned, 
 #                            sex       = gender, # TEXT
 #                            age_years = age     # INTEGER_POSITIVE
 # )
@@ -410,27 +399,27 @@ You'll want to look at your data. Here are a few ways you can explore.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r browse_data, eval = FALSE}
 ## view the first ten rows of data
-head(cebs_cleaned, n = 10)
+head(ewar_cleaned, n = 10)
 
 ## view your whole dataset interactively (in an excel style format)
-View(cebs_cleaned)
+View(ewar_cleaned)
 
 ## overview of variable types and contents
-str(cebs_cleaned)
+str(ewar_cleaned)
 
 ## get summary: 
 ## mean, median and max values of numeric variables
 ## counts for categorical variables
 ## also gives number of NAs
-summary(cebs_cleaned)
+summary(ewar_cleaned)
 
 ## view unique values contained in variables 
 ## you can run this for any column -- just replace the column name
-unique(cebs_cleaned$XX) 
+unique(ewar_cleaned$signal_type) 
 
 ## use the dfSummary function in combination with view
 ## note that view is not capitalised with this package
-# summarytools::dfSummary(cebs_cleaned) %>%
+# summarytools::dfSummary(ewar_cleaned) %>%
 #   summarytools::view()
 ```
 
@@ -447,16 +436,15 @@ specific variables or rows.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r remove_unused_data}
 ## Drop unused rows  -----------------------------------------------------------
-## This step removes blank rows that don't have both a date of signal and event 
-## ID.
-cebs_cleaned <- cebs_cleaned %>% 
-  filter(!is.na(event_id) & !is.na(date_signal)) 
+## This step removes blank rows that don't have both a date of signal
+ewar_cleaned <- ewar_cleaned %>% 
+  filter(!is.na(date_signal)) 
 
 
 ## Drop columns ----------------------------------------------------------------
 ## OPTIONAL: This step shows you how you can remove certain variables.
 
-# cebs_cleaned <- cebs_cleaned %>%
+# ewar_cleaned <- ewar_cleaned %>%
 #   select(-c(var1, var2))
 
 ```
@@ -491,14 +479,14 @@ This chunk will help you set up and clean your date variables.
 ## If not, comment this section out and use the below.
 
 ## make sure all date variables are formatted as dates 
-DATEVARS <- cebs_dict %>% 
-  filter(data_element_valuetype == "DATE") %>%
-  filter(data_element_shortname %in% names(cebs_cleaned)) %>% 
+DATEVARS <- ewar_dict %>% 
+  filter(type == "date") %>%
+  filter(name %in% names(ewar_cleaned)) %>% 
   ## filter to match the column names of your data
-  pull(data_element_shortname) 
+  pull(name) 
 
 ## change to dates 
-cebs_cleaned <- cebs_cleaned %>%
+ewar_cleaned <- ewar_cleaned %>%
   mutate_at(DATEVARS, linelist::guess_dates,
             error_tolerance = 0.5)
 
@@ -508,19 +496,19 @@ cebs_cleaned <- cebs_cleaned %>%
 ## Use this section if you did not have DHIS2 data. 
 
 ## use the guess_dates() function to make a first pass at date variables.
-# cebs_cleaned <- cebs_cleaned %>%
+# ewar_cleaned <- ewar_cleaned %>%
 #   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
 #           error_tolerance = 0.5)
 
 ## once you have run guess_dates(), take a look at your date variables.
 ## here is an example:
-# table(cebs_cleaned$date_signal)
+# table(ewar_cleaned$date_signal)
 
 
 ## Some dates will be unrealistic or wrong.
 ## Here is an example of how to manually fix dates. 
 ## Look at your data and edit as needed.
-# cebs_cleaned <- mutate(cebs_cleaned,
+# ewar_cleaned <- mutate(ewar_cleaned,
 #                            date_signal = case_when(
 #                              date_signal < as.Date("2017-11-01")  ~ as.Date(NA),
 #                              date_signal == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
@@ -533,7 +521,7 @@ cebs_cleaned <- cebs_cleaned %>%
 ## This step creates an epiweek variable from the date of onset.
 ## You can use date_of_consultation_admission if you are missing many date_of_onset.
 
-cebs_cleaned$epiweek <- aweek::date2week(cebs_cleaned$date_signal, 
+ewar_cleaned$epiweek <- aweek::date2week(ewar_cleaned$date_signal, 
                                              floor_day = TRUE, 
                                              factor = TRUE)
 
@@ -551,11 +539,11 @@ includes numeric, factor, and character vectors.
 ```{r create_vars}
 
 ## Numeric variables -----------------------------------------------------------
-## This step creates numeric variables related to timeliness of CEBS activities
+## This step creates numeric variables related to timeliness of ewar activities
 ## You can adapt this step to create other calculated variables
 
 ## create timeliness-related variables
-cebs_cleaned <- cebs_cleaned %>%
+ewar_cleaned <- ewar_cleaned %>%
   ## Time in days to verify a signal
   mutate(verification_time = as.numeric(date_verification - date_signal)) %>% 
   ## Time in days to risk assess a signal after verification
@@ -572,14 +560,14 @@ cebs_cleaned <- cebs_cleaned %>%
 
 ## The variable ALERT will be binary (TRUE/FALSE) -- if an alert was declared 
 ## or not
-cebs_cleaned$ALERT <- str_detect(cebs_cleaned$exit_status, "1")
+ewar_cleaned$ALERT <- str_detect(ewar_cleaned$alert_status, "1")
   
 
 ## Recode character variables -------------------------------------------------
 ## This step shows how to fix misspellings in the geographic region variable.
 ## Ideally, you want these values to match your shapefile and population data!
 
-# cebs_cleaned <- cebs_cleaned %>%
+# ewar_cleaned <- ewar_cleaned %>%
 #   mutate(location_signal = case_when(
 #     location_signal == "Valliages D"       ~ "Village D",
 #     location_signal == "VillageD"          ~ "Village D",
@@ -603,14 +591,14 @@ of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r report_setup}
 # return the last day of the reporting week
-obs_end   <- week2date(str_glue("{reporting_week}-7"))
+obs_end   <- aweek::week2date(str_glue("{reporting_week}-7"))
 
 # filter out cases after end of reporting week
-cebs_cleaned <- cebs_cleaned %>% 
-  filter(date_of_consultation_admission <= obs_end)
+ewar_cleaned <- ewar_cleaned %>% 
+  filter(date_signal <= obs_end)
 
 # define the first week of outbreak (date of first case)
-first_week <- as.aweek(min(as.character(cebs_cleaned$epiweek)))
+first_week <- aweek::as.aweek(min(as.character(ewar_cleaned$epiweek)))
 
 # outbreak start 
 # return the first day in the week of first case 
@@ -635,7 +623,7 @@ are duplicated - giving you more flexibility around browsing which ones to drop.
 
 ## option 1: only keep the first occurrence of duplicate case 
 
-cebs_cleaned <- cebs_cleaned %>% 
+ewar_cleaned <- ewar_cleaned %>% 
   ## find duplicates based on signal_type, date_signal, initials 
   ## only keep the first occurrence 
   distinct(signal_type, date_signal, initials, .keep_all = TRUE)
@@ -643,7 +631,7 @@ cebs_cleaned <- cebs_cleaned %>%
 
 # ## option 2: create flagging variables for duplicates (then use to browse)
 # 
-# cebs_cleaned <- cebs_cleaned %>% 
+# ewar_cleaned <- ewar_cleaned %>% 
 #   ## choose which variables to use for finding unique rows 
 #   group_by(signal_type, date_signal, initials) %>% 
 #   mutate(
@@ -653,7 +641,7 @@ cebs_cleaned <- cebs_cleaned %>%
 #   )
 # 
 # ## browse duplicates based on flagging variables 
-# cebs_cleaned %>% 
+# ewar_cleaned %>% 
 #   ## only keep rows that are duplicated
 #   filter(duped) %>% 
 #   ## arrange by variables of interest 
@@ -661,7 +649,7 @@ cebs_cleaned <- cebs_cleaned %>%
 #   View()
 # 
 # ## filter duplicates to only keep the row with the earlier entry 
-# cebs_cleaned %>% 
+# ewar_cleaned %>% 
 #   ## choose which variables to use for finding unique rows 
 #   group_by(signal_type, date_signal, initials) %>% 
 #   ## sort to have the earliest date by person first
@@ -675,11 +663,11 @@ cebs_cleaned <- cebs_cleaned %>%
 --------------------------------------------------------------------------------
 
 You can save your cleaned dataset as an Excel. 
-This automatically names your file "cebs_cleaned_DATE", where DATE is the
+This automatically names your file "ewar_cleaned_DATE", where DATE is the
 current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r save_cleaned_data}
-# rio::export(cebs_cleaned, here::here("Data", str_glue("cebs_cleaned_{Sys.Date()}.xlsx")))
+# rio::export(ewar_cleaned, here::here("Data", str_glue("ewar_cleaned_{Sys.Date()}.xlsx")))
 ```
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -738,7 +726,7 @@ Your coordinate reference system needs to be WGS84.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r read_shapefiles, message=FALSE}
 ## fake map data - DELETE if you are using real data
-map <- gen_polygon(regions = unique(cebs_cleaned$location_signal))
+map <- gen_polygon(regions = unique(ewar_cleaned$location_signal))
 
 
 ## read in shapefile
