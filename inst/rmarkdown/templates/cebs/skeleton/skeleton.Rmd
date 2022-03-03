@@ -710,7 +710,7 @@ summary_table <- ewar_cleaned %>%
   mutate(epiweek = as.factor(epiweek))
 
 
-# Transpose the data so that epi weeks are on top
+# Transpose the data so that epiweeks are on top
 summary_table_t <- data.table::transpose(summary_table, keep.names = "rn") %>% 
    as_tibble() 
 
@@ -731,12 +731,77 @@ summary_table_t %>%
 ##### Verified signals by type over time
 ```{r time_verified_signals_type_table}
 
+verif_sig_table <- ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks
+  filter(epiweek >= six_weeks_ago & epiweek <= reporting_week & event_status == "1") %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(verified_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            verified_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            verified_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            verified_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            verified_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            verified_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek))
+
+
+# Transpose the data so that epiweeks are on top
+verif_sig_table_t <- data.table::transpose(verif_sig_table, keep.names = "rn") %>% 
+   as_tibble() 
+
+# Change the column names to take on the first row values
+colnames(verif_sig_table_t) = verif_sig_table_t[1,]
+
+## Finalise table
+verif_sig_table_t %>% 
+  ## remove the 2nd row of data
+  slice(-1) %>% 
+  ## make a flex table
+  flextable()
+
+
 ```
 
 
 
 ##### Alerts by type over time
 ```{r time_alerts_type_figure}
+
+alert_table <- ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks
+  filter(epiweek >= six_weeks_ago & epiweek <= reporting_week & ALERT == TRUE) %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(alert_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            alert_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            alert_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            alert_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            alert_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            alert_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek))
+
+
+# Transpose the data so that epiweeks are on top
+alert_table_t <- data.table::transpose(alert_table, keep.names = "rn") %>% 
+   as_tibble() 
+
+# Change the column names to take on the first row values
+colnames(alert_table_t) = alert_table_t[1,]
+
+## Finalise table
+alert_table_t %>% 
+  ## remove the 2nd row of data
+  slice(-1) %>% 
+  ## make a flex table
+  flextable()
 
 ```
 
