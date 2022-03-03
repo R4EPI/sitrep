@@ -732,7 +732,7 @@ summary_table_t %>%
 ```{r time_verified_signals_type_table}
 
 verif_sig_table <- ewar_cleaned %>% 
-  ## Filter to only include data for the past 6 weeks
+  ## Filter to only include data for the past 6 weeks and verified signals
   filter(epiweek >= six_weeks_ago & epiweek <= reporting_week & event_status == "1") %>% 
   ## Group by epiweek
   group_by(epiweek) %>% 
@@ -772,7 +772,7 @@ verif_sig_table_t %>%
 ```{r time_alerts_type_figure}
 
 alert_table <- ewar_cleaned %>% 
-  ## Filter to only include data for the past 6 weeks
+  ## Filter to only include data for the past 6 weeks and alerts
   filter(epiweek >= six_weeks_ago & epiweek <= reporting_week & ALERT == TRUE) %>% 
   ## Group by epiweek
   group_by(epiweek) %>% 
@@ -809,6 +809,46 @@ alert_table_t %>%
 
 #### Place
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This section focuses on where verified signals and alerts were detected.
+
+There is code to include maps based on distribution of verified signals and alerts
+You must have a shapefile to create this map.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+##### Verified signals by type by location - table
+<!-- The below shows all signals in the past 6 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_verified_signals_type_table}
+
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and verified signals
+  filter(epiweek >= six_weeks_ago & epiweek <= reporting_week & event_status == "1") %>% 
+  select(signal_type, location_signal) %>% 
+  ## summarise data by week
+  tbl_summary(by = "signal_type")
+  
+
+```
+
+
+##### Alerts by type by location - table
+<!-- The below shows all signals in the past 6 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_alerts_type_table}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and verified signals
+  filter(epiweek >= six_weeks_ago & epiweek <= reporting_week & ALERT == "TRUE") %>% 
+  select(signal_type, location_signal) %>% 
+  ## summarise data by week
+  tbl_summary(by = "signal_type")
+  
+```
+
+
 <!-- #### Maps  -->
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// read_shapefiles \\\
@@ -839,11 +879,6 @@ map <- gen_polygon(regions = unique(ewar_cleaned$location_signal))
 
 ```
 
-
-##### Verified signals by type by location - table
-```{r place_verified_signals_type_table}
-
-```
 
 ##### Verified signals by type by location - map
 ```{r place_verified_signals_type_map}
@@ -894,12 +929,6 @@ ggplot() +
   # remove coordinates and axes
   theme_void() 
 
-
-```
-
-
-##### Alerts by type by location - table
-```{r place_alerts_type_table}
 
 ```
 
