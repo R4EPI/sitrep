@@ -827,7 +827,7 @@ ewar_cleaned %>%
   ## Filter to only include data for the past 6 weeks and verified signals
   filter(epiweek >= six_weeks_ago & epiweek <= reporting_week & event_status == "1") %>% 
   select(signal_type, location_signal) %>% 
-  ## summarise data by week
+  ## summarise data by signal type
   tbl_summary(by = "signal_type")
   
 
@@ -842,8 +842,9 @@ ewar_cleaned %>%
 ewar_cleaned %>% 
   ## Filter to only include data for the past 6 weeks and verified signals
   filter(epiweek >= six_weeks_ago & epiweek <= reporting_week & ALERT == "TRUE") %>% 
+  ## Select the variables of interest - signal type and location of signal
   select(signal_type, location_signal) %>% 
-  ## summarise data by week
+  ## summarise data by signal type
   tbl_summary(by = "signal_type")
   
 ```
