@@ -1,8 +1,11 @@
 ---
 title: "EWAR situation report and monitoring"
-output: 
+output:
+  pdf_document: default
   word_document:
-    keep_md: true
+    keep_md: yes
+  html_document:
+    df_print: paged
 ---
 
 # Introduction to this template
@@ -45,7 +48,8 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
                       error = TRUE,       # show errors if they appear, but don't stop
                       fig.width = 6*1.25, # Figure width
-                      fig.height = 6      # Figure height
+                      fig.height = 6,      # Figure height
+                      message = FALSE
                      )
 
 
@@ -115,11 +119,14 @@ pacman::p_load(
      sf,               # to manage spatial data using a Simple Feature format
      tmap,             # to produce simple maps, works for both interactive and static maps
      OpenStreetMap,    # to add OSM basemap in ggplot map
+     ggspatial,        # to add scales to maps
 
      
      # routine reports
      #################
      rmarkdown,        # produce PDFs, Word Documents, Powerpoints, and HTML files
+     sitrep,           # to make use of various functions made for MSF
+
 
      
      # tables for presentation
@@ -136,12 +143,6 @@ pacman::p_load(
 ## give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
 
-## sets the theme in ggplot for epicurves
-epicurve_theme <- theme(
-  axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-  legend.title = element_blank(),
-  panel.grid.major.x = element_line(color = "grey60", linetype = 3),
-  panel.grid.major.y = element_line(color = "grey60", linetype = 3))
 ```
 
 
@@ -221,28 +222,30 @@ If you didn't use the standardized data dictionary, go to read_Excel_data.
 ```{r read_KoBo_data, warning = FALSE, message = FALSE}
 ### Read in data ---------------------------------------------------------------
 
+# Uncomment the below when you want to import your data
+
 ## Signal verification form
 ## Excel file ------------------------------------------------------------------
 ## For a specific sheet, use "which"
-signal_raw <- rio::import(here::here("Data", "signal.xlsx"), which = "Sheet1") %>%
-              ## convert all column names to lower case
-              janitor::clean_names()
+# signal_raw <- rio::import(here::here("Data", "signal.xlsx"), which = "Sheet1") %>%
+#               ## convert all column names to lower case
+#               janitor::clean_names()
 
 
 ## Risk assessment form
 ## Excel file ------------------------------------------------------------------
 ## For a specific sheet, use "which"
-risk_assess_raw <- rio::import(here::here("Data", "risk_assessment.xlsx"), which = "Sheet1") %>%
-              ## convert all column names to lower case
-              janitor::clean_names()
+# risk_assess_raw <- rio::import(here::here("Data", "risk_assessment.xlsx"), which = "Sheet1") %>%
+#               ## convert all column names to lower case
+#               janitor::clean_names()
 
 
 ## Response form
 ## Excel file ------------------------------------------------------------------
 ## For a specific sheet, use "which"
-response_raw <- rio::import(here::here("Data", "response.xlsx"), which = "Sheet1") %>%
-              ## convert all column names to lower case
-              janitor::clean_names()
+# response_raw <- rio::import(here::here("Data", "response.xlsx"), which = "Sheet1") %>%
+#               ## convert all column names to lower case
+#               janitor::clean_names()
 
 ``` 
 
@@ -590,19 +593,14 @@ This chunk removes cases after your reporting week and defines the start and end
 of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r report_setup}
-# return the last day of the reporting week
-obs_end   <- aweek::week2date(str_glue("{reporting_week}-7"))
+# TODO return the last day of the reporting week
+# obs_end   <- aweek::week2date(str_glue("{reporting_week}-7"))
+# 
+# # filter out cases after end of reporting week
+# ewar_cleaned <- ewar_cleaned %>% 
+#   filter(date_signal <= obs_end)
 
-# filter out cases after end of reporting week
-ewar_cleaned <- ewar_cleaned %>% 
-  filter(date_signal <= obs_end)
 
-# define the first week of outbreak (date of first case)
-first_week <- aweek::as.aweek(min(as.character(ewar_cleaned$epiweek)))
-
-# outbreak start 
-# return the first day in the week of first case 
-obs_start <- as.Date(first_week)
 ```
 
 
@@ -722,7 +720,9 @@ summary_table_t %>%
   ## remove the 2nd row of data
   slice(-1) %>% 
   ## make a flex table
-  flextable()
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
 
 
 ```
@@ -761,7 +761,9 @@ verif_sig_table_t %>%
   ## remove the 2nd row of data
   slice(-1) %>% 
   ## make a flex table
-  flextable()
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
 
 
 ```
@@ -801,7 +803,9 @@ alert_table_t %>%
   ## remove the 2nd row of data
   slice(-1) %>% 
   ## make a flex table
-  flextable()
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
 
 ```
 
@@ -898,7 +902,7 @@ map <- map %>%
 
 
 ##### Verified signals by type by location - map
-```{r place_verified_signals_type_map}
+```{r place_verified_signals_type_map, message = FALSE, warning = FALSE}
 
 ## Count number of verified signals in last week  ----------------------------------------
 verif_sig <- ewar_cleaned %>% 
@@ -949,7 +953,7 @@ ggplot() +
 
 
 ##### Alerts by type by location
-```{r place_alerts_type_map}
+```{r place_alerts_type_map, message = FALSE, warning = FALSE}
 
 ## Count number of alerts in reporting week  ----------------------------------------
 alerts <- ewar_cleaned %>% 
@@ -972,7 +976,7 @@ map_alerts <- left_join(map, alerts, by = c("name" = "location_signal")) %>%
     
 
 ## Plot alerts by location
------------------------------------------------
+# -----------------------------------------------
 
 ggplot() +
   ## Add the map layer as an empty white shape
@@ -986,7 +990,7 @@ ggplot() +
   # color the scale to be perceptually uniform 
   # drop FALSE keeps all levels 
   # name allows you to change the legend title 
-  scale_fill_brewer(palette = "OrRd", 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", 
                     name = "No. alerts") + 
   # label polygons
   geom_sf_text(data = map_alerts, aes(label = name), size = 2.5,
@@ -1022,7 +1026,7 @@ There is code to examine the following:
 ```{r set_start}
 
 ## Identify the start week for monitoring/evaluation period
-start_week <- aweek::as.aweek("2020-W04")
+# start_week <- aweek::as.aweek("2020-W04")
 
 ```
 
@@ -1030,7 +1034,7 @@ start_week <- aweek::as.aweek("2020-W04")
 
 #### Characteristics of surveillance data collected
 
-During the evaluation period, there were `r fmt_count(filter(ebs_cleaned, epiweek >= start_week & epiweek <= reporting_week), is.na(date_signal)== F)`, `r fmt_count(filter(ebs_cleaned, epiweek >= start_week & epiweek <= reporting_week), is.na(event_id)== F)`, `r fmt_count(filter(ebs_cleaned, epiweek >= start_week & epiweek <= reporting_week), ALERT == TRUE)`,  `r fmt_count(filter(ebs_cleaned, epiweek >= start_week & epiweek <= reporting_week), response_undertaken == "y")` signals collected, events identified, alerts reported and responses conducted, respectively.
+
 
 
 
