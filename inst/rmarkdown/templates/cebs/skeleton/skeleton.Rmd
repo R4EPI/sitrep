@@ -1,9 +1,9 @@
 ---
 title: "EWAR situation report and monitoring"
 output:
-  pdf_document: default
   word_document:
     keep_md: yes
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -48,8 +48,9 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
                       error = TRUE,       # show errors if they appear, but don't stop
                       fig.width = 6*1.25, # Figure width
-                      fig.height = 6,      # Figure height
-                      message = FALSE
+                      fig.height = 6,     # Figure height
+                      message = FALSE,    # do not show messages
+                      warning = FALSE     # do not show warnings
                      )
 
 
@@ -682,7 +683,7 @@ Include this paragraph in the body of the email when sharing the SitRep
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 #### Time
-##### Overview of EBS performance indicators
+##### Overview of EBS performance indicators in past 6 weeks
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Include this summary table when sharing the Sitrep
 It shows the number of signals collected, discarded at triage, verified, number of
@@ -726,6 +727,38 @@ summary_table_t %>%
 
 
 ```
+
+
+#### Overview of signal processes by type in `r reporting_week`
+
+```{r summary_table_reporting_week_type}
+
+
+ewar_cleaned %>% 
+ ## Filter to only include data for the past 6 weeks
+  filter(epiweek == reporting_week) %>% 
+  ## Group by epiweek
+  group_by(signal_type) %>% 
+  ## Count the number of total signals, number required verification,
+  # verified signals, alerts and responses
+  summarise(total_signals = n(),
+            verified_signals = sum(event_status == "1", na.rm = T),
+            risk_assessments = sum(is.na(date_assessment) == F,  na.rm = T),
+            alerts = sum(ALERT, na.rm  = T),
+            responses = sum(response_undertaken == "y", na.rm = T)) %>% 
+  dplyr::rename("Signal type" = signal_type, "
+                Total signals" = total_signals,
+                "Verified signals" = verified_signals,
+                "Risk assessments" = risk_assessments,
+                "Alerts" = alerts,
+                "Responses" = responses) %>% 
+  flextable::flextable()
+
+
+
+```
+
+
 
 
 ##### Verified signals by type over time
