@@ -542,6 +542,8 @@ includes numeric, factor, and character vectors.
 
 ## create timeliness-related variables
 ewar_cleaned <- ewar_cleaned %>%
+  ## Time in days to detect the signal
+  mutate(detection_time = as.numeric(date_signal - date_event_start)) %>% 
   ## Time in days to verify a signal
   mutate(verification_time = as.numeric(date_verification - date_signal)) %>% 
   ## Time in days to risk assess a signal after verification
@@ -988,7 +990,6 @@ There is code to examine the following:
 - Characteristics of signals, events, alerts and responses.
 - The usefulness of surveillance system
 - The timeliness of verification, risk assessment and response
-- The representativeness of the surveillance system
 - The completeness of various variables
 - The positive predictive value of signals
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -1045,8 +1046,35 @@ ewar_cleaned %>%
 ```
 
 
+#### Usefulness
+##### Number of alerts of the CEBS that resulted in public health action
+
+Across the period of evaluation, there were `r fmt_count(ewar_cleaned, ALERT)` of which `r nrow(filter(ewar_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
 
 
 
+#### Timeliness of signal detection, verification, risk assessment and response
+The below table shows the median delay in days between identification and detection/reporting of a signal, detection of a signal
+and verification, verification of a signal and assessment, assessment of a signal and a response.
+
+```{r timeliness, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select timeliness-related variables
+  select(detection_time, verification_time, assessment_time, response_time) %>% 
+  ## calculate mean and SD for each
+  tbl_summary(missing = "no",
+              type = (all_categorical() ~ "continuous"),
+              label = list(detection_time ~ "Time to detect signal" ,
+                verification_time ~ "Time to verify signal",
+                assessment_time ~ "Time to assess verified signal",
+                response_time ~ "Time from assessment to response")) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
 
 
+```
+
+
+#### Completeness of selected variables
