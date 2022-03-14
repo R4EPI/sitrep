@@ -1,17 +1,17 @@
 ---
 title: "EWAR situation report and monitoring"
 output:
-  html_document:
-    df_print: paged
-  pdf_document: default
   word_document:
     keep_md: yes
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
-# Introduction to this template
+# Introduction to this template 
 
 This is a template which can be used to create an automated EWAR situation report
-and for routine monitoring purposes
+and for routine monitoring purposes. It can be used to report on community and/or health facility event-based surveillance and equally community and/or health facility indicator-based surveillance, according to how surveillance is set up in the project.
 
 - The situation report is organised by time and place
 For a more detailed explanation of this template, please visit https://r4epis.netlify.app/
@@ -548,8 +548,10 @@ ewar_cleaned <- ewar_cleaned %>%
   mutate(verification_time = as.numeric(date_verification - date_signal)) %>% 
   ## Time in days to risk assess a signal after verification
   mutate(assessment_time = as.numeric(date_assessment - date_verification)) %>% 
+  ## Time in days to response from detection
+  mutate(response_detect_time = as.numeric(date_response_started - date_signal)) %>% 
   ## Time in days to response after risk assessment
-  mutate(response_time = as.numeric(date_response_started - date_assessment))
+  mutate(response_assess_time = as.numeric(date_response_started - date_assessment))
 
 
 
@@ -679,7 +681,7 @@ Include this paragraph in the body of the email when sharing the SitRep
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 #### Overview for `r reporting_week`
-In `r reporting_week`, there were `r nrow(filter(ewar_cleaned, epiweek == reporting_week))` signals received, of which `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), event_status == "1")` were verified. There were `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), is.na(date_assessment) == FALSE)` risk assessments completed resulting in `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), ALERT)` alerts and `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), response_undertaken == "y")`. 
+In `r reporting_week`, there were `r nrow(filter(ewar_cleaned, epiweek == reporting_week))` signals received, of which `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), event_status == "1")` were verified. There were `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), is.na(date_assessment) == FALSE)` risk assessments completed resulting in `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), ALERT)` alerts and `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), response_undertaken == "y")` responses. 
 
 
 #### Time
@@ -776,6 +778,54 @@ ewar_cleaned %>%
 
 ```
 
+##### Responses by type in the past 4 weeks
+```{r time_responses_type_figure, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and alerts
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(response_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            response_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            response_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            response_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            response_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            response_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>% 
+  ## rename to make a cleaner table and labels can be adjusted further
+  dplyr::rename("Epiweek" = epiweek) %>% 
+  ## convert to flextable
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
+
+```
+
+
+
+
+##### Reporting source of signals - past 4 weeks
+```{r reporting_source, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## examine only the last 4 weeks
+  filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
+  ## select variables of interest
+  select(epiweek, reporter_signal) %>% 
+  ## Summarise value by epiweek
+  tbl_summary(by = epiweek, 
+              label = list(reporter_signal ~ "Reporter")) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+
+
+```
+
 
 
 #### Place
@@ -788,8 +838,8 @@ You must have a shapefile to create this map.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
-##### Verified signals by type by location
-<!-- The below shows all signals in the past 6 weeks. The time period can be adjusted  -->
+##### Verified signals by type by location - past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
 <!-- as needed -->
 ```{r place_verified_signals_type_table, ft.align = "left"}
 
@@ -807,13 +857,13 @@ ewar_cleaned %>%
 ```
 
 
-##### Alerts by type by location
-<!-- The below shows all signals in the past 6 weeks. The time period can be adjusted  -->
+##### Alerts by type by location in the past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
 <!-- as needed -->
 ```{r place_alerts_type_table, ft.align = "left"}
 
 ewar_cleaned %>% 
-  ## Filter to only include data for the past 6 weeks and verified signals
+  ## Filter to only include data for the past 4 weeks and alerts
   filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == "TRUE") %>% 
   ## Select the variables of interest - signal type and location of signal
   select(signal_type, location_signal) %>% 
@@ -823,7 +873,22 @@ ewar_cleaned %>%
   gtsummary::as_flex_table()
   
 ```
+##### Responses by type by location in the past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_responses_type_table, ft.align = "left"}
 
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and responses
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
+  ## Select the variables of interest - signal type and location of signal
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+```
 
 <!-- #### Maps  -->
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -872,7 +937,7 @@ map <- map %>%
 ```
 
 
-##### Verified signals by type by location
+##### Verified signals by type by location in `r reporting_week`
 ```{r place_verified_signals_type_map, message = FALSE, warning = FALSE}
 
 ## Count number of verified signals in last week  ----------------------------------------
@@ -923,7 +988,7 @@ ggplot() +
 ```
 
 
-##### Alerts by type by location
+##### Alerts by type by location in `r reporting_week`
 ```{r place_alerts_type_map, message = FALSE, warning = FALSE}
 
 ## Count number of alerts in reporting week  ----------------------------------------
@@ -977,6 +1042,63 @@ ggplot() +
 
 ```
 
+
+##### Response by location in `r reporting_week`
+```{r place_response_type_map, message = FALSE, warning = FALSE}
+
+## Count number of alerts in reporting week  ----------------------------------------
+responses <- ewar_cleaned %>% 
+    ## specify the time period of interest
+    filter(epiweek == reporting_week ) %>% 
+    ## convert
+    ## Group by location
+    group_by(location_signal) %>% 
+    ## Count verified signals by location
+    summarise(response = sum(response_undertaken == "y", na.rm = T)) %>% 
+   ## Remove rows where there were 0 alerts
+    filter(response > 0)
+
+## left join with polygon
+map_response <- left_join(map, responses, by = c("name" = "location_signal")) %>% 
+  ## filter locations where there were no alerts
+  filter(is.na(response) == F)
+ 
+    
+    
+
+## Plot responses by location
+# -----------------------------------------------
+
+ggplot() +
+  ## Add the map layer as an empty white shape
+  geom_sf(data = map, fill = "white") +
+  # shapefile as polygon
+  geom_sf(data = map_response, aes(fill = as.factor(response)))+
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() +
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", 
+                    name = "No. responses") + 
+  # label polygons
+  geom_sf_text(data = map_response, aes(label = name), size = 3,
+               colour = "black") + 
+  # remove coordinates and axes
+  theme_void() +
+  # facet_wrap("signal_type") + 
+  labs( captions = str_glue("Source: MSF data from {reporting_week}"),
+       title = str_glue("Number of responses in MSF-OCA catchment areas, 
+                        {reporting_week}"))
+
+
+
+
+```
+
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You can delete the following if not doing a routine monitoring of the data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -1004,7 +1126,7 @@ There is code to examine the following:
 
 #### Characteristics of surveillance data collected
 
-##### Overview of EBS performance indicators in past 4 weeks
+##### Overview of EBS performance indicators full dataset
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Include this summary table when sharing the Sitrep
 It shows the number of signals collected, discarded at triage, verified, number of
@@ -1015,8 +1137,6 @@ alerts and responses in the 6 weeks prior to the reporting week
 ```{r time_overview_table, ft.align = "left"}
 
 ewar_cleaned %>% 
-  ## Filter to only include data for the past 4 weeks
-  filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
   ## Group by epiweek
   group_by(epiweek) %>% 
   ## Count the number of total signals, number required verification,
@@ -1049,7 +1169,25 @@ ewar_cleaned %>%
 #### Usefulness
 ##### Number of alerts of the CEBS that resulted in public health action
 
-Across the period of evaluation, there were `r nrow(ewar_cleaned, ALERT)` alerts of which `r nrow(filter(ewar_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
+Across the period of evaluation, there were `r nrow(filter(ewar_cleaned, ALERT))` alerts of which `r nrow(filter(ewar_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
+
+
+#### Responses by type by location - full dataset
+<!-- The below shows all responses by signal type and location for the entire dataset  -->
+
+```{r place_responses_type_table_eval, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and responses
+  filter(response_undertaken == "y") %>% 
+  ## Select the variables of interest - signal type and location of signal
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+```
 
 
 
@@ -1061,14 +1199,16 @@ and verification, verification of a signal and assessment, assessment of a signa
 
 ewar_cleaned %>% 
   ## select timeliness-related variables
-  select(detection_time, verification_time, assessment_time, response_time) %>% 
+  select(detection_time, verification_time, assessment_time, 
+         response_detect_time, response_assess_time) %>% 
   ## calculate mean and SD for each
   tbl_summary(missing = "no",
               type = (all_categorical() ~ "continuous"),
               label = list(detection_time ~ "Time to detect signal" ,
                 verification_time ~ "Time to verify signal",
-                assessment_time ~ "Time to assess verified signal",
-                response_time ~ "Time from assessment to response")) %>% 
+                assessment_time ~ "Time to risk assess verified signal",
+                response_detect_time ~ "Time from detection to response",
+                response_assess_time ~ "Time from risk assessment to response")) %>% 
   ## convert to flextable
   gtsummary::as_flex_table()
   
@@ -1077,7 +1217,7 @@ ewar_cleaned %>%
 ```
 
 
-#### Completeness of selected variables
+#### Completeness of selected variables - full dataset
 ```{r completeness, ft.align = "left"}
 
 ewar_cleaned %>% 
@@ -1086,11 +1226,99 @@ ewar_cleaned %>%
          total_affected, date_verification, date_assessment) %>% 
   ## create a summary table of number and proportion of missing values
   miss_var_summary() %>% 
+  ## rename columns
+  dplyr::rename("Variable" = variable,
+                "Number missing" = n_miss,
+                "% missing" = pct_miss) %>% 
   ## convert to flextable
-  flextable::flextable()
+  flextable::flextable() %>% 
+  autofit()
 
 ```
 
 
 
-#### Positive predictive value
+#### Positive predictive value - overview full dataset
+```{r ppv_general, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select variables to make calculations
+  select(event_status, ALERT, response_undertaken) %>% 
+  ## calculate proportion of signals that become events
+  summarise(ppv_sig_eve = round(sum(event_status == 1, na.rm = T)/n(), digits = 2),
+            ppv_sig_alerts = round(sum(ALERT, na.rm = T)/n(), 
+                                   digits = 2),
+            ppv_sig_response = round(sum(response_undertaken == "y",
+                                         na.rm = T)/n(), 
+                                     digits = 2),
+            ppv_eve_alerts = round(sum(ALERT, na.rm = T)/sum(event_status == 1,
+                                                       na.rm = T),
+                                   digits = 2)) %>% 
+  ## rename variables
+  dplyr::rename("PPV signals as events" = ppv_sig_eve,
+                "PPV signals as alerts" = ppv_sig_alerts,
+                "PPV signals as response"  = ppv_sig_response,
+                "PPV events as alerts" = ppv_eve_alerts) %>% 
+  ## Make a long dataset out of the PPV calculations
+  pivot_longer(everything(), names_to = "PPV", values_to = "%") %>% 
+  ## Convert to flextable
+  flextable::flextable() %>% 
+  ## adjust size of table
+  autofit()
+
+
+```
+
+
+#### Positive predictive value - event to signal ratio full dataset
+
+```{r ppv_event_signal_ratio}
+
+ewar_cleaned %>% 
+  ## select variables of interest
+  select(epiweek, event_status) %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## calculate ratio of events to signals
+  summarise(event_signal = round(sum(event_status == "1", na.rm = T)/n(),
+                                 digits = 2)) %>% 
+  ## Make a barplot
+  ggplot()+
+  geom_point(aes(x = as.factor(epiweek), y = event_signal)) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = "Epi week",
+       y = "Event:signal ratio",
+       title = "Event to signal ratio by epiweek")
+
+```
+
+
+#### Positive predictive value - by signal type full dataset
+```{r ppv_signal_type, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select variables to make calculations
+  select(event_status, ALERT, response_undertaken, signal_type) %>% 
+  ## Group by signal type
+  group_by(signal_type) %>% 
+  ## calculate proportion of signals that become events
+  summarise(ppv_sig_eve = round(sum(event_status == 1, na.rm = T)/n(), digits = 2),
+            ppv_sig_alerts = round(sum(ALERT, na.rm = T)/n(), 
+                                   digits = 2),
+            ppv_sig_response = round(sum(response_undertaken == "y",
+                                         na.rm = T)/n(), 
+                                     digits = 2),
+            ppv_eve_alerts = round(sum(ALERT, na.rm = T)/sum(event_status == 1,
+                                                       na.rm = T),
+                                   digits = 2)) %>% 
+  ## rename variables
+  dplyr::rename("PPV signals as events" = ppv_sig_eve,
+                "PPV signals as alerts" = ppv_sig_alerts,
+                "PPV signals as response"  = ppv_sig_response,
+                "PPV events as alerts" = ppv_eve_alerts,
+                "Signal type" = signal_type) %>% 
+  ## Convert to flextable
+  flextable::flextable()
+
+```
+
