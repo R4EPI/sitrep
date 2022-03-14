@@ -872,7 +872,7 @@ map <- map %>%
 ```
 
 
-##### Verified signals by type by location - map
+##### Verified signals by type by location
 ```{r place_verified_signals_type_map, message = FALSE, warning = FALSE}
 
 ## Count number of verified signals in last week  ----------------------------------------
@@ -1015,7 +1015,7 @@ alerts and responses in the 6 weeks prior to the reporting week
 ```{r time_overview_table, ft.align = "left"}
 
 ewar_cleaned %>% 
-  ## Filter to only include data for the past 6 weeks
+  ## Filter to only include data for the past 4 weeks
   filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
   ## Group by epiweek
   group_by(epiweek) %>% 
@@ -1049,7 +1049,7 @@ ewar_cleaned %>%
 #### Usefulness
 ##### Number of alerts of the CEBS that resulted in public health action
 
-Across the period of evaluation, there were `r fmt_count(ewar_cleaned, ALERT)` of which `r nrow(filter(ewar_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
+Across the period of evaluation, there were `r nrow(ewar_cleaned, ALERT)` alerts of which `r nrow(filter(ewar_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
 
 
 
@@ -1078,3 +1078,19 @@ ewar_cleaned %>%
 
 
 #### Completeness of selected variables
+```{r completeness, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select variables of interest
+  select(source_signal, date_signal, location_signal, signal_type,
+         total_affected, date_verification, date_assessment) %>% 
+  ## create a summary table of number and proportion of missing values
+  miss_var_summary() %>% 
+  ## convert to flextable
+  flextable::flextable()
+
+```
+
+
+
+#### Positive predictive value
