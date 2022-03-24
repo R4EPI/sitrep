@@ -11,7 +11,10 @@ output:
 # Introduction to this template 
 
 This is a template which can be used to create an automated EWAR situation report
-and for routine monitoring purposes. It can be used to report on community and/or health facility event-based surveillance and equally community and/or health facility indicator-based surveillance, according to how surveillance is set up in the project.
+and for routine monitoring purposes. It can be used to report on community 
+and/or health facility event-based surveillance and equally community 
+and/or health facility indicator-based surveillance, according to how
+surveillance is set up in the project.
 
 - The situation report is organised by time and place
 For a more detailed explanation of this template, please visit https://r4epis.netlify.app/
@@ -166,6 +169,8 @@ reporting_week <- tsibble::yearweek("2018-W15")
 
 ## set 4 weeks prior to reporting week
 past4weeks <- reporting_week - 3
+
+
 
 ```
 
@@ -523,6 +528,10 @@ ewar_cleaned <- ewar_cleaned %>%
 
 ewar_cleaned$epiweek <- tsibble::yearweek(ewar_cleaned$date_signal)
 
+
+## Create epimonth variable
+ewar_cleaned$epimonth <- tsibble::yearmonth(ewar_cleaned$date_signal)
+
 ```
 
 
@@ -683,6 +692,40 @@ Include this paragraph in the body of the email when sharing the SitRep
 #### Overview for `r reporting_week`
 In `r reporting_week`, there were `r nrow(filter(ewar_cleaned, epiweek == reporting_week))` signals received, of which `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), event_status == "1")` were verified. There were `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), is.na(date_assessment) == FALSE)` risk assessments completed resulting in `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), ALERT)` alerts and `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), response_undertaken == "y")` responses. 
 
+#### Overview of performance in past 4 weeks
+
+```{r performance_overview_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## filter to only include the last 4 weeks data
+  filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of total signals, number required verification,
+  # verified signals, alerts and responses
+  summarise(total_signals = n(),
+            verified_signals = sum(event_status == "1", na.rm = T),
+            risk_assessments = sum(is.na(date_assessment) == F,  na.rm = T),
+            alerts = sum(ALERT, na.rm  = T),
+            responses = sum(response_undertaken == "y", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>%
+  ## Add total value
+  janitor::adorn_totals("row") %>% 
+  ## Rename variables to make a cleaner table
+  dplyr::rename("Epiweek" = epiweek, 
+                "Total signals" = total_signals,
+                "Verified signals" = verified_signals,
+                "Risk assessments" = risk_assessments,
+                "Alerts" = alerts,
+                "Responses" = responses) %>% 
+  ## make a flex table
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
+
+
+```
 
 #### Time
 
@@ -717,117 +760,6 @@ ewar_cleaned %>%
 ```
 
 
-
-
-##### Verified signals by type past 4 weeks
-```{r time_verified_signals_type_table, ft.align = "left"}
-
-ewar_cleaned %>% 
-  ## Filter to only include data for the past 4 weeks and verified signals
-  filter(epiweek >= past4weeks & epiweek <= reporting_week & event_status == "1") %>% 
-  ## Group by epiweek
-  group_by(epiweek) %>% 
-  ## Count the number of verified signals by signal type
-  ## You will need to replace the new variable names below to reflect the 
-  ## signals included in your surveillance system
-  summarise(verified_signal1 = sum(signal_type == "signal_1", na.rm = T),
-            verified_signal2 = sum(signal_type == "signal_2", na.rm = T),
-            verified_signal3 = sum(signal_type == "signal_3", na.rm = T),
-            verified_signal4 = sum(signal_type == "signal_4", na.rm = T),
-            verified_signal5 = sum(signal_type == "signal_5", na.rm = T),
-            verified_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
-  ## convert epiweek to a factor
-  mutate(epiweek = as.factor(epiweek)) %>% 
-  ## rename to make a cleaner table and labels can be adjusted further
-  dplyr::rename("Epiweek" = epiweek) %>% 
-  ## convert to flextable
-  flextable() %>% 
-  ## fit the table automatically
-  autofit()
-
-
-```
-
-
-
-##### Alerts by type in the past 4 weeks
-```{r time_alerts_type_figure, ft.align = "left"}
-
-ewar_cleaned %>% 
-  ## Filter to only include data for the past 6 weeks and alerts
-  filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == TRUE) %>% 
-  ## Group by epiweek
-  group_by(epiweek) %>% 
-  ## Count the number of verified signals by signal type
-  ## You will need to replace the new variable names below to reflect the 
-  ## signals included in your surveillance system
-  summarise(alert_signal1 = sum(signal_type == "signal_1", na.rm = T),
-            alert_signal2 = sum(signal_type == "signal_2", na.rm = T),
-            alert_signal3 = sum(signal_type == "signal_3", na.rm = T),
-            alert_signal4 = sum(signal_type == "signal_4", na.rm = T),
-            alert_signal5 = sum(signal_type == "signal_5", na.rm = T),
-            alert_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
-  ## convert epiweek to a factor
-  mutate(epiweek = as.factor(epiweek)) %>% 
-  ## rename to make a cleaner table and labels can be adjusted further
-  dplyr::rename("Epiweek" = epiweek) %>% 
-  ## convert to flextable
-  flextable() %>% 
-  ## fit the table automatically
-  autofit()
-
-```
-
-##### Responses by type in the past 4 weeks
-```{r time_responses_type_figure, ft.align = "left"}
-
-ewar_cleaned %>% 
-  ## Filter to only include data for the past 6 weeks and alerts
-  filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
-  ## Group by epiweek
-  group_by(epiweek) %>% 
-  ## Count the number of verified signals by signal type
-  ## You will need to replace the new variable names below to reflect the 
-  ## signals included in your surveillance system
-  summarise(response_signal1 = sum(signal_type == "signal_1", na.rm = T),
-            response_signal2 = sum(signal_type == "signal_2", na.rm = T),
-            response_signal3 = sum(signal_type == "signal_3", na.rm = T),
-            response_signal4 = sum(signal_type == "signal_4", na.rm = T),
-            response_signal5 = sum(signal_type == "signal_5", na.rm = T),
-            response_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
-  ## convert epiweek to a factor
-  mutate(epiweek = as.factor(epiweek)) %>% 
-  ## rename to make a cleaner table and labels can be adjusted further
-  dplyr::rename("Epiweek" = epiweek) %>% 
-  ## convert to flextable
-  flextable() %>% 
-  ## fit the table automatically
-  autofit()
-
-```
-
-
-
-
-##### Reporting source of signals - past 4 weeks
-```{r reporting_source, ft.align = "left"}
-
-ewar_cleaned %>% 
-  ## examine only the last 4 weeks
-  filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
-  ## select variables of interest
-  select(epiweek, reporter_signal) %>% 
-  ## Summarise value by epiweek
-  tbl_summary(by = epiweek, 
-              label = list(reporter_signal ~ "Reporter")) %>% 
-  ## convert to flextable
-  gtsummary::as_flex_table()
-
-
-```
-
-
-
 #### Place
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -836,59 +768,6 @@ This section focuses on where verified signals and alerts were detected.
 There is code to include maps based on distribution of verified signals and alerts
 You must have a shapefile to create this map.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-
-##### Verified signals by type by location - past 4 weeks
-<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
-<!-- as needed -->
-```{r place_verified_signals_type_table, ft.align = "left"}
-
-
-ewar_cleaned %>% 
-  ## Filter to only include data for the past 6 weeks and verified signals
-  filter(epiweek >= past4weeks & epiweek <= reporting_week & event_status == "1") %>% 
-  select(signal_type, location_signal) %>% 
-  ## summarise data by signal type
-  tbl_summary(by = "signal_type") %>% 
-  ## convert to flextable
-  gtsummary::as_flex_table()
-  
-
-```
-
-
-##### Alerts by type by location in the past 4 weeks
-<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
-<!-- as needed -->
-```{r place_alerts_type_table, ft.align = "left"}
-
-ewar_cleaned %>% 
-  ## Filter to only include data for the past 4 weeks and alerts
-  filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == "TRUE") %>% 
-  ## Select the variables of interest - signal type and location of signal
-  select(signal_type, location_signal) %>% 
-  ## summarise data by signal type
-  tbl_summary(by = "signal_type") %>% 
-  ## convert to flextable
-  gtsummary::as_flex_table()
-  
-```
-##### Responses by type by location in the past 4 weeks
-<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
-<!-- as needed -->
-```{r place_responses_type_table, ft.align = "left"}
-
-ewar_cleaned %>% 
-  ## Filter to only include data for the past 4 weeks and responses
-  filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
-  ## Select the variables of interest - signal type and location of signal
-  select(signal_type, location_signal) %>% 
-  ## summarise data by signal type
-  tbl_summary(by = "signal_type") %>% 
-  ## convert to flextable
-  gtsummary::as_flex_table()
-  
-```
 
 <!-- #### Maps  -->
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1191,7 +1070,7 @@ ewar_cleaned %>%
 
 
 
-#### Timeliness of signal detection, verification, risk assessment and response
+#### Timeliness of signal detection, verification, risk assessment and response - full dataset
 The below table shows the median delay in days between identification and detection/reporting of a signal, detection of a signal
 and verification, verification of a signal and assessment, assessment of a signal and a response.
 
@@ -1215,6 +1094,34 @@ ewar_cleaned %>%
 
 
 ```
+
+
+
+#### Timeliness of signal detection, verification, risk assessment and response - by month
+```{r timeliness_month, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select timeliness-related variables
+  select(detection_time, verification_time, assessment_time, 
+         response_detect_time, response_assess_time, epimonth) %>% 
+  ## Group by epimonth
+  group_by(epimonth) %>% 
+  ## calculate mean and SD for each
+  tbl_summary(missing = "no",
+              type = (all_categorical() ~ "continuous"),
+              label = list(detection_time ~ "Time to detect signal" ,
+                verification_time ~ "Time to verify signal",
+                assessment_time ~ "Time to risk assess verified signal",
+                response_detect_time ~ "Time from detection to response",
+                response_assess_time ~ "Time from risk assessment to response"), by = epimonth) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+
+
+```
+
+
 
 
 #### Completeness of selected variables - full dataset
@@ -1270,25 +1177,25 @@ ewar_cleaned %>%
 ```
 
 
-#### Positive predictive value - event to signal ratio full dataset
+<!-- #### Positive predictive value - event to signal ratio full dataset -->
 
 ```{r ppv_event_signal_ratio}
 
-ewar_cleaned %>% 
-  ## select variables of interest
-  select(epiweek, event_status) %>% 
-  ## Group by epiweek
-  group_by(epiweek) %>% 
-  ## calculate ratio of events to signals
-  summarise(event_signal = round(sum(event_status == "1", na.rm = T)/n(),
-                                 digits = 2)) %>% 
-  ## Make a barplot
-  ggplot()+
-  geom_point(aes(x = as.factor(epiweek), y = event_signal)) +
-  theme(axis.text.x = element_text(angle = 90)) +
-  labs(x = "Epi week",
-       y = "Event:signal ratio",
-       title = "Event to signal ratio by epiweek")
+# ewar_cleaned %>% 
+#   ## select variables of interest
+#   select(epiweek, event_status) %>% 
+#   ## Group by epiweek
+#   group_by(epiweek) %>% 
+#   ## calculate ratio of events to signals
+#   summarise(event_signal = round(sum(event_status == "1", na.rm = T)/n(),
+#                                  digits = 2)) %>% 
+#   ## Make a barplot
+#   ggplot()+
+#   geom_point(aes(x = as.factor(epiweek), y = event_signal)) +
+#   theme(axis.text.x = element_text(angle = 90)) +
+#   labs(x = "Epi week",
+#        y = "Event:signal ratio",
+#        title = "Event to signal ratio by epiweek")
 
 ```
 
@@ -1322,3 +1229,163 @@ ewar_cleaned %>%
 
 ```
 
+
+
+#### Annex
+
+##### Verified signals by type past 4 weeks
+```{r time_verified_signals_type_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and verified signals
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & event_status == "1") %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(verified_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            verified_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            verified_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            verified_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            verified_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            verified_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>% 
+  ## rename to make a cleaner table and labels can be adjusted further
+  dplyr::rename("Epiweek" = epiweek) %>% 
+  ## convert to flextable
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
+
+
+```
+
+
+##### Alerts by type in the past 4 weeks
+```{r time_alerts_type_figure, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and alerts
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == TRUE) %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(alert_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            alert_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            alert_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            alert_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            alert_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            alert_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>% 
+  ## rename to make a cleaner table and labels can be adjusted further
+  dplyr::rename("Epiweek" = epiweek) %>% 
+  ## convert to flextable
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
+
+```
+
+##### Responses by type in the past 4 weeks
+```{r time_responses_type_figure, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and alerts
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(response_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            response_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            response_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            response_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            response_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            response_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>% 
+  ## rename to make a cleaner table and labels can be adjusted further
+  dplyr::rename("Epiweek" = epiweek) %>% 
+  ## convert to flextable
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
+
+```
+
+##### Verified signals by type by location - past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_verified_signals_type_table, ft.align = "left"}
+
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and verified signals
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & event_status == "1") %>% 
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+
+```
+
+
+##### Alerts by type by location in the past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_alerts_type_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and alerts
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == "TRUE") %>% 
+  ## Select the variables of interest - signal type and location of signal
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+```
+
+##### Responses by type by location in the past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_responses_type_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and responses
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
+  ## Select the variables of interest - signal type and location of signal
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+```
+
+
+##### Reporting source of signals - past 4 weeks
+```{r reporting_source, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## examine only the last 4 weeks
+  filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
+  ## select variables of interest
+  select(epiweek, reporter_signal) %>% 
+  ## Summarise value by epiweek
+  tbl_summary(by = epiweek, 
+              label = list(reporter_signal ~ "Reporter")) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+
+
+```
