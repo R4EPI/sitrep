@@ -68,7 +68,7 @@ required_packages <- c("knitr",       # create output docs
                        "linelist",    # Functions for cleaning/standardising data
                        "incidence",   # create epicurves
                        "aweek",       # define epi weeks
-                       "epitrix",     # epi helpers and tricks
+                       "janitor",     # clean variable names
                        "sf",          # encode spatial vector data
                        "ggspatial")   # plot maps
 
@@ -221,8 +221,8 @@ linelist_dict <- msf_dict("Meningitis", compact = FALSE)
 ## make a copy of your orginal dataset and name it linelist_cleaned
 linelist_cleaned <- linelist_raw
 
-## define clean variable names using clean_labels from the epitrix package
-cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+## define clean variable names using clean_names from the janitor package
+cleaned_colnames <- janitor::clean_names(colnames(linelist_raw))
 
 ## overwrite variable names with defined clean names
 colnames(linelist_cleaned) <- cleaned_colnames
@@ -329,8 +329,8 @@ the full-text value.
 ## make a copy of your orginal dataset and name it linelist_cleaned
 # linelist_cleaned <- linelist_raw
  
-## define clean variable names using clean_labels from the epitrix package
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
+## define clean variable names using clean_labels from the janitor package
+# cleaned_colnames <- janitor::clean_names(colnames(linelist_raw))
  
 ## overwrite variable names with defined clean names
 # colnames(linelist_cleaned) <- cleaned_colnames
