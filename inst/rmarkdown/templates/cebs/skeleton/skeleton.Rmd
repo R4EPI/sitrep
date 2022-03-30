@@ -16,7 +16,15 @@ and/or health facility event-based surveillance and equally community
 and/or health facility indicator-based surveillance, according to how
 surveillance is set up in the project.
 
-- The situation report is organised by time and place
+- The EWAR sitrep is organised by time and place and can be run and shared on a weekly/monthly basis, as needed
+
+- The monitoring and evaluation of surveillance attributes section could be reviewed on more irregular basis, for example
+every 3 months
+
+- The annex contains a variety of additional tables that could be examined for reference purposes but wouldn't need to be
+included in the routine EWAR sitrep
+
+
 For a more detailed explanation of this template, please visit https://r4epis.netlify.app/
 - Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 - Text within <! > will not show in your final document. These comments are used
@@ -682,11 +690,11 @@ This marks the start of the ANALYSIS portion of the template.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
-### Routine EWAR SitRep
+### Routine EWAR Sitrep
 #### Recommendations
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Add relevant recommendations based on interpretation of data presented in the report
-Include this paragraph in the body of the email when sharing the SitRep
+Include this paragraph in the body of the email when sharing the Sitrep
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 #### Overview for `r reporting_week`
