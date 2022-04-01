@@ -568,8 +568,17 @@ ewar_cleaned <- ewar_cleaned %>%
   ## Time in days to response from detection
   mutate(response_detect_time = as.numeric(date_response_started - date_signal)) %>% 
   ## Time in days to response after risk assessment
-  mutate(response_assess_time = as.numeric(date_response_started - date_assessment))
-
+  mutate(response_assess_time = as.numeric(date_response_started - date_assessment)) %>% 
+  ## Identify when verification done within 24 hours of signal being detected
+  mutate(verif_24 = case_when(
+    as.numeric(date_verification - date_signal) <= 1 ~ "Verified <= 24 hours",
+    TRUE ~ "Verified > 24 hours"
+  )) %>% 
+  ## Identify when risk assessment done within 48 hours of signal being detected
+  mutate(assess_48 = case_when(
+    as.numeric(date_assessment - date_signal) <= 2 ~ "Risk assessed <= 48 hours",
+    TRUE ~ "Risk assessed > 48 hours"
+  ))
 
 
 ## Factor (categorical) variables ----------------------------------------------
@@ -761,7 +770,10 @@ ewar_cleaned %>%
                 "Alerts" = alerts,
                 "Responses" = responses) %>% 
   janitor::adorn_totals("row") %>% 
-  flextable::flextable()
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
 
 
 
@@ -1044,10 +1056,10 @@ ewar_cleaned %>%
                 "Risk assessments" = risk_assessments,
                 "Alerts" = alerts,
                 "Responses" = responses) %>% 
-  ## make a flex table
-  flextable() %>% 
-  ## fit the table automatically
-  autofit()
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
 
 
 ```
@@ -1103,6 +1115,24 @@ ewar_cleaned %>%
 
 ```
 
+#### Timeliness of signal verification and risk assessment compared to expected- full dataset
+The below table shows the proportion of signals that were verified within 24 hours of detection and proportion of signals risk assessed within 48 hours of detection
+
+```{r timeliness_prop, ft.align = "left"}
+
+ewar_cleaned %>%
+  ## select timeliness-related variables
+  select(verif_24, assess_48) %>%
+  ## calculate mean and SD for each
+  tbl_summary(label = list(
+    verif_24 ~ "Time to verify signal",
+    assess_48 ~ "Time to conduct risk assessment"
+  )) %>%
+  ## convert to flextable
+  gtsummary::as_flex_table()
+
+
+```
 
 
 #### Timeliness of signal detection, verification, risk assessment and response - by month
@@ -1130,7 +1160,25 @@ ewar_cleaned %>%
 ```
 
 
+#### Timeliness of verification and risk assessment - by % and month
+```{r timeliness_month_prop, ft.align = "left"}
 
+ewar_cleaned %>% 
+  ## select timeliness-related variables
+  select(verif_24, assess_48, epimonth) %>% 
+  ## Group by epimonth
+  group_by(epimonth) %>% 
+  ## calculate mean and SD for each
+   tbl_summary(label = list(
+    verif_24 ~ "Time to verify signal",
+    assess_48 ~ "Time to conduct risk assessment"),
+    by = epimonth) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+
+
+```
 
 #### Completeness of selected variables - full dataset
 ```{r completeness, ft.align = "left"}
@@ -1147,7 +1195,8 @@ ewar_cleaned %>%
                 "% missing" = pct_miss) %>% 
   ## convert to flextable
   flextable::flextable() %>% 
-  autofit()
+  ## autofit table
+  flextable::autofit()
 
 ```
 
@@ -1176,11 +1225,10 @@ ewar_cleaned %>%
                 "PPV events as alerts" = ppv_eve_alerts) %>% 
   ## Make a long dataset out of the PPV calculations
   pivot_longer(everything(), names_to = "PPV", values_to = "%") %>% 
-  ## Convert to flextable
+  ## convert to flextable
   flextable::flextable() %>% 
-  ## adjust size of table
-  autofit()
-
+  ## autofit table
+  flextable::autofit()
 
 ```
 
@@ -1232,8 +1280,10 @@ ewar_cleaned %>%
                 "PPV signals as response"  = ppv_sig_response,
                 "PPV events as alerts" = ppv_eve_alerts,
                 "Signal type" = signal_type) %>% 
-  ## Convert to flextable
-  flextable::flextable()
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
 
 ```
 
@@ -1263,9 +1313,9 @@ ewar_cleaned %>%
   ## rename to make a cleaner table and labels can be adjusted further
   dplyr::rename("Epiweek" = epiweek) %>% 
   ## convert to flextable
-  flextable() %>% 
-  ## fit the table automatically
-  autofit()
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
 
 
 ```
@@ -1293,9 +1343,9 @@ ewar_cleaned %>%
   ## rename to make a cleaner table and labels can be adjusted further
   dplyr::rename("Epiweek" = epiweek) %>% 
   ## convert to flextable
-  flextable() %>% 
-  ## fit the table automatically
-  autofit()
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
 
 ```
 
@@ -1321,9 +1371,9 @@ ewar_cleaned %>%
   ## rename to make a cleaner table and labels can be adjusted further
   dplyr::rename("Epiweek" = epiweek) %>% 
   ## convert to flextable
-  flextable() %>% 
-  ## fit the table automatically
-  autofit()
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
 
 ```
 
