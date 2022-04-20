@@ -16,13 +16,13 @@ and/or health facility event-based surveillance and equally community
 and/or health facility indicator-based surveillance, according to how
 surveillance is set up in the project.
 
-- The EWAR sitrep is organised by time and place and can be run and shared on a weekly/monthly basis, as needed
+- The EWAR sitrep is organised by time and place and can be run and shared on a weekly/monthly basis, as needed  
 
-- The monitoring and evaluation of surveillance attributes section could be reviewed on more irregular basis, for example
-every 3 months
+- The monitoring and evaluation of surveillance attributes section could be reviewed on a more irregular basis, for example every 3 months  
 
-- The annex contains a variety of additional tables that could be examined for reference purposes but wouldn't need to be
-included in the routine EWAR sitrep
+- The annex contains a variety of additional tables that could be examined for reference purposes but wouldn't need to be included in the routine EWAR sitrep  
+
+- Comment out the code or delete the output that you don't need when producing your Sitrep or M&E report
 
 
 For a more detailed explanation of this template, please visit https://r4epis.netlify.app/
@@ -997,6 +997,8 @@ ggplot() +
 
 ```
 
+\newpage
+\pagebreak
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You can delete the following if not doing a routine monitoring of the data
