@@ -62,7 +62,9 @@ required_packages <- c("knitr",       # create output docs
                        "sitrep",      # MSF field epi functions
                        "survey",      # for survey functions
                        "srvyr",       # dplyr wrapper for survey package
-                       "gtsummary"    # produce tables
+                       "gtsummary",   # produce tables
+                       "labelled",    # add labels to variables
+                       "matchmaker"   # recode datasets with dictionaries
                        )
 
 for (pkg in required_packages) {
@@ -96,6 +98,8 @@ Comment out this chunk when you are using real data.
 
 ## generates MSF standard dictionary for Kobo 
 study_data_dict <- msf_dict_survey("Mortality")
+## generates MSF standard dictionary for Kobo in long format (for recoding)
+study_data_dict_long <- msf_dict_survey(disease = "Mortality", compact = FALSE)
 
 
 ## generates a fake dataset for use as an example in this template
@@ -792,28 +796,42 @@ labelled package for that.
 
 ```{r labelling_data}
 
-## label variable names with labelled 
-## recode values with matchmaker (because value labels cant be used for analysis). 
+## create variable names with labelled  
 
-library(labelled)
+## define a list of names and labels based on the dictionary 
+var_labels <- setNames(
+  ## add variable labels as a list
+  as.list(study_data_dict$short_name), 
+  ## name the list with the current variable names
+  study_data_dict$name)
 
-study_data_cleaned %>% 
-set_variable_labels(
-    age = "Age (years)",
-    sex = "Sex",
+## add the variable labels to dataset 
+study_data_cleaned <- study_data_cleaned %>% 
+  set_variable_labels(
+    ## set the labels with the object defined above
+    .labels = var_labels, 
+    ## do not throw an error if some names dont match 
+    ## not all names in the dictionary appear in the dataset 
+    .strict = FALSE)
+
+## it is possible to update individual variables manually too
+study_data_cleaned <- study_data_cleaned %>% 
+  set_variable_labels(
+    ## variable name = variable label 
+    age_years = "Age (years)",
     age_group = "Age group (years)",
-  )
+    age_months = "Age (months)", 
+    age_group_mon = "Age group (months"
+    )
 
 
-checking <- msf_dict_survey(disease = "Mortality", compact = FALSE)
-
-matchmaker::match_df(study_data_cleaned, 
-                      checking, 
-                      from = "option_name", 
-                      to = "option_label_french", 
-                      by = "name", 
-                      order = "option_order_in_set")
-
+## recode values with matchmaker package (value labels cant be used for analysis) 
+study_data_cleaned <- match_df(study_data_cleaned, 
+         study_data_dict_long, 
+         from = "option_name", 
+         to = "option_label_english", 
+         by = "name", 
+         order = "option_order_in_set")
 ```
 
 
@@ -1470,6 +1488,7 @@ age_pyramid(survey_design,
 
 ## Mortality
 
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// CMR \\\
 --------------------------------------------------------------------------------
@@ -1483,32 +1502,6 @@ Note the possibility of negative confidence intervals if there are low counts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r CMR, warning = FALSE, message = FALSE}
-
-## define temporary functions (TODO make these proper wrappers)
-confidence_intervals <- function(data, variable, by, ...) {
-  
-  ## calculate confidence intervals using survey::svyciprop 
-  props <- svyciprop(as.formula(paste0( "~" , variable)),
-              data, na.rm = TRUE)
-  
-  ## extract the confidence intervals 
-  as.numeric(confint(props) * 100) %>% ## make numeric and multiply for percentage
-    round(., digits = 1) %>%           ## round to one digit
-    c(.) %>%                           ## extract the numbers from matrix
-    paste0(., collapse = "-")          ## combine to single character
-}
-
-design_effect <- function(data, variable, by, ...) {
-  
-  ## design effect using survey::svymean 
-  deffs <- svymean(as.formula(paste0( "~" , variable)), 
-          data, na.rm = TRUE, deff = TRUE)
-  
-  ## pull using deff and only keep the TRUE column 
-  ## (need better workaround for other var types
-  deffs <- deff(deffs)[[TRUE]]
-  
-}
 
 ## weighted counts and proportion of dead
 death_props <- survey_design %>% 
@@ -1533,7 +1526,7 @@ death_props <- survey_design %>%
 ## mortality per 10,000 persons/day with CI
 CMR <- survey_design %>% 
   ## survey ratio used to account for observation time 
-  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  summarize(mortality = survey_ratio(died * 10000, obstime, vartype = "ci")) %>% 
   ## if negative CIs set to zero
   mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
          mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
@@ -1580,9 +1573,8 @@ death_props_strat <- tab_survey(survey_design, died,
 
 
 survey_design %>% 
-  # select(died, health_district) %>% 
-  tbl_svysummary(by = died, 
-                 include = c(died, health_district)) %>% 
+  select(died, health_district) %>%
+  tbl_svysummary(by = health_district) %>% 
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
@@ -1607,7 +1599,7 @@ CMR_strat <- survey_design %>%
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   ## if negative CIs set to zero
   mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
-         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp))
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
   ## merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE, digits = 1)
 
