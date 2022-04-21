@@ -302,7 +302,6 @@ If you have more specific proportions/data, you can use them below.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
-
 ```{r read_population_data, warning = FALSE, message = FALSE}
 
 
@@ -342,7 +341,7 @@ If you have more specific proportions/data, you can use them below.
 population_data_age_district_a <- gen_population(total_pop = 10000, # set total population 
   groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set groups
   proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set proportions for each group
-  strata      = c("male", "female")) %>%           # stratify by gender
+  strata      = c("Male", "Female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
@@ -353,7 +352,7 @@ population_data_age_district_a <- gen_population(total_pop = 10000, # set total 
 population_data_age_district_b <- gen_population(total_pop = 10000, # set total population 
   groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set groups
   proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set proportions for each group
-  strata      = c("male", "female")) %>%           # stratify by gender
+  strata      = c("Male", "Female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
@@ -387,9 +386,9 @@ each cluster.
 
 ```{r cluster_counts}
 
-cluster_counts <- tibble(cluster = c("village_1", "village_2", "village_3", "village_4", 
-                                     "village_5", "village_6", "village_7", "village_8",
-                                     "village_9", "village_10"), 
+cluster_counts <- tibble(cluster = c("Village 1", "Village 2", "Village 3", "Village 4", 
+                                     "Village 5", "Village 6", "Village 7", "Village 8",
+                                     "Village 9", "Village 10"), 
                          households = c(700, 400, 600, 500, 300, 
                                         800, 700, 400, 500, 500))
 ```
@@ -449,6 +448,7 @@ of the chunk to re-run all the code chunks up to the current one.
 The chunks are:
 - standardise_dates  -- will set up and clean dates.
 - create_age_group   -- creates the age group variables from age
+- recode_dictionary  -- recode variables based on a data dictionary
 - factor_vars        -- helps clean factor variables
 - obvservation_time  -- calculates person-time based on start/end cause dates
 - remove_unused_data -- dropping unused rows/columns
@@ -610,6 +610,38 @@ study_data_cleaned <- group_age_categories(study_data_cleaned,
 ```
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// recode_dictionary \\\
+--------------------------------------------------------------------------------
+
+We can use the matchmaker package to recode our dataset using a data dictionary. 
+
+So for example our variable for sex might have coded values of "m" and "f" but 
+the label would be "Male" and "Female".
+This corresponds to the option_name and option_label in Kobo dictionaries.
+
+Currently, value labels cant be used for analysis so we have just recoded using 
+the matchmaker package (in the recode_dictionary chunk). 
+Variable labels can be used and so we will used the labelled package for that in 
+the labelling_data code chunk. 
+
+NOTE: it is important to use matchmaker before working with factor vars 
+(factor_vars) as it will swap things to characters based on the dictionary used
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r recode_dictionary}
+
+## recode values with matchmaker package (value labels cant be used for analysis) 
+study_data_cleaned <- match_df(study_data_cleaned, 
+         study_data_dict_long, 
+         from = "option_name", 
+         to = "option_label_english", 
+         by = "name", 
+         order = "option_order_in_set")
+
+```
+
+
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// factor_vars \\\
@@ -626,14 +658,14 @@ This chunk will help you clean factor variables.
 ## (this could also be done with the if_else or case_when function - 
 ## but this option is shorter)
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(consent = consent == "yes")
+  mutate(consent = consent == "Yes")
 
 
 ## Change a yes/no variable in to TRUE/FALSE
 ## create a new variable called died 
 ## where the old one is yes place TRUE in the new one
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(died = died == "yes")
+  mutate(died = died == "Yes")
 
 
 ## Recode character variables
@@ -658,13 +690,13 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 ## Set the levels of a factor 
-study_data_cleaned <- study_data_cleaned %>%
-  mutate(cause = factor(cause,
-                        levels = c("fever_malaria", "diarrhoea", 
-                                   "respiratory_infection", "trauma_accident", 
-                                   "during_pregnancy", "during_delivery",
-                                   "post_partum", "violence", "dont_know", 
-                                   "other")))
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate(cause = factor(cause,
+#                         levels = c("fever_malaria", "diarrhoea", 
+#                                    "respiratory_infection", "trauma_accident", 
+#                                    "during_pregnancy", "during_delivery",
+#                                    "post_partum", "violence", "dont_know", 
+#                                    "other")))
 
 ## explicitly replace NA of a factor
 study_data_cleaned <- study_data_cleaned %>%
@@ -681,6 +713,15 @@ study_data_cleaned <- study_data_cleaned %>%
 #       )
 #     )
 
+
+## fix factor levels -----------------------------------------------------------
+
+## make sure there are the appropriate levels (names)
+study_data_cleaned$no_consent_reason <- fct_recode(study_data_cleaned$no_consent_reason,
+                                            "No time" = "I do not have time",
+                                            "Previous negative experience" = "I have had a negative experience with a previous survey.",
+                                            "No perceived benefit" = "There is no benefit to me and my family"
+                                           )
   
 ```
 
@@ -788,10 +829,12 @@ So for example our variable name would be "sex" but the label would be "Sex", an
 the values would be "m" and "f" but the label would be "Male" and "Female".
 This corresponds to the option_name and option_label in kobo dictionaries.
 
-Currently, value labels cant be used for analysis so we will just recode using 
-the matchmaker package. Variable labels can be used and so we will used the 
-labelled package for that. 
+Currently, value labels cant be used for analysis so we have just recoded using 
+the matchmaker package (in the recode_dictionary chunk). 
+Variable labels can be used and so we will used the labelled package for that. 
 
+NOTE: it is important to use matchmaker before working with factor vars 
+(factor_vars) as it will swap things to characters based on the dictionary used
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r labelling_data}
@@ -821,17 +864,10 @@ study_data_cleaned <- study_data_cleaned %>%
     age_years = "Age (years)",
     age_group = "Age group (years)",
     age_months = "Age (months)", 
-    age_group_mon = "Age group (months"
+    age_group_mon = "Age group (months)",
+    age_category = "Age category", 
+    died = "Died"
     )
-
-
-## recode values with matchmaker package (value labels cant be used for analysis) 
-study_data_cleaned <- match_df(study_data_cleaned, 
-         study_data_dict_long, 
-         from = "option_name", 
-         to = "option_label_english", 
-         by = "name", 
-         order = "option_order_in_set")
 ```
 
 
@@ -859,7 +895,10 @@ It is important that you drop observations before adding survey weights!
 ## store the cases that you drop so you can describe them (e.g. non-consenting 
 ## or wrong village/cluster)
 dropped <- study_data_cleaned %>% 
-  filter(!consent | is.na(startdate) | is.na(enddate) | village_name == "other")
+  filter(!consent | is.na(startdate) | is.na(enddate) | 
+           ## note that whatever you use for weights cannot be missing!
+           village_name == "Other"| is.na(age_years) | is.na(sex))
+
 ## use the dropped cases to remove the unused rows from the survey data set  
 study_data_cleaned <- anti_join(study_data_cleaned, dropped, by = names(dropped))
 
@@ -957,7 +996,7 @@ study_data_cleaned <- add_weights_strata(x = study_data_cleaned,
 
 ## cluster ---------------------------------------------------------------------
 
-## get the number of people of individuals interviewed per household 
+## get the number of individuals interviewed per household 
 ## adds a variable with counts of the household (parent) index variable
 study_data_cleaned <- study_data_cleaned %>% 
   add_count(index, name = "interviewed")
@@ -1286,14 +1325,14 @@ iqr <- str_c(  # basically copy paste together the following
 sex_ratio <- study_data_cleaned %>% 
   count(sex) %>% 
   spread(sex, n) %>%
-  mutate(ratio = round(male/female, digits = 1)) %>%
+  mutate(ratio = round(Male/Female, digits = 1)) %>%
   pull(ratio)
 
 ## compute sex ratios by age group 
 sex_ratio_age <- study_data_cleaned %>% 
   count(age_group, sex) %>% 
   spread(sex, n) %>%
-  mutate(ratio = round(male/female, digits = 1)) %>%
+  mutate(ratio = round(Male/Female, digits = 1)) %>%
   select(age_group, ratio)
 
 ## sort table by ascending ratio then select the lowest (first)
@@ -1316,7 +1355,7 @@ it will then pull the age group with the highest proportion of pregnant women.
 
 pregnant_women_in_data <- study_data_cleaned %>% 
   ## filter for only women in the data
-  filter(sex == "female") %>% 
+  filter(sex == "Female") %>% 
   ## get counts (ignore missings)
   tabyl(age_group, pregnant, show_na = FALSE) %>%
   ## add in percentages based on column totals
@@ -1324,7 +1363,7 @@ pregnant_women_in_data <- study_data_cleaned %>%
   ## format percentages
   adorn_pct_formatting() %>% 
   ## arrange proportions in descending order
-  arrange(desc(yes)) %>% 
+  arrange(desc(Yes)) %>% 
   ## grab the first row
   slice(1)
 
@@ -1333,8 +1372,8 @@ pregnant_women_in_data <- study_data_cleaned %>%
 
 
 Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
-`r fmt_count(study_data_cleaned, sex == "female")` females and 
-`r fmt_count(study_data_cleaned, sex == "male")` males (unweighted). The male to
+`r fmt_count(study_data_cleaned, sex == "Female")` females and 
+`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
 female ratio was `r sex_ratio` in the surveyed population. The lowest male to
 female ratio was `r min_sex_ratio_age$ratio` in the 
 `r min_sex_ratio_age$age_group` year age group.
@@ -1345,7 +1384,7 @@ The highest number of surveyed indivduals (unweighted) were in the
 `r table(study_data_cleaned$age_group) %>% which.max() %>% names()`
 year age group.
 The number of surveyed women who were pregnant was 
-`r fmt_count(study_data_cleaned, sex == "female" & pregnant == "yes")`. 
+`r fmt_count(study_data_cleaned, sex == "Female" & pregnant == "Yes")`. 
 The highest proportion of pregnant women was among the 
 `r pregnant_women_in_data$age_group` year age group, at 
 `r pregnant_women_in_data$yes`.
@@ -1510,16 +1549,14 @@ death_props <- survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-  add_stat(fns = everything() ~ confidence_intervals) %>% 
+  
   ## add in deff 
-  add_stat(fns = everything() ~ design_effect) %>% 
+  
   ## modify the column headers
   modify_header(
     list(
       n ~ "**Weighted total (N)**",
-      stat_0 ~ "**Weighted Count (n)**",
-      add_stat_1 ~ "**95%CI**", 
-      add_stat_2 ~ "**Deff**"
+      stat_0 ~ "**Weighted Count (n)**"
     )
     )
 
@@ -1562,32 +1599,21 @@ Note the possibility of negative confidence intervals if there are low counts
 ```{r CMR_strata, warning = FALSE, message = FALSE}
 
 ## weighted counts and proportion of dead
-death_props_strat <- tab_survey(survey_design, died, 
-                                strata = health_district,
-                                deff = TRUE, 
-                                keep = "TRUE") %>%
-  mutate(
-    across(.cols = ends_with(" n"), 
-            .fns = ~format(round(., digits = 1), big.mark = ",")))
-
-
-
-survey_design %>% 
+death_props_strat <- survey_design %>% 
   select(died, health_district) %>%
   tbl_svysummary(by = health_district) %>% 
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-  add_stat(fns = everything() ~ confidence_intervals) %>% 
+
   ## add in deff 
-  add_stat(fns = everything() ~ design_effect) %>% 
+
   ## modify the column headers
   modify_header(
     list(
       n ~ "**Weighted total (N)**",
-      stat_0 ~ "**Weighted Count (n)**",
-      add_stat_1 ~ "**95%CI**", 
-      add_stat_2 ~ "**Deff**"
+      stat_1 ~ "**District A Weighted Count (n)** \n N={n}", 
+      stat_2 ~ "**District B Weighted Count (n)** \n N={n}" 
     )
     )
 
@@ -1608,12 +1634,12 @@ CMR_strat <- survey_design %>%
 
 
 In District A the weighted number of deaths was 
-`r death_props_strat %>% pull("district_a n")`, 
+`r inline_text(death_props_strat, variable = "died",  column = "stat_1")`, 
 which gives a weighted proportion of 
 `r death_props_strat %>% pull("district_a ci")`, and a design effect of
 `r death_props_strat %>% pull("district_a deff") %>% round(digits = 3)`.  
 In comparison, the weighted number of deaths in District B was
-`r death_props_strat %>% pull("district_b n")`, 
+`r inline_text(death_props_strat, variable = "died",  column = "stat_2")`, 
 the weighted proportion was 
 `r death_props_strat %>% pull("district_b ci")` and the design effect was 
 `r death_props_strat %>% pull("district_b deff") %>% round(digits = 3)`.  
@@ -1685,32 +1711,44 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 ## weighted counts and proportions by cause of death 
 cause_of_death_prop <- survey_design %>% 
-  filter(died) %>%  # proportions only among those who died
-  tab_survey(cause) %>%
-  select(cause = value, n, ci) %>%
-  mutate(cause = fct_inorder(cause))
+  # proportions only among those who died
+  filter(died) %>% 
+  select(cause) %>% 
+  tbl_svysummary()
+  ## add ci 
 
 ## weighted cause-specific mortality ratios
 cause_of_death_mort <- survey_design %>% 
-  filter(died) %>%  # proportions only among those who died
+  filter(died) %>%  # rates only among those who died
   group_by(cause) %>% 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   ## if negative CIs set to zero
   mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
-         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp))
-
-## Join the counts, props and mortality ratios together
-dplyr::left_join(cause_of_death_prop, cause_of_death_mort, by = "cause") %>% 
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
   ## merge confidence intervals for mortality in to one column 
   ## (do not change to percent)
-  unite_ci("Mortality per 10,000 persons/day (95% CI)", starts_with("mortality"),
-           m100 = FALSE, percent = FALSE) %>%
-  filter(cause != "Not Applicable") %>%
-  rename("Cause of death" = cause,
-         "Deaths (n)" = n,
-         "% (95% CI)" = ci
-        ) %>% 
-  kable(digits = 1)
+  unite_ci("mortality", starts_with("mortality"),
+           m100 = FALSE, percent = FALSE)
+
+## Join the counts, props and mortality ratios together
+cause_of_death_prop %>% 
+  ## edit the underlying table for gtsummary
+  modify_table_body(
+    ## join the prop table with mortality table
+    ~dplyr::left_join(
+        .x,
+        cause_of_death_mort,
+        ## row labels in prop gtsummary match the cause in the mortality table
+        by = c("label" = "cause")
+      )
+  ) %>% 
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_0 ~ "**Deaths \n N={N}**", 
+      mortality ~ "**Mortality per 10,000 persons/day (95% CI)**" 
+    )
+    )
 ```
 
 
@@ -1731,14 +1769,18 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ```{r weighted_cause_death_strata, warning = FALSE, message = FALSE}
 
 survey_design %>% 
-  filter(died) %>%  # proportions only among those who died
-  tab_survey(cause, strata = health_district, col_total = TRUE) %>%
-  filter(value != "Not Applicable") %>%
-  select(-variable) %>%
-  rename("Cause of death" = value) %>%
-  augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" 
-  kable(digits = 1)
+  filter(died) %>% # proportions only among those who died
+  select(cause, health_district) %>%
+  tbl_svysummary(by = health_district) %>%   
+  ## add in confidence intervals
+
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_1 ~ "**District A Weighted Count (n)** \n N={n}", 
+      stat_2 ~ "**District B Weighted Count (n)** \n N={n}" 
+    )
+    )
 ```
 
 
@@ -1772,7 +1814,7 @@ survey_design %>%
   pivot_wider(id_cols = cause,     # choose variable for rows
               names_from = health_district, # choose variable for columns 
               values_from = mort) %>%       # choose what goes in cells
-  select("Cause of death" = cause, 
+  select("Main cause of death" = cause, 
          "District A MR (95%CI)" = "district_a", 
          "District B MR (95%CI)" = "district_b") %>% 
   kable(digits = 1)
@@ -1803,8 +1845,8 @@ cause_of_death_sex <- survey_design %>%
   ## merge confidence intervals for mortality in to one column (do not change to percent)
   unite_ci("mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE)
 
-male_mortality   <- cause_of_death_sex %>% filter(sex == "male") %>% pull(mortality)
-female_mortality <- cause_of_death_sex %>% filter(sex == "female") %>% pull(mortality)
+male_mortality   <- cause_of_death_sex %>% filter(sex == "Male") %>% pull(mortality)
+female_mortality <- cause_of_death_sex %>% filter(sex == "Female") %>% pull(mortality)
 ```
 
 The gender specific mortality rate was `r female_mortality` deaths/10,000 persons/day amongst females and
@@ -1827,14 +1869,15 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ```{r weighted_death_cause_by_age, warning = FALSE}
 
 survey_design %>% 
-  filter(died) %>% 
-  tab_survey(cause, strata = age_group) %>%
-  filter(value != "Not Applicable") %>%
-  select(-variable) %>% 
-  rename("Cause of death" = value) %>%
-  augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci" 
-  kable(digits = 1)
+  filter(died) %>% # proportions only among those who died
+  select(cause, age_group) %>%
+  tbl_svysummary(by = age_group) %>%   
+  ## add in confidence intervals
+
+  ## modify the column headers
+  modify_spanning_header(
+    all_stat_cols() ~ "**Age group (years)**"
+  )
 ```
 
 
@@ -1855,14 +1898,10 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ```{r weighted_death_cause_by_gender}
 
 survey_design %>% 
-  filter(died) %>% 
-  tab_survey(cause, strata = sex) %>%
-  filter(value != "Not Applicable") %>%
-  select(-variable) %>% 
-  rename("Cause of death" = value) %>%
-  augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
-  kable(digits = 1)
+  filter(died) %>% # proportions only among those who died
+  select(cause, sex) %>%
+  tbl_svysummary(by = sex) %>%   
+  ## add in confidence intervals
 ```
 
 
@@ -1939,7 +1978,7 @@ tab_linelist(study_data_cleaned, "endcause", col_total = TRUE) %>%
   kable(digits = 1)
 ```
 
-This parallel set diagram shows the flow of population between each indivudal 
+This parallel set diagram shows the flow of population between each individual 
 starting and end points during the study period. 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
