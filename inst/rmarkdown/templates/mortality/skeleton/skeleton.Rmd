@@ -57,7 +57,7 @@ required_packages <- c("knitr",       # create output docs
                        "forcats",     # manipulate and rearrange factors
                        "stringr",     # manipulate texts
                        "ggplot2",     # create plots and charts
-                       "ggforce",     # for visualising population flows, 
+                       "ggalluvial",  # for visualising population flows, 
                        "apyramid",    # plotting age pyramids
                        "sitrep",      # MSF field epi functions
                        "survey",      # for survey functions
@@ -860,12 +860,14 @@ study_data_cleaned <- study_data_cleaned %>%
 study_data_cleaned <- study_data_cleaned %>% 
   set_variable_labels(
     ## variable name = variable label 
-    age_years = "Age (years)",
-    age_group = "Age group (years)",
-    age_months = "Age (months)", 
+    age_years     = "Age (years)",
+    age_group     = "Age group (years)",
+    age_months    = "Age (months)", 
     age_group_mon = "Age group (months)",
-    age_category = "Age category", 
-    died = "Died"
+    age_category  = "Age category", 
+    died          = "Died", 
+    startcause    = "Observation start", 
+    endcause      = "Observation end"
     )
 ```
 
@@ -1575,8 +1577,8 @@ CMR <- survey_design %>%
 During the recall period the weighted number and proportion of deaths in the 
 population was `r inline_text(death_props, variable = "died",  column = "stat_0")`,
 with a weighted confidence interval of
-`r inline_text(death_props, variable = "died",  column = "add_stat_1")`, and a 
-design effect of `r inline_text(death_props, variable = "died",  column = "add_stat_2")`.
+`r #inline_text(death_props, variable = "died",  column = "add_stat_1")`, and a 
+design effect of `r #inline_text(death_props, variable = "died",  column = "add_stat_2")`.
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
 
 
@@ -1635,13 +1637,13 @@ CMR_strat <- survey_design %>%
 In District A the weighted number of deaths was 
 `r inline_text(death_props_strat, variable = "died",  column = "stat_1")`, 
 which gives a weighted proportion of 
-`r death_props_strat %>% pull("district_a ci")`, and a design effect of
-`r death_props_strat %>% pull("district_a deff") %>% round(digits = 3)`.  
+`r #death_props_strat %>% pull("district_a ci")`, and a design effect of
+`r #death_props_strat %>% pull("district_a deff") %>% round(digits = 3)`.  
 In comparison, the weighted number of deaths in District B was
 `r inline_text(death_props_strat, variable = "died",  column = "stat_2")`, 
 the weighted proportion was 
-`r death_props_strat %>% pull("district_b ci")` and the design effect was 
-`r death_props_strat %>% pull("district_b deff") %>% round(digits = 3)`.  
+`r #death_props_strat %>% pull("district_b ci")` and the design effect was 
+`r #death_props_strat %>% pull("district_b deff") %>% round(digits = 3)`.  
 The crude mortality rate in District A was 
 `r CMR_strat %>% filter(health_district == "district_a") %>% pull(Mortality)`
 deaths per 10000 person-days and in District B was 
@@ -1942,7 +1944,7 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 survey_design %>% 
   filter(died) %>% # proportions only among those who died
   select(cause, sex) %>%
-  tbl_svysummary(by = sex) %>%   
+  tbl_svysummary(by = sex)   
   ## add in confidence intervals
 ```
 
@@ -1991,12 +1993,15 @@ study period.
 
 ```{r descriptive_start_population}
 
-tab_linelist(study_data_cleaned, "startcause", col_total = TRUE) %>% 
-  ## rename columns appropriately
-  select("Status" = value, 
-         "Individuals (n)" = n, 
-         "%" = proportion) %>%
-  kable(digits = 1)
+study_data_cleaned %>% 
+  select(startcause) %>% 
+  tbl_summary() %>% 
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_0 ~ "**Individuals** \n N={N}"
+    )
+    )
 ```
 
 This shows the unweighted counts and proportions of departure reasons during
@@ -2012,12 +2017,15 @@ study period.
 
 ```{r descriptive_end_population}
 
-tab_linelist(study_data_cleaned, "endcause", col_total = TRUE) %>% 
-  ## rename columns appropriately
-  select("Status" = value, 
-         "Individuals (n)" = n, 
-         "%" = proportion) %>%
-  kable(digits = 1)
+study_data_cleaned %>% 
+  select(endcause) %>% 
+  tbl_summary() %>% 
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_0 ~ "**Individuals** \n N={N}"
+    )
+    )
 ```
 
 This parallel set diagram shows the flow of population between each individual 
@@ -2039,37 +2047,31 @@ shows arbitrary arrival and departure reasons.
 
 ## summarize data
 flow_table <- study_data_cleaned %>%
-  count(startcause, endcause, sex) %>%  # get counts 
-  gather_set_data(x = c("startcause", "endcause")) %>%     # change format for plotting
-  mutate(x = fct_relevel(x, c("startcause", "endcause")),  # set startcause as first level
-         x = fct_recode(x, 
-                        "Start \n cause" = "startcause",   # add line break (\n) after start
-                        "End \n cause"   = "endcause")
-        )
+  count(startcause, endcause, sex)  # get counts
 
 ## plot your dataset 
   ## on the x axis is the start and end causes
-  ## gather_set_data generates an ID for each possible combination
-  ## splitting by y gives the possible start/end combos
-  ## value as n gives it as counts (could also be changed to proportion)
-ggplot(flow_table, aes(x, id = id, split = y, value = n)) +
+  ## on the y show n - gives it as counts (could also be changed to proportion)
+ggplot(data = flow_table,
+       aes(axis1 = startcause, axis2 = endcause,
+           y = n)) +
+  ## define x axis limits and labels
+  scale_x_discrete(limits = c("Start\ncause", "End\ncause")) +
   ## colour lines by sex 
-  geom_parallel_sets(aes(fill = sex), alpha = 0.5, axis.width = 0.2) +
+  geom_alluvium(aes(fill = sex)) +
   ## fill in the label boxes grey
-  geom_parallel_sets_axes(axis.width = 0.15, fill = "grey80", color = "grey80") +
-  ## change text colour and angle (needs to be adjusted)
-  geom_parallel_sets_labels(color = "black", angle = 0, size = 5) +
-  ## adjusted y and x axes (probably needs more vertical space)
-  scale_x_discrete(name = NULL, expand = c(0, 0.2)) +
-  scale_y_continuous(breaks = NULL, expand = c(0, 0)) +
-  scale_fill_brewer(type = "qual") + 
-  ## remove axis labels
+  geom_stratum(fill = "grey90") +
+  ## add in text of labels to boxes
+  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
+  ## define y axis label
+  labs(y = "Frequency (n)") + 
+  ## adjust theme
+  theme_minimal() + 
   theme(
     title = element_text(size = 26),
     text = element_text(size = 26),
-    axis.line = element_blank(),
-    axis.ticks = element_blank(),
-    legend.position = "bottom"
+    legend.position = "bottom", 
+    legend.title = element_blank()
   )
 ```
 
