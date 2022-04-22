@@ -64,7 +64,8 @@ required_packages <- c("knitr",       # create output docs
                        "srvyr",       # dplyr wrapper for survey package
                        "gtsummary",   # produce tables
                        "labelled",    # add labels to variables
-                       "matchmaker"   # recode datasets with dictionaries
+                       "matchmaker",  # recode datasets with dictionaries
+                       "lubridate"    # working with dates
                        )
 
 for (pkg in required_packages) {
@@ -793,11 +794,9 @@ study_data_cleaned$endcause <- fct_recode(study_data_cleaned$endcause,
 ## month of death --------------------------------------------------------------
 
 ## create a variable for month of end (used for deaths by month)
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(endmonth = factor(months(enddate), 
-                           levels = month.name)
-         )
-
+## note this is not used because we have to iterrate in the cmr_month chunk
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate(endmonth = tsibble::yearmonth(enddate))
 
 ## time sequence of events -----------------------------------------------------
 
@@ -1661,24 +1660,67 @@ using the survey_design object.
 
 This makes a bar plot with whiskers for CIs. 
 
+For these estimates to be accurate we need to calculate observation time for each
+month separately. Then divide the number of deaths in that month by the total
+observation time in that month. 
+
+
 Note the possibility of negative confidence intervals if there are low counts; 
 and that those negatives are set to zero. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r CMR_months}
 
+## retrieve all months that we have in the dataset
+study_months <- seq.Date(
+  min(study_data_cleaned$recall_start), 
+  max(study_data_cleaned$recall_end), 
+  by = "month"
+  )
+
 ## retrieve weighted mortality ratios by month
-CMR_month <- survey_design %>% 
-  ## split by month of death
-  group_by(endmonth) %>% 
-  ## survey ratio includes the observation times in calculation
-  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci"))  %>% 
-  ## if negative CIs set to zero
-  mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
-         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp))
+CMR_month <- purrr::map(
+  ## for each month run the function
+  study_months, 
+           function(x) {
+             
+             ## define beginning and end of month 
+             month_start <- x 
+             month_end <- lubridate::ceiling_date(x, unit = "month") - 1
+             ## define all the days in the current month
+             month_span <- seq.Date(month_start, month_end, by = "day")
+             
+             
+             survey_design %>% 
+               ## drop if enddate before or startdate after current month
+               filter(
+                 startdate <= month_end, 
+                 enddate >= month_start, 
+               ) %>% 
+               mutate(
+                 # if startdate before current month then set to beginning of month
+                 startdate = if_else(startdate < month_start, month_start, startdate), 
+                 # edit to died in current month 
+                 died =  died & (enddate %in% month_span),
+                 ## if enddate after current month then set to end of month
+                 enddate = if_else(enddate > month_end, month_end, enddate), 
+                 ## calculate new obstime for the month
+                 obstime = as.numeric(enddate - startdate)
+                 ) %>% 
+               ## survey ratio includes the observation times in calculation
+               summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci"))  %>% 
+                ## if count zero or negative CIs set to zero
+                mutate(mortality = if_else(is.infinite(mortality), 0, mortality),
+                       mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
+                       mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp), 
+                       ## add in the current month 
+                       month = factor(format(x, format = "%B %Y")))
+             }) %>% 
+  ## combine list in to one dataframe
+  bind_rows()
 
 ## plot with months as x axis and mortality rate as y
-ggplot(CMR_month, aes(x = endmonth, y = mortality)) + 
+ggplot(CMR_month, aes(x = month, y = mortality)) + 
   geom_bar(stat = "identity", col = "black", fill = "red") +  # plot as bars 
   geom_errorbar(aes(ymin = mortality_low, ymax = mortality_upp, width = 0.2)) + # add CIs
   scale_y_continuous(expand = c(0,0)) + # set origin for axes
