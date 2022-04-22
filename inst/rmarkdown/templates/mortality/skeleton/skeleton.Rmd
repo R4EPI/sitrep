@@ -452,6 +452,7 @@ The chunks are:
 - recode_dictionary  -- recode variables based on a data dictionary
 - factor_vars        -- helps clean factor variables
 - obvservation_time  -- calculates person-time based on start/end cause dates
+- labelling_data     -- add variable labels to your dataset
 - remove_unused_data -- dropping unused rows/columns
 - survey_weights     -- calculating survey weights according to study design
 - survey_design      -- create a survey object for weighted analysis 

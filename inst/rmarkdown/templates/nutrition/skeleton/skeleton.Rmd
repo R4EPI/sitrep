@@ -9,7 +9,7 @@ output:
 # Introduction to this template
 
 This is a template which can be used to create a report from a retrospective
-mortality survey. 
+nutrition survey. 
 
 - There are sections for reading and cleaning data, calculating 
     anthropometric indicators based on z-score counts followed by  
@@ -37,7 +37,7 @@ We used the following definitions for the analysis of the survey results for Wei
 We used the following definitions for the analysis of the survey results for MUAC measurements:
 
 * Global acute malnutrition (GAM): MUAC of <125mm and/or oedema;
-* Moderate acute malnutrirtion: MUAC <125mm and >= 115mm and no oedema;
+* Moderate acute malnutrition: MUAC <125mm and >= 115mm and no oedema;
 * Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
 
 In order to estimate stunting in the surveyed population, we looked at Height for Age z-scores (HAZ) and used the following definitions:  
@@ -123,21 +123,22 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 /// read_fake_data \\\
 --------------------------------------------------------------------------------
 To play with this template, you can create fake data based off data
-dictionary used for Dharma.
+dictionary used for Kobo.
 Comment out this chunk when you are using real data.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_fake_data, warning = FALSE, message = FALSE}
 
 
-## generates MSF standard dictionary for Dharma 
+## generates MSF standard dictionary for Kobo 
 study_data_dict <- msf_dict_survey("Nutrition")
-
+## generates MSF standard dictionary for Kobo in long format (for recoding)
+study_data_dict_long <- msf_dict_survey(disease = "Nutrition", compact = FALSE)
 
 ## generates a fake dataset for use as an example in this template
 ## this dataset already has household and individual levels merged
 study_data_raw <- gen_data(dictionary = "Nutrition",
-                           varnames   = "column_name",
+                           varnames   = "name",
                            numcases   = 1000)
 ```
 
@@ -148,26 +149,26 @@ study_data_raw <- gen_data(dictionary = "Nutrition",
 You should load your data as a linelist, where each row is one person. 
 
 There are two options for reading data:
-- Your data is from Dharma: use read_DHARMA_data
-- Your data is NOT FROM Dharma and in Excel, CSV, or Stata format: 
-use read_nonDHARMA_data
+- Your data is from Kobo: use read_kobo_data
+- Your data is NOT FROM Kobo and in Excel, CSV, or Stata format: 
+use read_non_kobo_data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// read_DHARMA_data \\\
+/// read_kobo_data \\\
 --------------------------------------------------------------------------------
-This section is for data collected with Dharma.
+This section is for data collected with Kobo. 
 It uses the standardized MSF data dictionary.
 
-If you didn't use the standardized data dictionary, go to read_nonDHARMA_data.
+If you didn't use the standardized data dictionary, go to read_non_kobo_data.
 
 Generally, survey datasets will have two levels:
 One for household and one for individual (to combine see merge_data_levels).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r read_DHARMA_data, warning = FALSE, message = FALSE}
+```{r read_kobo_data, warning = FALSE, message = FALSE}
 
 ### Read in data ---------------------------------------------------------------
 
@@ -176,11 +177,11 @@ One for household and one for individual (to combine see merge_data_levels).
 
 ## read in household data sheet
 # study_data_hh <- rio::import(here::here("nutrition_survey.xlsx"), 
-#                               which = "Level 0 Named", na = ".")
+#                               which = "nutrition_survey_erb", na = "")
 
 ## read in individual level data sheet
 # study_data_indiv <- rio::import(here::here("nutrition_survey.xlsx", 
-#                               which = "Level 1 Named", na = ".")
+#                               which = "r1", na = "")
 
 
 ## Excel file with password ----------------------------------------------------
@@ -190,11 +191,11 @@ One for household and one for individual (to combine see merge_data_levels).
 # library(excel.link)
 
 # study_data_hh <- xl.read.file(here::here("nutrition_survey.xlsx"),
-#                              xl.sheet = "Level 0 Named",
+#                              xl.sheet = "nutrition_survey_erb",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
 # study_data_indiv <- xl.read.file(here::here("nutrition_survey.xlsx"),
-#                              xl.sheet = "Level 1 Named",
+#                              xl.sheet = "r1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 ```
 
@@ -202,13 +203,13 @@ One for household and one for individual (to combine see merge_data_levels).
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// read_nonDHARMA_data \\\
+/// read_non_kobo_data \\\
 --------------------------------------------------------------------------------
-This section is for data not from Dharma. 
-If you have already loaded data from Dharma, go to merge_data_levels
+This section is for data not from Kobo.  
+If you have already loaded data from Kobo, go to merge_data_levels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r read_nonDHIS_data, warning = FALSE, message = FALSE}
+```{r read_non_kobo_data, warning = FALSE, message = FALSE}
 
 ## Excel file ------------------------------------------------------------------
 ## to read in a specific sheet use "which"
@@ -243,40 +244,43 @@ these levels will need to be merged in to one dataset.
 
 This is done using a unique identifier for the household 
 (which has to be repeated for each row in the individuals dataset) 
-For a Dharma dataset this variable is "fact_0_id".
+For a Kobo dataset this variable is "_index" at the household level, which 
+matches the "_parent_index" at the individual level.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r merge_data_levels}
 
-## make sure each individual has the ID 
-## (equivalent of excel drag downwards to fill blanks)
-# study_data_indiv <- study_data_indiv %>% fill(fact_0_id)
-
 ## join the individual and household data to form a complete data set
-#study_data_raw <- left_join(study_data_hh, study_data_indiv, by = "fact_0_id")
+#study_data_raw <- left_join(study_data_hh, study_data_indiv, by = c("_index" = "_parent_index"))
+
 ```
 
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// prep_DHARMA_data \\\
+/// prep_kobo_data \\\
 --------------------------------------------------------------------------------
 This section is to import your data dictionary and standardise variable names. 
 
-The Dharma data dictionary has variable names
-in the column_name column. Possible values for each variable are
-specified in choice_code and choice_name columns. 
-Code has the shortened value and Name has the full-text value.
+The Kobo data dictionary has variable names
+in the "name" column of the survey sheet. Possible values for each variable are
+specified in choices sheet. 
+In the choices tab, "name" has the shortened value and the "label::english" and 
+"label::french" columns have the appropriate long versions. 
+
+Using the msf_dict_survey function to import a Kobo dictionary excel file will 
+re-format this for you so it can be used easily to recode. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r prep_DHARMA_data}
+```{r prep_kobo_data}
 
 ## Data dictionary -------------------------------------------------------------
 
 
-## read in data dictionary
-# study_data_dict <- rio::import("nutrition_survey.xlsx",
-#                                which = "Data Dictionary")
+## read in a kobo data dictionary
+## important to specify template is FALSE (otherwise you get the generic dict)
+# study_data_dict <- msf_dict_survey(name = here::here("nutrition_survey_dict.xlsx"), 
+#                                    template = FALSE)
 
 ## look at the dictionary by uncommenting the line below
 # View(study_data_dict) 
@@ -289,20 +293,20 @@ Code has the shortened value and Name has the full-text value.
 ## make a copy of your orginal dataset and name it study_data_cleaned
 study_data_cleaned <- study_data_raw
 
-## define clean variable names using clean_labels from the epitrix package. 
-cleaned_colnames <- epitrix::clean_labels(colnames(study_data_cleaned))
-
-## overwrite variable names with defined clean names
-colnames(study_data_cleaned) <- cleaned_colnames 
-
-## Some of the names outputed from Dharma are very long
-## In this example, we rename several variables
+## Sometimes you want to rename specific variables
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
-study_data_cleaned <- rename(study_data_cleaned,
-                             head_available = q28_cq1,
-                             head_adult = q45_cq2,
-                             head_consent = q49_cq3,
-                             no_consent_other = q61_cq4b)
+## You can add multiple column name recodes by simply separating them with a comma
+# study_data_cleaned <- rename(study_data_cleaned,
+#                              violence_nature_other_details    =  violence_nature_other)
+
+## define clean variable names using clean_names from the janitor package. 
+study_data_cleaned <- janitor::clean_names(study_data_cleaned)
+
+## create a unique identifier by combining indeces of the two levels 
+## x and y are added on to the end of variables that are duplicated 
+## (in this case, parent and child index)
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate(uid = str_glue("{index}_{index_y}"))
 ```
 
 
@@ -320,7 +324,7 @@ from proportions.
 
 Below we show basic examples for reading data and entering counts - as well as 
 a more complex version using proportions to get the age/sex breakdown in 
-two seperate regions. (Useful if doing a stratified survey)
+two separate regions. (Useful if doing a stratified survey)
 
 Comment out the options you are not using.
 
@@ -374,7 +378,7 @@ population_data_age_district_a <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "District A")           # add a column to identify region 
+  mutate(health_district = "district_a")           # add a column to identify region 
 
 
 ## generate population data by age groups in years for district B
@@ -385,7 +389,7 @@ population_data_age_district_b <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "District B")           # add a column to identify region 
+  mutate(health_district = "district_a")           # add a column to identify region 
 
 
 
@@ -414,8 +418,11 @@ each cluster.
 
 ```{r cluster_counts}
 
-cluster_counts <- tibble(cluster = c("Village A", "Village B", "Village C", "Village D"), 
-                         households = c(700, 400, 600, 500))
+cluster_counts <- tibble(cluster = c("Village 1", "Village 2", "Village 3", "Village 4", 
+                                     "Village 5", "Village 6", "Village 7", "Village 8",
+                                     "Village 9", "Village 10"), 
+                         households = c(700, 400, 600, 500, 300, 
+                                        800, 700, 400, 500, 500))
 ```
 
 
@@ -451,7 +458,7 @@ unique(study_data_raw$sex)
 ## for example check age <6 months and height >100 cm and return corresponding IDs
 study_data_raw %>% 
   filter(age_month < 6 & height > 100) %>% 
-  select("fact_0_id")
+  select("uid")
 
 ## use the dfSummary function in combination with view
 ## note that view is not capitalised with this package
@@ -472,8 +479,10 @@ of the chunk to re-run all the code chunks up to the current one.
 The chunks are:
 - standardise_dates    -- will set up and clean dates.
 - create_age_group     -- creates the age group variables from age
+- recode_dictionary    -- recode variables based on a data dictionary
 - factor_vars          -- helps clean factor variables
 - nutrition_indicators -- calculates z-scores and cutoffs
+- labelling_data     -- add variable labels to your dataset
 - remove_unused_data   -- dropping unused rows/columns
 - survey_weights       -- calculating survey weights according to study design
 - survey_design        -- create a survey object for weighted analysis 
@@ -493,16 +502,17 @@ This chunk will help you set up and clean your date variables.
 
 ```{r standardise_dates}
 
-## DHARMA standard data --------------------------------------------------------
-## If you got your data from Dharma, use this portion of the code.
+## Kobo standard data --------------------------------------------------------
+## If you got your data from Kobo, use this portion of the code.
 ## If not, comment this section out and use the below.
 
 ## make sure all date variables are formatted as dates 
 ## get the names of variables which are dates
-DATEVARS <- filter(study_data_dict, data_element_valuetype == "DATE") %>% 
-  filter(column_name %in% names(study_data_cleaned)) %>% 
+DATEVARS <- study_data_dict %>% 
+  filter(type == "date") %>% 
+  filter(name %in% names(study_data_cleaned)) %>% 
   ## filter to match the column names of your data
-  pull(column_name) # select date vars
+  pull(name) # select date vars
 
 ## find if there are date variables which are completely empty
 ## (otherwise the linelist package does not work)
@@ -518,14 +528,13 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 ## change to dates 
 ## use the guess_dates() function to make a first pass at date variables.
 study_data_cleaned <- study_data_cleaned %>%
-  study_data_cleaned <- study_data_cleaned %>%
   mutate(
     across(.cols = all_of(DATEVARS),
            .fns = ~linelist::guess_dates(.x,
                                          error_tolerance = 0.5)))
 
-## Non-DHARMA data -------------------------------------------------------------
-## Use this section if you did not have Dharma data. 
+## Non-Kobo data -------------------------------------------------------------
+## Use this section if you did not have Kobo data.  
 
 ## use the guess_dates() function to make a first pass at date variables.
 # study_data_cleaned <- study_data_cleaned %>%
@@ -542,8 +551,8 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ## set specific unrealistic dates to NA
 # study_data_cleaned <- mutate(study_data_cleaned,
-#                            date_of_survey < as.Date("2017-11-01") ~ as.Date(NA), 
-#                            date_of_survey == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
+#                            date < as.Date("2017-11-01") ~ as.Date(NA), 
+#                            date == as.Date("2081-01-01") ~ as.Date("2018-01-01"))
 ```
 
 
@@ -563,12 +572,12 @@ This chunk will help you set up your age group variable.
 
 ## make sure age is an integer 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(age_month = as.integer(age_month))
+  mutate(age_months = as.integer(age_months))
 
 ## create an age group variable (combining those over 24 months and those under) 
 study_data_cleaned <- study_data_cleaned %>%
   mutate(age_group_bin = factor(
-    if_else(age_month >= 24,
+    if_else(age_months >= 24,
       "24-60",
       "0-23"
     )
@@ -577,7 +586,7 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ## create age group variable for under 1 years based on months
 study_data_cleaned <- study_data_cleaned %>%
-  mutate(age_group = age_categories(study_data_cleaned$age_month,
+  mutate(age_group = age_categories(study_data_cleaned$age_months,
                                     breakers = c(6, 12, 24, 36, 48, 60),
                                     ceiling = TRUE))
 
