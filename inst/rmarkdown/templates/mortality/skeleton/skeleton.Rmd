@@ -2077,8 +2077,65 @@ ggplot(data = flow_table,
 
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This following part of the script is for added MSF modules. 
+If you did not include these modules in your survey  data collection then you 
+can delete the rest of this. Note however that some parts of violence,  
+nutrition, and vaccination are in the basic mortality module (and so the code 
+below may be of use). 
+These include the following: 
 
-## Morbidity
+- Health Seeking Behaviour -- morbidity and access to healthcare 
+- Violence                 -- types of violence and perpetrators
+- Malaria                  -- infection with malaria and treatment 
+- Nutrition                -- not included: see the nutrition template for code
+
+
+You must adapt this section according to your data!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+## Health seeking behaviour
+
+
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// ill_hh \\\
+--------------------------------------------------------------------------------
+
+The below chunks calculate values that are displayed with the inline text
+
+
+Get unweighted counts of households that had at least on member who was ill, as 
+well as medians and standard deviations of the number of ill individuals.    
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+```{r ill_hh}
+
+## get counts of the number of households with someone ill 
+ill_num <- study_data_cleaned %>% 
+  ## only keep households with someone ill 
+  filter(ill_hh_number > 0) %>% 
+  ## trim data to only unique households within each cluster
+  distinct(cluster_number, household_number, ill_hh_number) %>%
+  summarise(
+    ## get the number of households with an ill person
+    ill_hh       = n(), 
+    ## get the proportion of households with an ill person
+    ill_hh_prop  = round(ill_hh / num_hh * 100, digits = 1),
+    ## get the median number of ill household members
+    ill_hh_med   = median(ill_hh_number),
+    ## get the range and standard deviation of ill household members
+    ill_hh_range = str_c(range(clustersize), collapse = "--"),
+    ill_hh_sd    = round(sd(hhsize), digits = 1)
+  )
+
+```
+
+
+The unweighted number of households with at least one person ill was 
+`r str_glue("{ill_num$ill_hh} ({ill_num$ill_hh_prop}%)")`. 
+Among households with an ill member, the median number of ill people was 
+`r str_glue("{ill_num$ill_hh_med} (range: {ill_num$ill_hh_range}, standard deviation: {ill_num$ill_hh_sd})")`
 
 
 Symptoms reported among those who were sick 
@@ -2089,21 +2146,15 @@ Symptoms reported among those who were sick
 
 The below chunk creates a weighted table of symptoms among those sick. 
 
-Note that empty rows (those with "") are dropped and the method (xlogit) is 
-the US CDC SUDAAN method for calculating CIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r weighted_symptoms_reported}
 
-# survey_design %>%                  
-#   filter(sick == "yes") %>% # filter for those who were sick in last 2 weeks
-#   # calculate weighted counts and weighted proportions 
-#   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2) %>%
-#   select("Symptom" = value,
-#          "N reported" = n,
-#          "% (95% CI)" = ci
-#         ) %>%
-#   kable(digits = 1)
+survey_design %>% 
+  filter(ill_recently == "Yes") %>% # filter for those who were sick in last 2 weeks
+  select(cause_illness) %>%
+  tbl_svysummary()   
+  ## add in confidence intervals
 ```
 
 
@@ -2116,22 +2167,16 @@ Symptoms reported among those who were sick, stratified by age group
 
 The below chunk creates a weighted table of symptoms among those sick by age 
 group. 
-
-Note that empty rows (those with "") are dropped and the method (xlogit) is 
-the US CDC SUDAAN method for calculating CIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r weighted_symptoms_reported_age, warning = FALSE}
-# 
-# survey_design %>%                  
-#   filter(sick == "yes") %>% # filter for those who were sick in last 2 weeks
-#   # calculate weighted counts and weighted proportions - stratified by agegroup!!
-#   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
-#              strata = age_group, pretty = TRUE) %>%
-#   select(-variable) %>%
-#   rename("Symptom" = value) %>%
-#   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
-#   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
-#   kable(digits = 1)
+
+survey_design %>% 
+  filter(ill_recently == "Yes") %>% # filter for those who were sick in last 2 weeks
+  select(cause_illness, age_group) %>%
+  tbl_svysummary(by = age_group)   
+  ## add in confidence intervals
+
 ```
 
 
@@ -2145,23 +2190,107 @@ Symptoms reported among those who were sick, stratified by gender
 The below chunk creates a weighted table of symptoms among those sick by 
 sex
 
-Note that empty rows (those with "") are dropped and the method (xlogit) is 
-the US CDC SUDAAN method for calculating CIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
 ```{r weighted_symptoms_reported_sex}
 
-# survey_design %>%                  
-#   filter(sick == "yes") %>% # filter for those who were sick in last 2 weeks
-#   # calculate weighted counts and weighted proportions - stratified by sex!!
-#   tab_survey(contains("symptoms"), drop = "", method = "xlogit", digits = 2,
-#              strata = sex, pretty = TRUE) %>%
-#   select(-variable) %>%
-#   rename("Symptom" = value) %>%
-#   augment_redundant(" (n)"      = " n") %>% # wrap all "n" in braces (note space before n)
-#   rename_redundant("% (95% CI)" = "ci") %>% # relabel all columns containing "ci"
-#   kable(digits = 1)
-
+survey_design %>% 
+  filter(ill_recently == "Yes") %>% # filter for those who were sick in last 2 weeks
+  select(cause_illness, sex) %>%
+  tbl_svysummary(by = sex)   
+  ## add in confidence intervals
 ```
 
 
+
+Reason reported not seeking healthcare among those who were sick, and did not seek help
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// weighted_no_healthcare_reported \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of symptoms among those sick by 
+sex
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r weighted_no_healthcare_reported}
+
+survey_design %>% 
+  # filter for those who were sick in last 2 weeks and did not seek help
+  filter(ill_recently == "Yes" & 
+           care_illness_recent == "No") %>% 
+  select(no_care_illness) %>%
+  tbl_svysummary()   
+  ## add in confidence intervals
+```
+
+
+## Violence
+
+Number, place and types of violence reported among those who had an experience
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// violence \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of number types and places where violence
+occured, among those who experience it. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r violence}
+
+survey_design %>% 
+  # filter for those who experience violence
+  filter(violent_episode == "Yes" ) %>% 
+  select(violent_episodes_number, violence_nature, uniform, place_violence) %>%
+  tbl_svysummary()   
+  ## add in confidence intervals
+```
+
+## Malaria 
+
+Current febrile status and health seeking behaviour among children reporting fever
+in the last two weeks
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// malaria \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of number of children currently febrile, 
+and whether health care was sought. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r malaria}
+
+survey_design %>% 
+  # filter for those who were sick in last 2 weeks and less than 5 years old
+  filter(fever_past_weeks == "Yes" & 
+           age_years < 5) %>% 
+  select(fever_now, care_fever) %>%
+  tbl_svysummary()   
+  ## add in confidence intervals
+```
+
+
+Reason reported not seeking healthcare among children who were sick, and did not seek help
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// malaria_reasons \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of reasons why healthcare not sought. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r malaria_reasons}
+
+survey_design %>% 
+  # filter for those who were sick in last 2 weeks, less than 5 years old didnt seek help
+  filter(fever_past_weeks == "Yes" & 
+           age_years < 5 & 
+           care_fever == "No") %>% 
+  select(reason_no_care) %>%
+  tbl_svysummary()   
+  ## add in confidence intervals
+```
 
