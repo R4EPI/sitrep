@@ -627,6 +627,9 @@ the matchmaker package (in the recode_dictionary chunk).
 Variable labels can be used and so we will used the labelled package for that in 
 the labelling_data code chunk. 
 
+You could also have your data in French by specifying "option_label_french", 
+if your data dictionary has that included (see the generic dictionary for example).  
+
 NOTE: it is important to use matchmaker before working with factor vars 
 (factor_vars) as it will swap things to characters based on the dictionary used
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -642,7 +645,6 @@ study_data_cleaned <- match_df(study_data_cleaned,
          order = "option_order_in_set")
 
 ```
-
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -960,7 +962,7 @@ study_data_cleaned <- study_data_cleaned %>%
 #   ## choose which variables to use for finding unique rows 
 #   group_by(uid, sex, age_group) %>% 
 #   ## sort to have the earliest date by person first
-#   arrange(as.Date(submission_time)) %>% 
+#   arrange(as.Date(start)) %>% 
 #   ## only keep the earliest row 
 #   slice(1)
 ```
@@ -1043,7 +1045,7 @@ There are four options, comment out those you do not use:
 - Cluster 
 - Stratified cluster
 
-For this template - we will pretend that we cluster surveys in two seperate 
+For this template - we will pretend that we cluster surveys in two separate 
 strata (health districts A and B). 
 So to get overall estimates we need have combined cluster and strata weights. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -1164,7 +1166,6 @@ dropped %>%
   tbl_summary() %>% 
   ## make variable names bold 
   bold_labels()
-
 ```
 
 
@@ -1281,7 +1282,7 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   ## Only show p-values over 0.001 (those under report as <0.001)
   mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
-  ## rename the columns appropriatley
+  ## rename the columns appropriately
   select(
     "Age group" = age_group,
     "Study population (n)" = n,
@@ -1312,7 +1313,7 @@ It also pulls the age group with the highest sex ratio.
 ```{r median_age_sex_ratios}
 ## compute the median age 
 medage <- median(study_data_cleaned$age_years)
-## paste the lower and uper quartile together
+## paste the lower and upper quartile together
 iqr <- str_c(  # basically copy paste together the following
   ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
@@ -1326,14 +1327,14 @@ iqr <- str_c(  # basically copy paste together the following
 ## compute overall sex ratio 
 sex_ratio <- study_data_cleaned %>% 
   count(sex) %>% 
-  spread(sex, n) %>%
+  pivot_wider(names_from = sex, values_from = n) %>%
   mutate(ratio = round(Male/Female, digits = 1)) %>%
   pull(ratio)
 
 ## compute sex ratios by age group 
 sex_ratio_age <- study_data_cleaned %>% 
   count(age_group, sex) %>% 
-  spread(sex, n) %>%
+  pivot_wider(names_from = sex, values_from = n) %>%
   mutate(ratio = round(Male/Female, digits = 1)) %>%
   select(age_group, ratio)
 
@@ -1382,7 +1383,7 @@ female ratio was `r min_sex_ratio_age$ratio` in the
 The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under five years of age made up 
 `r fmt_count(study_data_cleaned, age_years < 5)`of the surveyed individuals.
-The highest number of surveyed indivduals (unweighted) were in the 
+The highest number of surveyed individuals (unweighted) were in the 
 `r table(study_data_cleaned$age_group) %>% which.max() %>% names()`
 year age group.
 The number of surveyed women who were pregnant was 
@@ -1412,7 +1413,6 @@ study_data_cleaned %>%
     row = age_group, 
     col = sex, 
     percent = "cell")
-
 ```
 
 
@@ -1443,8 +1443,8 @@ study_data_cleaned %>%
 
 
 
-There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing information on sex and 
-`r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
+There were `r fmt_count(dropped, is.na(sex))` cases missing information on sex and 
+`r fmt_count(dropped, is.na(age_group))` missing age group.
 
 Unweighted age and gender distribution of household population covered by the survey.
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

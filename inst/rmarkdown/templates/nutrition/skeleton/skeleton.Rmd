@@ -88,16 +88,20 @@ options(knitr.kable.NA = "-")
 required_packages <- c("knitr",       # create output docs 
                        "here",        # find your files
                        "rio",         # for importing data
-                       "epitrix",     # clean/shape data
+                       "janitor",     # clean/shape data
                        "dplyr",       # clean/shape data
                        "tidyr",       # clean/shape data
                        "forcats",     # manipulate and rearrange factors
                        "stringr",     # manipulate texts
                        "ggplot2",     # create plots and charts
+                       "apyramid",    # plotting age pyramids
                        "sitrep",      # MSF field epi functions
                        "anthro",      # WHO Child Growth Standards (wrapper of survey)
                        "survey",      # for survey functions
-                       "srvyr"        # dplyr wrapper for survey package
+                       "srvyr",       # dplyr wrapper for survey package
+                       "gtsummary",   # produce tables
+                       "labelled",    # add labels to variables
+                       "matchmaker"   # recode datasets with dictionaries
                        )
 
 for (pkg in required_packages) {
@@ -389,7 +393,7 @@ population_data_age_district_b <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "district_a")           # add a column to identify region 
+  mutate(health_district = "district_b")           # add a column to identify region 
 
 
 
@@ -572,7 +576,17 @@ This chunk will help you set up your age group variable.
 
 ## make sure age is an integer 
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(age_months = as.integer(age_months))
+  mutate(age_months = as.integer(age_months),
+         age_years  = as.integer(age_months))
+
+## add convert years to months (for those over 1 year) 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_months = if_else(
+    age_years >= 1, 
+    as.integer(age_years * 12), 
+    as.integer(age_months)
+    ))
+
 
 ## create an age group variable (combining those over 24 months and those under) 
 study_data_cleaned <- study_data_cleaned %>%
@@ -584,7 +598,7 @@ study_data_cleaned <- study_data_cleaned %>%
   ))
 
 
-## create age group variable for under 1 years based on months
+## create age group variable for based on months
 study_data_cleaned <- study_data_cleaned %>%
   mutate(age_group = age_categories(study_data_cleaned$age_months,
                                     breakers = c(6, 12, 24, 36, 48, 60),
@@ -611,6 +625,40 @@ study_data_cleaned <- study_data_cleaned %>%
 ```
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// recode_dictionary \\\
+--------------------------------------------------------------------------------
+
+We can use the matchmaker package to recode our dataset using a data dictionary. 
+
+So for example our variable for sex might have coded values of "m" and "f" but 
+the label would be "Male" and "Female".
+This corresponds to the option_name and option_label in Kobo dictionaries.
+
+Currently, value labels cant be used for analysis so we have just recoded using 
+the matchmaker package (in the recode_dictionary chunk). 
+Variable labels can be used and so we will used the labelled package for that in 
+the labelling_data code chunk. 
+
+You could also have your data in French by specifying "option_label_french", 
+if your data dictionary has that included (see the generic dictionary for example).  
+
+NOTE: it is important to use matchmaker before working with factor vars 
+(factor_vars) as it will swap things to characters based on the dictionary used
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r recode_dictionary}
+
+## recode values with matchmaker package (value labels cant be used for analysis) 
+study_data_cleaned <- match_df(study_data_cleaned, 
+         study_data_dict_long, 
+         from = "option_name", 
+         to = "option_label_english", 
+         by = "name", 
+         order = "option_order_in_set")
+
+```
+
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// factor_vars \\\
@@ -623,8 +671,10 @@ This chunk will help you clean factor variables.
 ## Change a yes/no variable in to TRUE/FALSE
 ## create a new variable called consent 
 ## where the old one is yes place TRUE in the new one
+## (this could also be done with the if_else or case_when function - 
+## but this option is shorter)
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(consent = head_consent == "Yes")
+  mutate(consent = consent == "Yes")
 
 
 ## Change a character to factor - set the levels of a factor 
@@ -642,22 +692,22 @@ study_data_cleaned <- study_data_cleaned %>%
                                 "M" = "Male")
   )
 
-## change the order of levels
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(soap = fct_relevel(soap, 
-                            "Distribution", 
-                            "Healthcentre", 
-                            "Never")
-        )
+# ## change the order of levels
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate(soap = fct_relevel(soap, 
+#                             "Distribution", 
+#                             "Healthcentre", 
+#                             "Never")
+#         )
 
 
-## create a new grouping for soap variable 
-## simplified, distribution or health centre then covered otherwise not covered 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(coverage = if_else(soap %in% c("Distribution", "Healthcentre"),
-                            "Covered", 
-                            "Not covered")
-  )
+# ## create a new grouping for soap variable 
+# ## simplified, distribution or health centre then covered otherwise not covered 
+# study_data_cleaned <- study_data_cleaned %>% 
+#   mutate(coverage = if_else(soap %in% c("Distribution", "Healthcentre"),
+#                             "Covered", 
+#                             "Not covered")
+#   )
 
 
 ## Recode character variables
@@ -672,21 +722,37 @@ study_data_cleaned <- study_data_cleaned %>%
 #     TRUE ~ as.character(village_name))
 #   ))
 
+## create a character variable based off groups of a different variable 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(health_district = case_when(
+    cluster_number %in% c(1:5) ~ "district_a", 
+    TRUE ~ "district_b"
+  ))
+
 ## explicitly replace NA of a factor
 # study_data_cleaned <- study_data_cleaned %>%
 #   mutate(coverage = fct_explicit_na(coverage, na_level = "Not Applicable"))
 
 
-## replace missing values in Dharma multi-choice questions to "" so that we can
+## if you had a multi-choice question and the missing values were given as a "."
+## replace missing values in multi-choice questions to "" so that we can
 ## filter them out later.
-study_data_cleaned <- study_data_cleaned %>%
-  mutate(
-    across(
-      .cols = contains("q53"), # all variables that contain the word "q53"
-      .fns = ~factor(replace_na(., "")) # replace all missing values with "" and turn into a factor
-      ) 
-    )
+# study_data_cleaned <- study_data_cleaned %>%
+#   mutate(
+#     across(
+#       .cols = contains("violence"), # all variables that contain the word "violence"
+#       .fns = ~fct_explicit_na(as.character(.), "") # replace missing values with ""
+#       )
+#     )
     
+## fix factor levels -----------------------------------------------------------
+
+## make sure there are the appropriate levels (names)
+study_data_cleaned$no_consent_reason <- fct_recode(study_data_cleaned$no_consent_reason,
+                                            "No time" = "I do not have time",
+                                            "Previous negative experience" = "I have had a negative experience with a previous survey.",
+                                            "No perceived benefit" = "There is no benefit to me and my family"
+                                           )
 ```
 
 
@@ -711,12 +777,12 @@ Using these values we can create categorical variables in our dataset.
 ## retrieve zscores 
 zscore_results <- with(study_data_cleaned, anthro_zscores(
   sex = as.character(sex_brief),
-  age = age_month,
+  age = age_months,
   is_age_in_month = TRUE,
   weight = weight,
   lenhei = height,
   oedema = as.numeric(oedema),
-  armc = muac_mm_left_arm / 10 # convert to cm
+  armc = muac / 10 # convert to cm
 ))
 
 
@@ -740,7 +806,7 @@ study_data_cleaned <- study_data_cleaned %>%
     ## else leave the indicator variable as it was
   mutate(
     across(
-      .cols = vars(gam_whz, mam_whz, sam_whz), # select the indicator variables
+      .cols = c(gam_whz, mam_whz, sam_whz), # select the indicator variables
       .fns = ~if_else(!is.na(fwfl) & fwfl == 1, NA, .)) # NA if flagged, else leave as is
     )
     
@@ -797,9 +863,9 @@ study_data_cleaned <- study_data_cleaned %>%
 ## * Severe acute malnutrition (SAM): MUAC <115mm and/or oedema.
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
-    gam_muac = muac_mm_left_arm < 125 | oedema == "Yes", 
-    mam_muac = muac_mm_left_arm < 125 & muac_mm_left_arm >= 115 & oedema == "No", 
-    sam_muac = muac_mm_left_arm < 115 |  oedema == "Yes"
+    gam_muac = muac < 125 | oedema == "Yes", 
+    mam_muac = muac < 125 & muac >= 115 & oedema == "No", 
+    sam_muac = muac < 115 |  oedema == "Yes"
   )
 
 ## group indicator variables ---------------------------------------------------
@@ -847,6 +913,73 @@ study_data_cleaned <- study_data_cleaned %>%
 ```
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// labelling_data \\\
+--------------------------------------------------------------------------------
+
+We can use the labelled package to add tags to our variable names and values.  
+This means that we can have both coded values and a cleaner written out form of
+variable names and values; this makes our code easier to write but our output 
+cleaner to look at (because we can use labels in tables/figures).
+
+So for example our variable name would be "sex" but the label would be "Sex", and
+the values would be "m" and "f" but the label would be "Male" and "Female".
+This corresponds to the option_name and option_label in kobo dictionaries.
+
+Currently, value labels cant be used for analysis so we have just recoded using 
+the matchmaker package (in the recode_dictionary chunk). 
+Variable labels can be used and so we will used the labelled package for that. 
+
+NOTE: it is important to use matchmaker before working with factor vars 
+(factor_vars) as it will swap things to characters based on the dictionary used
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r labelling_data}
+
+## create variable names with labelled  
+
+## define a list of names and labels based on the dictionary 
+var_labels <- setNames(
+  ## add variable labels as a list
+  as.list(study_data_dict$short_name), 
+  ## name the list with the current variable names
+  study_data_dict$name)
+
+## add the variable labels to dataset 
+study_data_cleaned <- study_data_cleaned %>% 
+  set_variable_labels(
+    ## set the labels with the object defined above
+    .labels = var_labels, 
+    ## do not throw an error if some names dont match 
+    ## not all names in the dictionary appear in the dataset 
+    .strict = FALSE)
+
+## it is possible to update individual variables manually too
+study_data_cleaned <- study_data_cleaned %>% 
+  set_variable_labels(
+    ## variable name = variable label 
+    age_years                = "Age (years)",
+    age_months               = "Age (months)", 
+    age_group                = "Age group (months)", 
+    age_group_bin            = "Age category (months)",
+    flen                     = "HAZ", 
+    fwei                     = "WAZ", 
+    fwfl                     = "WHZ", 
+    gam_muac                 = "GAM", 
+    mam_muac                 = "MAM" ,  
+    sam_muac                 = "SAM", 
+    moderate_stunting_haz    = "Moderate stunting", 
+    severe_stunting_haz      = "Severe stunting", 
+    stunting_haz             = "Stunting",
+    moderate_underweight_waz = "Moderate underweight",
+    severe_underweight_waz   = "Severe underweight", 
+    underweight_waz          = "Underweight", 
+    gam_whz                  = "GAM", 
+    mam_whz                  = "MAM", 
+    sam_whz                  = "SAM"
+    )
+```
+
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// remove_unused_data \\\
@@ -857,32 +990,36 @@ You can also use this section to create temporary datasets so you can review
 specific variables or rows.
 
 You may want to drop rows with missing IDs (i.e. blank rows from excel) 
-simply add a !is.na(fact_0_id) if using a dharma dataset.
+simply add a !is.na(uid) if using a Kobo dataset.
 You will also want to drop those rows with ages outside of the range you want!
+If your check_dates shows rows with negative obs time - 
+make sure to solve those or drop!
 Those without consent need to be dropped too
 
 It is important that you drop observations before adding survey weights!
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
 ```{r remove_unused_data}
 ## Drop unused rows  -----------------------------------------------------------
 
 ## store the cases that you drop so you can describe them (e.g. non-consenting)
 dropped <- study_data_cleaned %>% 
-  filter(!consent | age_month <  6 | age_month > 60)
+  filter(!consent | age_months <  6 | age_months > 60 | 
+           ## note that whatever you use for weights cannot be missing!
+           village_name == "Other"| is.na(age_years) | is.na(sex))
+
 ## drop the unused rows from the survey data set  
 study_data_cleaned <- anti_join(study_data_cleaned, dropped, by = names(dropped))
 
 
 ## Drop columns ----------------------------------------------------------------
 ## OPTIONAL: This step shows you how you can remove certain variables.
-## study_data_cleaned <- select(study_data_cleaned, -c("age_month", "sex"))
+## study_data_cleaned <- select(study_data_cleaned, -c("age_years", "sex"))
 
 ## OPTIONAL: if you want to inspect certain variables, you can select these by
 ## name or column number. This example creates a reduced dataset for the first
-## three columns, age_month, and sex.
+## three columns, age_years, and sex.
 
-# study_data_reduced <- select(study_data_cleaned, c(1:3, "age_month", "sex")
+# study_data_reduced <- select(study_data_cleaned, c(1:3, "age_years", "sex")
 ```
 
 
@@ -929,7 +1066,7 @@ study_data_cleaned <- study_data_cleaned %>%
 #   ## choose which variables to use for finding unique rows 
 #   group_by(uid, sex, age_group) %>% 
 #   ## sort to have the earliest date by person first
-#   arrange(as.Date(submission_time)) %>% 
+#   arrange(as.Date(start)) %>% 
 #   ## only keep the earliest row 
 #   slice(1)
 ```
@@ -965,19 +1102,20 @@ study_data_cleaned <- add_weights_strata(x = study_data_cleaned,
 
 ## cluster ---------------------------------------------------------------------
 
-## merge village and household to create a unique household ID 
+## get the number of individuals interviewed per household 
+## adds a variable with counts of the household (parent) index variable
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(hh_id = str_glue("{village}_{household_id}"))
+  add_count(index, name = "interviewed")
 
 
 ## create cluster weights 
 study_data_cleaned <- add_weights_cluster(x = study_data_cleaned, 
                                           cl = cluster_counts, 
-                                          eligible = eligible, 
+                                          eligible = number_children, 
                                           interviewed = interviewed, 
-                                          cluster_x = village, 
+                                          cluster_x = village_name, 
                                           cluster_cl = cluster, 
-                                          household_x = hh_id, 
+                                          household_x = index, 
                                           household_cl = households, 
                                           surv_weight = "surv_weight_cluster", 
                                           surv_weight_ID = "surv_weight_ID_cluster", 
@@ -1009,7 +1147,7 @@ There are four options, comment out those you do not use:
 - Cluster 
 - Stratified cluster
 
-For this template - we will pretend that we cluster surveys in two seperate 
+For this template - we will pretend that we cluster surveys in two separate 
 strata (health districts A and B). 
 So to get overall estimates we need have combined cluster and strata weights. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -1035,7 +1173,7 @@ survey_design_strata <- study_data_cleaned %>%
 ## cluster ---------------------------------------------------------------------
 
 survey_design_cluster <- study_data_cleaned %>% 
-  as_survey_design(ids = village,  # cluster ids 
+  as_survey_design(ids = village_name,  # cluster ids 
                    weights = surv_weight_cluster, # weight variable created above 
                    strata = NULL # sampling was simple (no strata)
                   )
@@ -1043,7 +1181,7 @@ survey_design_cluster <- study_data_cleaned %>%
 ## stratified cluster ----------------------------------------------------------
 
 survey_design <- study_data_cleaned %>% 
-  as_survey_design(ids = village,  # cluster ids  
+  as_survey_design(ids = village_name,  # cluster ids  
                    weights = surv_weight_cluster_strata, # weight variable created above 
                    strata = health_district # sampling was stratified by district
                   )
@@ -1060,8 +1198,8 @@ This automatically names your file "study_data_cleaned_DATE", where DATE is the
 current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r save_cleaned_data}
-# rio::export(study_data_cleaned, here::here("data", str_glue("study_data_cleaned_{Sys.Date()}.xlsx")))
+```{r save_cleaned_data, eval = FALSE}
+rio::export(study_data_cleaned, here::here("data", str_glue("study_data_cleaned_{Sys.Date()}.xlsx")))
 ```
 
 
@@ -1094,7 +1232,7 @@ num_clus <- study_data_cleaned %>%
 ## get counts of number households 
 num_hh <- study_data_cleaned %>% 
   ## get unique houses by cluster
-  distinct(cluster_number, household_id) %>% 
+  distinct(cluster_number, household_number) %>% 
   ## get number of rounds (count how many unique)
   nrow()
 
@@ -1104,7 +1242,7 @@ num_hh <- study_data_cleaned %>%
 
 
 
-We included `r num_hh` households accross `r num_clus` clusters in this survey analysis. 
+We included `r num_hh` households across `r num_clus` clusters in this survey analysis. 
 
 
 
@@ -1129,15 +1267,16 @@ needs to be of the total and missings need to be dropped.
 
 ## using the dataset with dropped individuals 
 dropped %>% 
-  ## get counts multiple variables with reasons for no consent 
-  ## make the proportion of the total, including the missings for each
-  tab_linelist(starts_with("q53_cq4a_"), 
-               prop_total = TRUE, na.rm = FALSE, drop = "") %>% 
-  ## drop variable column and rename others
-  select("Reason" = value, 
-         "n" = n, 
-         "%" = proportion) %>% 
-  kable(digits = 1)
+  ## only keep reasons for no consent 
+  select(no_consent_reason) %>% 
+  ## make NAs a factor level called missing
+  ## to make the proportion of the total, including the missings
+  mutate(no_consent_reason = fct_explicit_na(no_consent_reason,
+                                             na_level = "Missing")) %>%
+  ## get counts and proportions 
+  tbl_summary() %>% 
+  ## make variable names bold 
+  bold_labels()
 
 ```
 
@@ -1158,7 +1297,7 @@ From these create medians and standard deviations.
 ## get counts of the number of households per cluster
 clustersize <- study_data_cleaned %>% 
   ## trim data to only unique households within each cluster
-  distinct(cluster_number, household_id) %>%
+  distinct(cluster_number, household_number) %>%
   ## count the number of households within each cluster
   count(cluster_number) %>% 
   pull(n)
@@ -1170,10 +1309,10 @@ clustermed <- median(clustersize)
 ## paste these together seperated by a dash 
 clusterrange <- str_c(range(clustersize), collapse = "--")
 
-# get counts of children per household 
-# do this by cluster as household IDs are only unique within clusters
+## get counts of children per household 
+## do this by cluster as household IDs are only unique within clusters
 hhsize <- study_data_cleaned %>% 
-  count(cluster_number, household_id) %>%
+  count(cluster_number, household_number) %>%
   pull(n) 
 
 ## get median number of children per household
@@ -1219,17 +1358,16 @@ your data.
 ```{r descriptive_sampling_bias, warning = FALSE}
 
 ## counts and props of the study population
-ag <- tab_linelist(study_data_cleaned, "age_group") %>%
-  mutate(n_total = sum(n)) %>%
-  select(-variable) %>%
-  rename(age_group = value) %>%
-  mutate(age_group = fct_inorder(age_group))
+ag <- tabyl(study_data_cleaned, age_group, show_na = FALSE) %>% 
+  mutate(n_total = sum(n), 
+         age_group = fct_inorder(age_group))
+
 
 ## counts and props of the source population
 propcount <- population_data_age %>% 
   group_by(age_group) %>%
-  tally(population) %>%
-  mutate(proportion = n / sum(n))
+    tally(population) %>%
+    mutate(percent = n / sum(n))
 
 ## bind together the columns of two tables, group by age, and perform a 
 ## binomial test to see if n/total is significantly different from population
@@ -1242,29 +1380,30 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   ## will add the variables p.value, parameter, conf.low, conf.high, method, and
   ## alternative. We will only use p.value here. You can include other
   ## columns if you want to report confidence intervals
-  mutate(binom = list(broom::tidy(binom.test(n, n_total, proportion_pop)))) %>%
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, percent_pop)))) %>%
   unnest(cols = c(binom)) %>% # important for expanding the binom.test data frame
-  mutate(proportion_pop = proportion_pop * 100) %>%
+  mutate(
+    across(.cols = contains("percent"), 
+            .fns = ~.x * 100)) %>%
 
   ## Adjusting the p-values to correct for false positives 
   ## (because testing multiple age groups). This will only make 
   ## a difference if you have many age categories
   mutate(p.value = p.adjust(p.value, method = "holm")) %>%
-  select(age_group, n, proportion, n_pop, proportion_pop, p.value) %>%
                       
   ## Only show p-values over 0.001 (those under report as <0.001)
   mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
-  ## rename the columns appropriatley
-  rename(
+  ## rename the columns appropriately
+  select(
     "Age group" = age_group,
     "Study population (n)" = n,
-    "%" = proportion,
+    "Study population (%)" = percent,
     "Source population (n)" = n_pop,
-    "%" = proportion_pop,
+    "Source population (%)" = percent_pop,
     "P-value" = p.value
   ) %>%
-  kable(digits = 2)
+  kable(digits = 1)
 
 ```
 
@@ -1283,12 +1422,12 @@ It also pulls the age group with the highest sex ratio.
 
 ```{r median_age_sex_ratios}
 ## compute the median age 
-medage <- median(study_data_cleaned$age_month)
+medage <- median(study_data_cleaned$age_months)
 ## paste the lower and uper quartile together
-iqr <- str_c(  # basically copy paste togehter the following
+iqr <- str_c(  # basically copy paste together the following
   ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
-    study_data_cleaned$age_month, 
+    study_data_cleaned$age_months, 
     c(0.25, 0.75), 
     na.rm = TRUE), 
   ## between lower and upper place an en-dash
@@ -1323,7 +1462,7 @@ The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
 years). Children under two years of age made up 
 `r fmt_count(study_data_cleaned, age_group_bin == "0-23")`of the surveyed 
 individuals.
-The highest number of surveyed indivduals (unweighted) were in the 
+The highest number of surveyed individuals (unweighted) were in the 
 `r table(study_data_cleaned$age_group) %>% which.max() %>% names()` 
 year age group.
 
@@ -1344,26 +1483,19 @@ to change this, set proptotal = FALSE
 
 ```{r describe_by_age_group_and_sex}
 
-tab_linelist(study_data_cleaned, age_group, 
-             strata     = sex, 
-             row_total  = TRUE,
-             col_total  = TRUE,
-             prop_total = TRUE) %>%
-  ## select and rename column names appropriately
-  select("Age"              = "value",
-         "Female cases (n)" = "Female n",
-         "%"                = "Female proportion",
-         "Male cases (n)"   = "Male n",
-         "%"                = "Male proportion",
-         "Total") %>%
-  kable(digits = 2)
+# get cross tabulated counts and proportions
+study_data_cleaned %>% 
+  tbl_cross( 
+    row = age_group, 
+    col = sex, 
+    percent = "cell")
 ```
 
 
 
-There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing 
+There were `r fmt_count(dropped, is.na(sex))` cases missing 
 information on sex and 
-`r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
+`r fmt_count(dropped, is.na(age_group))` missing age group.
 
 Unweighted age and gender distribution of household population covered by the
 survey.
@@ -1378,11 +1510,11 @@ of your cases.
 
 ```{r age_pyramid, warning=FALSE}
 
-plot_age_pyramid(study_data_cleaned, 
-                 age_group = "age_group", 
-                 split_by = "sex",
-                 proportion = TRUE) + 
-  labs(y = "Proportion", x = "Age group (months)") +                 # change axis labels
+age_pyramid(study_data_cleaned, 
+            age_group, 
+            split_by = sex, 
+            proportional = TRUE) + 
+  labs(y = "Proportion", x = "Age group (months)") +    # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -1407,13 +1539,13 @@ either sex or gender in any of your survey strata.
 
 ```{r age_pyramid_strata, warning=FALSE}
 
-plot_age_pyramid(study_data_cleaned, 
-                 age_group = "age_group", 
-                 split_by = "sex",
-                 stack_by = "health_district",
-                 proportion = TRUE, 
+age_pyramid(study_data_cleaned, 
+                 age_group, 
+                 split_by = sex,
+                 stack_by = health_district,
+                 proportional = TRUE, 
                  pal = c("red", "blue")) + 
-  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  labs(y = "Proportion", x = "Age group (months)") +    # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -1438,11 +1570,11 @@ sample and source population distributions by binomial test).
 
 ```{r age_pyramid_survey, warning=FALSE}
 
-plot_age_pyramid(survey_design,
-                 age_group = "age_group",
-                 split_by = "sex", 
+age_pyramid(survey_design,
+                 age_group,
+                 split_by = sex, 
                  proportion = TRUE) +
-  labs(y = "Proportion", x = "Age group (months)") +                 # change axis labels
+  labs(y = "Proportion (weighted)", x = "Age group (months)") + # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -1705,36 +1837,31 @@ flagged indicators
 ```{r missing_flagged_indicators}
 
 study_data_cleaned %>% 
-  tab_linelist(flen, fwei, fwfl, transpose = "value",
-               na.rm = FALSE, col_total = TRUE) %>% 
-  ## re-order columns and drop total_prop
-  select(Indicator = variable, 
-         "Missing n", "Missing proportion", 
-         "TRUE n", "TRUE proportion", 
-         "FALSE n", "FALSE proportion", 
-         "Total (N)" = "Total n") %>%
-  
-  ## rename indicators to something more understandable
-  mutate(Indicator = fct_recode(Indicator, 
-    "HAZ" = "flen", 
-    "WAZ" = "fwei", 
-    "WHZ" = "fwfl"
-  )) %>% 
-  
-  ## swap variabales with props in for percentages 
-  rename_redundant("%" = "prop") %>%
-  ## swap TRUEs for Flagged and FALSE for included
-  ## put n's in brackets
-  augment_redundant("Flagged"  = "TRUE",
-                    "Included" = "FALSE",
-                    " (n)"     = "_n$") %>% 
-  kable(digits = 1)
+  select(flen, fwei, fwfl) %>% 
+  ## mutate each of the flags be easier to enterprate  
+  mutate(
+    across(everything(), 
+            ~case_when(
+              .x == TRUE  ~ "Flagged", 
+              .x == FALSE ~ "Included", 
+              TRUE        ~ "Missing"
+            ))
+  ) %>% 
+  # Variable labels are removed by mutate(across(..)) for some reason
+  set_variable_labels(
+    ## variable name = variable label 
+    flen          = "HAZ", 
+    fwei          = "WAZ", 
+    fwfl          = "WHZ"
+    ) %>% 
+  tbl_summary()
+
 ```
 
 
 
 In addition the number of children missing MUAC 
-was `r fmt_count(study_data_cleaned, is.na(muac_mm_left_arm))`. 
+was `r fmt_count(study_data_cleaned, is.na(muac))`. 
 
 
 
@@ -1762,36 +1889,32 @@ This happens in three stages:
 
 overall <- survey_design %>% 
   ## tabulate multiple variables with same values
-  ## keep will drop all rows in the output where the value is not "TRUE"
-  ## transpose flips the table to indicators as columns 
-  ## important to drop missings! use na.rm = TRUE)
-  tab_survey(MUAC, keep = 'TRUE', 
-             transpose = "variable", na.rm = TRUE, deff = TRUE) %>% 
-  ## add in an age_group variable to be able to bind to age_group table below 
-  mutate(age_group = "Overall") %>% 
-  ## reorganise columns so can bind to age_group table below 
-  select(age_group, everything())
-
-
+  select(all_of(MUAC)) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE)
 
 age_strat <- survey_design %>% 
   ## tabulate multiple variables with same values
-  ## keep will drop all rows in the output where the value is not "TRUE"
-  ## transpose flips the table to have age groups as rows
-  tab_survey(MUAC, keep = 'TRUE', transpose = "variable", na.rm = TRUE, 
-             strata = age_group, deff = TRUE) %>%
-  mutate(age_group = as.character(age_group))
+  select(all_of(MUAC), age_group) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE, 
+                 ## stratify by age group
+                 by = age_group)
 
-## bind the age stratified and overall tables together 
-bind_rows(age_strat, overall) %>% 
-  ## change column names 
-  rename("Age group (months)" = "age_group", 
-         "GAM (n)" = "gam_muac n", 
-         "MAM (n)" = "mam_muac n",  
-         "SAM (n)" = "sam_muac n", ) %>% 
-  rename_redundant("DEFF" = " deff", 
-                   "Proportion (95%CI)" = " ci") %>% 
-  knitr::kable(digits = 1)
+## combine the overall and stratified tables 
+tbl_merge(list(overall, age_strat)) %>% 
+  modify_spanning_header(
+    list(
+      ## rename the spanning header
+      ## you can see what the columns are called by putting in an object and inspecting table_body
+      stat_0_1    ~ "**Overall**", 
+      c(stat_1_2,
+        stat_2_2, 
+        stat_3_2,
+        stat_4_2,
+        stat_5_2) ~ "**Age group (months)**"))
 ```
 
 
@@ -1815,32 +1938,35 @@ This happens in three stages:
 overall <- survey_design %>% 
   ## only keep children less than 87cm
   filter(height < 87) %>%
-  tab_survey(MUAC, keep = 'TRUE', 
-             transpose = "variable", na.rm = TRUE) %>% 
-  ## add in an age_group variable to be able to bind to age_group table below 
-  mutate(age_group = "Overall") %>% 
-  ## reorganise columns so can bind to age_group table below 
-  select(age_group, everything())
-
-
+  ## tabulate multiple variables with same values
+  select(all_of(MUAC)) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE)
 
 age_strat <- survey_design %>% 
   ## only keep children less than 87cm
   filter(height < 87) %>%
-  tab_survey(MUAC, keep = 'TRUE', 
-             transpose = "variable", na.rm = TRUE, 
-             strata = age_group) %>%
-  mutate(age_group = as.character(age_group))
+  ## tabulate multiple variables with same values
+  select(all_of(MUAC), age_group) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE, 
+                 ## stratify by age group
+                 by = age_group)
 
-## bind the age stratified and overall tables together 
-bind_rows(age_strat, overall) %>% 
-  ## change column names 
-  rename("Age group (months)" = "age_group", 
-         "GAM (n)" = "gam_muac n", 
-         "MAM (n)" = "mam_muac n",  
-         "SAM (n)" = "sam_muac n") %>% 
-  rename_redundant("Proportion (95%CI)" = " ci") %>% 
-  knitr::kable(digits = 1)
+## combine the overall and stratified tables 
+tbl_merge(list(overall, age_strat)) %>% 
+  modify_spanning_header(
+    list(
+      ## rename the spanning header
+      ## you can see what the columns are called by putting in an object and inspecting table_body
+      stat_0_1    ~ "**Overall**", 
+      c(stat_1_2,
+        stat_2_2, 
+        stat_3_2,
+        stat_4_2,
+        stat_5_2) ~ "**Age group (months)**"))
 ```
 
 
@@ -1864,27 +1990,33 @@ This happens in three stages:
 ```{r haz_age_group, warning = FALSE}
 
 overall <- survey_design %>% 
-  tab_survey(HAZ, keep = 'TRUE',
-             transpose = "variable", na.rm = TRUE) %>% 
-  ## add in an age_group variable to be able to bind to age_group table below 
-  mutate(age_group = "Overall") %>% 
-  ## reorganise columns so can bind to age_group table below 
-  select(age_group, everything())
+  ## tabulate multiple variables with same values
+  select(all_of(HAZ)) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE)
 
 age_strat <- survey_design %>% 
-  tab_survey(HAZ, keep = 'TRUE', transpose = "variable", na.rm = TRUE,
-             strata = age_group) %>%
-  mutate(age_group = as.character(age_group))
+  ## tabulate multiple variables with same values
+  select(all_of(HAZ), age_group) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE, 
+                 ## stratify by age group
+                 by = age_group)
 
-## bind the age stratified and overall tables together 
-bind_rows(age_strat, overall) %>% 
-  ## change column names 
-  rename("Age group (months)" = "age_group", 
-         "Moderate stunting (n)" = "moderate_stunting_haz n",
-         "Severe stunting (n)" = "severe_stunting_haz n", 
-         "Stunting (n)" = "stunting_haz n") %>% 
-  rename_redundant("Proportion (95%CI)" = " ci") %>% 
-  knitr::kable(digits = 1)
+## combine the overall and stratified tables 
+tbl_merge(list(overall, age_strat)) %>% 
+  modify_spanning_header(
+    list(
+      ## rename the spanning header
+      ## you can see what the columns are called by putting in an object and inspecting table_body
+      stat_0_1    ~ "**Overall**", 
+      c(stat_1_2,
+        stat_2_2, 
+        stat_3_2,
+        stat_4_2,
+        stat_5_2) ~ "**Age group (months)**"))
 ```
 
 
@@ -1907,27 +2039,33 @@ This happens in three stages:
 ```{r waz_age_group, warning = FALSE}
 
 overall <- survey_design %>% 
-  tab_survey(WAZ, keep = 'TRUE', 
-             transpose = "variable", na.rm = TRUE) %>% 
-  ## add in an age_group variable to be able to bind to age_group table below 
-  mutate(age_group = "Overall") %>% 
-  ## reorganise columns so can bind to age_group table below 
-  select(age_group, everything())
+  ## tabulate multiple variables with same values
+  select(all_of(WAZ)) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE)
 
 age_strat <- survey_design %>% 
-  tab_survey(WAZ, keep = 'TRUE', transpose = "variable", na.rm = TRUE,
-             strata = age_group) %>%
-  mutate(age_group = as.character(age_group))
+  ## tabulate multiple variables with same values
+  select(all_of(WAZ), age_group) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE, 
+                 ## stratify by age group
+                 by = age_group)
 
-## bind the age stratified and overall tables together 
-bind_rows(age_strat, overall) %>% 
-  ## change column names 
-  rename("Age group (months)" = "age_group", 
-         "Moderate underweight (n)" = "moderate_underweight_waz n", 
-         "Severe underweight (n)" = "severe_underweight_waz n", 
-         "Underweight (n)" = "underweight_waz n") %>% 
-  rename_redundant("Proportion (95%CI)" = " ci") %>% 
-  knitr::kable(digits = 1)
+## combine the overall and stratified tables 
+tbl_merge(list(overall, age_strat)) %>% 
+  modify_spanning_header(
+    list(
+      ## rename the spanning header
+      ## you can see what the columns are called by putting in an object and inspecting table_body
+      stat_0_1    ~ "**Overall**", 
+      c(stat_1_2,
+        stat_2_2, 
+        stat_3_2,
+        stat_4_2,
+        stat_5_2) ~ "**Age group (months)**"))
 ```
 
 
@@ -1936,7 +2074,7 @@ bind_rows(age_strat, overall) %>%
 Weighted prevalence of malnutrition based on weight-for-height z-score categories,
 by age group (months) and overall
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// waz_age_group \\\
+/// whz_age_group \\\
 --------------------------------------------------------------------------------
 
 This chunk creates a weighted table of prevalence based on weight-for-height
@@ -1951,52 +2089,32 @@ This happens in three stages:
 ```{r whz_age_group, warning = FALSE}
 
 overall <- survey_design %>% 
-  tab_survey(WHZ, keep = 'TRUE', 
-             transpose = "variable", na.rm = TRUE, deff = TRUE) %>% 
-  ## add in an age_group variable to be able to bind to age_group table below 
-  mutate(age_group = "Overall") %>% 
-  ## reorganise columns so can bind to age_group table below 
-  select(age_group, everything())
+  ## tabulate multiple variables with same values
+  select(all_of(WHZ)) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE)
 
 age_strat <- survey_design %>% 
-  tab_survey(WHZ, keep = 'TRUE', 
-             transpose = "variable", na.rm = TRUE, deff = TRUE,
-             strata = age_group) %>%
-  mutate(age_group = as.character(age_group))
+  ## tabulate multiple variables with same values
+  select(all_of(WHZ), age_group) %>% 
+  ## only show the row with TRUE
+  tbl_svysummary(missing = "no", 
+                 value = everything() ~ TRUE, 
+                 ## stratify by age group
+                 by = age_group)
 
-## bind the age stratified and overall tables together 
-bind_rows(age_strat, overall) %>% 
-  ## change column names 
-  rename("Age group (months)" = "age_group", 
-         "GAM (n)" = "gam_whz n", 
-         "MAM (n)" = "mam_whz n",  
-         "SAM (n)" = "sam_whz n") %>% 
-  rename_redundant("DEFF" = " deff", 
-                   "Proportion (95%CI)" = " ci") %>% 
-  knitr::kable(digits = 1)
-
+## combine the overall and stratified tables 
+tbl_merge(list(overall, age_strat)) %>% 
+  modify_spanning_header(
+    list(
+      ## rename the spanning header
+      ## you can see what the columns are called by putting in an object and inspecting table_body
+      stat_0_1    ~ "**Overall**", 
+      c(stat_1_2,
+        stat_2_2, 
+        stat_3_2,
+        stat_4_2,
+        stat_5_2) ~ "**Age group (months)**"))
 ```
-
-
-### Programme coverage
-
-Weighted counts and proportions of individual children who received soap
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// soap_coverage \\\
---------------------------------------------------------------------------------
-
-This chunk creates a weighted table of number and proportion of children that 
-received soap in the overall population. 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r soap_coverage}
-survey_design %>% 
-  tab_survey(soap, na.rm = FALSE) %>% 
-  ## choose and rename relevant columns
-  select("Method" = value, 
-         "Received (n)" = n, 
-         "Proportion (95%CI)" = ci) %>% 
-  kable(digits = 1)
-```
-
 
