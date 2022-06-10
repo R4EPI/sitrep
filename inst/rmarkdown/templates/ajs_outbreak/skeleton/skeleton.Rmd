@@ -757,7 +757,7 @@ linelist_cleaned <- linelist_cleaned %>%
 ## If you already have an age group variable defined, you should manually
 ## arrange the categories in order.
 # linelist_cleaned <- linelist_cleaned %>% 
-#   mutate(age_group = as_factor(
+#   mutate(age_group = fct_relevel(
 #     age_group,
 #     "0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
 
@@ -798,9 +798,8 @@ includes numeric, factor, and character vectors.
 ## You can adapt this step to create other calculated variables
 
 ## create number of days under observation
-linelist_cleaned <- mutate(linelist_cleaned, 
-                           obs_days = as.numeric(date_of_exit - 
-                                                   date_of_consultation_admission))
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
 
 
 
@@ -811,10 +810,14 @@ linelist_cleaned <- mutate(linelist_cleaned,
 
 ## The variable DIED will be binary (TRUE/FALSE) -- if patient died or not
 ## if your variable is named ("Dead on arrival", "Dead in facility"), use this
-linelist_cleaned$DIED <- str_detect(linelist_cleaned$exit_status, "Dead")
+## See Epi R Handbook strings chapter for more details
+## Use negate=TRUE argument to reverse the search
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(DIED = str_detect(exit_status, "Dead"))
   
 ## use this version for coded values (e.g. "DOA", "DD")
-# linelist_cleaned$DIED <- linelist_cleaned$exit_status %in% c("DD", "DOA")
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(DIED = exit_status %in% c("DD", "DOA"))
 
 
 
@@ -870,7 +873,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ## Create a variable based on rules from other simple character variables
 ## If you have access to lab results, you can create a case definition variable 
-## the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
+## the tilde (~) is used to assign the new values (Conf, prob, susp, unknown)
 ## starting from the specific to the general
 ## TRUE assigns all remaining rows 
 ## You MUST modify this section to match your case definition. The below
@@ -897,19 +900,16 @@ This chunk will help you clean factor variables.
 
 # Force missing values to NA
 # important for sex to generate age pyramids
-linelist_cleaned$sex <- fct_recode(linelist_cleaned$sex, 
-                                   NULL = "Unknown/unspecified")
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(sex = fct_recode(sex, NULL = "Unknown/unspecified"))
 
 
 # change the order of levels in a single categorical variable 
 # This orders the levels -- since in all figures / tables, 0-4 should come
 # before 4-24, etc
 linelist_cleaned <- linelist_cleaned %>% 
-  mutate(time_to_death = factor(time_to_death, 
-                                levels = c("0-4 hours", 
-                                           ">4-24 hours", 
-                                           ">24-48 hours", 
-                                           ">48 hours")))
+  mutate(time_to_death = fct_relevel(time_to_death,
+           "0-4 hours", ">4-24 hours", ">24-48 hours", ">48 hours"))
 
 
 
@@ -993,14 +993,14 @@ of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r report_setup}
 # return the last day of the reporting week
-obs_end   <- week2date(str_glue("{reporting_week}-7"))
+obs_end   <- reporting_date
 
 # filter out cases after end of reporting week
 linelist_cleaned <- linelist_cleaned %>% 
   filter(date_of_consultation_admission <= obs_end)
 
 # define the first week of outbreak (date of first case)
-first_week <- as.aweek(min(as.character(linelist_cleaned$epiweek)))
+first_week <- min(linelist_cleaned$epiweek)
 
 # outbreak start 
 # return the first day in the week of first case 
