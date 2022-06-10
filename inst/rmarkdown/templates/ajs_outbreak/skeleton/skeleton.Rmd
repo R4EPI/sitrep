@@ -68,18 +68,19 @@ pacman::p_load(
   dplyr,           # clean/shape data
   stringr,         # clean text
   ggplot2,         # create plots and charts
+  slider,          # moving averages
+  parsedate,       # guessing dates
   tidylog,         # to print effects of data cleaning
   patchwork,       # combine multiple plots
   sitrep,          # MSF field epi functions
+  epitabulate,     # nice tables
   janitor,         # clean data
   matchmaker,      # matching data
+  gtsummary,       # tables
   tsibble,         # epiweeks
   sf,              # encode spatial vector data
   ggspatial        # plot maps
 )
-
-# install {linelist} package from github
-pacman::p_load_current_gh("reconhub/linelist")
 
 
 ```
@@ -644,8 +645,7 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 linelist_cleaned <- linelist_cleaned %>%
     mutate(
       across(.cols = all_of(DATEVARS),
-           .fns = ~linelist::guess_dates(.x,
-                                         error_tolerance = 0.5)))
+           .fns = ~parsedate::parse_date(.x)))
 
 
 
@@ -890,6 +890,10 @@ linelist_cleaned <- linelist_cleaned %>%
     hep_e_rdt != "Positive" & other_cases_in_hh == "Yes"  ~ "Probable",
     TRUE                                                  ~ "Suspected"
   ))
+
+
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(case = case_def == "Confirmed")
 ```
   
 
@@ -1071,27 +1075,13 @@ You can only use this chunk if you have lab results and have defined a case
 definition variable.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_age_group_and_def}
-
-tab_linelist(linelist_cleaned, 
-             # rows as age groups, with case_def as strata (columns)
-             age_group, strata = case_def, 
-             # we want row totals and column totals
-             col_total = TRUE, row_total = TRUE) %>%
-  
-  # removes the column called variable (which just says "age_group" in this case)
-  select(-variable) %>%
-  
-  # renames the column called value to Age group
-  rename("Age group" = value) %>%
-  
-  # there are several columns called "proportion" - renames them to %
-  rename_redundant("%" = proportion) %>%
-  
-  # any time there is a column that says n, we replace that with "cases (n)"
-  augment_redundant(" cases (n)" = " n$") %>%
-  
-  # makes the table easy to read with only 2 decimal places
-  kable(digits = 1)
+linelist_cleaned %>% 
+  select(age_group, case_def) %>% 
+  mutate(case_def = forcats::fct_explicit_na(case_def, "Missing")) %>%
+  tbl_summary(by = case_def,
+              percent = "column",
+              label = list(age_group = "Age group")) %>% 
+  add_overall()
 ```
 
 
@@ -1104,14 +1094,13 @@ You can also show cases by proportion of the total population by sex and age.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Cases by age group and sex 
 ```{r total_props_agegroup_sex}
-tab_linelist(linelist_cleaned, 
-             age_group, strata = sex,
-             col_total = TRUE, row_total = TRUE, prop_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Age group" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" cases (n)" = " n$") %>%
-  kable(digits = 1)
+linelist_cleaned %>% 
+  select(age_group, sex) %>% 
+  mutate(sex = forcats::fct_explicit_na(sex, "Missing")) %>%
+  tbl_summary(by = sex,
+              percent = "cell",
+              label = list(age_group = "Age group")) %>% 
+  add_overall()
 ```
 
   
@@ -1153,17 +1142,9 @@ Cases by symptoms
 This chunk gives the counts and proportions for all of the variables in SYMPTOMS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_symptoms}
-
-tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Yes") %>% 
-  select(-value) %>%
-  # fix the way symptoms are displayed
-  # str_replace_all switches underscore for space in the variable column
-  # str_to_sentence makes the first letter capital, and all others lowercase
-  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
-  # rename accordingly
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+linelist_cleaned %>% 
+  select(SYMPTOMS) %>% 
+  tbl_summary()
 ```
 
 
@@ -1178,19 +1159,14 @@ This chunk gives the counts and proportions for all of the variables in LABS.
 If you do not have lab results, comment out this chunk.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_labs}
-
-tab_linelist(linelist_cleaned, LABS, 
-             transpose = "value") %>% 
-  # fix the way lab test names are displayed
-  # str_replace_all switches underscore for space in the variable column
-  # str_to_sentence makes the first letter capital, and all others lowercase
-  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
-  # rename accordingly
-  rename("Lab test" = variable) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
-
+linelist_cleaned %>% 
+  select(LABS) %>% 
+  pivot_longer(cols = everything()) %>% 
+  mutate(name = str_to_sentence(str_replace_all(name, "_", " "))) %>% 
+  tbl_summary(percent = "row",
+              by = value,
+              label = list(name = "Test")) %>% 
+  add_overall()
 ```
 
 
@@ -1211,13 +1187,10 @@ If you have the time_to_death available, you can use this chunk to describe when
 inpatients died. If not, comment it out.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_time_to_death, warning = FALSE, message = FALSE}
-filter(linelist_cleaned, DIED, patient_facility_type == "Inpatient") %>% 
-  tab_linelist(time_to_death, col_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Time (hours)" = value, 
-         "Deaths (n)" = n, 
-         "%" = proportion) %>% 
-  kable(digits = 1)
+linelist_cleaned %>% 
+  filter(DIED, patient_facility_type == "Inpatient") %>% 
+  select(time_to_death) %>% 
+  tbl_summary()
 ```
 
 
@@ -1232,15 +1205,14 @@ If you have no deaths reported, the table will not be useful.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r overall_cfr, warning = FALSE, message = FALSE}
 # use arguments from above to produce overal CFR
-linelist_cleaned %>% 
-  filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, mergeCI = TRUE) %>%
-  rename("Deaths" = deaths,
-         "Cases" = population,
-         "CFR (%)" = cfr,
-         "95%CI" = ci) %>%
-  kable(digits = 1)
-
+linelist_cleaned %>%
+    filter(patient_facility_type == "Inpatient") %>%
+    select(DIED) %>%
+    gtsummary::tbl_summary(
+      statistic = everything() ~ "{N}",
+      label = DIED ~ "All participants") %>%
+    # Use wrapper function to calculate cfr
+    epitabulate::add_cfr(deaths_var = "DIED")
 ```
 
 
@@ -1254,15 +1226,18 @@ by sex. If you have no deaths reported, the table will not be useful.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r cfr_by_sex, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  mutate(sex = forcats::fct_explicit_na(sex, "-")) %>%
-  case_fatality_rate_df(deaths = DIED, group = sex, mergeCI = TRUE, add_total = TRUE) %>%
-  rename("Sex" = sex, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1)
+    filter(patient_facility_type == "Inpatient") %>%
+    select(DIED, sex) %>%
+    mutate(deaths_var = "DIED") %>%
+    mutate(sex = forcats::fct_explicit_na(sex, "Missing")) %>%
+    gtsummary::tbl_summary(
+      include = sex,
+      statistic = sex ~ "{n}",
+      missing = "no",
+      label = sex ~ "Gender"
+    ) %>%
+    # Use wrapper function to calculate cfr
+    add_cfr(deaths_var = "DIED")
 ```
 
 
@@ -1276,21 +1251,18 @@ This chunk gives the case fatality ratio among inpatients with outcomes, divided
 by age group. If you have no deaths reported, the table will not be useful.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
-
 linelist_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
-  tidyr::complete(age_group, 
-                  fill = list(deaths = 0, 
-                              population = 0, 
-                              cfr = 0, 
-                              ci = "-")) %>% # Ensure all levels are represented
-  rename("Age group" = age_group, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1)
+    filter(patient_facility_type == "Inpatient") %>%
+    select(DIED, age_group) %>%
+    mutate(deaths_var = "DIED") %>%
+    gtsummary::tbl_summary(
+      include = age_group,
+      statistic = age_group ~ "{n}",
+      missing = "no",
+      label = age_group ~ "Age group"
+    ) %>%
+    # Use wrapper function to calculate cfr
+    add_cfr(deaths_var = "DIED")
 ```
 
 
@@ -1303,17 +1275,18 @@ by case definition. You must have lab results or a case definition defined to
 use this. If you have no deaths, the table will not be useful.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r cfr_by_case_def, warning = FALSE, message = FALSE}
-
-# linelist_cleaned %>%
-#   filter(patient_facility_type == "Inpatient") %>%
-#   case_fatality_rate_df(deaths = DIED, group = case_def, 
-#                         mergeCI = TRUE, add_total = TRUE) %>%
-#   rename("Case definition" = case_def,
-#          "Deaths" = deaths,
-#          "Cases" = population,
-#          "CFR (%)" = cfr,
-#          "95%CI" = ci) %>%
-#   knitr::kable(digits = 1)
+linelist_cleaned %>%
+    filter(patient_facility_type == "Inpatient") %>%
+    select(DIED, case_def) %>%
+    mutate(deaths_var = "DIED") %>%
+    gtsummary::tbl_summary(
+      include = case_def,
+      statistic = case_def ~ "{n}",
+      missing = "no",
+      label = case_def ~ "Case definition"
+    ) %>%
+    # Use wrapper function to calculate cfr
+    add_cfr(deaths_var = "DIED")
 ```
 
 
@@ -1579,14 +1552,62 @@ basic_curve
 The peak of the outbreak was in `r tab_linelist(linelist_cleaned, epiweek) %>% slice(which.max(n)) %>% pull(value)`  
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// epicurve_moving \\\
+--------------------------------------------------------------------------------
 
+# This chunk will calculate weekly incidence and with a moving average.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r epicurve_moving, message = FALSE}
+# adjust the width of the moving average window here
+moving_window_days <- 14
+
+# calculates the moving average using counts by date of onset
+moving_avg <- linelist_cleaned %>% 
+  
+  # count cases by date of onset
+  count(date_of_onset) %>% 
+  
+  # create column with sliding window for day and window prior
+  mutate(indexed_window = slider::slide_index_dbl(
+        n,                       # calculate on new_cases
+        .i = date_of_onset,       # indexed with date_onset 
+        .f = ~sum(.x, na.rm = TRUE),     # function is sum() with missing values removed
+        .before = days(moving_window_days - 1)))
+
+# create plot
+moving_plot <- ggplot(data = moving_avg,
+       mapping = aes(x = date_of_onset, y = indexed_window))+
+  geom_line()+
+  
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA))+
+  
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks)+ 
+  
+  # use pre-defined labels
+  epicurve_labels+
+  
+  # use pre-defined theme (design) settings
+  epicurve_theme+
+  
+  # adjust title and subtitle for this particular plot
+  labs(title = str_glue("Cases by date of onset"),
+       subtitle = str_glue("{moving_window_days}-day moving average
+                           Source: MSF data from {reporting_week}"))
+
+# show your plot (stored for later use) 
+moving_plot
+```
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// biweekly_epicurve \\\
 --------------------------------------------------------------------------------
 
-If needed, you can plot a monthly epicurve. You can also do this by quarter, or
-year.
+If needed, you can plot a biweekly epicurve.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r monthly_epicurve, message = FALSE}
@@ -2440,7 +2461,7 @@ for (week in unique(cases$epiweek)) {
   ## in the top-left corner and a caption in the bottom-right
   print(
     barplot + map_plot + plot_annotation(
-         title   = str_glue("Epiweek: {current_week}"),
+         title   = str_glue("Epiweek: {week}"),
          caption = str_glue("Source: MSF data from {reporting_week}")
     )
   )
