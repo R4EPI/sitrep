@@ -681,9 +681,13 @@ linelist_cleaned <- linelist_cleaned %>%
 ## This step creates an epiweek variable from the date of onset.
 ## You can use date_of_consultation_admission if you are missing many date_of_onset.
 linelist_cleaned <- linelist_cleaned %>% 
-  mutate(epiweek = tsibble::yearweek(
-    date_of_onset,
-    week_start = 1))   # 1 is Monday start; use 7 for Sundays or 5 for Fridays
+  mutate(
+    ## create an epiweek variable 
+    epiweek = tsibble::yearweek(
+      date_of_onset,
+      week_start = 1),  # 1 is Monday start; use 7 for Sundays or 5 for Fridays
+    ## create a date version of epiweek 
+    epiweek_date = as.Date(epiweek))   
 
 ```
 
@@ -733,17 +737,17 @@ linelist_cleaned <- linelist_cleaned %>%
 
 
 ## create age group variable for under 5 years based on months
-# linelist_cleaned <- linelist_cleaned %>% 
-#   mutate(age_group_mon = age_categories(
-#     age_months,
-#     breakers = c(0, 6, 9, 12, 24), 
-#     ceiling = TRUE))
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(age_group_mon = age_categories(
+    age_months,
+    breakers = c(0, 6, 9, 12, 24),
+    ceiling = TRUE))
 
 ## create an age group variable by specifying categorical breaks
-# linelist_cleaned <- linelist_cleaned %>% 
-#   mutate(age_group = age_categories(
-#     age_years,
-#     breakers = c(0, 3, 15, 30, 45)))
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(age_group = age_categories(
+    age_years,
+    breakers = c(0, 3, 15, 30, 45)))
 
 ## alternatively, create an age group variable by specifying a sequence
 ## this creates age groups for every ten years between 0 and 100.
@@ -1124,7 +1128,7 @@ There were `r fmt_count(linelist_cleaned, is.na(sex)| sex == "Unknown/unspecifie
 This chunk creates an age/sex pyramid of your cases.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r age_pyramid, warning=FALSE}
- plot_age_pyramid(linelist_cleaned,
+age_pyramid(linelist_cleaned,
                   age_group = "age_group", 
                   split_by = "sex") + 
   labs(y = "Cases (n)", x = "Age group") + # change axis  labels
@@ -1280,7 +1284,7 @@ linelist_cleaned %>%
                   fill = list(deaths = 0, 
                               population = 0, 
                               cfr = 0, 
-                              ci = 0)) %>% # Ensure all levels are represented
+                              ci = "-")) %>% # Ensure all levels are represented
   rename("Age group" = age_group, 
          "Deaths" = deaths, 
          "Cases" = population, 
@@ -1370,7 +1374,8 @@ attack rate by group.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r attack_rate_by_agegroup, warning = FALSE}
 
-cases <- count(linelist_cleaned, age_group) %>%    # cases for each age_group
+cases <- linelist_cleaned %>% 
+  count(age_group) %>%    # cases for each age_group
   left_join(population_data_age, by = "age_group") # merge population data 
 
 
@@ -1455,13 +1460,13 @@ mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
 --------------------------------------------------------------------------------
 
 To produce a crude mortality rate attributable to AJS per 10,000 people per 
-day, use the folowing code chunk. 
+day, use the following code chunk. 
 
 This assumes that you are capturing every AJS death in your population and 
 that your population remains stable over the time period of interest. 
 
 In this situation the time period of interest is from the beginning of the 
-epiweek your first case occured in, until the last day of the epiweek you are 
+epiweek your first case occurred in, until the last day of the epiweek you are 
 currently reporting on. (see this presentation (https://www.odi.org/sites/odi.org.uk/files/odi-assets/events-presentations/776.pdf) for more detail)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Crude mortality rate attributable to AJS per 10,000 population per day
@@ -1521,18 +1526,50 @@ There were `r fmt_count(linelist_cleaned, is.na(date_of_onset))` cases missing d
 # This chunk will calculate weekly incidence and plot your epicurve.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r epicurve, message = FALSE}
+## define begining and end of period of interest 
+start_week <- min(linelist_cleaned$epiweek, na.rm = TRUE)
+end_week <- max(linelist_cleaned$epiweek, na.rm = TRUE)
 
-# count cases for each week of outbreak
-# you can change the start of your week (eg "Sunday week", "Saturday week")
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = "Monday week")
+## pull the unique weeks which occur
+all_weeks <- seq(start_week,
+                 end_week, by = 1) 
+
+## change weeks to dates
+all_weeks_date <-  as.Date(all_weeks)  
 
 
-# plot your epicurve
-basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  # add labels to axes and below chart
-  epicurve_labels +
-  # change visuals of dates and remove legend title
+## define ggplot themes
+tsa_axes <-
+  ## set the x-axis limits based on weeks of interest, only label every january
+  scale_x_date(breaks = all_weeks_date,
+               labels = all_weeks,
+               limits = c(
+                 first(all_weeks_date),
+                 last(all_weeks_date)
+               ))
+
+
+basic_curve <- linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date)) +
+  
+  ## plot as a bar
+  geom_bar(width = 7,
+           fill = "red",
+           colour = "black") +
+  
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA))+
+  
+  ## add in the appropriate x-axis breaks and labels 
+  tsa_axes + 
+  
+  # use pre-defined labels
+  epicurve_labels+
+  
+  # use pre-defined theme (design) settings
   epicurve_theme
 
 # show your plot (stored for later use) 
@@ -1543,37 +1580,87 @@ basic_curve
 ## you can customize the number of breaks by changing n_breaks
 ## you can also use months for your break (here in three-month intervals)
 
-# basic_curve + scale_x_incidence(inc_week_7, n_breaks = 6)
 # basic_curve + scale_x_date(breaks = "3 months", date_labels = "%b %Y")
 
 
 ```
 
-The peak of the outbreak was in `r date2week(find_peak(inc_week_7), floor_day = TRUE)`
+The peak of the outbreak was in `r tab_linelist(linelist_cleaned, epiweek) %>% slice(which.max(n)) %>% pull(value)`  
+
 
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// biweekly_epicurve \\\
+/// monthly_epicurve \\\
 --------------------------------------------------------------------------------
 
-If needed, you can plot a biweekly epicurve. You can also do this by month,
-quarter, or year. You can change the start of your week as needed.
+If needed, you can plot a monthly epicurve. You can also do this by quarter, or
+year.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r biweekly_epicurve, message = FALSE}
+```{r monthly_epicurve, message = FALSE}
+## Create epimonth variable -----------------------------------------------------
+## This step creates an epimonth variable from the date of onset.
+## You can use date_of_consultation_admission if you are missing many date_of_onset.
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(
+    ## create an epiweek variable 
+    epimonth = tsibble::yearmonth(
+      date_of_onset),
+    ## create a date version of epiweek 
+    epimonth_date = as.Date(epiweek)) 
 
-# create case counts for two week groups of your outbreak overall
-inc_week_14 <- incidence(linelist_cleaned$date_of_onset, interval = "2 Monday weeks")
+
+## define begining and end of period of interest 
+start_month <- min(linelist_cleaned$epimonth, na.rm = TRUE)
+end_month <- max(linelist_cleaned$epimonth, na.rm = TRUE)
+
+## pull the unique weeks which occur
+all_months <- seq(start_month,
+                 end_month, by = 1) 
+
+## change weeks to dates
+all_months_date <-  as.Date(all_months)  
 
 
-# plot your epicurve
-plot(inc_week_14, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_14)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  # add labels to axes and below chart
-  epicurve_labels +
-  # change visuals of dates and remove legend title
+## define ggplot themes
+tsa_axes <-
+  ## set the x-axis limits based on weeks of interest, only label every january
+  scale_x_date(breaks = all_months_date,
+               labels = all_months,
+               limits = c(
+                 first(all_months_date),
+                 last(all_months_date)
+               ))
+
+
+monthly_curve <- linelist_cleaned %>%
+  filter(!is.na(epimonth_date)) %>%
+  
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epimonth_date)) +
+  
+  ## plot as a bar
+  geom_bar(fill = "red",
+           colour = "black") +
+  
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA))+
+
+  ## add in the appropriate x-axis breaks and labels 
+  tsa_axes + 
+  
+  # use pre-defined labels
+  epicurve_labels+
+  
+  # use pre-defined theme (design) settings
   epicurve_theme
+
+# show your plot (stored for later use) 
+monthly_curve
+
+
+
 
 ```
 
@@ -1588,18 +1675,34 @@ You can plot weekly incidence by gender using this chunk.
 
 ```{r incidence_by_gender, message = FALSE}
 
-# get counts by gender
-inc_week_7_gender <- incidence(linelist_cleaned$date_of_onset, 
-                               interval = "Monday week", 
-                               groups = linelist_cleaned$sex)
 
-plot(inc_week_7_gender, 
-     show_cases = FALSE, # this removes black borders
-     border = "black", 
-     n_breaks = nrow(inc_week_7_gender)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  epicurve_labels +
+sex_curve <- linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(sex)))) +
+  
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA))+
+
+  # control the fill color of the bars
+  scale_fill_viridis_d()+
+  
+  ## add in the appropriate x-axis breaks and labels 
+  tsa_axes + 
+  
+  # use pre-defined labels
+  epicurve_labels+
+  
+  # use pre-defined theme (design) settings
   epicurve_theme
+
+# show your plot (stored for later use) 
+sex_curve
 
 ```
 
@@ -1613,15 +1716,35 @@ This chunk shows the weekly incidence by case definition. You must have a
 defined case definition variable.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r incidence_by_case_def, message = FALSE}
-inc_week_7_casedef <- incidence(linelist_cleaned$date_of_onset, 
-                                interval = "Monday week", 
-                                groups = linelist_cleaned$case_def)
-plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  # add labels to axes and below chart
-  epicurve_labels +
-  # change visuals of dates, remove legend title and move legend to bottom
+
+case_def_curve <- linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(case_def)))) +
+  
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA))+
+  
+  # control the fill color of the bars
+  scale_fill_viridis_d(option = "A", direction = -1)+
+  
+  ## add in the appropriate x-axis breaks and labels 
+  tsa_axes + 
+  
+  # use pre-defined labels
+  epicurve_labels+
+  
+  # use pre-defined theme (design) settings
   epicurve_theme
+
+# show your plot (stored for later use) 
+case_def_curve
+
 ```
 
 
@@ -1635,16 +1758,34 @@ categorical variable!).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r incidence_by_water_source, message = FALSE}
-inc_week_7_water <- incidence(linelist_cleaned$date_of_onset, 
-                              interval = "Monday week", 
-                              groups = linelist_cleaned$water_source)
 
+water_curve <- linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
 
-plot(inc_week_7_water, show_cases = TRUE, border = "black", 
-     n_breaks = nrow(inc_week_7_water)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  epicurve_labels +
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(water_source)))) +
+  
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA))+
+  
+  # control the fill color of the bars
+  scale_fill_viridis_d(option = "C", direction = -1)+
+  
+  ## add in the appropriate x-axis breaks and labels 
+  tsa_axes + 
+  
+  # use pre-defined labels
+  epicurve_labels+
+  
+  # use pre-defined theme (design) settings
   epicurve_theme
+
+# show your plot (stored for later use) 
+water_curve
 ```
 
 
@@ -1658,16 +1799,36 @@ This chunk limits the data to only inpatients, then stratifies by sex.
 Cases by week of onset among inpatients by sex 
 
 ```{r incidence_by_sex_facility, message = FALSE}
-inc_week_7_sex_fac <- linelist_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  with(incidence(date_of_onset, interval = "Monday week", groups = sex))
 
-
-
-plot(inc_week_7_sex_fac, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_sex_fac)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  epicurve_labels +
+facility_curve_sex <- linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  filter(patient_facility_type == "Inpatient") %>% 
+  
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(sex)))) +
+  
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA))+
+  
+  # control the fill color of the bars
+  scale_fill_viridis_d()+
+  
+  ## add in the appropriate x-axis breaks and labels 
+  tsa_axes + 
+  
+  # use pre-defined labels
+  epicurve_labels+
+  
+  # use pre-defined theme (design) settings
   epicurve_theme
+
+# show your plot (stored for later use) 
+facility_curve_sex
+
 
 ```
 
