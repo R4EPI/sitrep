@@ -996,8 +996,8 @@ This chunk removes cases after your reporting week and defines the start and end
 of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r report_setup}
-# return the last day of the reporting week
-obs_end   <- reporting_date
+# return the last day of the last reporting week
+obs_end   <- as.Date((reporting_week + 1)) - 1
 
 # filter out cases after end of reporting week
 linelist_cleaned <- linelist_cleaned %>% 
@@ -1537,18 +1537,7 @@ all_weeks <- seq(start_week,
 ## change weeks to dates
 all_weeks_date <-  as.Date(all_weeks)  
 
-
-## define ggplot themes
-tsa_axes <-
-  ## set the x-axis limits based on weeks of interest, only label every january
-  scale_x_date(breaks = all_weeks_date,
-               labels = all_weeks,
-               limits = c(
-                 first(all_weeks_date),
-                 last(all_weeks_date)
-               ))
-
-
+# make plot
 basic_curve <- linelist_cleaned %>%
   filter(!is.na(epiweek_date)) %>%
   
@@ -1563,8 +1552,10 @@ basic_curve <- linelist_cleaned %>%
   # align plot with bottom of plot
   scale_y_continuous(expand = c(0, NA))+
   
-  ## add in the appropriate x-axis breaks and labels 
-  tsa_axes + 
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks)+ 
   
   # use pre-defined labels
   epicurve_labels+
@@ -1647,8 +1638,10 @@ monthly_curve <- linelist_cleaned %>%
   # align plot with bottom of plot
   scale_y_continuous(expand = c(0, NA))+
 
-  ## add in the appropriate x-axis breaks and labels 
-  tsa_axes + 
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_months_date,
+    labels = all_months)+
   
   # use pre-defined labels
   epicurve_labels+
@@ -1692,8 +1685,10 @@ sex_curve <- linelist_cleaned %>%
   # control the fill color of the bars
   scale_fill_viridis_d()+
   
-  ## add in the appropriate x-axis breaks and labels 
-  tsa_axes + 
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks)+ 
   
   # use pre-defined labels
   epicurve_labels+
@@ -1733,8 +1728,10 @@ case_def_curve <- linelist_cleaned %>%
   # control the fill color of the bars
   scale_fill_viridis_d(option = "A", direction = -1)+
   
-  ## add in the appropriate x-axis breaks and labels 
-  tsa_axes + 
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks)+
   
   # use pre-defined labels
   epicurve_labels+
@@ -1775,8 +1772,10 @@ water_curve <- linelist_cleaned %>%
   # control the fill color of the bars
   scale_fill_viridis_d(option = "C", direction = -1)+
   
-  ## add in the appropriate x-axis breaks and labels 
-  tsa_axes + 
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks)+
   
   # use pre-defined labels
   epicurve_labels+
@@ -1817,8 +1816,10 @@ facility_curve_sex <- linelist_cleaned %>%
   # control the fill color of the bars
   scale_fill_viridis_d()+
   
-  ## add in the appropriate x-axis breaks and labels 
-  tsa_axes + 
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks)+
   
   # use pre-defined labels
   epicurve_labels+
@@ -1846,7 +1847,7 @@ Attack rate per 10,000 population by week
 ```{r attack_rate_per_week, warning = FALSE, message = FALSE}
 # counts and cumulative counts by week
 cases <- linelist_cleaned %>%
-  arrange(date_of_onset) %>%        # arrange by date of onset
+  arrange(date_of_onset) %>%        # arrange by date of onset 
   count(epiweek, .drop = FALSE) %>% # count all epiweeks and include zero counts
   mutate(cumulative = cumsum(n))    # add a cumulative sum
 
@@ -1904,7 +1905,8 @@ Case fatality ratio as a proportion among inpatients by week
 # calculate CFR among inpatients by week
 cfr <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(str_detect(exit_status, "Dead"), group = epiweek)
+  mutate(epiweek_char = as.character(epiweek)) %>% 
+  case_fatality_rate_df(str_detect(exit_status, "Dead"), group = epiweek_char)
 
 
 cfr %>%
@@ -1938,7 +1940,7 @@ This chunk sets up the AR graph. (It does not print the graph automatically.)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r ar_line_graph}
 
-ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
+ar_plot <- ggplot(ar, aes(x = as.Date(epiweek), group = 1)) +
   # add confidence intervals as a ribbon
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "blue",  fill = "blue", 
@@ -1946,11 +1948,11 @@ ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   # add AR as a line
   geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
   # set origin for axes
-  scale_y_continuous(expand = c(0, 0)) +
-  # scale the x axis the same as the incidence curve. Expand forces it to align. 
-  incidence::scale_x_incidence(inc_week_7, 
-                               n_breaks = nrow(inc_week_7), 
-                               expand = c(0, 7 * 1.5)) +
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks)+
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 10,000)") + 
   # change visuals of dates and remove legend title
@@ -1968,7 +1970,7 @@ If you do not have any deaths in your data set, this will not show anything.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r cfr_line_graph}
 
-cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
+cfr_plot <- ggplot(cfr, aes(x = as.Date(yearweek(as.character(epiweek_char)))), group = 1) +
   # add confidence intervals as a ribbon
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "red", fill = "red", 
@@ -1976,11 +1978,11 @@ cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   # add CFR as a line
   geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
   # set origin for axes
-  scale_y_continuous(expand = c(0, 0)) +  
-  # scale the x axis the same as the incidence curve. Expand forces it to align. 
-  incidence::scale_x_incidence(inc_week_7, 
-                               n_breaks = nrow(inc_week_7), 
-                               expand = c(0, 7 * 1.5)) +
+  scale_y_continuous(expand = c(0, NA)) +  
+# control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks)+
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "CFR [95% CI]", 
        subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
