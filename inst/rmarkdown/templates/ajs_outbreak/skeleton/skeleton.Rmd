@@ -54,37 +54,75 @@ knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
 options(knitr.kable.NA = "-")
 
 
+# Ensures the package "pacman" is installed
+if (!require("pacman")) {
+     install.packages("pacman") }
 
-## Installing required packages for this template
-required_packages <- c("knitr",       # create output docs
-                       "here",        # find your files
-                       "dplyr",       # clean/shape data
-                       "forcats",     # clean/shape data
-                       "stringr",     # clean text
-                       "rio",         # read in data
-                       "ggplot2",     # create plots and charts
-                       "patchwork",   # combine plots in one
-                       "sitrep",      # MSF field epi functions
-                       "linelist",    # Functions for cleaning/standardising data/dates
-                       "matchmaker",  # dictionary-based standardization of variables
-                       "incidence",   # create epicurves
-                       "aweek",       # define epi weeks
-                       "epitrix",     # epi helpers and tricks
-                       "sf",          # encode spatial vector data
-                       "ggspatial")   # plot maps
+# Install and load required packages for this template
+pacman::p_load(
+  knitr,           # create output docs
+  here,            # find your files
+  rio,             # read in data
+  forcats,         # handle ordinal variables
+  lubridate,       # handle dates
+  dplyr,           # clean/shape data
+  stringr,         # clean text
+  ggplot2,         # create plots and charts
+  tidylog,         # to print effects of data cleaning
+  patchwork,       # combine multiple plots
+  sitrep,          # MSF field epi functions
+  janitor,         # clean data
+  matchmaker,      # matching data
+  tsibble,         # epiweeks
+  sf,              # encode spatial vector data
+  ggspatial        # plot maps
+)
 
-for (pkg in required_packages) {
-  # install packages if not already present
-  if (!pkg %in% rownames(installed.packages())) {
-    install.packages(pkg)
-  }
-  
-  # load packages to this current session 
-  library(pkg, character.only = TRUE)
-}
+# install {linelist} package from github
+pacman::p_load_current_gh("reconhub/linelist")
 
 
+```
 
+
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// define_current_week \\\
+--------------------------------------------------------------------------------
+
+You need to set the week you want to report on. Generally, this is the previous
+week. Put it below.
+
+The standard is
+Monday.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r define_current_week}
+## replace the date below with the latest date 
+## for which you want data to appear in the report
+reporting_date <- ymd("2019-06-17")
+
+## This command sets the reporting week (e.g 2019 W25) based on the reporting_date
+## Mondays are the week start by default. Adjust the "1" to another number if desired.
+## E.g. 7 for Sundays, 5 for Fridays
+reporting_week <- tsibble::yearweek(reporting_date, 1)
+
+```
+
+
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// set_plot_defaults \\\
+--------------------------------------------------------------------------------
+
+This code set the defaults for plots, such as the base text size,
+the text angle, legend title, gridline color (grey), and x and y labels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r set_plot_defaults}
 ## Set default options for plots and charts
 
 ## set default text size to 16 for plots
@@ -97,26 +135,6 @@ epicurve_theme <- theme(
   legend.title = element_blank(),
   panel.grid.major.x = element_line(color = "grey60", linetype = 3),
   panel.grid.major.y = element_line(color = "grey60", linetype = 3))
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// define_current_week \\\
---------------------------------------------------------------------------------
-
-You need to set the week you want to report on. Generally, this is the previous
-week. Put it below.
-
-aweek::set_week_start will define the beginning of the week. The standard is
-Monday.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r define_current_week}
-## set the day that defines the beginning of your epiweek.
-aweek::set_week_start("Monday")
-
-## set current week 
-reporting_week <- aweek::as.aweek("2019-W25")
 
 ## sets the labels in ggplot for the epicurves
 epicurve_labels <- labs(x = "Calendar week", 
@@ -128,17 +146,20 @@ epicurve_labels <- labs(x = "Calendar week",
 
 
 
+
+
+
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// read_fake_data \\\
 --------------------------------------------------------------------------------
 
-
-To play with this template, you can create fake data. Comment out this chunk
-when you are using real data.
+To play with this template, you can create fake data. 
+Comment out the code in this chunk when you are using real data.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r read_fake_data, warning = FALSE, message = FALSE}
 
-linelist_raw <- gen_data("AJS")
+linelist_raw <-  sitrep::gen_data("AJS")
 
 ## fake lab data
 # lab_results <- linelist_cleaned %>% 
@@ -151,14 +172,26 @@ linelist_raw <- gen_data("AJS")
 
 
 
+
+
+
+
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You should load your data as a linelist, where each row is one case.
+If using real data, it should be in a "linelist" format: one row per case
 
 There are two options:
-- Your data is from DHIS2: use read_DHIS_excel_data
-- Your data is NOT FROM DHIS2 and in Excel, CSV, or Stata format: 
-use read_nonDHIS_data
+
+1) Your data are from DHIS2: use the "read_DHIS_data" code below  
+2) Your data are NOT FROM DHIS2 and are in Excel, CSV, or Stata format: 
+use the "read_nonDHIS_data" code below
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+
+
+
+
 
 
 
@@ -168,7 +201,7 @@ use read_nonDHIS_data
 
 This section is for data from DHIS2.
 It uses the standardized MSF data dictionary.
-If you didn't use the standardized data dictionary, go to read_nonDHIS_data.
+If you did not use the standardized data dictionary, go to read_nonDHIS_data.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_DHIS_data, warning = FALSE, message = FALSE}
@@ -181,10 +214,10 @@ If you didn't use the standardized data dictionary, go to read_nonDHIS_data.
 
 
 ## Excel file with password ----------------------------------------------------
-## Use this section if your Excel has a password.
+## Use this section if your Excel has a password
+## Change "linelist.xlsx" to the name and filepath of your file
 
-# install.packages(c("excel.link", "askpass"))
-# library(excel.link)
+# pacman::p_load(c("excel.link", "askpass"))
 
 # linelist_raw <- xl.read.file(here::here("linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
@@ -199,10 +232,10 @@ If you didn't use the standardized data dictionary, go to read_nonDHIS_data.
 
 This section is for data from DHIS2 that you loaded in read_DHIS_data.
 
-If you didn't use DHIS2 data, go to read_nonDHIS_data.
+If you did not use DHIS2 data, go to read_nonDHIS_data.
 
-This step shows you the data dictionary. The data dictionary has variable names
-in the data_element_shortname column. Possible values for each variable are
+This step shows you the AJS data dictionary. The data dictionary has variable 
+names in the data_element_shortname column. Possible values for each variable are
 specified in code and name columns. Code has the shortened value and Name has
 the full-text value.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -219,14 +252,9 @@ linelist_dict <- msf_dict("AJS", compact = FALSE)
 
 
 ## Clean column names ----------------------------------------------------------
-## make a copy of your orginal dataset and name it linelist_cleaned
-linelist_cleaned <- linelist_raw
-
-## define clean variable names using clean_labels from the epitrix package
-cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
-
-## overwrite variable names with defined clean names
-colnames(linelist_cleaned) <- cleaned_colnames
+## make a copy of your original dataset and name it linelist_cleaned
+linelist_cleaned <- linelist_raw %>% 
+  janitor::clean_names()
 
 
 
@@ -248,30 +276,36 @@ linelist_cleaned <- matchmaker::match_df(linelist_cleaned,
 /// read_nonDHIS_data \\\
 --------------------------------------------------------------------------------
 
-This section is for data not from DHIS2.
-If you have already loaded data from DHIS2, go to read_population_data.
+This section is to import data not from DHIS2.
+If you have already imported data from DHIS2, go to read_population_data.
+
+Uncomment and use the code appropriate to your situation. Then update the
+filepath and name of your file (and sheet or range if applicable)
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_nonDHIS_data, warning = FALSE, message = FALSE}
 
 ## Excel file ------------------------------------------------------------------
-## to read in a specific sheet use "which"
+## to import  a specific sheet use the "which" argument
 # linelist_raw <- rio::import(here::here("linelist.xlsx"), which = "Sheet1")
 
 
 
 ## Excel file -- Specific range ------------------------------------------------
-## you can specify a range in an excel sheet.
+## this command allows you to specify a range in an excel sheet.
 # linelist_raw <- rio::import(here::here("linelist.xlsx"), range = "B2:J102")
 
 
 
 ## Excel file with password ----------------------------------------------------
-## use this section if your Excel has a password.
+## use this section if your Excel has a password. The final command will prompt 
+## you to enter the password.
 
-# install.packages(c("excel.link", "askpass"))
-# library(excel.link)
+## This command installs and loads packages that handle passwords
+# pacman::p_load(excel.link, askpass)
 
+## THis commands imports your password-protected Excel and asks for the password
 # linelist_raw <- xl.read.file(here::here("linelist.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
@@ -328,44 +362,42 @@ the full-text value.
 ## This step fixes the column names so they are easy to use in R.
 
 ## make a copy of your orginal dataset and name it linelist_cleaned
-# linelist_cleaned <- linelist_raw
+# linelist_cleaned <- linelist_raw %>% 
+#      janitor::clean_names()
  
-## define clean variable names using clean_labels from the epitrix package
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
- 
-## overwrite variable names with defined clean names
-# colnames(linelist_cleaned) <- cleaned_colnames
-
-
 
 ## Match column names ---------------------------------------------------------
 ## This step helps you match your variables to the standard variables.
 ## This step will require some patience. Courage!
 
 ## Use the function msf_dict_rename_helper() to create a template based on the
-## AJS dictionary. This will copy a rename command like the one above to your
-## clipboard.
+## AJS dictionary. This will copy a rename() command to your clipboard.
 
 # msf_dict_rename_helper("AJS")
 
-## Paste the result below and your column names to the matching variable.
+## Paste the result in the place indicated below.  
+## Then, in the spaces indicated, write your data's column names that correspond
+## to the standard column names in the MSF dictionary.  
+
 ## Be careful! You still need to be aware of what each variable means and what
 ## values it takes.
+
 ## If there are any variables that are in the MSF dictionary that are not in
 ## your data set, then you should comment them out, but be aware that some
 ## analyses may not run because of this. 
 
-
+## PASTE HERE
 
 ## Here is an EXAMPLE for changing a few specific names. function. In this
-## example, we have the columns "gender" and "age" that we want to rename as
-## "sex" and "age_years". 
+## example, we have the columns "gender" and "age" in our dataset, which we want
+## to map to (change to) the standard MSF column names "sex" and "age_years". 
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME).
 
 # linelist_cleaned <- rename(linelist_cleaned, 
 #                            sex       = gender, # TEXT
 #                            age_years = age     # INTEGER_POSITIVE
 # )
+
 
 ```
 
@@ -380,12 +412,11 @@ This template uses population data to calculate things like incidence.
 
 There are three options:
 - You can read in a spreadsheet with age group and region data.
-- You can put in the specific populations into the gen_population function. 
+- You can put in the specific populations into the gen_population() function. 
 - If you have the total or regional populations, you can estimate the age group
 from proportions.
 
 Comment out the options you are not using.
-
 
 Age group proportions are from the OCBA population denominators tool v1. The
 proportions below are for sub-Saharan Africa in 2019. They are only an estimate!
@@ -406,18 +437,20 @@ If you have more specific proportions, you can use them below.
 ## Enter counts directly -------------------------------------------------------
 
 # population_data_age <- gen_population(
-#   groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
-#   counts = c(3600, 18110, 13600, 8080, 6600),
-#   strata = NULL) %>%
-#   rename(age_group = groups,
+#     groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
+#     counts = c(3600, 18110, 13600, 8080, 6600),
+#     strata = NULL) %>%   # do not stratify by gender
+#   rename(                # rename columns (syntax is NEW NAME = OLD NAME)
+#     age_group = groups,
 #     population = n)
 
 # population_data_region <- gen_population(
-#   groups = c("Village A", "Village B", "Village C", "Village D"),
-#   counts = c(10000, 20000, 15000, 5000),
-#   strata = NULL) %>%               # do not stratify by gender
-#   rename(patient_origin = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
-#          population = n)
+#     groups = c("Village A", "Village B", "Village C", "Village D"),
+#     counts = c(10000, 20000, 15000, 5000),
+#     strata = NULL) %>%        # do not stratify by gender
+#   rename(                     # rename columns (syntax is NEW NAME = OLD NAME)
+#     patient_origin = groups,  
+#     population = n)
 
 
 ## Create counts from proportions ----------------------------------------------
@@ -550,7 +583,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ## OPTIONAL: if you want to inspect certain variables, you can select these by
 ## name or column number. This example creates a reduced dataset for the first
-## three columns, age_years, and sex.
+## three columns, and age_years, and sex.
 
 # linelist_reduced <- select(linelist_cleaned, c(1:3, "age_years", "sex"))
 
@@ -590,7 +623,8 @@ This chunk will help you set up and clean your date variables.
 
 ## make sure all date variables are formatted as dates 
 ## get the names of variables which are dates
-DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
+DATEVARS <- linelist_dict %>% 
+  filter(data_element_valuetype == "DATE") %>%
   filter(data_element_shortname %in% names(linelist_cleaned)) %>% 
   ## filter to match the column names of your data
   pull(data_element_shortname) 
@@ -598,12 +632,12 @@ DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
 ## find if there are date variables which are completely empty
 ## (otherwise the linelist package does not work)
 EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
-  is.na(study_data_cleaned[[.x]])
+  is.na(linelist_cleaned[[.x]])
   )) %>% 
   unlist() %>% 
   which()
 
-## remove exclude the names of variables which are completely emptys
+## remove exclude the names of variables which are completely empty
 DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 
 ## change to dates 
@@ -631,24 +665,25 @@ linelist_cleaned <- linelist_cleaned %>%
 
 
 ## Some dates will be unrealistic or wrong.
-## Here is an example of how to manually fix dates. 
+## Here is an example of how to manually fix dates.
+## Place the criteria on the left, and the correct date on the right of the ~
 ## Look at your data and edit as needed.
-# linelist_cleaned <- mutate(linelist_cleaned,
-#                            date_of_onset = case_when(
-#                              date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA),
-#                              date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
-#                              TRUE                                   ~ date_of_onset
-#                            ))
+# linelist_cleaned <- linelist_cleaned %>%
+#    mutate(date_of_onset = case_when(
+#      date_of_onset < as.Date("2017-11-01")  ~ as.Date(NA),
+#      date_of_onset == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
+#      TRUE                                   ~ date_of_onset
+#      ))
   
 
 
 ## Create epiweek variable -----------------------------------------------------
 ## This step creates an epiweek variable from the date of onset.
 ## You can use date_of_consultation_admission if you are missing many date_of_onset.
-
-linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
-                                             floor_day = TRUE, 
-                                             factor = TRUE)
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(epiweek = tsibble::yearweek(
+    date_of_onset,
+    week_start = 1))   # 1 is Monday start; use 7 for Sundays or 5 for Fridays
 
 ```
 
@@ -682,41 +717,49 @@ linelist_cleaned <- linelist_cleaned %>%
 
 
 ## OPTIONAL: change those who are above or below a certain age to NA
-# linelist_cleaned <- mutate(linelist_cleaned,
-#                            age_years = case_when(
-#                              is.na(age_years) ~ NA_integer_,
-#                              age_years < 0   ~ NA_integer_,
-#                              age_years > 120 ~ NA_integer_,
-#                              TRUE            ~ as.integer(age_years) #Preserves other values
-#                            ))
+# linelist_cleaned <- linelist_cleaned %>%
+#    mutate(age_years = case_when(
+#      is.na(age_years) ~ NA_integer_,
+#      age_years < 0    ~ NA_integer_,
+#      age_years > 120  ~ NA_integer_,
+#      TRUE             ~ as.integer(age_years) #Preserves other values
+#     ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
-# linelist_cleaned <- mutate(linelist_cleaned,
-#                            age_months = case_when(
-#                              age_years < 5 ~ age_years * 12
-#                              )) 
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(age_months = case_when(
+#     age_years < 5 ~ age_years * 12
+#     ))
 
 
 ## create age group variable for under 5 years based on months
-linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months, 
-                                                 breakers = c(0, 6, 9, 12, 24), 
-                                                 ceiling = TRUE)
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(age_group_mon = age_categories(
+#     age_months,
+#     breakers = c(0, 6, 9, 12, 24), 
+#     ceiling = TRUE))
 
 ## create an age group variable by specifying categorical breaks
-linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years, 
-                                             breakers = c(0, 3, 15, 30, 45))
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(age_group = age_categories(
+#     age_years,
+#     breakers = c(0, 3, 15, 30, 45)))
 
 ## alternatively, create an age group variable by specifying a sequence
 ## this creates age groups for every ten years between 0 and 100.
-# linelist_cleaned$age_group <- age_categories(linelist_cleaned$age,
-#                                              lower = 0, 
-#                                              upper = 100, 
-#                                              by = 10)
+# linelist_cleaned <- linelist_cleaned %>% 
+#     mutate(age_group = age_categories(
+#       linelist_cleaned$age,
+#       lower = 0, 
+#       upper = 100, 
+#       by = 10))
 
 ## If you already have an age group variable defined, you should manually
 ## arrange the categories in order.
-# linelist_cleaned$age_group <- factor(linelist_cleaned$age_group,
-#                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(age_group = as_factor(
+#     age_group,
+#     "0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
 
 
 ## to combine different age categories use the following function 
