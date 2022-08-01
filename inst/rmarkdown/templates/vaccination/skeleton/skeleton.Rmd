@@ -61,9 +61,14 @@ required_packages <- c("knitr",       # create output docs
                        "forcats",     # manipulate and rearrange factors
                        "stringr",     # manipulate texts
                        "ggplot2",     # create plots and charts
+                       "apyramid",    # plotting age pyramids
                        "sitrep",      # MSF field epi functions
                        "survey",      # for survey functions
-                       "srvyr"        # dplyr wrapper for survey package
+                       "srvyr",       # dplyr wrapper for survey package
+                       "gtsummary",   # produce tables
+                       "labelled",    # add labels to variables
+                       "matchmaker",  # recode datasets with dictionaries
+                       "lubridate"    # working with dates
                        )
 
 for (pkg in required_packages) {
@@ -97,12 +102,14 @@ Comment out this chunk when you are using real data.
 
 
 ## generates MSF standard dictionary for Kobo 
-study_data_dict <- msf_dict_survey("Vaccination")
+study_data_dict <- msf_dict_survey("Vaccination_short")
 
+## generates MSF standard dictionary for Kobo in long format (for recoding)
+study_data_dict_long <- msf_dict_survey(disease = "Vaccination_short", compact = FALSE)
 
 ## generates a fake dataset for use as an example in this template
 ## this dataset already has household and individual levels merged
-study_data_raw <- gen_data(dictionary = "Vaccination", 
+study_data_raw <- gen_data(dictionary = "Vaccination_short", 
                            varnames = "name",
                            numcases = 1000)
 ```
@@ -255,26 +262,20 @@ re-format this for you so it can be used easily to recode.
 study_data_cleaned <- study_data_raw
 
 ## Sometimes you want to rename specific variables
+## For example we want to add details to violance_natur_other
+## This is because otherwise it will be duplicated after we clean names below
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 ## You can add multiple column name recodes by simply separating them with a comma
 # study_data_cleaned <- rename(study_data_cleaned,
 #                              age_in_years = q10_age_yr,
-#                              age_in_months = q55_age_mth,
-#                              sex = q5_sex,
-#                              vaccine_routine = q2_vaccine_9months,
-#                              vaccine_sia = q32_vaccine_sia,
-#                              vaccine_mass = q17_vaccine_mass,
-#                              disease_diagnosis = q47_disease_diagnosis,
-#                              cluster_number = q77_what_is_the_cluster_number)
+#                              age_in_months = q55_age_mth)
 
-
-## define clean variable names using clean_labels from the epitrix package. 
-cleaned_colnames <- epitrix::clean_labels(colnames(study_data_cleaned))
-
-## overwrite variable names with defined clean names
-colnames(study_data_cleaned) <- cleaned_colnames 
+## define clean variable names using clean_names from the janitor package. 
+study_data_cleaned <- janitor::clean_names(study_data_cleaned)
 
 ## create a unique identifier by combining indeces of the two levels 
+## x and y are added on to the end of variables that are duplicated 
+## (in this case, parent and child index)
 # study_data_cleaned <- study_data_cleaned %>% 
 #   mutate(uid = str_glue("{index}_{index_y}"))
 ```
@@ -345,7 +346,7 @@ population_data_age_district_a <- gen_population(total_pop = 10000, # set total 
   groups      = c("0", "1", "2", "3", "4", "5+"), # set groups
   proportions = c(0.0164, 0.0164, 0.015, 0.015,
                   0.015, 0.1386), # set proportions for each group
-  strata      = c("male", "female")) %>%           # stratify by gender
+  strata      = c("Male", "Female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
@@ -357,7 +358,7 @@ population_data_age_district_b <- gen_population(total_pop = 10000, # set total 
   groups      = c("0", "1", "2", "3", "4", "5+"), # set groups
   proportions = c(0.0164, 0.0164, 0.015, 0.015,
                   0.015, 0.1386), # set proportions for each group
-  strata      = c("male", "female")) %>%           # stratify by gender
+  strata      = c("Male", "Female")) %>%           # stratify by gender
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
@@ -391,9 +392,9 @@ each cluster.
 
 ```{r cluster_counts}
 
-cluster_counts <- tibble(cluster = c("village_1", "village_2", "village_3", "village_4", 
-                                     "village_5", "village_6", "village_7", "village_8",
-                                     "village_9", "village_10"), 
+cluster_counts <- tibble(cluster = c("Village 1", "Village 2", "Village 3", "Village 4", 
+                                     "Village 5", "Village 6", "Village 7", "Village 8",
+                                     "Village 9", "Village 10"), 
                          households = c(700, 400, 600, 500, 300, 
                                         800, 700, 400, 500, 500))
 ```
@@ -452,7 +453,9 @@ of the chunk to re-run all the code chunks up to the current one.
 The chunks are:
 - standardise_dates  -- will set up and clean dates.
 - create_age_group   -- creates the age group variables from age
+- recode_dictionary  -- recode variables based on a data dictionary
 - factor_vars        -- helps clean factor variables
+- labelling_data     -- add variable labels to your dataset
 - remove_unused_data -- dropping unused rows/columns
 - survey_weights     -- calculating survey weights according to study design
 - survey_design      -- create a survey object for weighted analysis 
@@ -621,7 +624,32 @@ study_data_cleaned <- study_data_cleaned %>%
 ```
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// recode_dictionary \\\
+--------------------------------------------------------------------------------
+We can use the matchmaker package to recode our dataset using a data dictionary. 
+So for example our variable for sex might have coded values of "m" and "f" but 
+the label would be "Male" and "Female".
+This corresponds to the option_name and option_label in Kobo dictionaries.
+Currently, value labels cant be used for analysis so we have just recoded using 
+the matchmaker package (in the recode_dictionary chunk). 
+Variable labels can be used and so we will used the labelled package for that in 
+the labelling_data code chunk. 
+You could also have your data in French by specifying "option_label_french", 
+if your data dictionary has that included (see the generic dictionary for example).  
+NOTE: it is important to use matchmaker before working with factor vars 
+(factor_vars) as it will swap things to characters based on the dictionary used
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
+```{r recode_dictionary}
+## recode values with matchmaker package (value labels cant be used for analysis) 
+study_data_cleaned <- match_df(study_data_cleaned, 
+         study_data_dict_long, 
+         from = "option_name", 
+         to = "option_label_english", 
+         by = "name", 
+         order = "option_order_in_set")
+```
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// factor_vars \\\
@@ -638,7 +666,7 @@ This chunk will help you clean factor variables.
 ## (this could also be done with the if_else or case_when function - 
 ## but this option is shorter)
 study_data_cleaned <- study_data_cleaned %>% 
-  mutate(consent = consent == "yes")
+  mutate(consent = consent == "Yes")
 
 ## Recode character variables
 ## This step shows how to fix misspellings in the geographic region variable.
@@ -662,10 +690,10 @@ study_data_cleaned <- study_data_cleaned %>%
 ## create a new variable by reordering the levels of a factor 
 study_data_cleaned <- study_data_cleaned %>%
   mutate(no_consent = fct_relevel(no_consent_reason,
-                                  "no_benefit", 
-                                  "no_time", 
-                                  "neg_experience",
-                                  "other")
+                                  "There is no benefit to me and my family", 
+                                  "I do not have time", 
+                                  "I have had a negative experience with a previous survey.",
+                                  "Other")
         )
 
 
@@ -678,13 +706,13 @@ study_data_cleaned <- study_data_cleaned %>%
     is.na(msf_vacc) & 
       is.na(routine_vacc) & 
       is.na(sia_vacc)                  ~ NA_character_,
-    msf_vacc     == "card"             ~ "Card", 
-    routine_vacc == "card"             ~ "Card", 
-    sia_vacc     == "card"             ~ "Card", 
-    msf_vacc     == "verbal"           ~ "Verbal", 
-    routine_vacc == "verbal"           ~ "Verbal", 
-    sia_vacc     == "verbal"           ~ "Verbal",
-    TRUE                               ~ "Unvaccinated")
+    msf_vacc     == "Yes, card"             ~ "Card", 
+    routine_vacc == "Yes, card"             ~ "Card", 
+    sia_vacc     == "Yes, card"             ~ "Card", 
+    msf_vacc     == "Yes, verbal"           ~ "Verbal", 
+    routine_vacc == "Yes, verbal"           ~ "Verbal", 
+    sia_vacc     == "Yes, verbal"           ~ "Verbal",
+    TRUE                                    ~ "Unvaccinated")
     )
 
 ## correct the order of levels in newly created var
@@ -720,7 +748,57 @@ study_data_cleaned <- study_data_cleaned %>%
 ```
 
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// labelling_data \\\
+--------------------------------------------------------------------------------
 
+We can use the labelled package to add tags to our variable names and values.  
+This means that we can have both coded values and a cleaner written out form of
+variable names and values; this makes our code easier to write but our output 
+cleaner to look at (because we can use labels in tables/figures).
+
+So for example our variable name would be "sex" but the label would be "Sex", and
+the values would be "m" and "f" but the label would be "Male" and "Female".
+This corresponds to the option_name and option_label in kobo dictionaries.
+
+Currently, value labels cant be used for analysis so we have just recoded using 
+the matchmaker package (in the recode_dictionary chunk). 
+Variable labels can be used and so we will used the labelled package for that. 
+
+NOTE: it is important to use matchmaker before working with factor vars 
+(factor_vars) as it will swap things to characters based on the dictionary used
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r labelling_data}
+## create variable names with labelled  
+
+## define a list of names and labels based on the dictionary 
+var_labels <- setNames(
+  ## add variable labels as a list
+  as.list(study_data_dict$short_name), 
+  ## name the list with the current variable names
+  study_data_dict$name)
+
+## add the variable labels to dataset 
+study_data_cleaned <- study_data_cleaned %>% 
+  set_variable_labels(
+    ## set the labels with the object defined above
+    .labels = var_labels, 
+    ## do not throw an error if some names dont match 
+    ## not all names in the dictionary appear in the dataset 
+    .strict = FALSE)
+
+## it is possible to update individual variables manually too
+study_data_cleaned <- study_data_cleaned %>% 
+  set_variable_labels(
+    ## variable name = variable label 
+    age_years     = "Age (years)",
+    age_group     = "Age group (years)",
+    age_months    = "Age (months)", 
+    age_group_mon = "Age group (months)",
+    age_category  = "Age category"
+    )
+```
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -849,7 +927,7 @@ study_data_cleaned <- study_data_cleaned %>%
 ## create cluster weights 
 study_data_cleaned <- add_weights_cluster(x = study_data_cleaned, 
                                           cl = cluster_counts, 
-                                          eligible = children_count, 
+                                          eligible = number_children, 
                                           interviewed = interviewed, 
                                           cluster_x = village_name, 
                                           cluster_cl = cluster, 
