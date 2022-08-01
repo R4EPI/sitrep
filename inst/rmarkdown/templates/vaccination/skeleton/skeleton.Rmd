@@ -1,5 +1,5 @@
 ---
-title: "Vaccination survey"
+title: "Vaccination survey short"
 output: 
   word_document:
     keep_md: true
@@ -10,7 +10,7 @@ output:
 # Introduction to this template
 
 This is a template which can be used to create a report from a vaccination 
-coverage survey. 
+coverage survey from the short dictionary. 
 
 - There are sections for reading and cleaning data, followed by 
     weighting calculations and then survey analysis.  
@@ -55,7 +55,7 @@ options(knitr.kable.NA = "-")
 required_packages <- c("knitr",       # create output docs
                        "here",        # find your files
                        "rio",         # for importing data
-                       "epitrix",     # clean/shape data
+                       "janitor",     # clean/shape data
                        "dplyr",       # clean/shape data
                        "tidyr",       # clean/shape data
                        "forcats",     # manipulate and rearrange factors
