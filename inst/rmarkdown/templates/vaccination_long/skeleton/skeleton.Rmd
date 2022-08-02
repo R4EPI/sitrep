@@ -1331,14 +1331,16 @@ age_pyramid(survey_design,
 ## Vaccination coverage
 
 Weighted vaccination coverage; accepting equal validity from self-reported and 
-card-reported vaccination status
+card-reported vaccination status, and detailing availability of vaccination cards
+and health facility records
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// vaccination_coverage_overall \\\
 --------------------------------------------------------------------------------
 
 The below chunk creates a weighted table of counts proportions for vaccination 
-coverage while accepting equal validity from self- and card-reporting. 
+coverage while accepting equal validity from self- and card-reporting, then 
+listing wether cards and records are available. 
 
 Note that this includes a design effect. 
 
@@ -1350,8 +1352,10 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ```{r vaccination_coverage_overall}
 
 survey_design %>% 
-  select(vaccination_status_simple) %>% 
-  tbl_svysummary() %>% 
+  ## only keep variables of interest
+  select(any_vaccine, vaccine_card, hf_records) %>% 
+  ## only display one line for each variable (with counts for "Yes")
+  tbl_svysummary(value = list(everything() ~ "Yes")) %>% 
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
@@ -1369,53 +1373,18 @@ survey_design %>%
 ```
 
 
-Weighted vaccination coverage; distinguishing between vaccination cards and 
-verbal confirmation 
+## Vaccination history without a card
+
+Weighted overall vaccination completeness; based on surveyor assessments of
+care-giver verbal accounts and on care-giver's own assessment
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// vaccination_coverage_overall_detail \\\
+/// vaccination_completeness_assessment \\\
 --------------------------------------------------------------------------------
 
 The below chunk creates a weighted table of counts proportions for vaccination 
-coverage while distinguishing validity from self- and card-reporting. 
-
-Note that low counts or short observation times may lead to a confidence interval 
-that crosses zero (i.e. negative) for ratios. These should be interpreted
-as if no deaths or recoded to zero (impossible to have negative deaths). 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r vaccination_coverage_overall_detail}
-
-survey_design %>% 
-  select(vaccination_status) %>% 
-  tbl_svysummary() %>% 
-  ## add the weighted total
-  add_n() %>%
-  ## add in confidence intervals
-  
-  ## add in deff 
-  
-  ## modify the column headers
-  modify_header(
-    list(
-      n ~ "**Weighted total (N)**",
-      stat_0 ~ "**Weighted Count (n)**"
-    )
-    )
-```
-
-
-
-Weighted vaccination coverage by health district; accepting equal validity from
-self-reported and card-reported vaccination status 
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// vaccination_coverage_strata \\\
---------------------------------------------------------------------------------
-
-The below chunk creates a weighted table of counts proportions for vaccination 
-coverage while accepting equal validity from self- and card-reporting, 
-stratified by health district. 
+completeness care-giver verbal-reporting, based on surveyor's assessment and on 
+care-giver's own assessement of the verbal reporting of vaccinations
 
 Note that this includes a design effect. 
 
@@ -1424,104 +1393,86 @@ that crosses zero (i.e. negative) for ratios. These should be interpreted
 as if no deaths or recoded to zero (impossible to have negative deaths). 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r vaccination_coverage_strata}
+```{r vaccination_completeness_assessment}
 
 survey_design %>% 
-  select(vaccination_status_simple, health_district) %>%
-  tbl_svysummary(by = health_district) %>% 
+  ## only keep variables of interest
+  select(all_vaccines_survey_woc, all_vaccines_caretaker_woc) %>% 
+  ## only display one line for each variable (with counts for "Yes")
+  tbl_svysummary(value = list(everything() ~ "Yes")) %>% 
   ## add the weighted total
-  add_n() %>%   
+  add_n() %>%
   ## add in confidence intervals
-   
+  
   ## add in deff 
-   
+  
   ## modify the column headers
   modify_header(
     list(
       n ~ "**Weighted total (N)**",
-      stat_1 ~ "**District A Weighted Count (n)** \n N={n}", 
-      stat_2 ~ "**District B Weighted Count (n)** \n N={n}" 
+      stat_0 ~ "**Weighted Count (n)**"
     )
     )
 
 ```
 
 
-
-
-
-Weighted vaccination coverage by sex; accepting equal validity from self-reported 
-and card-reported vaccination status
+Weighted vaccination coverage by disease based on verbal history 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// vaccination_coverage_sex \\\
+/// vaccination_coverage_verbal \\\
 --------------------------------------------------------------------------------
 
 The below chunk creates a weighted table of counts proportions for vaccination 
-coverage while accepting equal validity from self- and card-reporting; broken 
-down by sex. 
+coverage by each disease based on verbal history, it combines binary and 
+categorical variables in to one table. 
+
+Note that this includes a design effect. 
 
 Note that low counts or short observation times may lead to a confidence interval 
 that crosses zero (i.e. negative) for ratios. These should be interpreted
 as if no deaths or recoded to zero (impossible to have negative deaths). 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r vaccination_coverage_sex}
+```{r vaccination_completeness_assessment}
 
 survey_design %>% 
-  select(vaccination_status_simple, sex) %>%
-  tbl_svysummary(by = sex) %>% 
+  ## only keep variables of interest
+  select(injection_upper_arm,
+         scar_present,
+         poliodrop_woc,
+         poliodrop_hf_woc,
+         poliodrop_camp_woc,
+         polioinjection_woc,
+         num_polioinjection_woc,
+         quad_penta_woc,
+         num_quad_penta_woc,
+         pcv_woc,num_pcv_woc,
+         measles_woc,
+         num_measles_woc,
+         measles_hf_woc,
+         measles_camp_woc,
+         yellow_fever_woc,
+         num_yellow_fever_woc,
+         yellow_fever_hf_woc,
+         yellow_fever_camp_woc,
+         rotavirus_woc,
+         num_rotavirus_woc) %>% 
+  ## only display one line for each variable (with counts for "Yes")
+  ## also specify for the scar_present variable to show the relevant level
+  tbl_svysummary(value = list(where(is.factor) ~ "Yes", 
+                 scar_present ~ "Scar present")) %>% 
   ## add the weighted total
-  add_n() %>%   
+  add_n() %>%
   ## add in confidence intervals
-   
+  
   ## add in deff 
-   
+  
   ## modify the column headers
   modify_header(
     list(
       n ~ "**Weighted total (N)**",
-      stat_1 ~ "**Male Weighted Count (n)** \n N={n}", 
-      stat_2 ~ "**Female Weighted Count (n)** \n N={n}" 
-    )
-    )
-```
-
-
-
-Weighted vaccination coverage by sex; distinguishing between vaccination cards 
-and verbal confirmation
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// vaccination_coverage_sex_detail \\\
---------------------------------------------------------------------------------
-
-The below chunk creates a weighted table of counts proportions for vaccination 
-coverage while distinguishing validity from self- and card-reporting; broken 
-down by sex. 
-
-Note that low counts or short observation times may lead to a confidence interval 
-that crosses zero (i.e. negative) for ratios. These should be interpreted
-as if no deaths or recoded to zero (impossible to have negative deaths). 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r vaccination_coverage_sex_detail}
-
-survey_design %>% 
-  select(vaccination_status, sex) %>%
-  tbl_svysummary(by = sex) %>% 
-  ## add the weighted total
-  add_n() %>%   
-  ## add in confidence intervals
-   
-  ## add in deff 
-   
-  ## modify the column headers
-  modify_header(
-    list(
-      n ~ "**Weighted total (N)**",
-      stat_1 ~ "**Male Weighted Count (n)** \n N={n}", 
-      stat_2 ~ "**Female Weighted Count (n)** \n N={n}" 
+      stat_0 ~ "**Weighted Count (n)**"
     )
     )
 
@@ -1529,248 +1480,36 @@ survey_design %>%
 
 
 
-Weighted vaccination coverage by age group; accepting equal validity from self-reported and card-reported vaccination status
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// vaccination_coverage_age_group \\\
---------------------------------------------------------------------------------
-
-The below chunk creates a weighted table of counts proportions for vaccination 
-coverage while accpeting equal validity from self- and card-reporting; broken 
-down by age group.  
-
-Note that low counts or short observation times may lead to a confidence interval 
-that crosses zero (i.e. negative) for ratios. These should be interpreted
-as if no deaths or recoded to zero (impossible to have negative deaths). 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r vaccination_coverage_age_group}
-
-survey_design %>% 
-  select(vaccination_status_simple, age_group) %>%
-  ## Note that here we swap the stratifier 
-  ## this way age group becomes the rows, so we need to calculate percent by row
-  tbl_svysummary(by = vaccination_status_simple, 
-                 percent = "row") %>% 
-  ## add the weighted total
-  add_n() %>%   
-  ## add in confidence intervals
-   
-  ## add in deff 
-   
-  ## modify the column headers
-  modify_header(
-    list(
-      n ~ "**Weighted total (N)**",
-      stat_1 ~ "**Vaccinated Weighted Count (n)** \n N={n}", 
-      stat_2 ~ "**Unvaccinated Weighted Count (n)** \n N={n}" 
-    )
-    )
-```
 
 
 
-Weighted vaccination coverage by age group; distinguishing between vaccination 
-cards and verbal confirmation 
 
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// vaccination_coverage_sex_detail \\\
---------------------------------------------------------------------------------
 
-The below chunk creates a weighted table of counts proportions for vaccination 
-coverage while distinguishing validity from self- and card-reporting; broken 
-down by age group.  
-
-Note that low counts or short observation times may lead to a confidence interval 
-that crosses zero (i.e. negative) for ratios. These should be interpreted
-as if no deaths or recoded to zero (impossible to have negative deaths). 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r vaccination_coverage_age_group_detail}
- 
-survey_design %>% 
-  select(vaccination_status, age_group) %>%
-  ## Note that here we swap the stratifier 
-  ## this way age group becomes the rows, so we need to calculate percent by row
-  tbl_svysummary(by = vaccination_status, 
-                 percent = "row") %>% 
-  ## add the weighted total
-  add_n() %>%   
-  ## add in confidence intervals
-   
-  ## add in deff 
-   
-  ## modify the column headers
-  modify_header(
-    list(
-      n ~ "**Weighted total (N)**",
-      stat_1 ~ "**Card Weighted Count (n)** \n N={n}", 
-      stat_2 ~ "**Verbal Weighted Count (n)** \n N={n}", 
-      stat_3 ~ "**Unvaccinated Weighted Count (n)** \n N={n}" 
-    )
-    )
-```
 
 
 ## Reasons for not vaccinating 
 
-Weighted counts and proportions for reasons not vaccinated in routine circumstances, individually, among those not vaccinated
+Weighted counts and proportions for reasons not vaccinated, individually, among those not vaccinated based on verbal or card assessment
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// no_vacc_reason_routine \\\
+/// no_vacc_reason \\\
 --------------------------------------------------------------------------------
 
 The below chunk creates a weighted table of counts proportions for reasons 
-not vaccinated during routine immunisation activitites. 
+not vaccinated. 
 
 Note that low counts or short observation times may lead to a confidence interval 
 that crosses zero (i.e. negative) for ratios. These should be interpreted
 as if no deaths or recoded to zero (impossible to have negative deaths). 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r no_vacc_reason_routine}
+```{r no_vacc_reason}
 
 survey_design %>% 
   ## filter for those not vaccinated 
-  filter(!routine_vacc %in% c("Yes, card", "Yes, verbal")) %>%
-  select(reason_route_vacc) %>% 
-  tbl_svysummary() %>% 
-  ## add in confidence intervals
-  
-  ## add in deff 
-  
-  ## modify the column headers
-  modify_header(
-    list(
-      stat_0 ~ "**Weighted Count (n) \n (N={round(N, digits = 0)})**"
-    )
-    )
-
-```
-
-
-Weighted counts and proportions for reasons not vaccinated in campaign circumstances, individually, among those not vaccinated
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// no_vacc_reason_campaign_sia_combo \\\
---------------------------------------------------------------------------------
-
-The below chunk creates a weighted table of counts proportions for reasons 
-not vaccinated during campaign immunisation activitites. 
-
-Note that low counts or short observation times may lead to a confidence interval 
-that crosses zero (i.e. negative) for ratios. These should be interpreted
-as if no deaths or recoded to zero (impossible to have negative deaths). 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r no_vacc_reason_campaign}
-
-## campaign reasons 
-survey_design %>% 
-  ## filter for not vaccinated 
-  filter(!msf_vacc %in% c("Yes, card", "Yes, verbal")) %>%
-  select(reason_msf_vacc) %>% 
-  tbl_svysummary() %>% 
-  ## add in confidence intervals
-  
-  ## add in deff 
-  
-  ## modify the column headers
-  modify_header(
-    list(
-      stat_0 ~ "**Campaign Weighted Count (n) \n (N={round(N, digits = 0)})**"
-    )
-    )
-```
-
-Weighted counts and proportions for reasons not vaccinated in supplemented 
-immunisation activities, among those not vaccinated
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// no_vacc_reason_sia \\\
---------------------------------------------------------------------------------
-
-The below chunk creates a weighted table of counts proportions for reasons 
-not vaccinated during supplemented immunisation activitites. 
-
-Note that low counts or short observation times may lead to a confidence interval 
-that crosses zero (i.e. negative) for ratios. These should be interpreted
-as if no deaths or recoded to zero (impossible to have negative deaths). 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r no_vacc_reason_sia}
-
-## sia reasons 
-survey_design %>% 
-  ## filter for not vaccinated 
-  filter(!sia_vacc %in% c("Yes, card", "Yes, verbal")) %>%
-  select(reason_sia_vacc) %>% 
-  tbl_svysummary() %>% 
-  ## add in confidence intervals
-  
-  ## add in deff 
-  
-  ## modify the column headers
-  modify_header(
-    list(
-      stat_0 ~ "**Supplementary Weighted Count (n) \n (N={round(N, digits = 0)})**"
-    )
-    )
-```
-
-## Measles infection 
-
-Weighted counts and proportions for previous diagnosis of measles
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// measles_diagnosis \\\
---------------------------------------------------------------------------------
-
-The below chunk creates a weighted table of counts proportions for whether 
-children have a previous diagnosis of measles
-
-Note that low counts or short observation times may lead to a confidence interval 
-that crosses zero (i.e. negative) for ratios. These should be interpreted
-as if no deaths or recoded to zero (impossible to have negative deaths). 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r measles_diagnosis}
-
-survey_design %>% 
-  select(diagnosis_disease) %>% 
-  tbl_svysummary() %>% 
-  ## add in confidence intervals
-  
-  ## add in deff 
-  
-  ## modify the column headers
-  modify_header(
-    list(
-      stat_0 ~ "**Weighted Count (n) \n (N={round(N, digits = 0)})**"
-    )
-    )
-
-
-```
-
-Weighted counts and proportions for years since previous diagnosis of measles, 
-among those who reported previous measles diagnosis
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// time_since_diagnosis \\\
---------------------------------------------------------------------------------
-
-The below chunk creates a weighted table of counts proportions for time since  
-children had a previous diagnosis of measles (i.e. difference in current age 
-and age at infection)
-
-Note that low counts or short observation times may lead to a confidence interval 
-that crosses zero (i.e. negative) for ratios. These should be interpreted
-as if no deaths or recoded to zero (impossible to have negative deaths). 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-```{r time_since_diagnosis}
-
-survey_design %>% 
-  filter(diagnosis_disease == "Yes") %>% 
-  select(time_since_group) %>% 
+  filter(
+    all_vaccines_survey_woc != "Yes" &
+    all_vaccines_survey_card != "Yes") %>%
+  select(reason_not_all_vacc) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
   
