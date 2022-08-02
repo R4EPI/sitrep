@@ -796,7 +796,8 @@ study_data_cleaned <- study_data_cleaned %>%
     age_group     = "Age group (years)",
     age_months    = "Age (months)", 
     age_group_mon = "Age group (months)",
-    age_category  = "Age category"
+    age_category  = "Age category", 
+    time_since_group = "Time since diagnosis (years)"
     )
 ```
 
@@ -1071,15 +1072,16 @@ This chunk will create a table of dropped individuals by reason for no consent.
 
 ## using the dataset with dropped individuals 
 dropped %>% 
-  ## get counts of reasons for no consent 
-  ## make the proportion of the total, including the missings  
-  tab_linelist("no_consent", col_total = TRUE, digits = 1, 
-             na.rm = FALSE) %>% 
-  ## drop variable column and rename others
-  select("Reason" = value, 
-         "n" = n, 
-         "%" = proportion) %>%
-  kable(digits = 1)
+  ## only keep reasons for no consent 
+  select(no_consent_reason) %>% 
+  ## make NAs a factor level called missing
+  ## to make the proportion of the total, including the missings
+  mutate(no_consent_reason = fct_explicit_na(no_consent_reason,
+                                             na_level = "Missing")) %>%
+  ## get counts and proportions 
+  tbl_summary() %>% 
+  ## make variable names bold 
+  bold_labels()
 ```
 
 
@@ -1161,17 +1163,15 @@ your data.
 
 ```{r descriptive_sampling_bias, warning = FALSE}
 ## counts and props of the study population
-ag <- tab_linelist(study_data_cleaned, "age_group") %>%
-  mutate(n_total = sum(n)) %>%
-  select(-variable) %>%
-  rename(age_group = value) %>%
-  mutate(age_group = fct_inorder(age_group))
+ag <- tabyl(study_data_cleaned, age_group, show_na = FALSE) %>% 
+    mutate(n_total = sum(n), 
+         age_group = fct_inorder(age_group))
 
 ## counts and props of the source population
 propcount <- population_data_age %>% 
   group_by(age_group) %>%
   tally(population) %>%
-  mutate(proportion = n / sum(n))
+  mutate(percent = n / sum(n))
 
 ## bind together the columns of two tables, group by age, and perform a 
 ## binomial test to see if n/total is significantly different from population
@@ -1184,26 +1184,27 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
   ## will add the variables p.value, parameter, conf.low, conf.high, method, and
   ## alternative. We will only use p.value here. You can include other
   ## columns if you want to report confidence intervals
-  mutate(binom = list(broom::tidy(binom.test(n, n_total, proportion_pop)))) %>%
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, percent_pop)))) %>%
   unnest(cols = c(binom)) %>% # important for expanding the binom.test data frame
-  mutate(proportion_pop = proportion_pop * 100) %>%
+  mutate(
+    across(.cols = contains("percent"), 
+            .fns = ~.x * 100)) %>%
 
   ## Adjusting the p-values to correct for false positives 
   ## (because testing multiple age groups). This will only make 
   ## a difference if you have many age categories
   mutate(p.value = p.adjust(p.value, method = "holm")) %>%
-  select(age_group, n, proportion, n_pop, proportion_pop, p.value) %>%
                       
   ## Only show p-values over 0.001 (those under report as <0.001)
   mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
 
-  ## rename the columns appropriatley
-  rename(
+  ## rename the columns appropriately
+  select(
     "Age group" = age_group,
     "Study population (n)" = n,
-    "Study population (%)" = proportion,
+    "Study population (%)" = percent,
     "Source population (n)" = n_pop,
-    "Source population (%)" = proportion_pop,
+    "Source population (%)" = percent_pop,
     "P-value" = p.value
   ) %>%
   kable(digits = 1)
@@ -1226,7 +1227,7 @@ It also pulls the age group with the highest sex ratio.
 ```{r median_age_sex_ratios}
 ## compute the median age 
 medage <- median(study_data_cleaned$age_years)
-## paste the lower and uper quartile together
+## paste the lower and upper quartile together
 iqr <- str_c(  # basically copy paste togehter the following
   ## calculate the 25% and 75% of distribution, with missings removed
   quantile(     
@@ -1241,14 +1242,14 @@ iqr <- str_c(  # basically copy paste togehter the following
 sex_ratio <- study_data_cleaned %>% 
   count(sex) %>% 
   pivot_wider(names_from = sex, values_from = n) %>% 
-  mutate(ratio = round(male/female, digits = 3)) %>%
+  mutate(ratio = round(Male/Female, digits = 3)) %>%
   pull(ratio)
 
 ## compute sex ratios by age group 
 sex_ratio_age <- study_data_cleaned %>% 
   count(age_group, sex) %>% 
   pivot_wider(names_from = sex, values_from = n) %>% 
-  mutate(ratio = round(male/female, digits = 3)) %>%
+  mutate(ratio = round(Male/Female, digits = 3)) %>%
   select(age_group, ratio)
 
 ## sort table by ascending ratio then select the lowest (first)
@@ -1256,8 +1257,8 @@ min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
 ```
 
 Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
-`r fmt_count(study_data_cleaned, sex == "female")` females and 
-`r fmt_count(study_data_cleaned, sex == "male")` males (unweighted). The male to
+`r fmt_count(study_data_cleaned, sex == "Female")` females and 
+`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
 female ratio was `r sex_ratio` in the surveyed population. The lowest male to
 female ratio was `r min_sex_ratio_age$ratio`
 in the `r min_sex_ratio_age$age_group` year age group.
@@ -1278,24 +1279,17 @@ This chunk will create an unweighted table of survey individuals by age group
 and sex.
 
 Note that proportions are of the total sample (not within each gender) 
-to change this, set proptotal = FALSE
+to change this, set percent = "column"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r describe_by_age_group_and_sex}
 
-tab_linelist(study_data_cleaned, age_group, 
-             strata     = sex, 
-             row_total  = TRUE,
-             col_total  = TRUE,
-             prop_total = TRUE) %>%
-  ## select and rename column names appropriately
-  select("Age"              = "value",
-         "Female cases (n)" = "female n",
-         "Female cases (%)" = "female proportion",
-         "Male cases (n)"   = "male n",
-         "Male cases (%)"   = "male proportion",
-         "Total") %>%
-  kable(digits = 1)
+# get cross tabulated counts and proportions
+study_data_cleaned %>% 
+  tbl_cross( 
+    row = age_group, 
+    col = sex, 
+    percent = "cell")
 ```
 
 
@@ -1310,29 +1304,22 @@ This chunk will create an unweighted table of survey individuals by age category
 and sex (i.e. a breakdown by months and years combined).
 
 Note that proportions are of the total sample (not within each gender) 
-to change this, set proptotal = FALSE
+to change this, set percent = "column"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r describe_by_age_category_and_sex}
 
-tab_linelist(study_data_cleaned, age_category, 
-             strata     = sex, 
-             row_total  = TRUE,
-             col_total  = TRUE,
-             prop_total = TRUE) %>%
-  ## select and rename column names appropriately
-  select("Age"              = "value",
-         "Female cases (n)" = "female n",
-         "Female cases (%)" = "female proportion",
-         "Male cases (n)"   = "male n",
-         "Male cases (%)"   = "male proportion",
-         "Total") %>%
-  kable(digits = 1)
+# get cross tabulated counts and proportions
+study_data_cleaned %>% 
+  tbl_cross( 
+    row = age_category, 
+    col = sex, 
+    percent = "cell")
 ```
 
 
-There were `r fmt_count(study_data_cleaned, is.na(sex))` cases missing information on sex and 
-`r fmt_count(study_data_cleaned, is.na(age_group))` missing age group.
+There were `r fmt_count(dropped, is.na(sex))` cases missing information on sex and 
+`r fmt_count(dropped, is.na(age_group))` missing age group.
 
 Unweighted age and gender distribution of household population covered by the survey.
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1345,10 +1332,10 @@ of your cases.
 
 ```{r age_pyramid, warning=FALSE}
 
-plot_age_pyramid(study_data_cleaned, 
-                 age_group = "age_group", 
-                 split_by = "sex",
-                 proportion = TRUE) + 
+age_pyramid(study_data_cleaned, 
+                 age_group, 
+                 split_by = sex,
+                 proportional = TRUE) + 
   labs(y = "Proportion", x = "Age group (years)") + # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
@@ -1373,13 +1360,13 @@ either sex or gender in any of your survey strata.
 
 ```{r age_pyramid_strata, warning=FALSE}
 
-plot_age_pyramid(study_data_cleaned, 
-                 age_group = "age_group", 
-                 split_by = "sex",
-                 stack_by = "health_district",
-                 proportion = TRUE, 
+age_pyramid(study_data_cleaned, 
+                 age_group, 
+                 split_by = sex,
+                 stack_by = health_district,
+                 proportional = TRUE, 
                  pal = c("red", "blue")) + 
-  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+  labs(y = "Proportion", x = "Age group (years)") +  # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -1403,11 +1390,11 @@ sample and source population distributions by binomial test).
 
 ```{r age_pyramid_survey, warning=FALSE}
 
-plot_age_pyramid(survey_design,
-                 age_group = "age_group",
-                 split_by = "sex", 
-                 proportion = TRUE) +
-  labs(y = "Proportion", x = "Age group (years)") +                 # change axis labels
+age_pyramid(survey_design,
+                 age_group,
+                 split_by = sex, 
+                 proportional = TRUE) +
+  labs(y = "Proportion", x = "Age group (years)") +  # change axis labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
@@ -1437,15 +1424,23 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 ```{r vaccination_coverage_overall}
 
-survey_design %>%  # use the survey object (weighted)
-  ## calculate weighted counts and weighted proportions
-  tab_survey(vaccination_status_simple, deff = TRUE) %>% 
-  ## select and rename appropriate columns 
-  select("Vaccination status" = value, 
-         "Children (n)" = n, 
-         "% (95% CI)" = ci,
-         "Design effect" = deff) %>% 
-  kable(digits = 1)
+survey_design %>% 
+  select(vaccination_status_simple) %>% 
+  tbl_svysummary() %>% 
+  ## add the weighted total
+  add_n() %>%
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_0 ~ "**Weighted Count (n)**"
+    )
+    )
+
 ```
 
 
@@ -1466,13 +1461,22 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 ```{r vaccination_coverage_overall_detail}
 
-survey_design %>% # use the survey object (weighted)
-  ## calculate weighted counts and weighted proportions
-  tab_survey(vaccination_status) %>% 
-  select("Vaccination status" = value, 
-         "Children (n)" = n,  
-         "% (95% CI)" = ci) %>% 
-  kable(digits = 1)
+survey_design %>% 
+  select(vaccination_status) %>% 
+  tbl_svysummary() %>% 
+  ## add the weighted total
+  add_n() %>%
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_0 ~ "**Weighted Count (n)**"
+    )
+    )
 ```
 
 
@@ -1497,13 +1501,24 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 ```{r vaccination_coverage_strata}
 
-survey_design %>%  # use the survey object (weighted)
-  tab_survey(vaccination_status_simple, strata = health_district) %>% 
-  select(-variable) %>%
-  rename("Vaccination status" = value) %>% 
-  augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = " ci") %>% # relabel all columns containing "ci"
-  kable(digits = 1)
+survey_design %>% 
+  select(vaccination_status_simple, health_district) %>%
+  tbl_svysummary(by = health_district) %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+   
+  ## add in deff 
+   
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_1 ~ "**District A Weighted Count (n)** \n N={n}", 
+      stat_2 ~ "**District B Weighted Count (n)** \n N={n}" 
+    )
+    )
+
 ```
 
 
@@ -1518,7 +1533,7 @@ and card-reported vaccination status
 --------------------------------------------------------------------------------
 
 The below chunk creates a weighted table of counts proportions for vaccination 
-coverage while accpeting equal validity from self- and card-reporting; broken 
+coverage while accepting equal validity from self- and card-reporting; broken 
 down by sex. 
 
 Note that low counts or short observation times may lead to a confidence interval 
@@ -1528,15 +1543,23 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 ```{r vaccination_coverage_sex}
 
-survey_design %>% # use the survey object (weighted)
-  ## calculate weighted counts and weighted proportions - stratified by sex
-  tab_survey(vaccination_status_simple, strata = sex, deff = TRUE) %>%
-  select(-variable) %>%
-  rename("Vaccination status" = value) %>% 
-  augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = " ci",      # relabel all columns containing "ci"
-                   "Design Effect" = " deff") %>% # "deff" to "Design effect"
-  kable(digits = 1)
+survey_design %>% 
+  select(vaccination_status_simple, sex) %>%
+  tbl_svysummary(by = sex) %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+   
+  ## add in deff 
+   
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_1 ~ "**Male Weighted Count (n)** \n N={n}", 
+      stat_2 ~ "**Female Weighted Count (n)** \n N={n}" 
+    )
+    )
 ```
 
 
@@ -1558,15 +1581,25 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r vaccination_coverage_sex_detail}
-# return weighted counts and weighted proportions 
+
 survey_design %>% 
-  tab_survey(vaccination_status, strata = sex) %>%
-  select(-variable) %>%
-  rename("Vaccination status" = value) %>% 
-  augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = " ci"      # relabel all columns containing "ci"
-                   ) %>% 
-  kable(digits = 1)
+  select(vaccination_status, sex) %>%
+  tbl_svysummary(by = sex) %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+   
+  ## add in deff 
+   
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_1 ~ "**Male Weighted Count (n)** \n N={n}", 
+      stat_2 ~ "**Female Weighted Count (n)** \n N={n}" 
+    )
+    )
+
 ```
 
 
@@ -1587,15 +1620,27 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r vaccination_coverage_age_group}
- 
+
 survey_design %>% 
-  tab_survey(vaccination_status_simple, strata = age_group, deff = TRUE, 
-             digits = 1, drop = "Missing", transpose = "value") %>%
-  rename("Age group (years)" = age_group) %>% 
-  augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = " ci",       # relabel all columns containing "ci"
-                   "Design Effect" = " deff") %>% # "deff" to "Design effect"
-  kable(digits = 1)
+  select(vaccination_status_simple, age_group) %>%
+  ## Note that here we swap the stratifier 
+  ## this way age group becomes the rows, so we need to calculate percent by row
+  tbl_svysummary(by = vaccination_status_simple, 
+                 percent = "row") %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+   
+  ## add in deff 
+   
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_1 ~ "**Vaccinated Weighted Count (n)** \n N={n}", 
+      stat_2 ~ "**Unvaccinated Weighted Count (n)** \n N={n}" 
+    )
+    )
 ```
 
 
@@ -1619,71 +1664,97 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ```{r vaccination_coverage_age_group_detail}
  
 survey_design %>% 
-  tab_survey(vaccination_status, strata = age_group, 
-             drop = "Missing", transpose = "value") %>%
-  rename("Age group (years)" = age_group) %>% 
-  augment_redundant(" (n)"         = " n") %>%  # wrap all "n" in braces (note space before n)
-  rename_redundant("% (95% CI)"    = " ci"      # relabel all columns containing "ci"
-                   ) %>%
-  kable(digits = 1)
+  select(vaccination_status, age_group) %>%
+  ## Note that here we swap the stratifier 
+  ## this way age group becomes the rows, so we need to calculate percent by row
+  tbl_svysummary(by = vaccination_status, 
+                 percent = "row") %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+   
+  ## add in deff 
+   
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_1 ~ "**Card Weighted Count (n)** \n N={n}", 
+      stat_2 ~ "**Verbal Weighted Count (n)** \n N={n}", 
+      stat_3 ~ "**Unvaccinated Weighted Count (n)** \n N={n}" 
+    )
+    )
 ```
 
 
 ## Reasons for not vaccinating 
 
-Weighted counts and proportions for reasons not vaccinated in routine and 
-campaign circumstances, individually, among those not vaccinated
+Weighted counts and proportions for reasons not vaccinated in routine circumstances, individually, among those not vaccinated
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// no_vacc_reason_routine_campaign_combo \\\
+/// no_vacc_reason_routine \\\
 --------------------------------------------------------------------------------
 
 The below chunk creates a weighted table of counts proportions for reasons 
-not vaccinated broken down by routine and campaign.  
-
-This happens in three steps: 
-- Counts and weighted proportions for routine
-- Counts and weighted proportions for campaign 
-- bind the columns together 
+not vaccinated during routine immunisation activitites. 
 
 Note that low counts or short observation times may lead to a confidence interval 
 that crosses zero (i.e. negative) for ratios. These should be interpreted
 as if no deaths or recoded to zero (impossible to have negative deaths). 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r no_vacc_reason_routine_campaign_combo}
+```{r no_vacc_reason_routine}
 
-## routine reasons 
-routine <- survey_design %>% 
+survey_design %>% 
   ## filter for those not vaccinated 
-  filter(!routine_vacc %in% c("card", "verbal")) %>%
-  tab_survey(reason_route_vacc) %>%
-  # rename columns appropriately
-  select("Reasons" = value, 
-         "Routine (n)" = n , 
-         "% (95% CI)" = ci)
-
-## campaign reasons 
-campaign <- survey_design %>% 
-  ## filter for not vaccinated 
-  filter(!msf_vacc %in% c("card", "verbal")) %>%
-  tab_survey(reason_msf_vacc) %>% 
-  ## rename remaining columns appropriately 
-  select("Campaign (n)" = n, 
-         "% (95% CI)" = ci)
+  filter(!routine_vacc %in% c("Yes, card", "Yes, verbal")) %>%
+  select(reason_route_vacc) %>% 
+  tbl_svysummary() %>% 
+  ## add in confidence intervals
   
-## bind two together 
-bind_cols(routine, 
-          campaign) %>% 
-  ## rename columns appropriately 
-    select(Reasons, 
-         "Routine (n)",  
-         "Routine % (95% CI)" = "% (95% CI)...3", 
-         "Campaign (n)", 
-         "Campaign % (95% CI)" = "% (95% CI)...5") %>% 
-  kable(digits = 1)
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_0 ~ "**Weighted Count (n) \n (N={round(N, digits = 0)})**"
+    )
+    )
 
 ```
 
+
+Weighted counts and proportions for reasons not vaccinated in campaign circumstances, individually, among those not vaccinated
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// no_vacc_reason_campaign_sia_combo \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of counts proportions for reasons 
+not vaccinated during campaign immunisation activitites. 
+
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for ratios. These should be interpreted
+as if no deaths or recoded to zero (impossible to have negative deaths). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r no_vacc_reason_campaign}
+
+## campaign reasons 
+survey_design %>% 
+  ## filter for not vaccinated 
+  filter(!msf_vacc %in% c("Yes, card", "Yes, verbal")) %>%
+  select(reason_msf_vacc) %>% 
+  tbl_svysummary() %>% 
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_0 ~ "**Campaign Weighted Count (n) \n (N={round(N, digits = 0)})**"
+    )
+    )
+```
 
 Weighted counts and proportions for reasons not vaccinated in supplemented 
 immunisation activities, among those not vaccinated
@@ -1701,14 +1772,22 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r no_vacc_reason_sia}
 
+## sia reasons 
 survey_design %>% 
-  filter(!sia_vacc %in% c("card", "verbal")) %>%
-  tab_survey(reason_sia_vacc) %>%
-  ## rename columns appropriately
-  select("Reasons" = value, 
-         "SIA (n)" = n , 
-         "% (95% CI)" = ci) %>%
-  kable(digits = 1)
+  ## filter for not vaccinated 
+  filter(!sia_vacc %in% c("Yes, card", "Yes, verbal")) %>%
+  select(reason_sia_vacc) %>% 
+  tbl_svysummary() %>% 
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_0 ~ "**Supplementary Weighted Count (n) \n (N={round(N, digits = 0)})**"
+    )
+    )
 ```
 
 ## Measles infection 
@@ -1730,12 +1809,19 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 ```{r measles_diagnosis}
 
 survey_design %>% 
-  tab_survey(diagnosis_disease) %>%
-  ## rename columns appropriately
-  select("Previous diagnosis" = value, 
-         "n" = n , 
-         "% (95% CI)" = ci) %>%
-  kable(digits = 1)
+  select(diagnosis_disease) %>% 
+  tbl_svysummary() %>% 
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_0 ~ "**Weighted Count (n) \n (N={round(N, digits = 0)})**"
+    )
+    )
+
 
 ```
 
@@ -1757,15 +1843,20 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 ```{r time_since_diagnosis}
 
-
 survey_design %>% 
-  filter(diagnosis_disease == "yes") %>% 
-  tab_survey(time_since_group) %>%
-  ## rename columns appropriately
-  select("Years since diagnosis" = value, 
-         "n" = n , 
-         "% (95% CI)" = ci) %>%
-  kable(digits = 1)
+  filter(diagnosis_disease == "Yes") %>% 
+  select(time_since_group) %>% 
+  tbl_svysummary() %>% 
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      stat_0 ~ "**Weighted Count (n) \n (N={round(N, digits = 0)})**"
+    )
+    )
 
 ```
 
