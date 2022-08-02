@@ -102,14 +102,14 @@ Comment out this chunk when you are using real data.
 
 
 ## generates MSF standard dictionary for Kobo 
-study_data_dict <- msf_dict_survey("Vaccination_short")
+study_data_dict <- msf_dict_survey("Vaccination_long")
 
 ## generates MSF standard dictionary for Kobo in long format (for recoding)
-study_data_dict_long <- msf_dict_survey(disease = "Vaccination_short", compact = FALSE)
+study_data_dict_long <- msf_dict_survey(disease = "Vaccination_long", compact = FALSE)
 
 ## generates a fake dataset for use as an example in this template
 ## this dataset already has household and individual levels merged
-study_data_raw <- gen_data(dictionary = "Vaccination_short", 
+study_data_raw <- gen_data(dictionary = "Vaccination_long", 
                            varnames = "name",
                            numcases = 1000)
 ```
@@ -431,9 +431,9 @@ unique(study_data_raw$sex)
 
 ## check for logical date inconsistencies 
 ## for example check vaccine age greater than current age and return corresponding IDs
-study_data_raw %>% 
-  filter(age_routine_vacc > age_months) %>% 
-  select("uid")
+# study_data_raw %>% 
+#   filter(age_routine_vacc > age_months) %>% 
+#   select("uid")
 
 ## use the dfSummary function in combination with view
 ## note that view is not capitalised with this package
@@ -596,31 +596,6 @@ study_data_cleaned <- group_age_categories(study_data_cleaned,
                                          months = age_group_mon)
 
 
-## years since diagnosis variable ----------------------------------------------
-
-## adapt age at diagnosis and then create a new time_since variable
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(
-    ## change the age at diagnosis variable to be in years 
-    age_diagnosis = age_diagnosis / 12, 
-    ## change those less than 1 year to be 0
-    age_diagnosis = if_else(age_diagnosis < 1, 
-                                 0, 
-                                 age_diagnosis), 
-    ## calculate the years between current age and age at diagnosis
-    time_since = age_years - age_diagnosis)
-
-
-## create a grouping variable for years since diagnosis
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(time_since_group = age_categories(time_since,
-               lower = 0, upper = 5, by = 1))
-
-## fix the labels for years under five
-study_data_cleaned <- study_data_cleaned %>% 
-  ## remove what comes after a dash (i.e. repeated year)
-  mutate(time_since_group = str_remove(time_since_group, "-.*"))
-    
 ```
 
 
@@ -696,55 +671,6 @@ study_data_cleaned <- study_data_cleaned %>%
                                   "Other")
         )
 
-
-## create a character variable based off groups of a different variable 
-## combine all vaccine variables in to one 
-## keep the yes answers and change others to no 
-## if missing in all three vars then stays NA
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status = case_when(
-    is.na(msf_vacc) & 
-      is.na(routine_vacc) & 
-      is.na(sia_vacc)                  ~ NA_character_,
-    msf_vacc     == "Yes, card"             ~ "Card", 
-    routine_vacc == "Yes, card"             ~ "Card", 
-    sia_vacc     == "Yes, card"             ~ "Card", 
-    msf_vacc     == "Yes, verbal"           ~ "Verbal", 
-    routine_vacc == "Yes, verbal"           ~ "Verbal", 
-    sia_vacc     == "Yes, verbal"           ~ "Verbal",
-    TRUE                                    ~ "Unvaccinated")
-    )
-
-## correct the order of levels in newly created var
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status = fct_relevel(vaccination_status, 
-                                          "Card", 
-                                          "Verbal", 
-                                          "Unvaccinated")
-  )
-
-
-## create a new grouping for vaccine status variable 
-## simplified, card or verbal then yes otherwise no 
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(
-    vaccination_status_simple = case_when(
-      is.na(vaccination_status)                   ~ NA_character_,
-      vaccination_status %in% c("Card", "Verbal") ~ "Vaccinated", 
-      TRUE                                        ~ "Unvaccinated")
-    )
-
-## correct the order of levels in newly created var
-study_data_cleaned <- study_data_cleaned %>% 
-  mutate(vaccination_status_simple = fct_relevel(vaccination_status_simple, 
-                                                 "Vaccinated", 
-                                                 "Unvaccinated")
-  )
-
-## explicitly replace NA of a factor
-study_data_cleaned <- study_data_cleaned %>%
-  mutate(routine_vacc = fct_explicit_na(routine_vacc, na_level = "No answer"))
-
 ```
 
 
@@ -796,8 +722,7 @@ study_data_cleaned <- study_data_cleaned %>%
     age_group     = "Age group (years)",
     age_months    = "Age (months)", 
     age_group_mon = "Age group (months)",
-    age_category  = "Age category", 
-    time_since_group = "Time since diagnosis (years)"
+    age_category  = "Age category"
     )
 ```
 
