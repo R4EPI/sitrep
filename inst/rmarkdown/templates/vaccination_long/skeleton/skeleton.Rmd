@@ -671,6 +671,39 @@ study_data_cleaned <- study_data_cleaned %>%
                                   "Other")
         )
 
+
+## create simplified groupings for each of the vaccine status variables 
+## simplified, TRUE (regardless of date) otherwise FALSE (or NA if missing) 
+
+## select the variables from dictionary for vaccines by card 
+CARDVARS <- study_data_dict %>% 
+  filter(type == "vaccine_card") %>% 
+  filter(name %in% names(study_data_cleaned)) %>% 
+  ## filter to match the column names of your data
+  pull(name) # select vars
+
+## create simplified variables
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    ## for each of the vaccine variables
+    dplyr::across(all_of(CARDVARS),
+                  ## if a row contains "Yes" return TRUE 
+                  ~str_detect(.x, "Yes"), 
+                  ## rename with original name with "_simple" on the end
+                  .names = "{.col}_simple")
+    )
+
+## create a list of vaccines with simplified variable names
+CARDVARSSIMP <- str_glue("{CARDVARS}_simple")
+
+## select unique vaccines for use in iterating later
+VACCINES <- CARDVARS %>% 
+  ## using the list of vaccine names, remove numbers (for doses)
+  str_remove("[:digit:]") %>% 
+  ## keep only unique vaccines
+  unique()
+
+
 ```
 
 
@@ -724,6 +757,28 @@ study_data_cleaned <- study_data_cleaned %>%
     age_group_mon = "Age group (months)",
     age_category  = "Age category"
     )
+
+
+
+## add in variables for newly created variables (based on old names)
+## e.g. here label the simple vacc variables with the original variable labels
+vacc_var_labels <- setNames(
+  ## add variable labels as a list 
+  as.list(study_data_dict$short_name[study_data_dict$type == "vaccine_card"]), 
+  ## name the list with the variable names of interest
+  CARDVARSSIMP
+)
+
+
+## add the variable labels to dataset 
+study_data_cleaned <- study_data_cleaned %>% 
+  set_variable_labels(
+    ## set the labels with the object defined above
+    .labels = vacc_var_labels, 
+    ## do not throw an error if some names dont match 
+    ## not all names in the dictionary appear in the dataset 
+    .strict = FALSE)
+
 ```
 
 
@@ -1524,7 +1579,81 @@ survey_design %>%
 
 
 
+Weighted vaccination coverage by vaccine and dose based on vaccination cards
 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// vaccination_coverage_card \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of counts proportions for vaccination 
+coverage by vaccine and dose based on vaccination cards. Note that this uses a 
+character vector of variable names in the dplyr::select() function, to pull the
+variables of interest. 
+
+Note that this includes a design effect. 
+
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for ratios. These should be interpreted
+as if no deaths or recoded to zero (impossible to have negative deaths). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r vaccination_coverage_card}
+
+survey_design %>% 
+  ## only keep variables of interest
+  select(all_of(CARDVARSSIMP)) %>% 
+  ## automatically only displays one line for each variable (with counts for TRUE)
+  tbl_svysummary() %>% 
+  ## add the weighted total
+  add_n() %>%
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_0 ~ "**Weighted Count (n)**"
+    )
+    )
+
+```
+
+
+
+```{r}
+
+CARDVARSDATES <- str_glue("date_{CARDVARS}")
+
+counts <- survey_design %>% 
+  ## only keep variables of interest
+  group_by(date_dtp_hib1) %>%
+  srvyr::survey_count(date_dtp_hib1)
+
+ggplot(counts, aes(x = date_dtp_hib1, y = n)) + 
+  geom_bar(stat = "identity", 
+           fill = "red") +
+  
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) + 
+  
+   # control x-axis breaks and display
+  scale_x_date(
+    breaks = "1 month",
+    date_labels = "%b %Y", 
+    limits = c(as.Date("2018-01-01"), as.Date("2018-07-01"))) + 
+  
+  labs(y = "Weighted count", x = "Date of vaccination", 
+       title = "date_dtp_hib1") +
+  
+  theme(
+  axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+  legend.title = element_blank(),
+  panel.grid.major.x = element_line(color = "grey60", linetype = 3),
+  panel.grid.major.y = element_line(color = "grey60", linetype = 3))
+
+```
 
 
 
