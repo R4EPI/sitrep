@@ -1373,7 +1373,7 @@ survey_design %>%
 ```
 
 
-## Vaccination history without a card
+## Vaccination history verbal
 
 Weighted overall vaccination completeness; based on surveyor assessments of
 care-giver verbal accounts and on care-giver's own assessment
@@ -1479,7 +1479,48 @@ survey_design %>%
 ```
 
 
+## Vaccination history with a card
 
+
+Weighted overall vaccination completeness; based on surveyor assessments of
+vaccination cards
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// vaccination_completeness_assessment_card \\\
+--------------------------------------------------------------------------------
+
+The below chunk creates a weighted table of counts proportions for vaccination 
+completeness based on surveyor's assessment of vaccination cards
+
+Note that this includes a design effect. 
+
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for ratios. These should be interpreted
+as if no deaths or recoded to zero (impossible to have negative deaths). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r vaccination_completeness_assessment_card}
+
+survey_design %>% 
+  ## only keep variables of interest
+  select(all_vaccines_survey_card) %>% 
+  ## only display one line for each variable (with counts for "Yes")
+  tbl_svysummary(value = list(everything() ~ "Yes")) %>% 
+  ## add the weighted total
+  add_n() %>%
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_0 ~ "**Weighted Count (n)**"
+    )
+    )
+
+```
 
 
 
