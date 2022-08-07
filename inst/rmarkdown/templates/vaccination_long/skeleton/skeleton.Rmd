@@ -1542,7 +1542,7 @@ that crosses zero (i.e. negative) for ratios. These should be interpreted
 as if no deaths or recoded to zero (impossible to have negative deaths). 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-```{r vaccination_completeness_assessment}
+```{r vaccination_coverage_verbal}
 
 survey_design %>% 
   ## only keep variables of interest
