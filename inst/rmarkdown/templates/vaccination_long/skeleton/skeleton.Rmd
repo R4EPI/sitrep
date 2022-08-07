@@ -50,36 +50,30 @@ knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height
 options(knitr.kable.NA = "-")
 
 
+# Ensures the package "pacman" is installed
+if (!require("pacman")) {
+     install.packages("pacman") }
 
-## Installing required packages for this template
-required_packages <- c("knitr",       # create output docs
-                       "here",        # find your files
-                       "rio",         # for importing data
-                       "janitor",     # clean/shape data
-                       "dplyr",       # clean/shape data
-                       "tidyr",       # clean/shape data
-                       "forcats",     # manipulate and rearrange factors
-                       "stringr",     # manipulate texts
-                       "ggplot2",     # create plots and charts
-                       "apyramid",    # plotting age pyramids
-                       "sitrep",      # MSF field epi functions
-                       "survey",      # for survey functions
-                       "srvyr",       # dplyr wrapper for survey package
-                       "gtsummary",   # produce tables
-                       "labelled",    # add labels to variables
-                       "matchmaker",  # recode datasets with dictionaries
-                       "lubridate"    # working with dates
-                       )
-
-for (pkg in required_packages) {
-  ## install packages if not already present
-  if (!pkg %in% rownames(installed.packages())) {
-    install.packages(pkg)
-  }
-  
-  ## load packages to this current session 
-  library(pkg, character.only = TRUE)
-}
+# Install and load required packages for this template
+pacman::p_load(
+  knitr,       # create output docs
+  here,        # find your files
+  rio,         # for importing data
+  janitor,     # clean/shape data
+  dplyr,       # clean/shape data
+  tidyr,       # clean/shape data
+  forcats,     # manipulate and rearrange factors
+  stringr,     # manipulate texts
+  ggplot2,     # create plots and charts
+  apyramid,    # plotting age pyramids
+  sitrep,      # MSF field epi functions
+  survey,      # for survey functions
+  srvyr,       # dplyr wrapper for survey package
+  gtsummary,   # produce tables
+  labelled,    # add labels to variables
+  matchmaker,  # recode datasets with dictionaries
+  lubridate    # working with dates
+  )
 
 
 ## set default text size to 18 for plots
