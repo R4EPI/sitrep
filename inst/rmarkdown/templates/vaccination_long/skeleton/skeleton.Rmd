@@ -595,7 +595,6 @@ study_data_cleaned <- group_age_categories(study_data_cleaned,
                                          years = age_group, 
                                          months = age_group_mon)
 
-
 ```
 
 
@@ -696,14 +695,38 @@ study_data_cleaned <- study_data_cleaned %>%
 ## create a list of vaccines with simplified variable names
 CARDVARSSIMP <- str_glue("{CARDVARS}_simple")
 
-## select unique vaccines for use in iterating later
-VACCINES <- CARDVARS %>% 
-  ## using the list of vaccine names, remove numbers (for doses)
-  str_remove("[:digit:]") %>% 
-  ## keep only unique vaccines
-  unique()
+## create a list of vaccines with date on the front of variable names
+CARDVARSDATE <- str_glue("date_{CARDVARS}")
 
+## years since vaccination variables -------------------------------------------
 
+## adapt date of vaccination and then create a new time_since variable
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    across(
+      all_of(CARDVARSDATE), 
+      ~as.numeric(date - .x),
+      ## rename with original name with "_simple" on the end
+      .names = "{.col}_time"
+      ))
+
+## create a grouping variable for years since vaccination
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    across(
+      all_of(str_glue("{CARDVARSDATE}_time")), 
+      ~age_categories(.x,
+               lower = 0, upper = 5, by = 1) %>% 
+        ## remove what comes after a dash (i.e. repeated year)
+        str_remove("-.*") %>% 
+        factor(levels = c("0", "1", "2", "3", "4", "5+")),
+      ## rename with original name with "_grp" on the end
+      .names = "{.col}_grp"
+      ) 
+      )
+
+## create a list of vaccines with time group on the of variable names
+CARDVARSTIMEGRP <- str_glue("{CARDVARSDATE}_time_grp")
 ```
 
 
@@ -762,11 +785,14 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ## add in variables for newly created variables (based on old names)
 ## e.g. here label the simple vacc variables with the original variable labels
+## we use c() to repeat this for the time since vaccination variable too
 vacc_var_labels <- setNames(
   ## add variable labels as a list 
-  as.list(study_data_dict$short_name[study_data_dict$type == "vaccine_card"]), 
+  as.list(
+    c(study_data_dict$short_name[study_data_dict$type == "vaccine_card"], 
+          study_data_dict$short_name[study_data_dict$type == "vaccine_card"])), 
   ## name the list with the variable names of interest
-  CARDVARSSIMP
+  c(CARDVARSSIMP, CARDVARSTIMEGRP)
 )
 
 
@@ -775,6 +801,39 @@ study_data_cleaned <- study_data_cleaned %>%
   set_variable_labels(
     ## set the labels with the object defined above
     .labels = vacc_var_labels, 
+    ## do not throw an error if some names dont match 
+    ## not all names in the dictionary appear in the dataset 
+    .strict = FALSE)
+
+## Adding labels for variables with multiple responses are allowed 
+  ## In Kobo - multioption variables apear once in the dictionary 
+  ## but exports have a character variable with all responses and then a 
+  ## binary (1/0) variable for each of the various options 
+  ## These are not automatically labelled from the dictionary above 
+
+## first create a list of the binary variable names by combining with the 
+## dictionary defined options for that variable 
+
+reason_vars <- study_data_dict_long %>% 
+  filter(type == "reasons") %>% 
+  select(option_name, option_label_english) %>% 
+  mutate(option_name = str_glue("reason_not_all_vacc_{option_name}"))
+
+
+## add in variables for newly created variables (based on old names)
+reason_var_labels <- setNames(
+  ## add variable labels as a list 
+  as.list(reason_vars$option_label_english), 
+  ## name the list with the variable names of interest
+  reason_vars$option_name
+)
+
+
+## add the variable labels to dataset 
+study_data_cleaned <- study_data_cleaned %>% 
+  set_variable_labels(
+    ## set the labels with the object defined above
+    .labels = reason_var_labels, 
     ## do not throw an error if some names dont match 
     ## not all names in the dictionary appear in the dataset 
     .strict = FALSE)
@@ -1585,7 +1644,7 @@ Weighted vaccination coverage by vaccine and dose based on vaccination cards
 /// vaccination_coverage_card \\\
 --------------------------------------------------------------------------------
 
-The below chunk creates a weighted table of counts proportions for vaccination 
+The below chunk creates a weighted table of counts and proportions for vaccination 
 coverage by vaccine and dose based on vaccination cards. Note that this uses a 
 character vector of variable names in the dplyr::select() function, to pull the
 variables of interest. 
@@ -1622,36 +1681,45 @@ survey_design %>%
 
 
 
-```{r}
+Weighted counts of time (in years) since vaccination by various vaccines
+based on vaccination cards
 
-CARDVARSDATES <- str_glue("date_{CARDVARS}")
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// vaccination_time_since \\\
+--------------------------------------------------------------------------------
 
-counts <- survey_design %>% 
+The below chunk creates a weighted table of counts and proportions time in years
+since vaccination, by various vaccines based on assessment of cards. 
+
+Note that this includes a design effect. 
+
+Note that low counts or short observation times may lead to a confidence interval 
+that crosses zero (i.e. negative) for ratios. These should be interpreted
+as if no deaths or recoded to zero (impossible to have negative deaths). 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+```{r vaccination_time_since}
+
+
+survey_design %>% 
   ## only keep variables of interest
-  group_by(date_dtp_hib1) %>%
-  srvyr::survey_count(date_dtp_hib1)
-
-ggplot(counts, aes(x = date_dtp_hib1, y = n)) + 
-  geom_bar(stat = "identity", 
-           fill = "red") +
+  select(all_of(CARDVARSTIMEGRP)) %>% 
+  ## automatically only displays one line for each variable (with counts for TRUE)
+  tbl_svysummary() %>% 
+  ## add the weighted total
+  add_n() %>%
+  ## add in confidence intervals
   
-  # align plot with bottom of plot
-  scale_y_continuous(expand = c(0, NA)) + 
+  ## add in deff 
   
-   # control x-axis breaks and display
-  scale_x_date(
-    breaks = "1 month",
-    date_labels = "%b %Y", 
-    limits = c(as.Date("2018-01-01"), as.Date("2018-07-01"))) + 
-  
-  labs(y = "Weighted count", x = "Date of vaccination", 
-       title = "date_dtp_hib1") +
-  
-  theme(
-  axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
-  legend.title = element_blank(),
-  panel.grid.major.x = element_line(color = "grey60", linetype = 3),
-  panel.grid.major.y = element_line(color = "grey60", linetype = 3))
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_0 ~ "**Weighted Count (n)**"
+    )
+    )
 
 ```
 
@@ -1677,10 +1745,9 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 survey_design %>% 
   ## filter for those not vaccinated 
   filter(
-    all_vaccines_survey_woc != "Yes" &
     all_vaccines_survey_card != "Yes") %>%
-  select(reason_not_all_vacc) %>% 
-  tbl_svysummary() %>% 
+  select(reason_vars$option_name) %>% 
+  tbl_svysummary(value = list(everything() ~ 1)) %>% 
   ## add in confidence intervals
   
   ## add in deff 
