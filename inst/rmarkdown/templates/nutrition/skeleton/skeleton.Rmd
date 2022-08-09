@@ -514,7 +514,6 @@ DATEVARS <- study_data_dict %>%
   pull(name) # select date vars
 
 ## find if there are date variables which are completely empty
-## (otherwise the linelist package does not work)
 EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
   is.na(study_data_cleaned[[.x]])
   )) %>% 
@@ -525,7 +524,8 @@ EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
 DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 
 ## change to dates 
-## use the guess_dates() function to make a first pass at date variables.
+## use the parse_date() function to make a first pass at date variables.
+## parse_date() produces a complicated format - so we use as.Date() to simplify
 study_data_cleaned <- study_data_cleaned %>%
   mutate(
     across(.cols = all_of(DATEVARS),
@@ -534,7 +534,8 @@ study_data_cleaned <- study_data_cleaned %>%
 ## Non-Kobo data -------------------------------------------------------------
 ## Use this section if you did not have Kobo data.  
 
-## use the guess_dates() function to make a first pass at date variables.
+## use the parse_date() function to make a first pass at date variables.
+## parse_date() produces a complicated format - so we use as.Date() to simplify
 # study_data_cleaned <- study_data_cleaned %>%
 #   mutate(
 #     across(.cols = matches("date|Date"),
