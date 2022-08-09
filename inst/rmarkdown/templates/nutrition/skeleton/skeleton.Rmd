@@ -103,6 +103,7 @@ pacman::p_load(
   survey,      # for survey functions
   srvyr,       # dplyr wrapper for survey package
   gtsummary,   # produce tables
+  flextable,   # for styling output tables
   labelled,    # add labels to variables
   matchmaker,  # recode datasets with dictionaries
   parsedate    # guessing dates
@@ -1268,7 +1269,13 @@ dropped %>%
   ## get counts and proportions 
   tbl_summary() %>% 
   ## make variable names bold 
-  bold_labels()
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 
 ```
 
@@ -1395,7 +1402,14 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
     "Source population (%)" = percent_pop,
     "P-value" = p.value
   ) %>%
-  kable(digits = 1)
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 
 ```
 
@@ -1480,7 +1494,13 @@ study_data_cleaned %>%
   tbl_cross( 
     row = age_group, 
     col = sex, 
-    percent = "cell")
+    percent = "cell") %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1846,7 +1866,13 @@ study_data_cleaned %>%
     fwei          = "WAZ", 
     fwfl          = "WHZ"
     ) %>% 
-  tbl_summary()
+  tbl_summary() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 
 ```
 
@@ -1906,7 +1932,13 @@ tbl_merge(list(overall, age_strat)) %>%
         stat_2_2, 
         stat_3_2,
         stat_4_2,
-        stat_5_2) ~ "**Age group (months)**"))
+        stat_5_2) ~ "**Age group (months)**")) %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1958,7 +1990,13 @@ tbl_merge(list(overall, age_strat)) %>%
         stat_2_2, 
         stat_3_2,
         stat_4_2,
-        stat_5_2) ~ "**Age group (months)**"))
+        stat_5_2) ~ "**Age group (months)**")) %>% #
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2008,7 +2046,13 @@ tbl_merge(list(overall, age_strat)) %>%
         stat_2_2, 
         stat_3_2,
         stat_4_2,
-        stat_5_2) ~ "**Age group (months)**"))
+        stat_5_2) ~ "**Age group (months)**")) %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2057,7 +2101,13 @@ tbl_merge(list(overall, age_strat)) %>%
         stat_2_2, 
         stat_3_2,
         stat_4_2,
-        stat_5_2) ~ "**Age group (months)**"))
+        stat_5_2) ~ "**Age group (months)**")) %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2107,6 +2157,12 @@ tbl_merge(list(overall, age_strat)) %>%
         stat_2_2, 
         stat_3_2,
         stat_4_2,
-        stat_5_2) ~ "**Age group (months)**"))
+        stat_5_2) ~ "**Age group (months)**")) %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
