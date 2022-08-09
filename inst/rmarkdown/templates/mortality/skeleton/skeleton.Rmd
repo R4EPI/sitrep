@@ -39,7 +39,8 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 
 ```{r setup, include = FALSE, results='hide', message=FALSE, warning=FALSE}
 ## hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
+knitr::opts_chunk$set(echo = FALSE, error = TRUE, warning = FALSE, message = FALSE, 
+                      fig.width = 6*1.25, fig.height = 6)
 
 
 ## set default NA to - in output, define figure width/height
@@ -66,6 +67,7 @@ pacman::p_load(
   survey,      # for survey functions
   srvyr,       # dplyr wrapper for survey package
   gtsummary,   # produce tables
+  flextable,   # for styling output tables
   labelled,    # add labels to variables
   matchmaker,  # recode datasets with dictionaries
   lubridate,   # working with dates
@@ -487,22 +489,22 @@ EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
 DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 
 ## change to dates 
-## use the guess_dates() function to make a first pass at date variables.
+## use the parse_date() function to make a first pass at date variables.
+## parse_date() produces a complicated format - so we use as.Date() to simplify
 study_data_cleaned <- study_data_cleaned %>%
   mutate(
     across(.cols = all_of(DATEVARS),
-           .fns = ~parsedate::parse_date(.x)))
+           .fns = ~parsedate::parse_date(.x) %>% as.Date()))
 
 
 ## Non-Kobo data -------------------------------------------------------------
 ## Use this section if you did not have Kobo data. 
 
-## use the guess_dates() function to make a first pass at date variables.
-# study_data_cleaned <- study_data_cleaned %>%
+## use the parse_date() function to make a first pass at date variables.
+## parse_date() produces a complicated format - so we use as.Date() to simplify# study_data_cleaned <- study_data_cleaned %>%
 #   mutate(
 #     across(.cols = matches("date|Date"),
-#            .fns  = ~linelist::guess_dates(.x, 
-#                                   error_tolerance = 0.5)))
+#            .fns  = ~parsedate::parse_date(.x)))
 
 
 ## Define recall period --------------------------------------------------------
@@ -1156,7 +1158,13 @@ dropped %>%
   ## get counts and proportions 
   tbl_summary() %>% 
   ## make variable names bold 
-  bold_labels()
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1282,9 +1290,14 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
     "Source population (%)" = percent_pop,
     "P-value" = p.value
   ) %>%
-  kable(digits = 1)
-  
-
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -1403,7 +1416,15 @@ study_data_cleaned %>%
   tbl_cross( 
     row = age_group, 
     col = sex, 
-    percent = "cell")
+    percent = "cell") %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1429,7 +1450,15 @@ study_data_cleaned %>%
   tbl_cross( 
     row = age_category, 
     col = sex, 
-    percent = "cell")
+    percent = "cell") %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1757,6 +1786,7 @@ cause_of_death_prop <- survey_design %>%
 cause_of_death_mort <- survey_design %>% 
   filter(died) %>%  # rates only among those who died
   group_by(cause) %>% 
+  ## use survey ratio to calculate mortality rate per 10000 person years
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   ## if negative CIs set to zero
   mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
@@ -1764,7 +1794,7 @@ cause_of_death_mort <- survey_design %>%
   ## merge confidence intervals for mortality in to one column 
   ## (do not change to percent)
   unite_ci("mortality", starts_with("mortality"),
-           m100 = FALSE, percent = FALSE)
+           m100 = FALSE, percent = FALSE, digits = 1)
 
 ## Join the counts, props and mortality ratios together
 cause_of_death_prop %>% 
@@ -1781,10 +1811,18 @@ cause_of_death_prop %>%
   ## modify the column headers
   modify_header(
     list(
-      stat_0 ~ "**Deaths \n N={N}**", 
-      mortality ~ "**Mortality per 10,000 persons/day (95% CI)**" 
+      stat_0 ~ "**Deaths \n N={round(N, digits = 0)}**", 
+      mortality ~ "**Mortality per 10,000 person/days (95% CI)**" 
     )
-    )
+    ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1816,7 +1854,15 @@ survey_design %>%
       stat_1 ~ "**District A Weighted Count (n)** \n N={n}", 
       stat_2 ~ "**District B Weighted Count (n)** \n N={n}" 
     )
-    )
+    ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1846,14 +1892,19 @@ survey_design %>%
   mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
          mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
   unite_ci("mort", starts_with("mortality"),
-           m100 = FALSE, percent = FALSE) %>% 
+           m100 = FALSE, percent = FALSE, digits = 1) %>% 
   pivot_wider(id_cols = cause,     # choose variable for rows
               names_from = health_district, # choose variable for columns 
               values_from = mort) %>%       # choose what goes in cells
   select("Main cause of death" = cause, 
          "District A MR (95%CI)" = "district_a", 
-         "District B MR (95%CI)" = "district_b") %>% 
-  kable(digits = 1)
+         "District B MR (95%CI)" = "district_b") %>%
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1913,7 +1964,15 @@ survey_design %>%
   ## modify the column headers
   modify_spanning_header(
     all_stat_cols() ~ "**Age group (years)**"
-  )
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1936,8 +1995,17 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 survey_design %>% 
   filter(died) %>% # proportions only among those who died
   select(cause, sex) %>%
-  tbl_svysummary(by = sex)   
+  tbl_svysummary(by = sex) %>% 
   ## add in confidence intervals
+  
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1993,7 +2061,15 @@ study_data_cleaned %>%
     list(
       stat_0 ~ "**Individuals** \n N={N}"
     )
-    )
+    ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 This shows the unweighted counts and proportions of departure reasons during
@@ -2017,7 +2093,15 @@ study_data_cleaned %>%
     list(
       stat_0 ~ "**Individuals** \n N={N}"
     )
-    )
+    ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 This parallel set diagram shows the flow of population between each individual 
@@ -2145,8 +2229,18 @@ The below chunk creates a weighted table of symptoms among those sick.
 survey_design %>% 
   filter(ill_recently == "Yes") %>% # filter for those who were sick in last 2 weeks
   select(cause_illness) %>%
-  tbl_svysummary()   
+  tbl_svysummary() %>% 
   ## add in confidence intervals
+
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+
 ```
 
 
@@ -2166,9 +2260,17 @@ group.
 survey_design %>% 
   filter(ill_recently == "Yes") %>% # filter for those who were sick in last 2 weeks
   select(cause_illness, age_group) %>%
-  tbl_svysummary(by = age_group)   
+  tbl_svysummary(by = age_group) %>%   
   ## add in confidence intervals
 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2189,8 +2291,17 @@ sex
 survey_design %>% 
   filter(ill_recently == "Yes") %>% # filter for those who were sick in last 2 weeks
   select(cause_illness, sex) %>%
-  tbl_svysummary(by = sex)   
+  tbl_svysummary(by = sex) %>%   
   ## add in confidence intervals
+  
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2213,8 +2324,17 @@ survey_design %>%
   filter(ill_recently == "Yes" & 
            care_illness_recent == "No") %>% 
   select(no_care_illness) %>%
-  tbl_svysummary()   
+  tbl_svysummary() %>% 
   ## add in confidence intervals
+  
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2236,8 +2356,17 @@ survey_design %>%
   # filter for those who experience violence
   filter(violent_episode == "Yes" ) %>% 
   select(violent_episodes_number, violence_nature, uniform, place_violence) %>%
-  tbl_svysummary()   
+  tbl_svysummary() %>% 
   ## add in confidence intervals
+  
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 ## Malaria 
@@ -2260,8 +2389,17 @@ survey_design %>%
   filter(fever_past_weeks == "Yes" & 
            age_years < 5) %>% 
   select(fever_now, care_fever) %>%
-  tbl_svysummary()   
+  tbl_svysummary() %>% 
   ## add in confidence intervals
+  
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2282,7 +2420,16 @@ survey_design %>%
            age_years < 5 & 
            care_fever == "No") %>% 
   select(reason_no_care) %>%
-  tbl_svysummary()   
+  tbl_svysummary() %>% 
   ## add in confidence intervals
+  
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
