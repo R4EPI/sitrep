@@ -104,7 +104,8 @@ pacman::p_load(
   srvyr,       # dplyr wrapper for survey package
   gtsummary,   # produce tables
   labelled,    # add labels to variables
-  matchmaker   # recode datasets with dictionaries
+  matchmaker,  # recode datasets with dictionaries
+  parsedate    # guessing dates
   )
 
 
@@ -527,8 +528,7 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 study_data_cleaned <- study_data_cleaned %>%
   mutate(
     across(.cols = all_of(DATEVARS),
-           .fns = ~linelist::guess_dates(.x,
-                                         error_tolerance = 0.5)))
+           .fns = ~parsedate::parse_date(.x) %>% as.Date()))
 
 ## Non-Kobo data -------------------------------------------------------------
 ## Use this section if you did not have Kobo data.  
@@ -537,8 +537,7 @@ study_data_cleaned <- study_data_cleaned %>%
 # study_data_cleaned <- study_data_cleaned %>%
 #   mutate(
 #     across(.cols = matches("date|Date"),
-#            .fns  = ~linelist::guess_dates(.x, 
-#                                   error_tolerance = 0.5)))
+#            .fns  = ~parsedate::parse_date(.x) %>% as.Date()))
 
 ## Fix wrong dates ------------------------------------------------------------- 
 
