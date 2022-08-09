@@ -68,7 +68,8 @@ pacman::p_load(
   gtsummary,   # produce tables
   labelled,    # add labels to variables
   matchmaker,  # recode datasets with dictionaries
-  lubridate    # working with dates
+  lubridate,   # working with dates
+  parsedate    # guessing dates
   )
 
 ## set default text size to 18 for plots
@@ -476,7 +477,6 @@ DATEVARS <- study_data_dict %>%
   pull(name) # select date vars
 
 ## find if there are date variables which are completely empty
-## (otherwise the linelist package does not work)
 EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
   is.na(study_data_cleaned[[.x]])
   )) %>% 
@@ -491,8 +491,7 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 study_data_cleaned <- study_data_cleaned %>%
   mutate(
     across(.cols = all_of(DATEVARS),
-           .fns = ~linelist::guess_dates(.x,
-                                         error_tolerance = 0.5)))
+           .fns = ~parsedate::parse_date(.x)))
 
 
 ## Non-Kobo data -------------------------------------------------------------
