@@ -278,6 +278,90 @@ study_data_cleaned <- janitor::clean_names(study_data_cleaned)
 
 
 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// prep_non_kobo_data \\\
+--------------------------------------------------------------------------------
+This section is for data not from Kobo. 
+
+If you have already loaded data from Kobo, go to read_population_data.
+
+It is more difficult to prepare the non Kobo data. You can do it! It will just
+take a little more work.
+
+Checklist to update this script to match your data:
+
+[ ] Comment out all lines in read_kobo_data and prep_kobo_data
+[ ] Recode your variable names to match the dictionary
+[ ] Recode variable contents to match the dictionary
+
+This step shows you the data dictionary. The Kobo data dictionary has variable 
+names in the "name" column of the survey sheet. Possible values for each 
+variable are specified in choices sheet. 
+In the choices tab, "name" has the shortened value and the "label::english" and 
+"label::french" columns have the appropriate long versions.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r prep_nonkobo_data}
+
+## MSF Survey Dictionary ----------------------------------------------------------
+
+## generates MSF standard dictionary for Kobo 
+# study_data_dict <- msf_dict_survey("vaccination_long")
+## generates MSF standard dictionary for Kobo in long format (for recoding)
+# study_data_dict_long <- msf_dict_survey(disease = "vaccination_long", compact = FALSE)
+
+## look at the standard dictionary by uncommenting the line below
+# View(study_data_dict) 
+## You will need to recode your variables to match the data dictionary. This is
+## addressed below.
+
+
+
+## Clean column names ----------------------------------------------------------
+## This step fixes the column names so they are easy to use in R.
+
+## make a copy of your orginal dataset and name it study_data_cleaned
+# study_data_cleaned <- study_data_raw
+
+## define clean variable names using clean_names from the janitor package. 
+# study_data_cleaned <- janitor::clean_names(study_data_cleaned)
+
+## Match column names ---------------------------------------------------------
+## This step helps you match your variables to the standard variables.
+## This step will require some patience. Courage!
+
+## Use the function msf_dict_rename_helper() to create a template based on the
+## standard dictionary. This will copy a rename command like the one above to your
+## clipboard.
+
+# msf_dict_rename_helper("vaccination_long", varnames = "name")
+
+## Paste the result below and your column names to the matching variable.
+
+## Be careful! You still need to be aware of what each variable means and what
+## values it takes.
+
+## If there are any variables that are in the MSF dictionary that are not in
+## your data set, then you should comment them out, but be aware that some
+## analyses may not run because of this. 
+
+
+## PASTE HERE
+
+
+## Here is an EXAMPLE for changing a few specific names. function. In this
+## example, we have the columns "gender" and "age" that we want to rename as
+## "sex" and "age_years". 
+## The formula for this is rename(data, NEW_NAME = OLD_NAME).
+
+# study_data_cleaned <- rename(study_data_cleaned, 
+#                            sex       = gender, # TEXT
+#                            age_years = age     # INTEGER_POSITIVE
+# )
+```
+
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// read_population_data \\\
 --------------------------------------------------------------------------------
