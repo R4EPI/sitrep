@@ -1383,13 +1383,19 @@ intervals.
 ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
 
 ar %>%
-  merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
+  merge_ci_df(e = 3, digits = 1) %>% # merge the lower and upper CI into one column
   rename("Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  select(-Population) %>% # drop the population column as it is not changing
-  knitr::kable(digits = 1, align = "r")
+ # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 Here, we can see that the attack rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
@@ -1407,20 +1413,31 @@ attack rate by group.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r attack_rate_by_agegroup, warning = FALSE}
 
-cases <- count(linelist_cleaned, age_group) %>%    # cases for each age_group
-  left_join(population_data_age, by = "age_group") # merge population data 
 
+linelist_cleaned %>%
+  ## create a dummy variable so all rows are counted
+  mutate(case_total = TRUE) %>% 
+  select(case_total, age_group) %>%
+  gtsummary::tbl_summary(
+    ## only include age group counts
+    include = age_group, 
+    label = list(age_group ~ "Age Group")
+    ) %>%
+  epitabulate::add_ar(
+    ## specify which variable counts cases (dummy)
+    case_var = "case_total",
+    ## get the population counts as a vector
+    population = pull(population_data_age, population),
+    drop_tblsummary_stat = TRUE) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 
-# attack rate for each group
-attack_rate(cases$n, cases$population, multiplier = 10000, mergeCI = TRUE) %>% 
-  # add the epiweek column to table
-  bind_cols(select(cases, age_group), .) %>% 
-  rename("Age group" = age_group, 
-         "Cases (n)" = cases, 
-         "Population" = population, 
-         "AR (per 10,000)" = ar, 
-         "95%CI" = ci) %>% 
-  kable(digits = 1, format.args = list(big.mark = ",")) # set thousands separator
 ```
 
 
