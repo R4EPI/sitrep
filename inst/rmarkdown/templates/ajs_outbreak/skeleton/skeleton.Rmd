@@ -78,7 +78,8 @@ pacman::p_load(
   flextable,
   tsibble,         # epiweeks
   sf,              # encode spatial vector data
-  ggspatial        # plot maps
+  ggspatial,       # plot maps
+  purrr            # iterate over data
 )
 
 ```
@@ -98,9 +99,9 @@ The standard is Monday.
 
 ## replace the date below with the latest date 
 ## for which you want data to appear in the report
-reporting_date <- ymd("2019-06-17")
+reporting_date <- ymd("2018-04-23")
 
-## This command sets the reporting week (e.g 2019 W25) based on the reporting_date
+## This command sets the reporting week (e.g 2018 W17) based on the reporting_date
 ## Mondays are the week start by default. Adjust the "1" to another number if desired.
 ## E.g. 7 for Sundays, 5 for Fridays
 reporting_week <- tsibble::yearweek(reporting_date, 1)
@@ -114,8 +115,6 @@ reporting_week <- tsibble::yearweek(reporting_date, 1)
 This code set the defaults for plots, such as the base text size,
 the text angle, legend title, gridline color (grey), and x and y labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-## set current week 
 
 ```{r set_plot_defaults}
 ## Set default options for plots and charts
@@ -969,7 +968,7 @@ obs_end   <- as.Date((reporting_week + 1)) - 1
 
 # filter out cases after end of reporting week
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_consultation_admission <= obs_end)
+  filter(epiweek <= reporting_week)
 
 # define the first week of outbreak (date of first case)
 first_week <- min(linelist_cleaned$epiweek)
@@ -1395,7 +1394,7 @@ ar %>%
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
- # produce styled output table with auto-adjusted column widths with {flextable}
+  # produce styled output table with auto-adjusted column widths with {flextable}
   qflextable() %>% 
   # make header text bold (using {flextable})
   bold(part = "header") %>% 
@@ -1419,7 +1418,6 @@ This chunk calculates the attack rate by age group and then gives a table of
 attack rate by group.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r attack_rate_by_agegroup, warning = FALSE}
-
 
 linelist_cleaned %>%
   ## create a dummy variable so all rows are counted
@@ -1857,6 +1855,7 @@ This chunk creates a table of attack rate by week
 Attack rate per 10,000 population by week 
 
 ```{r attack_rate_per_week, warning = FALSE, message = FALSE}
+
 # counts and cumulative counts by week
 cases <- linelist_cleaned %>%
   arrange(date_of_onset) %>%        # arrange by date of onset
@@ -1876,7 +1875,14 @@ ar %>%
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
  
 
@@ -1899,13 +1905,20 @@ attack_rate(cases$cumulative, population, multiplier = 10000) %>%
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// cumulative_attack_rate_per_week \\\
+/// cfr_per_week \\\
 --------------------------------------------------------------------------------
 
 This chunk calculates the CFR among inpatients as a proportion per week.
@@ -1917,6 +1930,7 @@ Case fatality ratio as a proportion among inpatients by week
 # calculate CFR among inpatients by week
 cfr <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
+  mutate(epiweek = as.character(epiweek)) %>% 
   case_fatality_rate_df(str_detect(exit_status, "Dead"), group = epiweek)
 
 
@@ -1927,7 +1941,14 @@ cfr %>%
          "Cases" = population, 
          "CFR (%)" = cfr, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -1951,7 +1972,7 @@ This chunk sets up the AR graph. (It does not print the graph automatically.)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r ar_line_graph}
 
-ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
+ar_plot <- ggplot(ar, aes(x = as.Date(epiweek), group = 1)) +
   # add confidence intervals as a ribbon
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "blue",  fill = "blue", 
@@ -1959,11 +1980,11 @@ ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   # add AR as a line
   geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
   # set origin for axes
-  scale_y_continuous(expand = c(0, 0)) +
-  # scale the x axis the same as the incidence curve. Expand forces it to align. 
-  incidence::scale_x_incidence(inc_week_7, 
-                               n_breaks = nrow(inc_week_7), 
-                               expand = c(0, 7 * 1.5)) +
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 10,000)") + 
   # change visuals of dates and remove legend title
@@ -1981,7 +2002,7 @@ If you do not have any deaths in your data set, this will not show anything.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r cfr_line_graph}
 
-cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
+cfr_plot <- ggplot(cfr, aes(x = as.Date(yearweek(as.character(epiweek)))), group = 1) +
   # add confidence intervals as a ribbon
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "red", fill = "red", 
@@ -1989,11 +2010,11 @@ cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   # add CFR as a line
   geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
   # set origin for axes
-  scale_y_continuous(expand = c(0, 0)) +  
-  # scale the x axis the same as the incidence curve. Expand forces it to align. 
-  incidence::scale_x_incidence(inc_week_7, 
-                               n_breaks = nrow(inc_week_7), 
-                               expand = c(0, 7 * 1.5)) +
+  scale_y_continuous(expand = c(0, NA)) +  
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "CFR [95% CI]", 
        subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
@@ -2033,13 +2054,22 @@ Inpatient admissions by case definition and week
 
 linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>%
-  tab_linelist(epiweek, strata = case_def,
-             col_total = TRUE,
-             row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+  tbl_cross(
+    row = epiweek, 
+    col = case_def, 
+    percent = "column", 
+    label = list(epiweek = "Calendar Week", 
+                 case_def = "Case definition")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+
 ```
 
 
@@ -2056,13 +2086,21 @@ Inpatient discharges by reason for exit and week
 
 linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>%
-  tab_linelist(epiweek, strata = exit_status2, 
-               col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Week" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+  tbl_cross(
+    row = epiweek, 
+    col = exit_status2, 
+    percent = "column", 
+    label = list(epiweek = "Calendar Week", 
+                 exit_status2 = "Outcome")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2095,14 +2133,23 @@ Cases by region and facility type
 
 ```{r describe_by_region_facility}
 
-tab_linelist(linelist_cleaned, patient_origin, 
-             strata = patient_facility_type,
-             col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Region" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+linelist_cleaned %>% 
+  tbl_cross(
+    row = patient_origin, 
+    col = patient_facility_type, 
+    percent = "column", 
+    label = list(patient_origin = "Region", 
+                 patient_facility_type = "Facility type")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+
 ```
 
   
@@ -2117,15 +2164,23 @@ Inpatient discharges by reason for exit and region
 
 ```{r describe_by_region_outcome, warning = FALSE}
 
-tab_linelist(filter(linelist_cleaned,
-                    patient_facility_type == "Inpatient"),
-             patient_origin, strata = exit_status2,
-             col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Region" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+linelist_cleaned %>% 
+  filter(patient_facility_type == "Inpatient") %>% 
+  tbl_cross(
+    row = patient_origin, 
+    col = exit_status2, 
+    percent = "column", 
+    label = list(patient_origin = "Region", 
+                 exit_status2 = "Outcome")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -2146,7 +2201,8 @@ Attack rage per 10,000 population by region
 ```{r attack_rate_by_region, warning = FALSE}
 
 # count cases by region
-cases <- count(linelist_cleaned, patient_origin) %>%
+cases <- linelist_cleaned %>% 
+  count(patient_origin) %>%
   # add in population data
   left_join(population_data_region, by = "patient_origin") 
 
@@ -2165,7 +2221,14 @@ ar_region <- attack_rate(cases$n, cases$population, multiplier = 10000) %>%
 ar_region %>% 
   merge_ci_df(e = 4) %>% # merge lower and upper CI in to one column 
   rename("95%CI" = ci) %>%  # rename single 95%CI column
-  kable(digits = 1, align = "r", format.args = list(big.mark = ",")) # set thousands separator
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -2219,7 +2282,14 @@ mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 1)
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -2344,7 +2414,7 @@ ggplot() +
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// map_for_loop_epiweek \\\
+/// map_iterate_epiweek \\\
 --------------------------------------------------------------------------------
 
 This chunk will create a map and barplot by week.
@@ -2358,7 +2428,7 @@ You need to:
 If you have a lot of map regions, you may want to use facet_wrap to show
 sub-units.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r map_for_loop_epiweek, message = FALSE, warning = FALSE, fig.width = 12}
+```{r map_iterate_epiweek, message = FALSE, warning = FALSE, fig.width = 12}
 
 ## Prepare data ---------------------------------------------------------------
 
@@ -2384,6 +2454,12 @@ ar <- attack_rate(cases$n, cases$population, multiplier = 10000) %>%
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper)
 
+## define the last four weeks available in your dataset
+which_weeks <- tail(unique(cases$epiweek), n = 4)
+
+## only keep the last four weeks of data 
+ar <- ar %>% 
+  filter(epiweek %in% which_weeks)
 
 # define the maximum number of cases / max AR for the color palette 
 max_cases <- max(cases$n, na.rm = TRUE) 
@@ -2403,9 +2479,11 @@ ar <- mutate(ar,
                                          breakers = breakers))
 
 
-# go through each epiweek, fiter and plot the data
-for (week in unique(cases$epiweek)) {
-  this_ar <- filter(ar, epiweek == week)
+
+# go through each epiweek, filter and plot the data
+purrr::map(.x = which_weeks, 
+           .f = ~{
+  this_ar <- filter(ar, epiweek == yearweek(.x))
   
   ## map 
   mapsub <- left_join(map, this_ar, by = c("name" = "Region"))
@@ -2444,12 +2522,10 @@ for (week in unique(cases$epiweek)) {
   
   ## combine the barplot and map plot into one with patchwork and add a title
   ## in the top-left corner and a caption in the bottom-right
-  print(
-    barplot + map_plot + plot_annotation(
-         title   = str_glue("Epiweek: {week}"),
-         caption = str_glue("Source: MSF data from {reporting_week}")
+  barplot + map_plot + plot_annotation(
+    title   = str_glue("Epiweek: {.x}"),
+    caption = str_glue("Source: MSF data from {reporting_week}")
     )
-  )
-}
+})
 ```
 
