@@ -53,40 +53,70 @@ knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
 ## set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
 
-
+# Ensures the package "pacman" is installed
+if (!require("pacman")) {
+     install.packages("pacman") }
 
 ## Installing required packages for this template
-required_packages <- c("knitr",       # create output docs
-                       "here",        # find your files
-                       "dplyr",       # clean/shape data
-                       "forcats",     # clean/shape data
-                       "stringr",     # clean text
-                       "rio",         # read in data
-                       "ggplot2",     # create plots and charts
-                       "patchwork",   # combine plots in one
-                       "sitrep",      # MSF field epi functions
-                       "linelist",    # Functions for cleaning/standardising data/dates
-                       "matchmaker",  # dictionary-based standardization of variables
-                       "incidence",   # create epicurves
-                       "aweek",       # define epi weeks
-                       "epitrix",     # epi helpers and tricks
-                       "sf",          # encode spatial vector data
-                       "ggspatial")   # plot maps
+pacman::p_load(
+  knitr,       # create output docs
+  here,        # find your files
+  rio,         # read in data
+  forcats,     # clean/shape data
+  lubridate,   # handle dates
+  dplyr,       # clean/shape data
+  tidyr,       # clean/shape data
+  stringr,     # clean text
+  ggplot2,     # create plots and charts
+  slider,      # moving averages
+  parsedate,   # guessing dates
+  patchwork,   # combine plots in one
+  sitrep,      # MSF field epi functions
+  janitor,     # clean data
+  matchmaker,  # dictionary-based standardization of variables
+  gtsummary,   # tables
+  flextable,   # table styling
+  tsibble,     # epiweeks
+  sf,          # encode spatial vector data
+  ggspatial,   # plot maps
+  purrr        # iterate over data
+)
 
-for (pkg in required_packages) {
-  # install packages if not already present
-  if (!pkg %in% rownames(installed.packages())) {
-    install.packages(pkg)
-  }
-  
-  # load packages to this current session 
-  library(pkg, character.only = TRUE)
-}
+```
 
 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// define_current_week \\\
+--------------------------------------------------------------------------------
+You need to set the week you want to report on. Generally, this is the previous
+week. Put it below.
+
+The standard is Monday.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r define_current_week}
+
+## replace the date below with the latest date 
+## for which you want data to appear in the report
+reporting_date <- ymd("2018-04-23")
+
+## This command sets the reporting week (e.g 2018 W17) based on the reporting_date
+## Mondays are the week start by default. Adjust the "1" to another number if desired.
+## E.g. 7 for Sundays, 5 for Fridays
+reporting_week <- tsibble::yearweek(reporting_date, 1)
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// set_plot_defaults \\\
+--------------------------------------------------------------------------------
+This code set the defaults for plots, such as the base text size,
+the text angle, legend title, gridline color (grey), and x and y labels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r set_plot_defaults}
 
 ## Set default options for plots and charts
-
 ## set default text size to 16 for plots
 ## give classic black/white axes for plots
 ggplot2::theme_set(theme_classic(base_size = 18))
@@ -97,26 +127,6 @@ epicurve_theme <- theme(
   legend.title = element_blank(),
   panel.grid.major.x = element_line(color = "grey60", linetype = 3),
   panel.grid.major.y = element_line(color = "grey60", linetype = 3))
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// define_current_week \\\
---------------------------------------------------------------------------------
-
-You need to set the week you want to report on. Generally, this is the previous
-week. Put it below.
-
-aweek::set_week_start will define the beginning of the week. The standard is
-Monday.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r define_current_week}
-## set the day that defines the beginning of your epiweek.
-aweek::set_week_start("Monday")
-
-## set current week 
-reporting_week <- aweek::as.aweek("2019-W25")
 
 ## sets the labels in ggplot for the epicurves
 epicurve_labels <- labs(x = "Calendar week", 
@@ -125,7 +135,6 @@ epicurve_labels <- labs(x = "Calendar week",
                         subtitle = str_glue("Source: MSF data from {reporting_week}")
                        ) 
 ```
-
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
