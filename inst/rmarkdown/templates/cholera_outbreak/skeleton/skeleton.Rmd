@@ -1017,7 +1017,7 @@ total of `r nrow(linelist_cleaned)` cases. There were
 `r fmt_count(linelist_cleaned, sex == "Female")` females and
 `r fmt_count(linelist_cleaned, sex == "Male")` males. 
 
-The most affected age group was `r tab_linelist(linelist_cleaned, age_group) %>% slice(which.max(n)) %>% pull(value)` years. 
+The most affected age group was `r tabyl(linelist_cleaned, age_group) %>% slice(which.max(n)) %>% pull(age_group)` years. 
 
 
 
@@ -1034,21 +1034,25 @@ definition variable.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_age_group_and_def}
 
-tab_linelist(linelist_cleaned, 
-             # rows as age groups, with case_def as strata (columns)
-             age_group, strata = case_def, 
-             # we want row totals and column totals
-             col_total = TRUE, row_total = TRUE) %>%
-  # removes the column called variable (which just says "age_group" in this case)
-  select(-variable) %>%
-  # renames the column called value to Age group
-  rename("Age group" = value) %>%
-  # there are several columns called "proportion" - renames them to %
-  rename_redundant("%" = proportion) %>%
-  # any time there is a column that says n, we replace that with "cases (n)"
-  augment_redundant(" cases (n)" = " n$") %>%
-  # makes the table easy to read with only 2 decimal places
-  kable(digits = 1)
+linelist_cleaned %>% 
+  ## only keep variables of interest
+  select(age_group, case_def) %>% 
+  ## make NAs show up as "Missing" (so they are included in counts)
+  mutate(case_def = forcats::fct_explicit_na(case_def, "Missing")) %>%
+  ## create a table with counts/percentages by column
+  tbl_summary(by = case_def,
+              percent = "column",
+              label = list(age_group = "Age group")) %>% 
+  ## add totals
+  add_overall() %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1064,14 +1068,22 @@ Cases by age group and sex
 This chunk will create a table of cases by age group and sex.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_age_group_and_sex}
-tab_linelist(linelist_cleaned, 
-             age_group, strata = sex, 
-             col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Age group" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" cases (n)" = " n$") %>%
-  kable(digits = 1)
+
+linelist_cleaned %>% 
+  select(age_group, sex) %>% 
+  mutate(sex = forcats::fct_explicit_na(sex, "Missing")) %>%
+  tbl_summary(by = sex,
+              percent = "column",
+              label = list(age_group = "Age group")) %>% 
+  add_overall() %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1084,14 +1096,22 @@ Cases by population proportion (age group and sex)
 You can also show cases by proportion of the total population by sex and age.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r total_props_agegroup_sex}
-tab_linelist(linelist_cleaned, 
-             age_group, strata = sex,
-             col_total = TRUE, row_total = TRUE, prop_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Age group" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" cases (n)" = " n$") %>%
-  kable(digits = 1)
+
+linelist_cleaned %>% 
+  select(age_group, sex) %>% 
+  mutate(sex = forcats::fct_explicit_na(sex, "Missing")) %>%
+  tbl_summary(by = sex,
+              percent = "cell",
+              label = list(age_group = "Age group")) %>% 
+  add_overall() %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1103,7 +1123,7 @@ Age pyramid
 This chunk creates an age/sex pyramid of your cases.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r age_pyramid, warning=FALSE}
- plot_age_pyramid(linelist_cleaned,
+ age_pyramid(linelist_cleaned,
                   age_group = "age_group", 
                   split_by = "sex") + 
   labs(y = "Cases (n)", x = "Age group") + # change axis  labels
@@ -1132,14 +1152,26 @@ Cases by treatment plan and case definition
 This chunk creates a table of fluids treatment plan by case definition.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_treatment_plan_case_def}
-tab_linelist(linelist_cleaned, 
-             fluids_treatment_plan, strata = case_def,
-             col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Fluid treatment plan" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" cases (n)" = " n$") %>%
-  kable(digits = 1)
+
+linelist_cleaned %>% 
+  ## only keep variables of interest
+  select(fluids_treatment_plan, case_def) %>% 
+  ## make NAs show up as "Missing" (so they are included in counts)
+  mutate(case_def = forcats::fct_explicit_na(case_def, "Missing")) %>%
+  ## create a table with counts/percentages by column
+  tbl_summary(by = case_def,
+              percent = "column",
+              label = list(fluids_treatment_plan = "Treatment plan")) %>% 
+  ## add totals
+  add_overall() %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1157,14 +1189,19 @@ Cases by dehydration severity at admission
 This chunk creates a table describing the dehydration level at admission.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_illness_severity_admission}
-tab_linelist(linelist_cleaned, 
-            dehydration_level_at_admission, 
-            col_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Dehydration severity" = value, 
-         "Cases (n)" = n, 
-         "%" = proportion) %>% 
-  kable(digits = 1)
+linelist_cleaned %>% 
+  select(dehydration_level_at_admission) %>% 
+  mutate(dehydration_level_at_admission = forcats::fct_explicit_na(dehydration_level_at_admission, "Missing")) %>%
+  tbl_summary(percent = "cell",
+              label = list(dehydration_level_at_admission = "Dehydration severity")) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1177,14 +1214,20 @@ Cases by dehydration severity during stay
 This chunk creates a table describing the dehydration level during the stay.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_illness_severity_stay}
-tab_linelist(linelist_cleaned, 
-            dehydration_severity_during_stay, 
-            col_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Dehydration severity" = value, 
-         "Cases (n)" = n, 
-         "%" = proportion) %>% 
-  kable(digits = 1)
+
+linelist_cleaned %>% 
+  select(dehydration_severity_during_stay) %>% 
+  mutate(dehydration_severity_during_stay = forcats::fct_explicit_na(dehydration_severity_during_stay, "Missing")) %>%
+  tbl_summary(percent = "cell",
+              label = list(dehydration_severity_during_stay = "Dehydration severity")) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1200,16 +1243,28 @@ If you do not have lab results, comment out this chunk.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_labs}
 
-tab_linelist(linelist_cleaned, LABS, 
-             transpose = "variable", col_total = TRUE) %>%
-  # rename accordingly
-  rename("Results" = value) %>%
-  rename_redundant("%" = proportion, 
-                   "Culture (n)" = "_culture_", 
-                   "PCR (n)" = "_pcr_", 
-                   "RDT (n)" = "_rdt") %>%
-  kable(digits = 1)
-
+linelist_cleaned %>% 
+  select(all_of(LABS)) %>% 
+  ## create long dataset for counting
+  pivot_longer(cols = everything()) %>% 
+  # fix the way lab test names are displayed
+  mutate(name = case_when(
+    str_detect(name, "culture") ~ "Culture", 
+    str_detect(name, "pcr")     ~ "PCR", 
+    str_detect(name, "rdt")     ~ "RDT")) %>% 
+  ## show percentages by column (i.e. for each test)
+  tbl_summary(percent = "column",
+              by = name,
+              label = list(value = "Test result")) %>% 
+  add_overall() %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1222,14 +1277,20 @@ Cases by vaccination status
 This chunk creates a table of the vaccination status of your cases.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_by_vaccination_status}
-tab_linelist(linelist_cleaned, 
-            previously_vaccinated, 
-            col_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Vaccination status" = value, 
-         "Cases (n)" = n, 
-         "%" = proportion) %>% 
-  kable(digits = 1)
+
+linelist_cleaned %>% 
+  select(previously_vaccinated) %>% 
+  mutate(previously_vaccinated = forcats::fct_explicit_na(previously_vaccinated, "Missing")) %>%
+  tbl_summary(percent = "cell",
+              label = list(previously_vaccinated = "Previous vaccination")) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1248,13 +1309,19 @@ If you have the time_to_death available, you can use this chunk to describe when
 inpatients died. If not, comment it out.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r describe_time_to_death, warning = FALSE, message = FALSE}
-filter(linelist_cleaned, DIED, patient_facility_type == "Inpatient") %>% 
-  tab_linelist(time_to_death, col_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Time (hours)" = value, 
-         "Deaths (n)" = n, 
-         "%" = proportion) %>% 
-  kable(digits = 1)
+
+linelist_cleaned %>% 
+  filter(DIED, patient_facility_type == "Inpatient") %>% 
+  select(time_to_death) %>% 
+  tbl_summary(label = list(time_to_death = "Time to Death")) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1271,12 +1338,22 @@ If you have no deaths reported, the table will not be useful.
 # use arguments from above to produce overal CFR
 linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, mergeCI = TRUE) %>%
-  rename("Deaths" = deaths,
-         "Cases" = population,
-         "CFR (%)" = cfr,
-         "95%CI" = ci) %>%
-  kable(digits = 1)
+  select(DIED) %>%
+  gtsummary::tbl_summary(
+    statistic = everything() ~ "{N}",
+    label = DIED ~ "Inpatients"
+    ) %>%
+  modify_header(stat_0 = "Cases (N)") %>% 
+  # Use wrapper function to calculate cfr
+  epitabulate::add_cfr(deaths_var = "DIED") %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 
 ```
 
@@ -1292,14 +1369,23 @@ by sex. If you have no deaths reported, the table will not be useful.
 ```{r cfr_by_sex, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  mutate(sex = forcats::fct_explicit_na(sex, "-")) %>%
-  case_fatality_rate_df(deaths = DIED, group = sex, mergeCI = TRUE, add_total = TRUE) %>%
-  rename("Sex" = sex, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1)
+  select(DIED, sex) %>%
+  mutate(sex = forcats::fct_explicit_na(sex, "Missing")) %>%
+  gtsummary::tbl_summary(
+    include = sex,
+    statistic = sex ~ "{n}",
+    label = sex ~ "Gender") %>%
+  modify_header(stat_0 = "Cases (N)") %>% 
+  # Use wrapper function to calculate cfr
+  add_cfr(deaths_var = "DIED") %>%
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1316,18 +1402,24 @@ by age group. If you have no deaths reported, the table will not be useful.
 
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
-  tidyr::complete(age_group, 
-                  fill = list(deaths = 0, 
-                              population = 0, 
-                              cfr = 0, 
-                              ci = 0)) %>% # Ensure all levels are represented
-  rename("Age group" = age_group, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1)
+  select(DIED, age_group) %>%
+  gtsummary::tbl_summary(
+    include = age_group,
+    statistic = age_group ~ "{n}",
+    missing = "no",
+    label = age_group ~ "Age group"
+    ) %>%
+  modify_header(stat_0 = "Cases (N)") %>%
+  # Use wrapper function to calculate cfr
+  add_cfr(deaths_var = "DIED") %>%
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1341,16 +1433,26 @@ have no deaths, the table will not be useful.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r cfr_by_case_def, warning = FALSE, message = FALSE}
 
-# linelist_cleaned %>%
-#   filter(patient_facility_type == "Inpatient") %>%
-#   case_fatality_rate_df(deaths = DIED, group = case_def, 
-#                         mergeCI = TRUE, add_total = TRUE) %>%
-#   rename("Case definition" = case_def,
-#          "Deaths" = deaths,
-#          "Cases" = population,
-#          "CFR (%)" = cfr,
-#          "95%CI" = ci) %>%
-#   knitr::kable(digits = 1)
+linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
+  select(DIED, case_def) %>%
+  gtsummary::tbl_summary(
+    include = case_def,
+    statistic = case_def ~ "{n}",
+    missing = "no",
+    label = case_def ~ "Case definition"
+    ) %>%
+  modify_header(stat_0 = "Cases (N)") %>%
+  # Use wrapper function to calculate cfr
+  add_cfr(deaths_var = "DIED") %>%
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1387,13 +1489,19 @@ intervals.
 ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
 
 ar %>%
-  merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
+  merge_ci_df(e = 3, digits = 1) %>% # merge the lower and upper CI into one column
   rename("Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  select(-Population) %>% # drop the population column as it is not changing
-  knitr::kable(digits = 1, align = "r")
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 Here, we can see that the attack rate for a population of `r format(population, big.mark = ",")` was `r fmt_ci_df(ar, percent = FALSE)`.
@@ -1411,20 +1519,29 @@ attack rate by group.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r attack_rate_by_agegroup, warning = FALSE}
 
-cases <- count(linelist_cleaned, age_group) %>%    # cases for each age_group
-  left_join(population_data_age, by = "age_group") # merge population data 
-
-
-# attack rate for each group
-attack_rate(cases$n, cases$population, multiplier = 10000, mergeCI = TRUE) %>% 
-  # add the epiweek column to table
-  bind_cols(select(cases, age_group), .) %>% 
-  rename("Age group" = age_group, 
-         "Cases (n)" = cases, 
-         "Population" = population, 
-         "AR (per 10,000)" = ar, 
-         "95%CI" = ci) %>% 
-  kable(digits = 1, format.args = list(big.mark = ",")) # set thousands separator
+linelist_cleaned %>%
+  ## create a dummy variable so all rows are counted
+  mutate(case_total = TRUE) %>% 
+  select(case_total, age_group) %>%
+  gtsummary::tbl_summary(
+    ## only include age group counts
+    include = age_group, 
+    label = list(age_group ~ "Age Group")
+    ) %>%
+  epitabulate::add_ar(
+    ## specify which variable counts cases (dummy)
+    case_var = "case_total",
+    ## get the population counts as a vector
+    population = pull(population_data_age, population),
+    drop_tblsummary_stat = TRUE) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1474,7 +1591,7 @@ pat_obs_time <- linelist_cleaned %>%
 /// mortality_rate \\\
 --------------------------------------------------------------------------------
 
-To produce a mortality rate (attribuatble to cholera) per 10,000 people use
+To produce a mortality rate (attributable to cholera) per 10,000 people use
 the following code chunk. This assumes that you are capturing every cholera
 death in your population.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -1487,7 +1604,14 @@ mortality_rate(deaths, population, multiplier = 10000, mergeCI = TRUE) %>%
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 1)
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -1515,7 +1639,14 @@ mortality_rate(deaths, population*obs_time, multiplier = 10000, mergeCI = TRUE) 
          "Person-days" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 1)
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -1537,7 +1668,14 @@ mortality_rate(deaths, pat_obs_time, multiplier = 10000, mergeCI = TRUE) %>%
          "Population" = population, 
          "Mortality (per 10,000/day)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 1)
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -1564,17 +1702,25 @@ There were `r fmt_count(linelist_cleaned, is.na(date_of_onset))` cases missing d
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r epicurve, message = FALSE}
 
-# count cases for each week of outbreak
-# you can change the start of your week (eg "Sunday week", "Saturday week")
-inc_week_7 <- incidence(linelist_cleaned$date_of_onset, interval = "Monday week")
-
-
-# plot your epicurve
-basic_curve <- plot(inc_week_7, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  # add labels to axes and below chart
+## make plot
+basic_curve <- linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date)) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           fill = "red",
+           colour = "black") +
+  ## align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  ## control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) + 
+  ## use pre-defined labels
   epicurve_labels +
-  # change visuals of dates and remove legend title
+  ## use pre-defined theme (design) settings
   epicurve_theme
 
 # show your plot (stored for later use) 
@@ -1585,14 +1731,48 @@ basic_curve
 ## you can customize the number of breaks by changing n_breaks
 ## you can also use months for your break (here in three-month intervals)
 
-# basic_curve + scale_x_incidence(inc_week_7, n_breaks = 6)
 # basic_curve + scale_x_date(breaks = "3 months", date_labels = "%b %Y")
 
 
 ```
 
-The peak of the outbreak was in `r date2week(find_peak(inc_week_7), floor_day = TRUE)`.
+The peak of the outbreak was in `r tabyl(linelist_cleaned, epiweek) %>% slice(which.max(n)) %>% pull(epiweek)`.
 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// epicurve_moving \\\
+--------------------------------------------------------------------------------
+# This chunk will calculate a two-weekly moving average and add it to your basic
+epicurve as a line. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r epicurve_moving, message = FALSE}
+## define the width of the moving average window here
+moving_window_days <- 14
+
+## calculates the moving average using counts by epiweek
+moving_avg <- linelist_cleaned %>% 
+  ## count cases by epiweek
+  count(epiweek_date) %>% 
+  ## create column with sliding window for day and window prior
+  mutate(indexed_window = slider::slide_index_dbl(
+    n,                       # calculate on new_cases
+    .i = epiweek_date,       # indexed with epiweek_date 
+    .f = ~mean(.x, na.rm = TRUE),     # function is mean() with missing values removed
+    .before = days(moving_window_days - 1)))
+
+## create plot
+moving_plot <-  basic_curve + 
+  geom_line(data = moving_avg,
+       mapping = aes(x = epiweek_date, y = indexed_window)) +
+  
+  # adjust title and subtitle for this particular plot
+  labs(title = str_glue("Cases by date of onset"),
+       subtitle = str_glue("{moving_window_days}-day moving average
+                           Source: MSF data from {reporting_week}"))
+
+# show your plot (stored for later use) 
+moving_plot
+```
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1605,16 +1785,33 @@ quarter, or year. You can change the start of your week as needed.
 
 ```{r biweekly_epicurve, message = FALSE}
 
-# create case counts for two week groups of your outbreak overall
-inc_week_14 <- incidence(linelist_cleaned$date_of_onset, interval = "2 Monday weeks")
+## calculates the moving sum using counts by epiweek
+moving_sum <- linelist_cleaned %>% 
+  ## count cases by date of onset
+  count(epiweek_date) %>% 
+  mutate(biweekly = slide_sum(x = n, 
+            after = 1, 
+            step = 2)) %>% 
+  filter(!is.na(biweekly))
 
-
-# plot your epicurve
-plot(inc_week_14, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_14)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
-  # add labels to axes and below chart
+ggplot(moving_sum, aes(x = epiweek_date, y = biweekly)) +
+  ## plot as a bar
+  geom_bar(
+    ## use the count we calculated above
+    stat = "identity", 
+    ## make each bar two weeks wide
+    width = 14,
+    fill = "red",
+    colour = "black") +
+  ## align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  ## control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) + 
+  ## use pre-defined labels
   epicurve_labels +
-  # change visuals of dates and remove legend title
+  ## use pre-defined theme (design) settings
   epicurve_theme
 
 ```
@@ -1631,16 +1828,22 @@ You can plot weekly incidence by gender using this chunk.
 ```{r incidence_by_gender, message = FALSE}
 
 # get counts by gender
-inc_week_7_gender <- incidence(linelist_cleaned$date_of_onset, 
-                               interval = "Monday week", 
-                               groups = linelist_cleaned$sex)
-
-plot(inc_week_7_gender, 
-     show_cases = FALSE, # this removes black borders
-     border = "black", 
-     n_breaks = nrow(inc_week_7_gender)) + 
-  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(sex)))) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) + 
+  # use pre-defined labels
   epicurve_labels +
+  # use pre-defined theme (design) settings
   epicurve_theme
 
 ```
@@ -1655,14 +1858,23 @@ This chunk shows the weekly incidence by case definition. You must have a
 defined case definition variable.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r incidence_by_case_def, message = FALSE}
-inc_week_7_casedef <- incidence(linelist_cleaned$date_of_onset, 
-                                interval = "Monday week", 
-                                groups = linelist_cleaned$case_def)
-plot(inc_week_7_casedef, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_casedef)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
-  # add labels to axes and below chart
+linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(case_def)))) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
+  # use pre-defined labels
   epicurve_labels +
-  # change visuals of dates, remove legend title and move legend to bottom
+  # use pre-defined theme (design) settings
   epicurve_theme
 ```
 
@@ -1676,15 +1888,24 @@ This chunk limits the data to only inpatients, then stratifies by sex.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 Cases by week of onset among inpatients by sex 
 ```{r incidence_by_sex_facility, message = FALSE}
-inc_week_7_sex_fac <- linelist_cleaned %>%
-  filter(patient_facility_type == "Inpatient") %>%
-  with(incidence(date_of_onset, interval = "Monday week", groups = sex))
-
-
-
-plot(inc_week_7_sex_fac, show_cases = TRUE, border = "black", n_breaks = nrow(inc_week_7_sex_fac)) + 
-  scale_y_continuous(expand = c(0, 0)) +  # set origin for axes
+linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  filter(patient_facility_type == "Inpatient") %>% 
+  
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(sex)))) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  ## align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  ## control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
+  ## use pre-defined labels
   epicurve_labels +
+  ## use pre-defined theme (design) settings
   epicurve_theme
 
 ```
@@ -1720,7 +1941,14 @@ ar %>%
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(j = -1, digits = 1)
 ```
  
 
@@ -1743,7 +1971,14 @@ attack_rate(cases$cumulative, population, multiplier = 10000) %>%
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(j = -1, digits = 1)
 ```
 
 
@@ -1761,6 +1996,7 @@ Case fatality ratio as a proportion among inpatients by week
 # calculate CFR among inpatients by week
 cfr <- linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
+  mutate(epiweek = as.character(epiweek)) %>% 
   case_fatality_rate_df(str_detect(exit_status, "Dead"), group = epiweek)
 
 
@@ -1771,7 +2007,14 @@ cfr %>%
          "Cases" = population, 
          "CFR (%)" = cfr, 
          "95%CI" = ci) %>% 
-  knitr::kable(digits = 1, align = "r")
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(j = -1, digits = 1)
 ```
 
 
@@ -1795,7 +2038,7 @@ This chunk sets up the AR graph. (It does not print the graph automatically.)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r ar_line_graph}
 
-ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
+ar_plot <- ggplot(ar, aes(x = as.Date(epiweek), group = 1)) +
   # add confidence intervals as a ribbon
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "blue",  fill = "blue", 
@@ -1803,11 +2046,11 @@ ar_plot <- ggplot(ar, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   # add AR as a line
   geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
   # set origin for axes
-  scale_y_continuous(expand = c(0, 0)) +
-  # scale the x axis the same as the incidence curve. Expand forces it to align. 
-  incidence::scale_x_incidence(inc_week_7, 
-                               n_breaks = nrow(inc_week_7), 
-                               expand = c(0, 7 * 1.5)) +
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 10,000)") + 
   # change visuals of dates and remove legend title
@@ -1825,7 +2068,7 @@ If you do not have any deaths in your data set, this will not show anything.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r cfr_line_graph}
 
-cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
+cfr_plot <- ggplot(cfr, aes(x = as.Date(yearweek(as.character(epiweek)))), group = 1) +
   # add confidence intervals as a ribbon
   geom_ribbon(aes(ymin = lower, ymax = upper), 
               color = "red", fill = "red", 
@@ -1833,11 +2076,11 @@ cfr_plot <- ggplot(cfr, aes(x = week2date(epiweek) + (7 * 0.5), group = 1)) +
   # add CFR as a line
   geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
   # set origin for axes
-  scale_y_continuous(expand = c(0, 0)) +  
-  # scale the x axis the same as the incidence curve. Expand forces it to align. 
-  incidence::scale_x_incidence(inc_week_7, 
-                               n_breaks = nrow(inc_week_7), 
-                               expand = c(0, 7 * 1.5)) +
+  scale_y_continuous(expand = c(0, NA)) +  
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
   # add labels to axes and below chart
   labs(x = "Calendar week", y = "CFR [95% CI]", 
        subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
@@ -1876,13 +2119,21 @@ Inpatient admissions by case definition and week
 
 linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>%
-  tab_linelist(epiweek, strata = case_def,
-             col_total = TRUE,
-             row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+  tbl_cross(
+    row = epiweek, 
+    col = case_def, 
+    percent = "column", 
+    label = list(epiweek = "Calendar Week", 
+                 case_def = "Case definition")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1899,13 +2150,21 @@ Inpatient discharges by reason for exit and week
 
 linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>%
-  tab_linelist(epiweek, strata = exit_status2, 
-               col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Week" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+  tbl_cross(
+    row = epiweek, 
+    col = exit_status2, 
+    percent = "column", 
+    label = list(epiweek = "Calendar Week", 
+                 exit_status2 = "Outcome")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1938,14 +2197,22 @@ Cases by region and facility type
 
 ```{r describe_by_region_facility, warning = FALSE}
 
-tab_linelist(linelist_cleaned, patient_origin, 
-             strata = patient_facility_type,
-             col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Region" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+linelist_cleaned %>% 
+  tbl_cross(
+    row = patient_origin, 
+    col = patient_facility_type, 
+    percent = "column", 
+    label = list(patient_origin = "Region", 
+                 patient_facility_type = "Facility type")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1960,15 +2227,23 @@ Inpatient discharges by reason for exit and region
 
 ```{r describe_by_region_outcome, warning = FALSE}
 
-tab_linelist(filter(linelist_cleaned,
-                    patient_facility_type == "Inpatient"),
-             patient_origin, strata = exit_status2,
-             col_total = TRUE, row_total = TRUE) %>% 
-  select(-variable) %>%
-  rename("Region" = value) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+linelist_cleaned %>% 
+  filter(patient_facility_type == "Inpatient") %>% 
+  tbl_cross(
+    row = patient_origin, 
+    col = exit_status2, 
+    percent = "column", 
+    label = list(patient_origin = "Region", 
+                 exit_status2 = "Outcome")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
@@ -1989,7 +2264,8 @@ Attack rage per 10,000 population by region
 ```{r attack_rate_by_region, warning = FALSE}
 
 # count cases by region
-cases <- count(linelist_cleaned, patient_origin) %>%
+cases <- linelist_cleaned %>% 
+  count(patient_origin) %>%
   # add in population data
   left_join(population_data_region, by = "patient_origin") 
 
@@ -2008,7 +2284,14 @@ ar_region <- attack_rate(cases$n, cases$population, multiplier = 10000) %>%
 ar_region %>% 
   merge_ci_df(e = 4) %>% # merge lower and upper CI in to one column 
   rename("95%CI" = ci) %>%  # rename single 95%CI column
-  kable(digits = 1, align = "r", format.args = list(big.mark = ",")) # set thousands separator
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -2062,7 +2345,14 @@ mortality_rate(deaths$deaths, deaths$population, multiplier = 10000) %>%
          "Population" = population, 
          "Mortality (per 10,000)" = `mortality per 10 000`, 
          "95%CI" = ci) %>% 
-  kable(digits = 1)
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 
@@ -2187,7 +2477,7 @@ ggplot() +
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// map_for_loop_epiweek \\\
+/// map_iterate_epiweek \\\
 --------------------------------------------------------------------------------
 
 This chunk will create a map and barplot by week.
@@ -2201,7 +2491,7 @@ You need to:
 If you have a lot of map regions, you may want to use facet_wrap to show
 sub-units.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r map_for_loop_epiweek, message = FALSE, warning = FALSE, fig.width = 12}
+```{r map_iterate_epiweek, message = FALSE, warning = FALSE, fig.width = 12}
 
 ## Prepare data ---------------------------------------------------------------
 
@@ -2227,6 +2517,12 @@ ar <- attack_rate(cases$n, cases$population, multiplier = 10000) %>%
          "Lower 95%CI" = lower,
          "Upper 95%CI" = upper)
 
+## define the last four weeks available in your dataset
+which_weeks <- tail(unique(cases$epiweek), n = 4)
+
+## only keep the last four weeks of data 
+ar <- ar %>% 
+  filter(epiweek %in% which_weeks)
 
 ## define the maximum number of cases / max AR for the color palette 
 max_cases <- max(cases$n, na.rm = TRUE) 
@@ -2247,8 +2543,9 @@ ar <- mutate(ar,
 
 
 ## go through each epiweek, fiter and plot the data
-for (week in unique(cases$epiweek)) {
-  this_ar <- filter(ar, epiweek == week)
+purrr::walk(.x = which_weeks, 
+           .f = ~{
+  this_ar <- filter(ar, epiweek == yearweek(.x))
   
   ## map 
   mapsub <- left_join(map, this_ar, by = c("name" = "Region"))
@@ -2289,10 +2586,10 @@ for (week in unique(cases$epiweek)) {
   ## in the top-left corner and a caption in the bottom-right
   print(
     barplot + map_plot + plot_annotation(
-         title   = str_glue("Epiweek: {week}"),
+         title   = str_glue("Epiweek: {.x}"),
          caption = str_glue("Source: MSF data from {reporting_week}")
     )
   )
-}
+})
 ```
 
