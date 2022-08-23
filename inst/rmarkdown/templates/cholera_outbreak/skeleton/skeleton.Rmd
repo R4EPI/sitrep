@@ -598,7 +598,7 @@ DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
 ## find if there are date variables which are completely empty
 ## (otherwise the linelist package does not work)
 EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
-  is.na(study_data_cleaned[[.x]])
+  is.na(linelist_cleaned[[.x]])
   )) %>% 
   unlist() %>% 
   which()
@@ -1868,7 +1868,7 @@ linelist_cleaned %>%
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_admissions_by_epiweek \\\
+/// describe_exits_by_epiweek \\\
 --------------------------------------------------------------------------------
 
 This chunk creates a table showing inpatient exits by type per epiweek.

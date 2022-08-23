@@ -2075,7 +2075,7 @@ linelist_cleaned %>%
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// describe_admissions_by_epiweek \\\
+/// describe_exits_by_epiweek \\\
 --------------------------------------------------------------------------------
 
 This chunk creates a table showing inpatient exits by type per epiweek.
