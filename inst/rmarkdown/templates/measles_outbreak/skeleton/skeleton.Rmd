@@ -623,7 +623,7 @@ linelist_cleaned <- linelist_cleaned %>%
 ## use the guess_dates() function to make a first pass at date variables.
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate(
-#     across(.cols = all_of(DATEVARS),
+#     across(.cols = matches("date|Date"),
 #            .fns = ~parsedate::parse_date(.x)))
 
 ## once you have run guess_dates(), take a look at your date variables.
