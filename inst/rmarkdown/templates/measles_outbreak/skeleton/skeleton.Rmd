@@ -231,11 +231,8 @@ linelist_dict <- msf_dict("Measles", compact = FALSE)
 ## make a copy of your orginal dataset and name it linelist_cleaned
 linelist_cleaned <- linelist_raw
 
-## define clean variable names using clean_labels from the epitrix package
-cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
-
-## overwrite variable names with defined clean names
-colnames(linelist_cleaned) <- cleaned_colnames
+## define clean variable names using clean_names from the janitor package. 
+linelist_cleaned <- janitor::clean_names(linelist_cleaned)
 
 
 
@@ -338,11 +335,8 @@ the full-text value.
 ## make a copy of your orginal dataset and name it linelist_cleaned
 # linelist_cleaned <- linelist_raw
  
-## define clean variable names using clean_labels from the epitrix package
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
- 
-## overwrite variable names with defined clean names
-# colnames(linelist_cleaned) <- cleaned_colnames
+## define clean variable names using clean_names from the janitor package. 
+# linelist_cleaned <- janitor::clean_names(linelist_cleaned)
 
 
 
@@ -363,7 +357,7 @@ the full-text value.
 ## your data set, then you should comment them out, but be aware that some
 ## analyses may not run because of this. 
 
-
+## PASTE HERE
 
 ## Here is an EXAMPLE for changing a few specific names. function. In this
 ## example, we have the columns "gender" and "age" that we want to rename as
