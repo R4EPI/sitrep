@@ -127,6 +127,7 @@ ggplot2::theme_set(theme_classic(base_size = 18))
 epicurve_theme <- theme(
   axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
   legend.title = element_blank(),
+  legend.position = "bottom",
   panel.grid.major.x = element_line(color = "grey60", linetype = 3),
   panel.grid.major.y = element_line(color = "grey60", linetype = 3))
 
@@ -892,7 +893,9 @@ linelist_cleaned <- linelist_cleaned %>%
       .cols = starts_with("test"),  
       # Sets order of levels
       .fns = ~fct_relevel(.x, 
-                          levels = c("Positive", "Negative", "Not done"))))
+                          levels = c("Positive", "Negative", "Not done")))) %>% 
+  ## stop a meaningless tidyverse warning from showing
+  suppressWarnings()
 
 ```
 
@@ -1882,7 +1885,7 @@ ar %>%
   # make your table fit to the maximum width of the word document
   set_table_properties(layout = "autofit") %>% 
   ## set to only show 1 decimal place 
-  colformat_double(digits = 1)
+  colformat_double(j = -1, digits = 1)
 ```
  
 
@@ -1912,7 +1915,7 @@ attack_rate(cases$cumulative, population, multiplier = 10000) %>%
   # make your table fit to the maximum width of the word document
   set_table_properties(layout = "autofit") %>% 
   ## set to only show 1 decimal place 
-  colformat_double(digits = 1)
+  colformat_double(j = -1, digits = 1)
 ```
 
 
@@ -1948,7 +1951,7 @@ cfr %>%
   # make your table fit to the maximum width of the word document
   set_table_properties(layout = "autofit") %>% 
   ## set to only show 1 decimal place 
-  colformat_double(digits = 1)
+  colformat_double(j = -1, digits = 1)
 ```
 
 
@@ -2481,7 +2484,7 @@ ar <- mutate(ar,
 
 
 # go through each epiweek, filter and plot the data
-purrr::map(.x = which_weeks, 
+purrr::walk(.x = which_weeks, 
            .f = ~{
   this_ar <- filter(ar, epiweek == yearweek(.x))
   
@@ -2522,10 +2525,13 @@ purrr::map(.x = which_weeks,
   
   ## combine the barplot and map plot into one with patchwork and add a title
   ## in the top-left corner and a caption in the bottom-right
-  barplot + map_plot + plot_annotation(
+  print(
+    barplot + map_plot + plot_annotation(
     title   = str_glue("Epiweek: {.x}"),
     caption = str_glue("Source: MSF data from {reporting_week}")
     )
+  )
+  
 })
 ```
 
