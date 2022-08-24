@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Display the available sitrep templates — available_sitrep_templates • sitrep</title>
+<title>Functions re-exported from apyramid — age_pyramid • sitrep</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Display the available sitrep templates — available_sitrep_templates" />
-<meta property="og:description" content="Display the available sitrep templates" />
+<meta property="og:title" content="Functions re-exported from apyramid — age_pyramid" />
+<meta property="og:description" content="Functions re-exported from apyramid" />
 
 
 
@@ -121,57 +121,28 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Display the available sitrep templates</h1>
-    <small class="dont-index">Source: <a href='https://github.com/R4EPI/sitrep/blob/master/R/check_templates.R'><code>R/check_templates.R</code></a></small>
-    <div class="hidden name"><code>available_sitrep_templates.Rd</code></div>
+    <h1>Functions re-exported from apyramid</h1>
+    <small class="dont-index">Source: <a href='https://github.com/R4EPI/sitrep/blob/master/R/apyramid_exports.R'><code>R/apyramid_exports.R</code></a></small>
+    <div class="hidden name"><code>apyramid.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Display the available sitrep templates</p>
+    <p>Functions re-exported from apyramid</p>
     </div>
 
-    <pre class="usage"><span class='fu'>available_sitrep_templates</span><span class='op'>(</span>categorise <span class='op'>=</span> <span class='cn'>FALSE</span>, <span class='va'>...</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='va'>age_pyramid</span></pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>categorise</th>
-      <td><p>if <code>TRUE</code>, the results are split into a list of outbreak
-and survey categories. Defaults to <code>FALSE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>options to pass on to dir</p></td>
-    </tr>
-    </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
 
-    <p>a vector of available templates in the sitrep package</p>
+    <p>An object of class <code>function</code> of length 1.</p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='r-in'><span class='fu'>available_sitrep_templates</span><span class='op'>(</span>categorise <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> $outbreak</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] "ajs_outbreak"        "cholera_outbreak"    "measles_outbreak"   </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [4] "meningitis_outbreak"</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> $survey</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] "mortality"   "nutrition"   "vaccination"</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
-<span class='r-in'><span class='fu'>available_sitrep_templates</span><span class='op'>(</span>categorise <span class='op'>=</span> <span class='cn'>TRUE</span>, full.names <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> $outbreak</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] "C:/Users/Spina/AppData/Local/Temp/Rtmpykbe7C/temp_libpath115844a91dc1/sitrep/rmarkdown/templates/ajs_outbreak"       </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [2] "C:/Users/Spina/AppData/Local/Temp/Rtmpykbe7C/temp_libpath115844a91dc1/sitrep/rmarkdown/templates/cholera_outbreak"   </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [3] "C:/Users/Spina/AppData/Local/Temp/Rtmpykbe7C/temp_libpath115844a91dc1/sitrep/rmarkdown/templates/measles_outbreak"   </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [4] "C:/Users/Spina/AppData/Local/Temp/Rtmpykbe7C/temp_libpath115844a91dc1/sitrep/rmarkdown/templates/meningitis_outbreak"</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> $survey</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] "C:/Users/Spina/AppData/Local/Temp/Rtmpykbe7C/temp_libpath115844a91dc1/sitrep/rmarkdown/templates/mortality"  </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [2] "C:/Users/Spina/AppData/Local/Temp/Rtmpykbe7C/temp_libpath115844a91dc1/sitrep/rmarkdown/templates/nutrition"  </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [3] "C:/Users/Spina/AppData/Local/Temp/Rtmpykbe7C/temp_libpath115844a91dc1/sitrep/rmarkdown/templates/vaccination"</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> </span>
-</pre>
+    <div class='dont-index'><p><span class="pkg">apyramid</span> functions:</p><ul>
+<li><p><code><a href='https://rdrr.io/pkg/apyramid/man/age_pyramid.html'>apyramid::age_pyramid()</a></code>: 	Plot a population pyramid (age-sex) from a dataframe</p></li>
+</ul>
+</div>
+
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
