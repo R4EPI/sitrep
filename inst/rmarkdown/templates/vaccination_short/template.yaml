@@ -1,0 +1,4 @@
+name: Vaccination coverage survey short
+description: >
+  An automated vaccination coverage survey template for the short dictionary
+create_dir: false

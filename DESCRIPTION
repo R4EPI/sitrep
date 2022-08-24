@@ -71,7 +71,8 @@ Imports:
     apyramid (>= 0.1.0),
     epitabulate (>= 0.0.0.9005),
     epidict (>= 0.0.0.9001),
-    epikit
+    epikit, 
+    pacman
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
