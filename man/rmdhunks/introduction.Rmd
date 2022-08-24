@@ -6,7 +6,7 @@ While templates are primarily for MSF analyses - they have been setup to be as
 generic as possible for use by the general applied epidemiology community. 
 
 **Detailed information about the project and the templates can be found at <https://r4epis.netlify.com>.**  
-An online manual for the functions in {sitrep} can be found at <https://r4epi.github.io/sitrep>.  
+A reference website for the functions in {sitrep} can be found at <https://r4epi.github.io/sitrep>.  
 
 {sitrep} includes a number of other *R* packages which facilitate specific analysis:  
 [{epitabulate}](https://r4epi.github.io/epitabulate): Tables for epidemiological analysis  
@@ -17,21 +17,14 @@ An online manual for the functions in {sitrep} can be found at <https://r4epi.gi
 
 ## Installation
 
-The **{sitrep}** package, developed by MSF and partners, is stored in a [GitHub repository](https://github.com/R4EPI/sitrep). 
+The **{sitrep}** package, is currently stored in a [GitHub repository](https://github.com/R4EPI/sitrep). 
 Therefore, the procedure to install these packages have one extra step required. 
 
-To install **sitrep** from GitHub you must first install the **drat** package.
+To install **sitrep** from GitHub you must first install the **devtools** package.
 
 ``` r
-install.packages("drat", repos = "https://cran.rstudio.com")
-```
-
-Once **drat** is installed, use its `addRepo()` function to add the "R4EPI" project to the list of valid repositories.
-This command below will install the [latest release of the **{sitrep}** package](https://github.com/R4EPI/sitrep/releases) and also install any packages necessary for use of the templates that are not currently installed on your machine.
-
-```r
-drat::addRepo("R4EPI")
-install.packages("sitrep")
+# install.packages("devtools")
+devtools::install_github("r4epi/sitrep")
 ```
  
 If you are getting errors, check the [frequently asked questions](https://r4epis.netlify.com/faq/).
@@ -39,7 +32,7 @@ If you are getting errors, check the [frequently asked questions](https://r4epis
 ## Available templates
 
 Sitrep has [four outbreak templates](https://r4epis.netlify.com/outbreaks/) and
-[three survey templates](https://r4epis.netlify.com/surveys/) available. These
+[four survey templates](https://r4epis.netlify.com/surveys/) available. These
 templates will generate the following:
 
 1. A word document with the situation report
