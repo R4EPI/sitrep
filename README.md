@@ -24,7 +24,7 @@ community.
 
 **Detailed information about the project and the templates can be found
 at <https://r4epis.netlify.com>.**  
-An online manual for the functions in {sitrep} can be found at
+A reference website for the functions in {sitrep} can be found at
 <https://r4epi.github.io/sitrep>.
 
 {sitrep} includes a number of other *R* packages which facilitate
@@ -40,27 +40,16 @@ and plotting
 
 ## Installation
 
-The **{sitrep}** package, developed by MSF and partners, is stored in a
-[GitHub repository](https://github.com/R4EPI/sitrep). Therefore, the
-procedure to install these packages have one extra step required.
+The **{sitrep}** package, is currently stored in a [GitHub
+repository](https://github.com/R4EPI/sitrep). Therefore, the procedure
+to install these packages have one extra step required.
 
-To install **sitrep** from GitHub you must first install the **drat**
-package.
-
-``` r
-install.packages("drat", repos = "https://cran.rstudio.com")
-```
-
-Once **drat** is installed, use its `addRepo()` function to add the
-“R4EPI” project to the list of valid repositories. This command below
-will install the [latest release of the **{sitrep}**
-package](https://github.com/R4EPI/sitrep/releases) and also install any
-packages necessary for use of the templates that are not currently
-installed on your machine.
+To install **sitrep** from GitHub you must first install the
+**devtools** package.
 
 ``` r
-drat::addRepo("R4EPI")
-install.packages("sitrep")
+# install.packages("devtools")
+devtools::install_github("r4epi/sitrep")
 ```
 
 If you are getting errors, check the [frequently asked
@@ -69,7 +58,7 @@ questions](https://r4epis.netlify.com/faq/).
 ## Available templates
 
 Sitrep has [four outbreak
-templates](https://r4epis.netlify.com/outbreaks/) and [three survey
+templates](https://r4epis.netlify.com/outbreaks/) and [four survey
 templates](https://r4epis.netlify.com/surveys/) available. These
 templates will generate the following:
 
@@ -79,7 +68,7 @@ templates will generate the following:
 3.  A directory with all of the figures produced
 
 You can access the list of templates in *R Studio* by clicking (see
-example below): file &gt; New file &gt; R Markdown… &gt; From Template
+example below): file \> New file \> R Markdown… \> From Template
 
 ![Example of how to open and save the cholera
 template](https://github.com/R4EPI/R4EPIs-website/raw/master/content/welcome/images/opening_template.gif)
@@ -99,11 +88,12 @@ available_sitrep_templates(categorise = TRUE)
 #> [4] "meningitis_outbreak"
 #> 
 #> $survey
-#> [1] "mortality"   "nutrition"   "vaccination"
+#> [1] "mortality"         "nutrition"         "vaccination_long" 
+#> [4] "vaccination_short"
 
 # generate the measles outbreak template in the output directory
 check_sitrep_templates("measles_outbreak", path = output_dir)
-#> [1] "C:\\Users\\Spina\\AppData\\Local\\Temp\\RtmpgTPWRw/sitrep_example"
+#> [1] "C:\\Users\\alexf\\AppData\\Local\\Temp\\RtmpW62lYi/sitrep_example"
 
 # view the contents
 list.files(output_dir, recursive = TRUE)
