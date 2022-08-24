@@ -53,36 +53,69 @@ knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
 ## set default NA to - in output, define figure width/height
 options(knitr.kable.NA = "-")
 
-
+# Ensures the package "pacman" is installed
+if (!require("pacman")) {
+     install.packages("pacman") }
 
 ## Installing required packages for this template
-required_packages <- c("knitr",       # create output docs
-                       "here",        # find your files
-                       "dplyr",       # clean/shape data
-                       "forcats",     # clean/shape data
-                       "stringr",     # clean text
-                       "rio",         # read in data
-                       "ggplot2",     # create plots and charts
-                       "patchwork",   # combine plots in one
-                       "sitrep",      # MSF field epi functions
-                       "linelist",    # Functions for cleaning/standardising data
-                       "incidence",   # create epicurves
-                       "aweek",       # define epi weeks
-                       "epitrix",     # epi helpers and tricks
-                       "sf",          # encode spatial vector data
-                       "ggspatial")   # plot maps
+pacman::p_load(
+  knitr,       # create output docs
+  here,        # find your files
+  rio,         # read in data
+  forcats,     # clean/shape data
+  lubridate,   # handle dates
+  dplyr,       # clean/shape data
+  tidyr,       # clean/shape data
+  stringr,     # clean text
+  ggplot2,     # create plots and charts
+  slider,      # moving averages
+  parsedate,   # guessing dates
+  patchwork,   # combine plots in one
+  sitrep,      # MSF field epi functions
+  janitor,     # clean data
+  matchmaker,  # dictionary-based standardization of variables
+  gtsummary,   # tables
+  flextable,
+  tsibble,     # epiweeks
+  sf,          # encode spatial vector data
+  ggspatial,   # plot maps
+  purrr            # iterate over data
+)
 
-for (pkg in required_packages) {
-  # install packages if not already present
-  if (!pkg %in% rownames(installed.packages())) {
-    install.packages(pkg)
-  }
-  
-  # load packages to this current session 
-  library(pkg, character.only = TRUE)
-}
+```
 
 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// define_current_week \\\
+--------------------------------------------------------------------------------
+
+You need to set the week you want to report on. Generally, this is the previous
+week. Put it below.
+
+The standard is Monday.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r define_current_week}
+
+## replace the date below with the latest date 
+## for which you want data to appear in the report
+reporting_date <- ymd("2018-04-23")
+
+## This command sets the reporting week (e.g 2018 W17) based on the reporting_date
+## Mondays are the week start by default. Adjust the "1" to another number if desired.
+## E.g. 7 for Sundays, 5 for Fridays
+reporting_week <- tsibble::yearweek(reporting_date, 1)
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// set_plot_defaults \\\
+--------------------------------------------------------------------------------
+This code set the defaults for plots, such as the base text size,
+the text angle, legend title, gridline color (grey), and x and y labels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r set_plot_defaults}
 
 ## Set default options for plots and charts
 
@@ -96,26 +129,6 @@ epicurve_theme <- theme(
   legend.title = element_blank(),
   panel.grid.major.x = element_line(color = "grey60", linetype = 3),
   panel.grid.major.y = element_line(color = "grey60", linetype = 3))
-```
-
-
-
-<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/// define_current_week \\\
---------------------------------------------------------------------------------
-
-You need to set the week you want to report on. Generally, this is the previous
-week. Put it below.
-
-aweek::set_week_start will define the beginning of the week. The standard is
-Monday.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-```{r define_current_week}
-## set the day that defines the beginning of your epiweek.
-aweek::set_week_start("Monday")
-
-## set current week 
-reporting_week <- aweek::as.aweek("2019-W25")
 
 ## sets the labels in ggplot for the epicurves
 epicurve_labels <- labs(x = "Calendar week", 
@@ -124,7 +137,6 @@ epicurve_labels <- labs(x = "Calendar week",
                         subtitle = str_glue("Source: MSF data from {reporting_week}")
                        ) 
 ```
-
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -221,12 +233,8 @@ linelist_dict <- msf_dict("Meningitis", compact = FALSE)
 ## make a copy of your orginal dataset and name it linelist_cleaned
 linelist_cleaned <- linelist_raw
 
-## define clean variable names using clean_labels from the epitrix package
-cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
-
-## overwrite variable names with defined clean names
-colnames(linelist_cleaned) <- cleaned_colnames
-
+## define clean variable names using clean_names from the janitor package. 
+linelist_cleaned <- janitor::clean_names(linelist_cleaned)
 
 
 ## Standardising values --------------------------------------------------------
@@ -329,12 +337,8 @@ the full-text value.
 ## make a copy of your orginal dataset and name it linelist_cleaned
 # linelist_cleaned <- linelist_raw
  
-## define clean variable names using clean_labels from the epitrix package
-# cleaned_colnames <- epitrix::clean_labels(colnames(linelist_raw))
- 
-## overwrite variable names with defined clean names
-# colnames(linelist_cleaned) <- cleaned_colnames
-
+## define clean variable names using clean_names from the janitor package. 
+# linelist_cleaned <- janitor::clean_names(linelist_cleaned)
 
 
 ## Match column names ---------------------------------------------------------
@@ -354,6 +358,8 @@ the full-text value.
 ## your data set, then you should comment them out, but be aware that some
 ## analyses may not run because of this. 
 
+
+## PASTE HERE
 
 
 ## Here is an EXAMPLE for changing a few specific names. function. In this
@@ -407,8 +413,8 @@ If you have more specific proportions, you can use them below.
 # population_data_age <- gen_population(
 #   groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
 #   counts = c(3600, 18110, 13600, 8080, 6600),
-#   strata = NULL) %>%
-#   rename(age_group = groups,
+#   strata = NULL) %>%               # do not stratify by gender
+#   rename(age_group = groups,       # rename columns (syntax is NEW NAME = OLD NAME)
 #     population = n)
 
 # population_data_region <- gen_population(
@@ -597,7 +603,7 @@ DATEVARS <- filter(linelist_dict, data_element_valuetype == "DATE") %>%
 ## find if there are date variables which are completely empty
 ## (otherwise the linelist package does not work)
 EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
-  is.na(study_data_cleaned[[.x]])
+  is.na(linelist_cleaned[[.x]])
   )) %>% 
   unlist() %>% 
   which()
@@ -607,10 +613,9 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 
 ## change to dates 
 linelist_cleaned <- linelist_cleaned %>%
-   mutate(
+  mutate(
     across(.cols = all_of(DATEVARS),
-           .fns = ~linelist::guess_dates(.x,
-                                         error_tolerance = 0.5)))
+           .fns = ~parsedate::parse_date(.x)))
 
 
 ## Non-DHIS2 data --------------------------------------------------------------
@@ -620,8 +625,7 @@ linelist_cleaned <- linelist_cleaned %>%
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate(
 #     across(.cols = matches("date|Date"),
-#            .fns  = ~linelist::guess_dates(.x, 
-#                                   error_tolerance = 0.5)))
+#            .fns = ~parsedate::parse_date(.x)))
 
 ## once you have run guess_dates(), take a look at your date variables.
 ## here is an example:
@@ -644,9 +648,14 @@ linelist_cleaned <- linelist_cleaned %>%
 ## This step creates an epiweek variable from the date of onset.
 ## You can use date_of_consultation_admission if you are missing many date_of_onset.
 
-linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
-                                             floor_day = TRUE, 
-                                             factor = TRUE)
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(
+    ## create an epiweek variable 
+    epiweek = tsibble::yearweek(
+      date_of_onset,
+      week_start = 1),  # 1 is Monday start; use 7 for Sundays or 5 for Fridays
+    ## create a date version of epiweek 
+    epiweek_date = as.Date(epiweek))  
 
 ```
 
@@ -713,8 +722,10 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 
 ## If you already have an age group variable defined, you should manually
 ## arrange the categories in order.
-# linelist_cleaned$age_group <- factor(linelist_cleaned$age_group,
-#                                      c("0-4y", "5-14y", "15-29y", "30-44y", "45+y"))
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(age_group = fct_relevel(
+#     age_group,
+#     "0-4y", "5-14y", "15-29y", "30-44y", "45+y")
 
 
 ## to combine different age categories use the following function 
@@ -753,9 +764,8 @@ includes numeric, factor, and character vectors.
 ## You can adapt this step to create other calculated variables
 
 ## create number of days under observation
-linelist_cleaned <- mutate(linelist_cleaned, 
-                           obs_days = as.numeric(date_of_exit - 
-                                                   date_of_consultation_admission))
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(obs_days = as.numeric(date_of_exit - date_of_consultation_admission))
 
 
 
@@ -833,7 +843,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ## Create a variable based on rules from other simple character variables
 ## If you have access to lab results, you can create a case definition variable 
-## the tilda (~) is used to assign the new values (Conf, prob, susp, unknown)
+## the tilde (~) is used to assign the new values (Conf, prob, susp, unknown)
 ## starting from the specific to the general
 ## TRUE assigns all remaining rows 
 ## You MUST modify this section to match your case definition. The below
@@ -902,7 +912,9 @@ linelist_cleaned <- linelist_cleaned %>%
       .cols = starts_with("seizure"),  
       # Sets order of levels
       .fns = ~fct_relevel(.x, 
-                          levels = c("Yes", "No"))))
+                          levels = c("Yes", "No")))) %>% 
+  ## stop a meaningless tidyverse warning from showing
+  suppressWarnings()
 ```
 
 
@@ -955,20 +967,25 @@ This chunk removes cases after your reporting week and defines the start and end
 of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r report_setup}
-# return the last day of the reporting week
-obs_end   <- week2date(str_glue("{reporting_week}-7"))
+# return the last day of the last reporting week
+obs_end   <- as.Date((reporting_week + 1)) - 1
 
 # filter out cases after end of reporting week
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_consultation_admission <= obs_end)
+  filter(epiweek <= reporting_week)
 
 # define the first week of outbreak (date of first case)
-first_week <- as.aweek(min(as.character(linelist_cleaned$epiweek)))
+first_week <- min(linelist_cleaned$epiweek)
 
 # outbreak start 
 # return the first day in the week of first case 
 obs_start <- as.Date(first_week)
 
+## pull the unique weeks which occur
+all_weeks <- seq(first_week,
+                 reporting_week, by = 1) 
+## change weeks to dates
+all_weeks_date <-  as.Date(all_weeks)  
 ```
 
 
