@@ -1,5 +1,4 @@
 ---
-title: sitrep
 output: github_document
 ---
 
@@ -13,6 +12,8 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 ```
+
+# Sitrep <img src="man/figures/logo.png" align="right" width="200" />
 
 <!-- badges: start -->
 [![Lifecycle: maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)

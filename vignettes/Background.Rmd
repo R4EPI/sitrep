@@ -1,0 +1,87 @@
+---
+title: "Origin Story"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Origin Story}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = FALSE
+)
+```
+
+
+## Origin 
+
+Applied Epi Tools originated out of the R4epis project. 
+R4epis started in 2018 as a partnership between Médecins Sans Frontières ([MSF](https://www.artsenzondergrenzen.nl/)
+the R for Epidemics Consortium ([RECON](http://www.repidemicsconsortium.org/)). 
+In 2021, [Applied Epi](https://appliedepi.org/) was contracted by MSF to finalise 
+the project. 
+
+## Aim
+
+The aim of the R4epis project was to develop standardised data cleaning, analysis
+and reporting tools to cover common types of outbreaks and population-based surveys
+that would be conducted in an MSF emergency response setting.
+
+This was done through the development of the R package {sitrep}. 
+The package provides field epidemiologists with novel data management tools as 
+well as templates of automated "situation reports" that cover outbreak 
+investigations (acute jaundice syndrome, cholera, measles, meningitis) and three 
+of the MSF ERB pre-approved surveys (mortality, nutrition and vaccination).
+
+All of the report templates are contained within the sitrep package as RMarkdown 
+templates that can easily be used from within RStudio. 
+The user then modifies a template to his/her needs.
+
+The templates address all aspects of:
+
+Data cleaning of outbreak linelists and survey data
+Analysis of data to report in terms of time, place, and person
+Analysis of survey data
+
+
+## Funding
+R4epis was initially funded through the [Sapling Nursery](https://msf.org.uk/sapling-nursery),
+an MSF internal innovation fund for new projects that aim to improve the medical 
+care MSF provides. This funding was secured by Annick Lenglet and Amrish Baidjoe. 
+In 2021, MSF Operational Centre Amsterdam awarded Applied Epi with a contract to
+finalise the project. 
+
+## Contributers
+
+The project has merged the skills and experience of people in coding in R software, field epidemiology, spatial epidemiology, health information systems and public health.
+
+The original R4epis project contributors are listed below in alphabetical order; 
+you can see the the up-to date list of contributors on [github](https://github.com/R4EPI/sitrep/graphs/contributors).
+
+
+Amrish Baidjoe (1, 2), Elburg van Boetzelaar (3), Raphael Brechard (4), Antonio Isidro Carrión Martín (4), Kate Doyle (5), Christopher Ian Jarvis (1, 6), Thibaut Jombart (1, 6), Zhian Kamvar (1, 2), Patrick Keating (1, 6), Anna Kuehne (4), Annick Lenglet (7), Pete Masters (4), Dirk Schumacher (1), Rosamund Southgate (4), Carolyn Tauro (4), Alex Spina (1, 8), Maria Verdecchia (4), Larissa Vernier (7)
+
+*Affiliations*
+
+1) R Epidemics Consortium
+
+2) Imperial College London, United Kingdom
+
+3) Médecins Sans Frontières, Cox’ Bazaar, Bangladesh
+
+4) Médecins Sans Frontières, London, United Kingdom
+
+5) Médecins Sans Frontières, Addis Abeba, Ethiopia
+
+6) London School of Hygiene and Tropical Medicine, United Kingdom
+
+7) Médecins Sans Frontières, Amsterdam, The Netherlands
+
+8) University of Exeter, United Kingdom
+
+
