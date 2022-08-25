@@ -1,7 +1,8 @@
-sitrep
-================
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# Sitrep <img src="man/figures/logo.png" align="right" width="200" />
+
 <!-- badges: start -->
 
 [![Lifecycle:
@@ -48,8 +49,8 @@ To install **sitrep** from GitHub you must first install the
 **devtools** package.
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("r4epi/sitrep")
+# install.packages("remotes")
+remotes::install_github("r4epi/sitrep")
 ```
 
 If you are getting errors, check the [frequently asked
@@ -93,7 +94,7 @@ available_sitrep_templates(categorise = TRUE)
 
 # generate the measles outbreak template in the output directory
 check_sitrep_templates("measles_outbreak", path = output_dir)
-#> [1] "C:\\Users\\alexf\\AppData\\Local\\Temp\\RtmpW62lYi/sitrep_example"
+#> [1] "C:\\Users\\alexf\\AppData\\Local\\Temp\\RtmpqMzhqG/sitrep_example"
 
 # view the contents
 list.files(output_dir, recursive = TRUE)

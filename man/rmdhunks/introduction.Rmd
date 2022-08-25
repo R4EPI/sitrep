@@ -23,8 +23,8 @@ Therefore, the procedure to install these packages have one extra step required.
 To install **sitrep** from GitHub you must first install the **devtools** package.
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("r4epi/sitrep")
+# install.packages("remotes")
+remotes::install_github("r4epi/sitrep")
 ```
  
 If you are getting errors, check the [frequently asked questions](https://r4epis.netlify.com/faq/).
