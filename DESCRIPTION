@@ -35,7 +35,9 @@ Authors@R:
 Description: Report templates and helper functions for applied epidemiology
 License: GPL-3
 BugReports: https://github.com/R4EPI/sitrep/issues
-URL: https://r4epis.netlify.com, https://github.com/R4EPI/sitrep
+URL: https://r4epis.netlify.com,
+    https://github.com/R4EPI/sitrep,
+    https://r4epi.github.io/sitrep/
 Depends: R (>= 3.2)
 Imports: 
     anthro,

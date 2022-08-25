@@ -1,8 +1,8 @@
+url: https://r4epi.github.io/sitrep/
 destination: docs
 template:
   params:
     ganalytics: UA-149766533-1
-
 navbar:
   structure:
     left:
@@ -16,7 +16,7 @@ navbar:
   components:
     home:
       icon: fas fa-home fa-lg
-      href: https://r4epis.netlify.com 
+      href: https://r4epis.netlify.com
     reference:
       text: Reference
       href: reference/index.html
@@ -26,3 +26,4 @@ navbar:
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/R4EPI/sitrep
+
