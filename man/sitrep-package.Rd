@@ -6,6 +6,8 @@
 \alias{sitrep-package}
 \title{sitrep: Report templates and helper functions for applied epidemiology}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Report templates and helper functions for applied epidemiology
 }
 \seealso{
@@ -13,6 +15,7 @@ Useful links:
 \itemize{
   \item \url{https://r4epis.netlify.com}
   \item \url{https://github.com/R4EPI/sitrep}
+  \item \url{https://r4epi.github.io/sitrep/}
   \item Report bugs at \url{https://github.com/R4EPI/sitrep/issues}
 }
 

@@ -98,3 +98,7 @@ Collate:
     'epidict_exports.R'
     'epikit_exports.R'
     'epitabulate_exports.R'
+    'AJS_linelist.R'
+    'AJS_pop.R'
+    'quartier_shape.R'
+    'block_shape.R'
