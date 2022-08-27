@@ -13,7 +13,6 @@ Report templates and helper functions for applied epidemiology
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://r4epis.netlify.com}
   \item \url{https://github.com/R4EPI/sitrep}
   \item \url{https://r4epi.github.io/sitrep/}
   \item Report bugs at \url{https://github.com/R4EPI/sitrep/issues}
@@ -21,12 +20,12 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Zhian N. Kamvar \email{zkamvar@gmail.com} (\href{https://orcid.org/0000-0003-1458-7108}{ORCID})
+\strong{Maintainer}: Alexander Spina \email{aspina@appliedepi.org} (\href{https://orcid.org/0000-0001-8425-1867}{ORCID})
 
 Authors:
 \itemize{
+  \item Zhian N. Kamvar \email{zkamvar@gmail.com} (\href{https://orcid.org/0000-0003-1458-7108}{ORCID})
   \item Dirk Schumacher \email{mai@dirk-schumacher.net}
-  \item Alexander Spina \email{alexfspina@gmail.com} (\href{https://orcid.org/0000-0001-8425-1867}{ORCID})
   \item Kate Doyle
   \item Chris Jarvis
   \item Lukas Richter

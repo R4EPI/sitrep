@@ -6,7 +6,7 @@
 \alias{tab_linelist}
 \alias{tab_univariate}
 \alias{data_frame_from_2x2}
-\title{Functions re-expored from {epitabulate}}
+\title{Functions re-exported from {epitabulate}}
 \format{
 An object of class \code{function} of length 1.
 
@@ -26,11 +26,21 @@ tab_univariate
 data_frame_from_2x2
 }
 \description{
-Functions re-expored from {epitabulate}
+Functions re-exported from {epitabulate}
 }
 \seealso{
 \pkg{epitabulate} functions:
 \itemize{
+\item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::add_ar()}}: a {gtsummary} wrapper for epikit::attack_rate()
+\item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::add_cfr()}}: a {gtsummary} wrapper for
+epikit::case_fatality_rate()
+\item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::add_crosstabs()}}: a {gtsummary} wrapper to add counts to
+a gtsummary::tbl_uvregression()
+\item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::add_mr()}}: a {gtsummary} wrapper for epikit::mortality_rate()
+\item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::gt_mh_odds()}}: a {gtsummary} wrapper for stratified
+univariate regression and mantel-haenszel estimates
+\item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::gt_remove_stat()}}: a {gtsummary} wrapper to remove variables
+from a gtsummary table
 \item \code{\link[epitabulate:tab_functions]{epitabulate::tab_linelist()}}: tabulate linelist data
 \item \code{\link[epitabulate:tab_functions]{epitabulate::tab_survey()}}: tabulate survey data
 \item \code{\link[epitabulate:tab_univariate]{epitabulate::tab_univariate()}}: caluclate odds, risk, and incidence risk

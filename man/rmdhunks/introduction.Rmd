@@ -20,7 +20,7 @@ A reference website for the functions in {sitrep} can be found at <https://r4epi
 The **{sitrep}** package, is currently stored in a [GitHub repository](https://github.com/R4EPI/sitrep). 
 Therefore, the procedure to install these packages have one extra step required. 
 
-To install **sitrep** from GitHub you must first install the **devtools** package.
+To install **sitrep** from GitHub you must first install the **remotes** package.
 
 ``` r
 # install.packages("remotes")

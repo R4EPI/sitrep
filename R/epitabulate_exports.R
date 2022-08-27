@@ -3,10 +3,20 @@
 # separate package for maintenance. By re-exporting them, the user does not
 # see much of a difference.
 
-#' Functions re-expored from {epitabulate}
+#' Functions re-exported from {epitabulate}
 #'
 #' @seealso \pkg{epitabulate} functions:
 #'
+#'  - [epitabulate::add_ar()]: a {gtsummary} wrapper for epikit::attack_rate()
+#'  - [epitabulate::add_cfr()]: a {gtsummary} wrapper for
+#'    epikit::case_fatality_rate()
+#'  - [epitabulate::add_crosstabs()]: a {gtsummary} wrapper to add counts to
+#'    a gtsummary::tbl_uvregression()
+#'  - [epitabulate::add_mr()]: a {gtsummary} wrapper for epikit::mortality_rate()
+#'  - [epitabulate::gt_mh_odds()]: a {gtsummary} wrapper for stratified
+#'    univariate regression and mantel-haenszel estimates
+#'  - [epitabulate::gt_remove_stat()]: a {gtsummary} wrapper to remove variables
+#'    from a gtsummary table
 #'  - [epitabulate::tab_linelist()]: tabulate linelist data
 #'  - [epitabulate::tab_survey()]: tabulate survey data
 #'  - [epitabulate::tab_univariate()]: caluclate odds, risk, and incidence risk
@@ -15,6 +25,42 @@
 #'    frame clearly labelling the (un)exposed (non)case combinations and their
 #'    totals.
 #'
+#' @name add_ar
+#' @importFrom epitabulate add_ar
+#' @export
+#' @rdname add_ar
+"add_ar"
+
+#' @name add_cfr
+#' @importFrom epitabulate add_cfr
+#' @export
+#' @rdname add_ar
+"add_cfr"
+
+#' @name add_crosstabs
+#' @importFrom epitabulate add_crosstabs
+#' @export
+#' @rdname add_crosstabs
+"add_crosstabs"
+
+#' @name add_mr
+#' @importFrom epitabulate add_mr
+#' @export
+#' @rdname add_ar
+"add_mr"
+
+#' @name gt_mh_odds
+#' @importFrom epitabulate gt_mh_odds
+#' @export
+#' @rdname gt_mh_odds
+"gt_mh_odds"
+
+#' @name gt_remove_stat
+#' @importFrom epitabulate gt_remove_stat
+#' @export
+#' @rdname gt_remove_stat
+"gt_remove_stat"
+
 #' @name tab_survey
 #' @importFrom epitabulate tab_survey
 #' @export
@@ -38,4 +84,3 @@
 #' @export
 #' @rdname tab_linelist
 "data_frame_from_2x2"
-
