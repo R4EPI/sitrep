@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
   message = FALSE,
   collapse = TRUE,
   comment = "#>",
-  echo = FALSE
+  echo = TRUE
 )
 ```
 
@@ -665,7 +665,7 @@ class(linelist_cleaned$date_of_onset)
 
 However, this command did not detect the date columns named with "dt", such as `dtdeath` and `dthospitalization`. We must **add code to convert those columns manually**:  
 
-```{r}
+```{r, echo=TRUE}
 # Individually convert column using the parse_date() function
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(dtdeath = ymd(parse_date(dtdeath)),
@@ -676,7 +676,7 @@ linelist_cleaned <- linelist_cleaned %>%
 Next we uncomment and **modify code to correct unrealistic dates**. We have browsed our data and know that there are observations with `date_of_onset` outside the reasonable range:
 
 
-```{r}
+```{r, echo=TRUE}
 # Check range of date_of_onset values, ignoring (removing) missing values
 range(linelist_cleaned$date_of_onset, na.rm = TRUE)
 ```
@@ -687,7 +687,7 @@ As you modify this chunk for your own situation, remember that **each left-hand 
 
 
 
-```{r}
+```{r, echo=TRUE}
 # Convert dates before April 2016 or after October 2017 to missing (NA)
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(date_of_onset = case_when(
@@ -700,14 +700,14 @@ linelist_cleaned <- linelist_cleaned %>%
 Check the range of dates again:  
 
 
-```{r}
+```{r, echo=TRUE}
 # Check range of date_of_onset values, ignoring (removing) missing values
 range(linelist_cleaned$date_of_onset, na.rm = TRUE)
 ```
 
 We also must **use the provided code to create a column called `epiweek`**. Although there are already columns that give the epidemiological weeks of various data points, it is safer to calculate a new column ourselves, AND later code chunks rely on the column being named `epiweek`.
 
-```{r}
+```{r, echo=TRUE}
 # Create column epiweek
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(
@@ -727,7 +727,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 **To create a column for `age_group` we must first clean the column `age_years`**. If we look at the range of values in `age_years`, we see something strange:  
 
-```{r}
+```{r, echo=TRUE}
 # See the range of age_years values, removing (excluding) NA
 range(linelist_cleaned$age_years, na.rm = TRUE)
 ```
@@ -741,7 +741,7 @@ class(linelist_cleaned$age_years)
 
 We must convert it by **adding the following command** to the script:  
 
-```{r}
+```{r, echo=TRUE}
 # Convert column age_years to numeric class
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(age_years = as.numeric(age_years))
@@ -749,7 +749,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 If we run the `range()` command again, we can see that the corrected range is 0.08 to 75.  
 
-```{r}
+```{r, echo=TRUE}
 # See the range of age_years values, removing (excluding) NA
 range(linelist_cleaned$age_years, na.rm = TRUE)
 ```
@@ -764,7 +764,7 @@ Then, the chunk contains three age-group commands marked "OPTIONAL":
 
 
 
-```{r}
+```{r, echo=TRUE}
 # OPTIONAL: create an age_months column from decimal years column
 linelist_cleaned <- linelist_cleaned %>%
   mutate(age_months = case_when(
@@ -776,7 +776,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 First we use the code to create an `age_group_mon` column for children under 5 years based on `age_months`.  
 
-```{r}
+```{r, echo=TRUE}
 ## create age group column for under 2 years based on months
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(age_group_mon = age_categories(
@@ -787,7 +787,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ...and we use the similar code below to create `age_group` as groupings of the column `age_years`. The function `age_categories()` is used with its `breakers =` argument set to a vector `c( )` of numbers: 0, 3, 15, 30, and 45. Thus, a 30-year old patient will be included in an age group named "30-44". Read more about `age_categories()` by searching the Help pane.
 
-```{r}
+```{r, echo=TRUE}
 ## create an age group column by specifying categorical breaks
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(age_group = age_categories(
@@ -811,8 +811,7 @@ As you modify this chunk for your own situation, remember that **each left-hand 
 
 Another tip is that all the right-hand side (RHS) values must be the same class (either character, numeric, etc.). So, if your other RHS values are character and you want one particular RHS value to be missing, you cannot just write `NA` on the RHS. Instead you must use the special character version of `NA`, `NA_character_`. This may seem like unnecessary trouble, but it ensures consistency among your data in the long term.  
 
-
-```{r}
+```{r, echo=TRUE}
 # Tabulate to see all possible values of exit_status
 linelist_cleaned %>% tabyl(exit_status, show_na = FALSE)
 
@@ -838,7 +837,7 @@ This command creates `DIED` as a logical (`TRUE` or `FALSE`) column, depending o
 However, we must **modify the existing command to detect within the NEW column `exit_status2`, not `exit_status`.**  
 
 
-```{r}
+```{r, echo=TRUE}
 ## Note we are directing R to look within the NEW exit_status2 column
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(DIED = str_detect(exit_status2, "Dead"))
@@ -854,7 +853,7 @@ When we assigned our columns to match the data dictionary, we used the column `h
 Included below are extra steps before and after the `case_when()` command using `tabyl()` to verify the correct conversion of values. Remove these two commands after verifying, as otherwise their outputs will appear in the report.  
 
 
-```{r}
+```{r, echo=TRUE}
 # View all the values in patient_facility_type
 linelist_cleaned %>% tabyl(patient_facility_type)
 
@@ -881,7 +880,7 @@ For later steps, we will need many of our testing columns to have the values "Po
 * One column (`test_hepatitis_b`) has a value recorded as "Weakly pos". For the purposes of this exercise we re-code this to "Positive".  
 
 
-```{r, warning=FALSE}
+```{r, echo=TRUE}
 ## sometimes, coding is inconsistent across columns -- for example, "Yes" / "No"
 ## may be coded as Y, y, yes, 1 / N, n, no, 0. You can change them all at once!
 ## Create a list of the columns you want to change, and run the following.
@@ -916,7 +915,7 @@ Note how this code checks the column `hep_e_rdt` for "Positive". The earlier cle
 
 In addition we need to **change the value looked for in `other_cases_in_hh` from "Yes" to "Oui".**
 
-```{r}
+```{r, echo=TRUE}
 # You MUST modify this section to match your case definition. The below
 # uses positive RDT for Confirmed and epi link only for Probable.
 
@@ -935,14 +934,14 @@ linelist_cleaned <- linelist_cleaned %>%
 
 Factor columns require specialized functions to manipulate (see the Epidemiologist R Handbook chapter [Factors](https://epirhandbook.com/en/factors.html)). The one factor column we should clean now is `sex`, with the following code:  
 
-```{r}
+```{r, echo=TRUE}
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(sex = fct_recode(sex, NULL = "Unknown/unspecified"))
 ```                                   
   
 And we can verify the unique values in column `sex` with a quick table:
 
-```{r}
+```{r, echo=TRUE}
 linelist_cleaned %>% 
   tabyl(sex)
 ```
@@ -960,7 +959,7 @@ The column `patient_origin` (originally the column *quartier* in the raw dataset
 
 However, the place names in `population_data_region` are ALL CAPITAL LETTERS. This is not true in `linelist_cleaned` - so the join will not register any matches. The easiest way to solve this problem is to **redefine the `linelist_cleaned` column into all capital letters as well**, using the base R function `toupper()`, which means "to upper case":  
 
-```{r}
+```{r, echo=TRUE}
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(patient_origin = toupper(patient_origin))
 ```
@@ -1074,6 +1073,321 @@ rio::export(linelist_cleaned, str_glue("AmTiman_linelist_cleaned_{Sys.Date()}.xl
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Analysis
+
+After cleaning the data, there are three sections of the template that produce tabular, graphic, and cartographic (map) analysis outputs.  
+
+
+
+## Person
+
+This first section produces descriptive analyses about the patient's demographics and attack rates.  
+
+
+
+
+
+### Demographic Tables:
+
+The person analysis section begins with a couple sentences that contain **in-line code** - code embedded in normal RMarkdown text (not within an R code chunk). The second sentence **in-line code** inserts the number of males and females by counting the observations with "Male" and "Female" in the variable `sex`. **Because our dataset's variable `sex` contains `M` and `F` instead, we must modify this in-line code (or modify our variable) so the `fmt_count()` function is searching for the correct terms.**  
+
+
+```
+From the start of the outbreak up until `r reporting_week` there were a 
+total of `r nrow(linelist_cleaned)` cases. There were
+`r fmt_count(linelist_cleaned, sex == "F")` females and
+`r fmt_count(linelist_cleaned, sex == "M")` males. 
+
+```
+
+The first demographic table presents patients by their age group (the table's rows) and their relationship with the case definition (the table's columns). This chunk uses pipes to link many different functions together and produce a table (`%>%` is the pipe operator - see the [R Basics chapter](https://epirhandbook.com/en/r-basics.html#piping) of the Epidemiologist R Handbook:  
+
+* `select()` keeps only the columns of interest
+* `mutate()` converts any instances of `NA` in the `case_def` column to the word "Missing", so the table's presentation is more clean. Note this change only applies in this table, not in the underlying dataset.  
+* `tbl_summary()` creates a summary table by age group with counts and percentages, with columns for each `case_def` value.  
+* `add_overall()` is a function from {gtsummary} that adds overall totals to the table  
+* `bold_labels()` is from {gtsummary} and makes the variable names bold.  
+* `as_flex_table()` is from the {flextable} package, which allows more detailed editing of the table presentation  
+* `bold()` makes the header bold  
+* `set_table_properties()` aligns the table to the maximum width of the word document report.  
+
+
+
+
+```{r describe_by_age_group_and_def, warning = FALSE, message = FALSE}
+linelist_cleaned %>% 
+  ## only keep variables of interest
+  select(age_group, case_def) %>% 
+  ## make NAs show up as "Missing" (so they are included in counts)
+  mutate(case_def = fct_explicit_na(case_def, "Missing")) %>%
+  ## create a table with counts/percentages by column
+  tbl_summary(by = case_def,
+              percent = "column",
+              label = list(age_group = "Age group")) %>% 
+  ## add totals
+  add_overall() %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+```
+
+
+
+You can change the argument `by =` to refer to any number of columns (in this next example, by `sex`).  
+
+```{r total_props_agegroup_sex, warning = FALSE, message = FALSE}
+
+linelist_cleaned %>% 
+  select(age_group, sex) %>% 
+  mutate(sex = fct_explicit_na(sex, "Missing")) %>%
+  tbl_summary(by = sex,
+              percent = "column",
+              label = list(age_group = "Age group")) %>% 
+  add_overall() %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+```
+
+Outside of the R code chunk, note the **in-line code** that gives the counts and percents of rows missing sex and age_group.  
+
+
+
+
+### Age pyramids 
+
+
+To print an age pyramid in your report, use the code below. A few things to note:  
+
+* The **variable for `split_by =` should have two non-missing value options** (e.g. Male or Female, Oui or Non, etc. Three will create a messy output.)  
+* The variable names work with or without quotation marks  
+* The dashed lines in the bars are the midpoint of the un-stratified age group   
+* You can adjust the position of the legend by replacing `legend.position = "bottom"` with "top", "left", or "right"  
+* Read more by searching "age_pyramid"" in the Help tab of the lower-right RStudio pane  
+
+You can make this a pyramid of months by supplying `age_group_mon` to the `age_group =` argument.  
+
+
+
+```{r age_pyramid, warning = FALSE, message = FALSE}
+# plot age pyramid by sex 
+age_pyramid(linelist_cleaned, 
+                 age_group = "age_group", 
+                 split_by = "sex") + 
+  labs(y = "Cases (n)", x = "Age group") + # change axis  labels (nb. x/y flip)
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+**To have an age pyramid of patients under 2 by month age groups, it is best to add a `filter()` step to the beginning of the code chunk, as below**. This selects for `linelist_cleaned` observations that meet the specified critera and passes that reduced dataset through the "pipes" to the next function:  (`plot_age_pyramid()`). If this `filter()` step is not added, you will see that the largest pyramid bars are of "missing". These are the patients old enough to not have a months age group.  
+
+If you add this filtering step, **you must also modify `age_pyramid()` by removing its first argument `linelist_cleaned,`**. The dataset is already given to the command in the `filter()` and is passed to `age_pyramid()` via piping.  
+
+Note that the filter step does not drop any observations from the `linelist_cleaned` object itself. Because the filter is **not** being assigned (`<-`) to over-write `linelist_cleaned`, this filter is only temporarily applied for the purpose of producing the age pyramid.
+
+```{r age_pyramid_under_two, warning = FALSE, message = FALSE}
+# plot age pyramid by month groups, for observations under 2 years
+filter(linelist_cleaned, age_years <= 2) %>%
+  age_pyramid(age_group = "age_group_mon",
+                   split_by = "sex") +
+                  # stack_by = "case_def") +
+  labs(y = "Cases (n)", x = "Age group (months)") + # change axis  labels (nb. x/y flip)
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+### Inpatient statistics  
+
+The text following the age pyramids uses **in-line code** to describe the distribution of outpatient and inpatient observations, and descriptive statistics of the length of stay for inpatients. **The Am Timan dataset does not have length of stay, so it is best to delete those related sentences related to `obs_days` for the final report**.  
+
+### Symptom and lab descriptive tables  
+
+This next code also uses the `tab_linelist()` function to **create descriptive tables of all the variables that were included in the `SYMPTOMS` variable list**.  
+
+* In the `tab_linelist()` function, `SYMPTOMS` (the value supplied to the second argument) is an object we defined in data cleaning that is a list of variables to tabulate. If this code produces an error about an "Unknown column", ensure that the variables in the object `SYMPTOMS` are *all* present in your dataset (and spelled correctly). 
+* Also in `tab_linelist()`, the argument `keep =` must represent the character value to be counted for the the table. As these Am Timan variables are still in French, **we change `keep = "Yes"` to `keep = "Oui"`**.  
+* The `mutate()` function is aesthetically changing variable names with underscores to spaces.   
+
+```{r describe_by_symptoms, warning=FALSE, message=FALSE}
+# get counts and proportions for all variables named in SYMPTOMS
+tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Oui") %>% 
+  select(-value) %>%
+  # fix the way symptom names are displayed
+  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
+  # rename accordingly
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
+  kable(digits = 1)
+```
+
+The code for the lab table is very similar, but has this difference:  
+
+* In the initial `tab_linelist()` command, `transpose = "value"` is set because the values in the lab data are important in-and-of themselves (e.g. IgM+/IgG-, etc.) - i.e. the values should become column headers.   
+
+
+{{% notice tip %}}
+This table may be large and unwieldy at first, until you clean your data. The step in data cleaning where we converted 0, 1, "yes", "pos", "neg", etc. to standardized "Positive" and "Negative" was crucial towards making this table readable. Once knitted into a word document, you will likely need to adjust the font size, column widths, etc.
+{{% /notice %}}
+
+
+```{r describe_by_labs, warning=FALSE, message=FALSE}
+# get counts and proportions for all variables named in LABS
+tab_linelist(linelist_cleaned, LABS, 
+             transpose = "value") %>% 
+  # fix the way lab test names are displayed
+  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
+  # rename accordingly
+  rename("Lab test" = variable) %>%
+  rename_redundant("%" = proportion) %>%
+  augment_redundant(" (n)" = " n$") %>%
+  kable(digits = 1)
+```
+
+## Case Fatality Ratio (CFR)
+
+The opening text of this chunk with in-line code must be edited to match our Am Timan data. The second in-line code references the variable `exit_status` - **this must now reference the variable `exit_status2`**. Also, we do not have Dead on Arrival recorded in our dataset, so **that part of the sentence should be deleted**.  
+
+Likewise, **the code section on time-to-death does not apply to our dataset and should be deleted.**  
+
+Overall CFR is produced with the code below. Note the following:  
+
+* This code requires the variable `patient_facility_type`, that it has a value "Inpatient", and the `DIED` variable.  
+* A filter is applied that restricts this table to Inpatient observations only.  
+* `rename()` is used to change the column labels in the table  
+
+```{r overall_cfr, warning = FALSE, message = FALSE}
+# use arguments from above to produce overal CFR
+overall_cfr <- linelist_cleaned %>% 
+  filter(patient_facility_type == "Inpatient") %>%
+  case_fatality_rate_df(deaths = DIED, mergeCI = TRUE) %>%
+  rename("Deaths" = deaths,
+         "Cases" = population,
+         "CFR (%)" = cfr,
+         "95%CI" = ci)
+  knitr::kable(overall_cfr, digits = 1)         # print nicely with 1 decimal digit
+```
+
+The next code adds arguments to `case_fatality_rate_df()` such as `group = sex` (which stratified the CFR by sex), and `add_total = TRUE` (which makes a total row across the sex groups).  
+
+```{r cfr_by_sex, warning = FALSE, message = FALSE}
+linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
+  mutate(sex = forcats::fct_explicit_na(sex, "-")) %>%
+  case_fatality_rate_df(deaths = DIED, group = sex, mergeCI = TRUE, add_total = TRUE) %>%
+  rename("Sex" = sex, 
+         "Deaths" = deaths, 
+         "Cases" = population, 
+         "CFR (%)" = cfr, 
+         "95%CI" = ci) %>% 
+  knitr::kable(digits = 1)
+```
+
+When creating a table of CFR by age groups, one additional step, using the function `complete()` is required to ensure that all `age_group` levels are shown even if they have no observations.  
+
+
+```{r cfr_by_age_group, warning = FALSE, message = FALSE}
+linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
+  case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
+  tidyr::complete(age_group, 
+                  fill = list(deaths = 0, 
+                              population = 0, 
+                              cfr = 0, 
+                              ci = 0)) %>% # Ensure all levels are represented
+  rename("Age group" = age_group, 
+         "Deaths" = deaths, 
+         "Cases" = population, 
+         "CFR (%)" = cfr, 
+         "95%CI" = ci) %>% 
+  knitr::kable(digits = 1)
+```
+
+
+The commented code below examines **CFR by case definition**. Note that this is dependant upon our working `case_def` variable.
+
+```{r cfr_by_case_def, warning = FALSE, message = FALSE}
+# Use if you have enough confirmed cases for comparative analysis 
+
+ linelist_cleaned %>%
+   filter(patient_facility_type == "Inpatient") %>%
+   case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
+   rename("Case definition" = case_def, 
+          "Deaths" = deaths, 
+          "Cases" = population, 
+          "CFR (%)" = cfr, 
+          "95%CI" = ci) %>% 
+   knitr::kable(digits = 1)
+```
+
+## Attack Rate
+To use the attack rate section, we need to modify the first code slightly. An object `population` is created from the sum of population counts in the population figures. **Because we only imported region-based population counts, we must change this command** to reflect that we do not have `population_data_age`, but rather `population_data_region`.
+
+```{r eval=FALSE}
+# OLD command from template 
+# population <- sum(population_data_age$population)
+```
+
+Running the correct command and printing the value of population, we see that the sum population across regions is estimated to be 62336.  
+
+```{r}
+# CORRECTED command for Am Timan exercise
+population <- sum(population_data_region$population)
+
+population
+```
+
+The first line of code below creates a multi-part object `ar` with the number of cases, population, attack rate per 10,000, and lower and upper confidence intervals (you can run just this line to verify yourself). The subsequent commands alter the aesthetics of to produce a neat table with appropriate column names. 
+
+```{r attack_rate, warning = FALSE, message = FALSE}
+# calculate the attack rate information and store them in object "ar""
+ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
+
+# Create table from the information in the object "ar""
+ar %>%
+  merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
+  rename("Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 10,000)" = ar, 
+         "95%CI" = ci) %>% 
+  select(-Population) %>% # drop the population column as it is not changing
+  knitr::kable(digits = 1, align = "r")
+```
+
+We are unable to calculate the attack rate by age group, because we do not have population counts for each age group. **Comment out (#) this code.**  
+
+Mortality attributable to AJS is also not appropriate for this example. **Comment out (#) the 4 related code chunks.**
+
+
+## Time
+
+## Place
 
 
 
