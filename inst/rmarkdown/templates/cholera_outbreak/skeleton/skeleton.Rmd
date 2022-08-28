@@ -1209,8 +1209,9 @@ month groupings. Uncomment the below code to use
 
 ```{r age_pyramid_months, warning=FALSE}
 # ## plot age pyramid by month groups, for observations under 2 years
-# filter(linelist_cleaned, age_years < 2) %>%
-#   plot_age_pyramid(age_group = "age_group_mon",
+# linelist_cleaned %>% 
+#   filter(age_years < 2) %>%
+#   age_pyramid(age_group = "age_group_mon",
 #                    split_by = "sex") +
 #                   # stack_by = "case_def") +
 #   labs(y = "Cases (n)", x = "Age group (months)") + # change axis  labels (nb. x/y flip)
