@@ -158,6 +158,7 @@ pacman::p_load(
   parsedate,       # guessing dates
   patchwork,       # combine multiple plots
   sitrep,          # MSF field epi functions
+  epitabulate,     # helper functions
   janitor,         # clean data
   matchmaker,      # matching data
   gtsummary,       # tables
@@ -502,7 +503,7 @@ A) Import a spreadsheet file with the estimates in the correct format
 B) Use the function `gen_population()` to derive the estimates from proportions based on globally accepted standards  
 C) Use the function `gen_population()` to directly enter counts  
 
-![](images/AJS_Population_Counts.png)  
+![](images/AJS_Population_Counts.png){width="549"}
 
 **For this case study, we use a spreadsheet containing population data by quartier (stored inside the {sitrep} R package).**  
 
@@ -1021,6 +1022,10 @@ LABS <- c("hep_b_rdt",
 
 
 
+
+
+
+
 ### Final setup for report  
 
 The next code chunk, `report_setup`, defines important date-related parameters used to produce the report, and filters to remove any observations with date of onset after the `reporting_week` (`reporting_week` is an object defined at the beginning of the script).  
@@ -1182,37 +1187,38 @@ Outside of the R code chunk, note the **in-line code** that gives the counts and
 
 To print an age pyramid in your report, use the code below. A few things to note:  
 
-* The **variable for `split_by =` should have two non-missing value options** (e.g. Male or Female, Oui or Non, etc. Three will create a messy output.)  
+* The **column for `split_by =` should have two non-missing value options** (e.g. Male or Female, Oui or Non, etc. Three will create a messy output.)  
 * The variable names work with or without quotation marks  
 * The dashed lines in the bars are the midpoint of the un-stratified age group   
 * You can adjust the position of the legend by replacing `legend.position = "bottom"` with "top", "left", or "right"  
-* Read more by searching "age_pyramid"" in the Help tab of the lower-right RStudio pane  
+* Read more by searching "age_pyramid" in the Help tab of the lower-right RStudio pane  
 
 You can make this a pyramid of months by supplying `age_group_mon` to the `age_group =` argument.  
 
 
 
-```{r age_pyramid, warning = FALSE, message = FALSE}
+```{r age_pyramid, width="100%"}
 # plot age pyramid by sex 
-age_pyramid(linelist_cleaned, 
-                 age_group = "age_group", 
-                 split_by = "sex") + 
-  labs(y = "Cases (n)", x = "Age group") + # change axis  labels (nb. x/y flip)
+age_pyramid(linelist_cleaned,
+                  age_group = "age_group", 
+                  split_by = "sex") + 
+  labs(y = "Cases (n)", x = "Age group") + # change axis  labels
   theme(legend.position = "bottom",     # move legend to bottom
         legend.title = element_blank(), # remove title
         text = element_text(size = 18)  # change text size
        )
 ```
 
-**To have an age pyramid of patients under 2 by month age groups, it is best to add a `filter()` step to the beginning of the code chunk, as below**. This selects for `linelist_cleaned` observations that meet the specified critera and passes that reduced dataset through the "pipes" to the next function:  (`plot_age_pyramid()`). If this `filter()` step is not added, you will see that the largest pyramid bars are of "missing". These are the patients old enough to not have a months age group.  
+**To have an age pyramid of patients under 2 by month age groups, it is best to add a `filter()` step to the beginning of the code chunk, as shown below**. This selects for `linelist_cleaned` observations that meet the specified critera and passes that subsetted dataset through the "pipes" to `age_pyramid()`. If this `filter()` step is not added, you will see that the largest pyramid bars are of "missing". These are the patients old enough to not have a months age group.  
 
 If you add this filtering step, **you must also modify `age_pyramid()` by removing its first argument `linelist_cleaned,`**. The dataset is already given to the command in the `filter()` and is passed to `age_pyramid()` via piping.  
 
 Note that the filter step does not drop any observations from the `linelist_cleaned` object itself. Because the filter is **not** being assigned (`<-`) to over-write `linelist_cleaned`, this filter is only temporarily applied for the purpose of producing the age pyramid.
 
-```{r age_pyramid_under_two, warning = FALSE, message = FALSE}
+```{r age_pyramid_under_two, width = "100%"}
 # plot age pyramid by month groups, for observations under 2 years
-filter(linelist_cleaned, age_years <= 2) %>%
+linelist_cleaned %>% 
+  filter(age_years <= 2) %>%
   age_pyramid(age_group = "age_group_mon",
                    split_by = "sex") +
                   # stack_by = "case_def") +
@@ -1229,50 +1235,67 @@ The text following the age pyramids uses **in-line code** to describe the distri
 
 ### Symptom and lab descriptive tables  
 
-This next code also uses the `tab_linelist()` function to **create descriptive tables of all the variables that were included in the `SYMPTOMS` variable list**.  
+This next code also uses the `tbl_summary()` function to **create descriptive tables of all the variables that were included in the `SYMPTOMS` variable list**.  
 
-* In the `tab_linelist()` function, `SYMPTOMS` (the value supplied to the second argument) is an object we defined in data cleaning that is a list of variables to tabulate. If this code produces an error about an "Unknown column", ensure that the variables in the object `SYMPTOMS` are *all* present in your dataset (and spelled correctly). 
-* Also in `tab_linelist()`, the argument `keep =` must represent the character value to be counted for the the table. As these Am Timan variables are still in French, **we change `keep = "Yes"` to `keep = "Oui"`**.  
+* In the `tbl_summary()` function, `SYMPTOMS` (the value supplied to the second argument) is an object we defined in data cleaning that is a list of variables to tabulate. If this code produces an error about an "Unknown column", ensure that the variables in the object `SYMPTOMS` are *all* present in your dataset (and spelled correctly). 
+* Also in `tbl_summary()`, the argument `keep =` must represent the character value to be counted for the the table. As these Am Timan variables are still in French, **we change `keep = "Yes"` to `keep = "Oui"`**.  
 * The `mutate()` function is aesthetically changing variable names with underscores to spaces.   
 
 ```{r describe_by_symptoms, warning=FALSE, message=FALSE}
 # get counts and proportions for all variables named in SYMPTOMS
-tab_linelist(linelist_cleaned, SYMPTOMS, keep = "Oui") %>% 
-  select(-value) %>%
-  # fix the way symptom names are displayed
-  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
-  # rename accordingly
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
+
+linelist_cleaned %>% 
+  select(all_of(SYMPTOMS)) %>% 
+  tbl_summary() %>% 
+  # fix the way symptoms are displayed
+  # str_replace_all switches underscore for space in the variable column
+  # str_to_sentence makes the first letter capital, and all others lowercase
+  modify_table_body(
+    ~.x %>% 
+      mutate(label = str_to_sentence(str_replace_all(label, "_", " ")))
+  ) %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+
+```
+These tables may be large and unwieldy at first, until you implement further data cleaning steps. Using `fct_recode()` to convert unexpected or mistakenly typed values as desired. For example, "OuI" should be recoded as "Oui" and "U" as "Unknown".  
+
+The code for making a table with the `LAB` columns is very similar:
+
+
+```{r describe_by_lab, warning=FALSE, message=FALSE}
+# get counts and proportions for all variables named in SYMPTOMS
+
+linelist_cleaned %>% 
+  select(all_of(LABS)) %>% 
+  tbl_summary() %>% 
+  # fix the way symptoms are displayed
+  # str_replace_all switches underscore for space in the variable column
+  # str_to_sentence makes the first letter capital, and all others lowercase
+  modify_table_body(
+    ~.x %>% 
+      mutate(label = str_to_sentence(str_replace_all(label, "_", " ")))
+  ) %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+
 ```
 
-The code for the lab table is very similar, but has this difference:  
-
-* In the initial `tab_linelist()` command, `transpose = "value"` is set because the values in the lab data are important in-and-of themselves (e.g. IgM+/IgG-, etc.) - i.e. the values should become column headers.   
+The step in data cleaning where we converted 0, 1, "yes", "pos", "neg", etc. to standardized "Positive" and "Negative" was crucial towards making this table readable.
 
 
-{{% notice tip %}}
-This table may be large and unwieldy at first, until you clean your data. The step in data cleaning where we converted 0, 1, "yes", "pos", "neg", etc. to standardized "Positive" and "Negative" was crucial towards making this table readable. Once knitted into a word document, you will likely need to adjust the font size, column widths, etc.
-{{% /notice %}}
-
-
-```{r describe_by_labs, warning=FALSE, message=FALSE}
-# get counts and proportions for all variables named in LABS
-tab_linelist(linelist_cleaned, LABS, 
-             transpose = "value") %>% 
-  # fix the way lab test names are displayed
-  mutate(variable = str_to_sentence(str_replace_all(variable, "_", " "))) %>%
-  # rename accordingly
-  rename("Lab test" = variable) %>%
-  rename_redundant("%" = proportion) %>%
-  augment_redundant(" (n)" = " n$") %>%
-  kable(digits = 1)
-```
 
 ## Case Fatality Ratio (CFR)
 
-The opening text of this chunk with in-line code must be edited to match our Am Timan data. The second in-line code references the variable `exit_status` - **this must now reference the variable `exit_status2`**. Also, we do not have Dead on Arrival recorded in our dataset, so **that part of the sentence should be deleted**.  
+The opening text of this chunk with in-line code must be edited to match our Am Timan data. The second in-line code references the variable `exit_status` - **this must now reference the variable `exit_status2`**. Also, we do not have "Dead on Arrival" recorded in our dataset, so **that part of the sentence should be deleted**.  
 
 Likewise, **the code section on time-to-death does not apply to our dataset and should be deleted.**  
 
@@ -1280,74 +1303,114 @@ Overall CFR is produced with the code below. Note the following:
 
 * This code requires the variable `patient_facility_type`, that it has a value "Inpatient", and the `DIED` variable.  
 * A filter is applied that restricts this table to Inpatient observations only.  
-* `rename()` is used to change the column labels in the table  
+* The function `add_cfr()` from the package {epitabulate} modifies the table to include the CFR.  
 
 ```{r overall_cfr, warning = FALSE, message = FALSE}
 # use arguments from above to produce overal CFR
-overall_cfr <- linelist_cleaned %>% 
+linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, mergeCI = TRUE) %>%
-  rename("Deaths" = deaths,
-         "Cases" = population,
-         "CFR (%)" = cfr,
-         "95%CI" = ci)
-  knitr::kable(overall_cfr, digits = 1)         # print nicely with 1 decimal digit
+  select(DIED) %>%
+  gtsummary::tbl_summary(
+    statistic = everything() ~ "{N}",
+    label = DIED ~ "Inpatients"
+    ) %>%
+  modify_header(stat_0 = "Cases (N)") %>% 
+  # Use wrapper function to calculate cfr
+  epitabulate::add_cfr(deaths_var = "DIED") %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+
 ```
 
-The next code adds arguments to `case_fatality_rate_df()` such as `group = sex` (which stratified the CFR by sex), and `add_total = TRUE` (which makes a total row across the sex groups).  
+The next code adds the `include = "sex"` argument to `tbl_summary()` (which stratifies the CFR by sex).  
 
 ```{r cfr_by_sex, warning = FALSE, message = FALSE}
 linelist_cleaned %>%
   filter(patient_facility_type == "Inpatient") %>%
-  mutate(sex = forcats::fct_explicit_na(sex, "-")) %>%
-  case_fatality_rate_df(deaths = DIED, group = sex, mergeCI = TRUE, add_total = TRUE) %>%
-  rename("Sex" = sex, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1)
+  select(DIED, sex) %>%
+  mutate(sex = forcats::fct_explicit_na(sex, "Missing")) %>%
+  gtsummary::tbl_summary(
+    include = sex,
+    statistic = sex ~ "{n}",
+    label = sex ~ "Gender") %>%
+  modify_header(stat_0 = "Cases (N)") %>% 
+  # Use wrapper function to calculate cfr
+  epitabulate::add_cfr(deaths_var = "DIED") %>%
+  # make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
-When creating a table of CFR by age groups, one additional step, using the function `complete()` is required to ensure that all `age_group` levels are shown even if they have no observations.  
+This table shows the CFR by age group. Note how the `include = ` argument is now assigned to `age_group`.
 
 
 ```{r cfr_by_age_group, warning = FALSE, message = FALSE}
-linelist_cleaned %>%
+
+linelist_cleaned %>% 
   filter(patient_facility_type == "Inpatient") %>%
-  case_fatality_rate_df(deaths = DIED, group = age_group, mergeCI = TRUE, add_total = TRUE) %>%
-  tidyr::complete(age_group, 
-                  fill = list(deaths = 0, 
-                              population = 0, 
-                              cfr = 0, 
-                              ci = 0)) %>% # Ensure all levels are represented
-  rename("Age group" = age_group, 
-         "Deaths" = deaths, 
-         "Cases" = population, 
-         "CFR (%)" = cfr, 
-         "95%CI" = ci) %>% 
-  knitr::kable(digits = 1)
+  select(DIED, age_group) %>%
+  gtsummary::tbl_summary(
+    include = age_group,
+    statistic = age_group ~ "{n}",
+    missing = "no",
+    label = age_group ~ "Age group"
+    ) %>%
+  modify_header(stat_0 = "Cases (N)") %>%
+  # Use wrapper function to calculate cfr
+  add_cfr(deaths_var = "DIED") %>%
+  # make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
 
-The commented code below examines **CFR by case definition**. Note that this is dependant upon our working `case_def` variable.
+The commented code below examines **CFR by case definition**. Note that this is dependent upon our working `case_def` variable.
 
 ```{r cfr_by_case_def, warning = FALSE, message = FALSE}
 # Use if you have enough confirmed cases for comparative analysis 
 
- linelist_cleaned %>%
-   filter(patient_facility_type == "Inpatient") %>%
-   case_fatality_rate_df(deaths = DIED, group = case_def, mergeCI = TRUE, add_total = TRUE) %>%
-   rename("Case definition" = case_def, 
-          "Deaths" = deaths, 
-          "Cases" = population, 
-          "CFR (%)" = cfr, 
-          "95%CI" = ci) %>% 
-   knitr::kable(digits = 1)
+linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
+  select(DIED, case_def) %>%
+  gtsummary::tbl_summary(
+    include = case_def,
+    statistic = case_def ~ "{n}",
+    missing = "no",
+    label = case_def ~ "Case definition"
+    ) %>%
+  modify_header(stat_0 = "Cases (N)") %>%
+  # Use wrapper function to calculate cfr
+  add_cfr(deaths_var = "DIED") %>%
+  # make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
 ```
 
+
+
 ## Attack Rate
-To use the attack rate section, we need to modify the first code slightly. An object `population` is created from the sum of population counts in the population figures. **Because we only imported region-based population counts, we must change this command** to reflect that we do not have `population_data_age`, but rather `population_data_region`.
+To use the attack rate section, we need to create an object `population` from the sum of population counts in the population figures. **Because we only imported region-based population counts, we must change this command** to reflect that we do not have `population_data_age`, but rather `population_data_region`.
 
 ```{r eval=FALSE}
 # OLD command from template 
@@ -1363,21 +1426,27 @@ population <- sum(population_data_region$population)
 population
 ```
 
-The first line of code below creates a multi-part object `ar` with the number of cases, population, attack rate per 10,000, and lower and upper confidence intervals (you can run just this line to verify yourself). The subsequent commands alter the aesthetics of to produce a neat table with appropriate column names. 
+The first line of code below creates a multi-part object `ar` with the number of cases, population, attack rate per 10,000, and lower and upper confidence intervals (you can run just this line to verify yourself). This function comes from our package {sitrep}. The subsequent commands alter the aesthetics of to produce a neat table with appropriate column names. 
 
 ```{r attack_rate, warning = FALSE, message = FALSE}
 # calculate the attack rate information and store them in object "ar""
 ar <- attack_rate(nrow(linelist_cleaned), population, multiplier = 10000)
 
-# Create table from the information in the object "ar""
+# print the table
 ar %>%
-  merge_ci_df(e = 3) %>% # merge the lower and upper CI into one column
+  merge_ci_df(e = 3, digits = 1) %>% # merge the lower and upper CI into one column
   rename("Cases (n)" = cases, 
          "Population" = population, 
          "AR (per 10,000)" = ar, 
          "95%CI" = ci) %>% 
-  select(-Population) %>% # drop the population column as it is not changing
-  knitr::kable(digits = 1, align = "r")
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
 ```
 
 We are unable to calculate the attack rate by age group, because we do not have population counts for each age group. **Comment out (#) this code.**  
