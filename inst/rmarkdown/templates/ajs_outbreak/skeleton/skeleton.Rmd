@@ -880,8 +880,8 @@ This chunk will help you clean factor variables.
 
 # Force missing values to NA
 # important for sex to generate age pyramids
-linelist_cleaned$sex <- fct_recode(linelist_cleaned$sex, 
-                                   NULL = "Unknown/unspecified")
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(sex = fct_recode(sex, NULL = "Unknown/unspecified"))
 
 
 # change the order of levels in a single categorical variable 
