@@ -620,20 +620,20 @@ DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 linelist_cleaned <- linelist_cleaned %>%
   mutate(
     across(.cols = all_of(DATEVARS),
-           .fns = ~parsedate::parse_date(.x)))
+           .fns = ~ymd(parsedate::parse_date(.x))))
 
 
 
 ## Non-DHIS2 data --------------------------------------------------------------
 ## Use this section if you did not have DHIS2 data. 
 
-## use the guess_dates() function to make a first pass at date variables.
+## use the parse_date() function to make a first pass at date variables.
 # linelist_cleaned <- linelist_cleaned %>%
 #   mutate(
 #     across(.cols = matches("date|Date"),
-#            .fns = ~parsedate::parse_date(.x)))
+#            .fns = ~ymd(parsedate::parse_date(.x))))
 
-## once you have run guess_dates(), take a look at your date variables.
+## once you have run parse_date(), take a look at your date variables.
 ## here is an example:
 # table(linelist_cleaned$date_of_consultation_admission)
 
