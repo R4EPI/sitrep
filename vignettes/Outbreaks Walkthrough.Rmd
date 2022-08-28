@@ -148,7 +148,7 @@ pacman::p_load(
   knitr,           # create output docs
   here,            # find your files
   rio,             # read in data
-  forcats,         # handle ordinal variables
+  forcats,         # handle ordinal columns
   lubridate,       # handle dates
   dplyr,           # clean/shape data
   tidyr,           # clean/shape data
@@ -192,7 +192,7 @@ This `setup` code chunk does the following:
 | {here}      | to locate files within the RStudio project                                 |
 | {rio}       | to import data from various formats (csv, xlsx, tsv, etc.)                 |
 | {dplyr}     | to clean and handle data                                                   |
-| {forcats}   | to clean the data and create ordinal variables ("factors")                 |
+| {forcats}   | to clean the data and create ordinal columns ("factors")                 |
 | {stringr}   | to clean and handle text/characters (known as "strings")                   |
 | {ggplot2}   | to visualise your data in plots                                            |
 | {lubridate} | to handle dates and times                                                  |
@@ -297,7 +297,7 @@ linelist_raw <- AJS_linelist
 
 For this vignette, **comment out (using \#) or delete the `read_fake_data`, `read_DHIS_data`, and `prep_DHIS_data` chunks**, as they are not necessary and will cause errors.
 
-A successful import should result in a dataframe object named `linelist_raw` in your RStudio Environment pane, consisting of 1447 observations and 122 variables.
+A successful import should result in a dataframe object named `linelist_raw` in your RStudio Environment pane, consisting of 1447 observations and 122 columns.
 
 ![](images/linelist_raw_imported.png){width="549"}
 
@@ -323,7 +323,7 @@ linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), which = "Sheet1
 
 
 
-## Align variables with data dictionary  
+## Align columns with data dictionary  
 
 As in this vignette, if your dataset is not initially aligned with the MSF data dictionary, the column names and values must be standardised. This is because later parts of the template expect certain column names and values.  
 
@@ -383,27 +383,27 @@ Running this command copies a block of code text to our clipboard. Now, *paste* 
 
 #### Complete the mapping of column names
 
-The variables will be in alphabetical order, sorted by if the appear in the template (REQUIRED) or not (optional).
+The columns will be in alphabetical order, sorted by if the appear in the template (REQUIRED) or not (optional).
 
-Some variables---such as lab results or symptoms---are listed as REQUIRED, but are not absolutely necessary for the template to run. If you do not have a variable and are unsure if it's necessary, do a search in the template to see if it's marked as OPTIONAL in the code chunk.
+Some columns---such as lab results or symptoms---are listed as REQUIRED, but are not absolutely necessary for the template to run. If you do not have a column and are unsure if it's necessary, do a search in the template to see if it's marked as OPTIONAL in the code chunk.
 
-To the right of each equals sign, and before each comma, type the *exact* names of the variables from your dataset that correspond to the expected MSF data dictionary variables on the left. The last un-commented line should not have a comma at the end. 
+To the right of each equals sign, and before each comma, type the *exact* names of the columns from your dataset that correspond to the expected MSF data dictionary columns on the left. The last un-commented line should not have a comma at the end. 
 
-Be sure to comment (#, ctrl + shift + c) out the lines of each data dictionary variable in the helper that is not present in your dataset!
+Be sure to comment (#, ctrl + shift + c) out the lines of each data dictionary column in the helper that is not present in your dataset!
 
 
 ![](images/AJS_Variable_Names.gif){width="549"}
 
 If you see this error:  
 `Error in is_symbol(expr) : argument "expr" is missing, with no default`  
-then you likely forgot to comment (#) the line for a variable you did not use.
+then you likely forgot to comment (#) the line for a column you did not use.
 
 And now you can see the result:  
 
 ![](images/AJS_Rename_Variables_Proof.png){width="549"}
 
 
-Below is the code for the variable assignments used in this case study walk-through. You can copy or reference this when building your template for this vignette.  
+Below is the code for the column assignments used in this case study walk-through. You can copy or reference this when building your template for this vignette.  
 
 ```{r, echo=TRUE}
 ## Below are the column assignments used in this case study example
@@ -449,13 +449,13 @@ linelist_cleaned <- rename(linelist_cleaned,
   test_hepatitis_b                  = medhbvelisa, # TEXT          (REQUIRED)
   test_hepatitis_c                  = medhcvelisa, # TEXT          (REQUIRED)
   test_hepatitis_e_genotype         = hevgenotype, # TEXT          (REQUIRED)
-  # test_hepatitis_e_igg              =   , # TEXT              (In same variable as elisa result)
+  # test_hepatitis_e_igg              =   , # TEXT              (In same column as elisa result)
   test_hepatitis_e_igm              = hevrecent, # TEXT          (REQUIRED)
   test_hepatitis_e_virus            = medhevelisa, # TEXT          (REQUIRED)
   # time_to_death                     =   , # TEXT              (Not in dataset)
   # typhoid                           =   , # TEXT              (Not in dataset)
   vomiting                          = medvomit, # BOOLEAN           (REQUIRED)
-  # water_source                      =   , # TEXT              !(Split across many variables)
+  # water_source                      =   , # TEXT              !(Split across many columns)
   yellow_fever                      = yf, # TEXT              (REQUIRED)
   # arrival_date_in_area_if_3m        =   , # DATE              (optional)
   date_lab_sample_taken             = medblooddt, # DATE              (optional)
@@ -517,7 +517,7 @@ population_data_region <- AJS_pop
 
 **Note the name change** from the default `population_data`, because the data we are importing is for regions (quartiers).  
 
-Note also that the variables names in the spreadsheet have already been edited to match the expected column names ("patient_origin" and "population").
+Note also that the columns names in the spreadsheet have already been edited to match the expected column names ("patient_origin" and "population").
 
 
 
@@ -540,7 +540,7 @@ Before moving on, delete or comment (#) all the code lines in the chunk that cre
 
 In this example, laboratory testing data is already included in the linelist dataset. Therefore, **there is no need to import a separate laboratory testing dataset**.  
 
-In your personal use-case, if you have a separate laboratory dataset, use the alterate code provided in the template to import and then join that dataset to the linelist dataset. You can join them based on an ID or case number variable that is present in both datasets. For more information about joins, see the Epidemiologist R Handbook chapter on [Joining data](https://epirhandbook.com/en/joining-data.html).  
+In your personal use-case, if you have a separate laboratory dataset, use the alterate code provided in the template to import and then join that dataset to the linelist dataset. You can join them based on an ID or case number column that is present in both datasets. For more information about joins, see the Epidemiologist R Handbook chapter on [Joining data](https://epirhandbook.com/en/joining-data.html).  
 
 
 
@@ -561,7 +561,7 @@ Wiew your whole dataset interactively. Remember that `View` needs to be written 
 View(linelist_cleaned)
 ```
 
-Overview of variable types and contents
+Overview of column types and contents
 ```{r echo=TRUE, eval=FALSE}
 str(linelist_cleaned)
 ```
@@ -636,9 +636,9 @@ Notice that the commands above returns the number of rows missing `date_of_consu
 
 ### Standardise dates  
 
-In `linelist_cleaned` there are seven variables containing dates (`dateentry`, `epiquestdate`, `date_of_consultation_admission`, `date_of_onset`, `date_lab_sample_taken`, `dthospitalisation`, `dtdeath`).  
+In `linelist_cleaned` there are seven columns containing dates (`dateentry`, `epiquestdate`, `date_of_consultation_admission`, `date_of_onset`, `date_lab_sample_taken`, `dthospitalisation`, `dtdeath`).  
 
-Because the Am Timan dataset contains date variables not found in the data dictionary, we will **comment out the first code lines related to DHIS-aligned data** (those commands convert only date variables known to the MSF data dictionary).  
+Because the Am Timan dataset contains date columns not found in the data dictionary, we will **comment out the first code lines related to DHIS-aligned data** (those commands convert only date columns known to the MSF data dictionary).  
 
 Instead, we uncomment and **use the commands applicable to non-DHIS2 data**. You may see messages warning that a few date entries are not in the correct timeframe - this is ok and these entries will be addressed in the next step.  
 
@@ -649,24 +649,24 @@ The command below uses the function `parse_date()` from the function {parsedate}
 ## Non-DHIS2 data --------------------------------------------------------------
 ## Use this section if you did not have DHIS2 data. 
 
-## use the parse_date() function to make a first pass at date variables.
+## use the parse_date() function to make a first pass at date columns.
 linelist_cleaned <- linelist_cleaned %>%
   mutate(
     across(.cols = matches("date|Date"),
            .fns  = ~ymd(parsedate::parse_date(.x))))
 ```
 
-The code above successfully converted many of our date variables (remember you can check a variable's class like `class(linelist$date_of_onset`). 
+The code above successfully converted many of our date columns (remember you can check a column's class like `class(linelist$date_of_onset`). 
 
 ```{r, echo=TRUE}
 class(linelist_cleaned$date_of_onset)
 ```
 
 
-However, this command did not detect the date variables named with "dt", such as `dtdeath` and `dthospitalization`. We must **add code to convert those variables manually**:  
+However, this command did not detect the date columns named with "dt", such as `dtdeath` and `dthospitalization`. We must **add code to convert those columns manually**:  
 
 ```{r}
-# Individually convert variable using the parse_date() function
+# Individually convert column using the parse_date() function
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(dtdeath = ymd(parse_date(dtdeath)),
          dthospitalisation = ymd(parse_date(dthospitalisation)))
@@ -705,14 +705,14 @@ Check the range of dates again:
 range(linelist_cleaned$date_of_onset, na.rm = TRUE)
 ```
 
-We also must **use the provided code to create a column called `epiweek`**. Although there are already variables that give the epidemiological weeks of various data points, it is safer to calculate a new column ourselves, AND later code chunks rely on the column being named `epiweek`.
+We also must **use the provided code to create a column called `epiweek`**. Although there are already columns that give the epidemiological weeks of various data points, it is safer to calculate a new column ourselves, AND later code chunks rely on the column being named `epiweek`.
 
 ```{r}
-# Create variable epiweek
+# Create column epiweek
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(
     
-    ## create an epiweek variable 
+    ## create an epiweek column 
     epiweek = tsibble::yearweek(
       date_of_onset,
       week_start = 1),
@@ -732,7 +732,7 @@ linelist_cleaned <- linelist_cleaned %>%
 range(linelist_cleaned$age_years, na.rm = TRUE)
 ```
 
-We know there are ages older than 9 years. So we check `class(linelist_cleaned$age_years)` and see that R is reading this variable as class *character*, not numeric!  
+We know there are ages older than 9 years. So we check `class(linelist_cleaned$age_years)` and see that R is reading this column as class *character*, not numeric!  
 
 ```{r, echo=TRUE}
 class(linelist_cleaned$age_years)
@@ -742,7 +742,7 @@ class(linelist_cleaned$age_years)
 We must convert it by **adding the following command** to the script:  
 
 ```{r}
-# Convert variable age_years to numeric class
+# Convert column age_years to numeric class
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(age_years = as.numeric(age_years))
 ```
@@ -756,28 +756,28 @@ range(linelist_cleaned$age_years, na.rm = TRUE)
 
 Then, the chunk contains three age-group commands marked "OPTIONAL":  
 
-* We do **not** want to use "add under 2 years to the age_years variable" because it assumes that we already have a variable `age_months`, which we do not. **Comment out (#) this code.**  
+* We do **not** want to use "add under 2 years to the age_years column" because it assumes that we already have a column `age_months`, which we do not. **Comment out (#) this code.**  
 
 * We also do **not** need to use "change those who are above or below a certain age to NA", because we already know our range of ages and do not have any outside an expected range. **Comment out (#) this code.**  
 
-* We **do** want to use "create an age_months variable from decimal years variable", as we do have decimal years. This command will **create an age_months variable** that has a value if a patient is under 5 years. **Uncomment and use this code.**  
+* We **do** want to use "create an age_months column from decimal years column", as we do have decimal years. This command will **create an age_months column** that has a value if a patient is under 5 years. **Uncomment and use this code.**  
 
 
 
 ```{r}
-# OPTIONAL: create an age_months variable from decimal years variable
+# OPTIONAL: create an age_months column from decimal years column
 linelist_cleaned <- linelist_cleaned %>%
   mutate(age_months = case_when(
             age_years < 5 ~ age_years * 12))
 ```
 
 
-**Now we can create the variables `age_group_mon` and `age_group`.**
+**Now we can create the columns `age_group_mon` and `age_group`.**
 
-First we use the code to create an `age_group_mon` variable for children under 5 years based on `age_months`.  
+First we use the code to create an `age_group_mon` column for children under 5 years based on `age_months`.  
 
 ```{r}
-## create age group variable for under 2 years based on months
+## create age group column for under 2 years based on months
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(age_group_mon = age_categories(
     age_months, 
@@ -785,10 +785,10 @@ linelist_cleaned <- linelist_cleaned %>%
     ceiling = TRUE))
 ```
 
-...and we use the similar code below to create `age_group` as groupings of the variable `age_years`. The function `age_categories()` is used with its `breakers =` argument set to a vector `c( )` of numbers: 0, 3, 15, 30, and 45. Thus, a 30-year old patient will be included in an age group named "30-44". Read more about `age_categories()` by searching the Help pane.
+...and we use the similar code below to create `age_group` as groupings of the column `age_years`. The function `age_categories()` is used with its `breakers =` argument set to a vector `c( )` of numbers: 0, 3, 15, 30, and 45. Thus, a 30-year old patient will be included in an age group named "30-44". Read more about `age_categories()` by searching the Help pane.
 
 ```{r}
-## create an age group variable by specifying categorical breaks
+## create an age group column by specifying categorical breaks
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(age_group = age_categories(
     age_years,
@@ -799,7 +799,7 @@ Finally, ensure that the remaining code in the `create_age_group` chunk is comme
 
 
 
-### Create and clean outcome variables  
+### Create and clean outcome columns  
 
 In the next chunk (`create_vars`) we can **comment out/ignore the code that makes a new numeric column `obs_days`**, because we do not have a `date_of_exit` column in our dataset. 
 
@@ -825,7 +825,7 @@ linelist_cleaned <- linelist_cleaned %>%
     exit_status == "Déchargé/Guéri"  ~ "Discharged"
   ))
 
-# Tabulate the NEW exit_status2 variable to check correct assignment
+# Tabulate the NEW exit_status2 column to check correct assignment
 # Tabulate to see all possible values of exit_status
 linelist_cleaned %>% tabyl(exit_status2, show_na = FALSE)
 ```
@@ -833,13 +833,13 @@ linelist_cleaned %>% tabyl(exit_status2, show_na = FALSE)
 
 **Now we can make the `DIED` column**, which is referenced in later code chunks. 
 
-This command creates `DIED` as a logical (`TRUE` or `FALSE`) variable, depending on whether each observation meets the criteria to the right of the assignment operator `<-`. For a similar example, read about the `%in%` operator on the R Basics - [Advanced and Miscellaneous](https://r4epis.netlify.com/training/r_basics/advanced_functions/) page.  
+This command creates `DIED` as a logical (`TRUE` or `FALSE`) column, depending on whether each observation meets the criteria to the right of the assignment operator `<-`. Read more about the `%in%` operator on the [R Basics chapter](https://epirhandbook.com/en/r-basics.html#in) of the Epi R Handbook 
 
-However, we must **modify the existing command to detect within the NEW variable `exit_status2`, not `exit_status`.**  
+However, we must **modify the existing command to detect within the NEW column `exit_status2`, not `exit_status`.**  
 
 
 ```{r}
-## Note we are directing R to look within the NEW exit_status2 variable
+## Note we are directing R to look within the NEW exit_status2 column
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(DIED = str_detect(exit_status2, "Dead"))
 ```
@@ -847,16 +847,16 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ### **Re-code values in `patient_facility_type`**  
 
-When we assigned our variables to match the data dictionary, we used the variable `hospitalisation` as the variable `patient_facility_type`. **However, the values in that variable do not match those expected by the template.** In the data dictionary, `patient_facility_type` should have values of "Inpatient" or "Outpatient." Currently, the values are "Oui" and "Non". In later code chunks, analyses are restricted to observations where `patient_facility_type == "Inpatient"`, thus, we must align the values to match the data dictionary.  
+When we assigned our columns to match the data dictionary, we used the column `hospitalisation` as the column `patient_facility_type`. **However, the values in that column do not match those expected by the template.** In the data dictionary, `patient_facility_type` should have values of "Inpatient" or "Outpatient." Currently, the values are "Oui" and "Non". In later code chunks, analyses are restricted to observations where `patient_facility_type == "Inpatient"`, thus, we must align the values to match the data dictionary.  
 
-**To clean these values we uncomment and modify code also from the `create_vars` chunk, found under the heading "recode character variables" (the template example is of fixing incorrect spellings of village names).**  
+**To clean these values we uncomment and modify code also from the `create_vars` chunk, found under the heading "recode character columns" (the template example is of fixing incorrect spellings of village names).**  
 
-Included below are extra steps before and after the `case_when()` command using `table()` to verify the correct conversion of values. Remove these two commands after verifying, as otherwise their outputs will appear in the report.  
+Included below are extra steps before and after the `case_when()` command using `tabyl()` to verify the correct conversion of values. Remove these two commands after verifying, as otherwise their outputs will appear in the report.  
 
 
 ```{r}
 # View all the values in patient_facility_type
-table(linelist_cleaned$patient_facility_type, useNA = "always")
+linelist_cleaned %>% tabyl(patient_facility_type)
 
 # Convert the values
 linelist_cleaned <- linelist_cleaned %>% 
@@ -866,48 +866,53 @@ linelist_cleaned <- linelist_cleaned %>%
   ))
 
 # Re-check that the values converted sucessfully
-table(linelist_cleaned$patient_facility_type, useNA = "always")
+linelist_cleaned %>% tabyl(patient_facility_type)
 
 ```
 
-### Recode values in lab test variables  
 
-For later steps, we will need many of our testing variables to the values "Positive" and "Negative" instead of "Pos" and "Neg". We can uncomment and use this helper code to make that change. Some notes about this step:  
 
-* You may receive warnings about unknown levels in some variables - this is generally okay but check the changes visually to be sure `View(linelist_cleaned)`.  
-* One variable (`test_hepatitis_e_igm`) has values 0 and 1 that we want to change to "Positive" and "Negative". The `fct_recode()` function expects *character* RHS inputs (within quotes) - so put "0" and "1" in quotes, as below, and confirm the change.  
-* One variable (`test_hepatitis_b`) has a value recorded as "Weakly pos". For the purposes of this exercise we re-code this to "Positive".  
+### Recode values in lab test columns  
+
+For later steps, we will need many of our testing columns to have the values "Positive" and "Negative" instead of "Pos" and "Neg". We can uncomment and use this helper code to make that change. Some notes about this step:  
+
+* You may receive warnings about unknown levels in some columns - this is generally okay but check the changes visually to be sure with `View(linelist_cleaned)`.  
+* One column (`test_hepatitis_e_igm`) has values 0 and 1 that we want to change to "Positive" and "Negative". The `fct_recode()` function expects *character* RHS inputs (within quotes) - so put "0" and "1" in quotes, as below, and confirm the change has occurred as expected.  
+* One column (`test_hepatitis_b`) has a value recorded as "Weakly pos". For the purposes of this exercise we re-code this to "Positive".  
 
 
 ```{r, warning=FALSE}
-## sometimes, coding is inconsistent across variables -- for example, "Yes" / "No"
+## sometimes, coding is inconsistent across columns -- for example, "Yes" / "No"
 ## may be coded as Y, y, yes, 1 / N, n, no, 0. You can change them all at once!
-## Create a list of the variables you want to change, and run the following.
+## Create a list of the columns you want to change, and run the following.
 ## You may need to edit this code if options are different in your data.
 
-# # create list of variables
+# # create list of columns
 change_test_vars <- c("hep_e_rdt", "hep_c_rdt", "hep_b_rdt", "test_hepatitis_a", "test_hepatitis_b", "test_hepatitis_c", "malaria_rdt_at_admission", "test_hepatitis_e_genotype", "test_hepatitis_e_igm", "test_hepatitis_e_virus", "hevpcr", "other_arthropod_transmitted_virus")
 
-# standardize options
-  linelist_cleaned <- linelist_cleaned %>%  
-       mutate_at(vars(change_test_vars), forcats::fct_recode,   
-       Positive = "Pos",
-       Positive = "pos",
-       Positive = "yes",
-       Positive = "Yes",
-       Positive = "Weakly pos",
-       Positive = "1",
-       Negative = "Neg",
-       Negative = "neg",
-       Negative = "no",
-       Negative = "No",
-       Negative = "0"
-     )  
+# standardize values
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(
+    across(
+      .cols = all_of(change_test_vars),
+      .fns = ~forcats::fct_recode(
+        .x,
+        Positive = "Pos",
+        Positive = "pos",
+        Positive = "yes",
+        Positive = "Yes",
+        Positive = "Weakly pos",
+        Positive = "1",
+        Negative = "Neg",
+        Negative = "neg",
+        Negative = "no",
+        Negative = "No",
+        Negative = "0")))
 ``` 
 
-**Lastly for the chunk `create_vars` we must create a case definition variable.** In this use of `case_when()`, the last line left-hand side (LHS) is TRUE, which serves as a catch-all for any other possible values that have not yet met the criteria of the earlier `case_when()` lines.  
+**Lastly for the chunk `create_vars` we must create a case definition column.** In this use of `case_when()`, the last line left-hand side (LHS) is TRUE, which serves as a catch-all for any other possible values that have not yet met the criteria of the earlier `case_when()` lines.  
 
-Note how this code checks the variable `hep_e_rdt` for "Positive". The earlier cleaning steps converting `hep_e_rdt` values from "Pos" to "Positive" were necessary for this case definition to properly apply.  
+Note how this code checks the column `hep_e_rdt` for "Positive". The earlier cleaning steps converting `hep_e_rdt` values from "Pos" to "Positive" were necessary for this case definition to properly apply.  
 
 In addition we need to **change the value looked for in `other_cases_in_hh` from "Yes" to "Oui".**
 
@@ -926,17 +931,24 @@ linelist_cleaned <- linelist_cleaned %>%
 
 
 
-### Factor variables  
+### Factor columns  
 
-Factor variables require specialized functions to manipulate (see Factor sections of the R Basics - [Advanced and Miscellaneous](https://r4epis.netlify.com/training/r_basics/advanced_functions/) page). The one factor variable we should clean now is `sex`, with the following code:  
+Factor columns require specialized functions to manipulate (see the Epidemiologist R Handbook chapter [Factors](https://epirhandbook.com/en/factors.html)). The one factor column we should clean now is `sex`, with the following code:  
 
 ```{r}
-linelist_cleaned$sex <- fct_recode(linelist_cleaned$sex, 
-                                   NULL = "Unknown/unspecified")
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(sex = fct_recode(sex, NULL = "Unknown/unspecified"))
 ```                                   
+  
+And we can verify the unique values in column `sex` with a quick table:
+
+```{r}
+linelist_cleaned %>% 
+  tabyl(sex)
+```
+
                                    
-                                   
-**We can comment out (#) the rest of the `factor_vars` chunk**, such as the code to change the order of levels in categorical variables. The Am Timan dataset does not include a variable `time_to_death` and we do not need to change the order of any categorical variables.  
+**Comment out (#) the rest of the `factor_vars` chunk**, such as the code to change the order of levels in categorical columns. The Am Timan dataset does not include a column `time_to_death` and we do not need to change the order of any categorical columns.  
 
 
 
@@ -944,23 +956,24 @@ linelist_cleaned$sex <- fct_recode(linelist_cleaned$sex,
 
 We must **add one additional cleaning step** necessary for this dataset.  
 
-The variable `patient_origin` (originally the variable *quartier* in the raw dataset) is referenced in the place analyses chunks, for example when calculating attack rates by region. In those steps, the variable `patient_origin` in `linelist_cleaned` is *joined to* the variable `patient_origin` of the data frame `population_data_region` (which was imported in the population and lab data steps).  
+The column `patient_origin` (originally the column *quartier* in the raw dataset) is referenced in the place analyses chunks, for example when calculating attack rates by region. In those steps, the column `patient_origin` in `linelist_cleaned` is *joined to* the column `patient_origin` of the data frame `population_data_region` (which was imported in the population and lab data steps).  
 
-However, the place names in `population_data_region` are ALL CAPITAL LETTERS. This is not true in `linelist_cleaned` - so the join will not register any matches. The easiest way to solve this problem is to **redefine the `linelist_cleaned` variable into all capital letters as well**, using the base R function `toupper()`, which means "to upper case":  
+However, the place names in `population_data_region` are ALL CAPITAL LETTERS. This is not true in `linelist_cleaned` - so the join will not register any matches. The easiest way to solve this problem is to **redefine the `linelist_cleaned` column into all capital letters as well**, using the base R function `toupper()`, which means "to upper case":  
 
 ```{r}
-linelist_cleaned$patient_origin <- toupper(linelist_cleaned$patient_origin)
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(patient_origin = toupper(patient_origin))
 ```
 
 
-### Gather common variables for later analysis
+### Gather common columns for later analysis
 
-These variables names are stored in vectors that are created using the function `c()`. These vectors of names will be referenced in later code chunks. This way if you want to run the same function over these variables you can simply use the named vector rather than typing out each variable individually.  
+These columns names are stored in vectors that are created using the function `c()`. These vectors of names will be referenced in later code chunks. This way if you want to run the same function over these columns you can simply use the named vector rather than typing out each column individually.  
 
-The default template code creates two vectors - one for symptom variables (`SYMPTOMS`) and one for laboratory testing variables (`LABS`). 
+The default template code creates two vectors - one for symptom columns (`SYMPTOMS`) and one for laboratory testing columns (`LABS`). 
 
 ```{r}
-# vectors of variable names ----------------------------------------------------
+# vectors of column names ----------------------------------------------------
 # create a grouping of all symptoms 
 
 SYMPTOMS <- c("generalized_itch", 
@@ -1018,42 +1031,48 @@ The second command in this chunk (shown below) uses `filter()` to remove observa
 
 ```{r echo=FALSE}
 # return the last day of the reporting week
-obs_end   <- week2date(str_glue(reporting_week, "-7"))
+obs_end   <- as.Date((reporting_week + 1)) - 1
 
 # filter out cases after end of reporting week
 linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_consultation_admission <= obs_end | is.na(date_of_consultation_admission))
+  filter(epiweek <= reporting_week)
 
 # define the first week of outbreak (date of first case)
-first_week <- as.aweek(min(as.character(linelist_cleaned$epiweek)))
+first_week <- min(linelist_cleaned$epiweek)
+
 
 # outbreak start 
 # return the first day in the week of first case 
 obs_start <- as.Date(first_week)
+
+## pull the unique weeks which occur
+all_weeks <- seq(first_week,
+                 reporting_week, by = 1) 
+
+## change weeks to dates
+all_weeks_date <-  as.Date(all_weeks) 
 ```
 
 
-```{r}
-# filter out cases after end of reporting week
-linelist_cleaned <- linelist_cleaned %>% 
-  filter(date_of_consultation_admission <= obs_end | is.na(date_of_consultation_admission))
-```
 
 ### Export if desired  
 
 And finally, if desired you can **export the cleaned dataset** for other purposes.  
 
-The command `export()` is also from the package **rio**.  
+The command `export()` is also from the package {rio}.  
 
 First, the object that you want to export is named (`linelist_cleaned`).  
 
-Then, the function `str_glue()` creates the name for the new file by combining "AmTiman_linelist_cleaned_" with the current date and finally the extention ".xlsx". Don't be confused - this is equivalen of writing `rio::export(linelist_cleaned, "AmTiman_linelist_cleaned_2019-08-24.xlsx")`, but using `str_glue()` and `Sys.Date()` means the current date will always be used automatically.
+Then, the function `str_glue()` creates the name for the new file by combining "AmTiman_linelist_cleaned_" with the current date and finally the extention ".xlsx". Don't be confused - this is equivalent of writing `rio::export(linelist_cleaned, "AmTiman_linelist_cleaned_2019-08-24.xlsx")`, but using `str_glue()` and `Sys.Date()` means the current date will always be used automatically.
 
 ```{r save_cleaned_data, eval = FALSE}
 ## OPTIONAL: save your cleaned dataset! 
 ## put the current date in the name so you know!
 rio::export(linelist_cleaned, str_glue("AmTiman_linelist_cleaned_{Sys.Date()}.xlsx"))
 ```
+
+
+
 
 
 
