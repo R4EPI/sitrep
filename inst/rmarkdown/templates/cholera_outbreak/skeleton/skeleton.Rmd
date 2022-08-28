@@ -800,10 +800,12 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ## The variable DIED will be binary (TRUE/FALSE) -- if patient died or not
 ## if your variable is named ("Dead on arrival", "Dead in facility"), use this
-linelist_cleaned$DIED <- str_detect(linelist_cleaned$exit_status, "Dead")
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(DIED = str_detect(exit_status, "Dead"))
   
 ## use this version for coded values (e.g. "DOA", "DD")
-# linelist_cleaned$DIED <- linelist_cleaned$exit_status %in% c("DD", "DOA")
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(DIED = exit_status %in% c("DD", "DOA"))
 
 
 
