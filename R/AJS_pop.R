@@ -1,6 +1,6 @@
 #' Example population data for Hepatatis E virus or Acute Jaundice Syndrome (AJS)
 #'
-#' Data from a real outbreak of Hepatitis E virus (HEV) infection which
+#' Population data from a real outbreak of Hepatitis E virus (HEV) infection which
 #' occurred in the Chadian town of Am Timan between October 2016 and
 #' April 2017. The Chadian Ministry of Health (MoH) has approved the use
 #'  of this data for training purposes.
