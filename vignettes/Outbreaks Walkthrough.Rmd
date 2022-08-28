@@ -257,7 +257,7 @@ epicurve_theme <- theme(
 ```
 
 
-```{recho=TRUE}
+```{r echo=TRUE}
 ## sets the labels in ggplot for the epicurves
 epicurve_labels <- labs(x = "Calendar week", 
                         y = "Cases (n)", 
@@ -642,120 +642,90 @@ Because the Am Timan dataset contains date variables not found in the data dicti
 
 Instead, we uncomment and **use the commands applicable to non-DHIS2 data**. You may see messages warning that a few date entries are not in the correct timeframe - this is ok and these entries will be addressed in the next step.  
 
-You can read more about the `parse_date()` function .  
+The command below uses the function `parse_date()` from the function {parsedate} to "guess" each individual date in the column - this approach can handle very messy data in which some dates are written as "17 October 2016" and others may be written as "2016-10-27". Read more about the `parse_date()` function [here](https://readr.tidyverse.org/reference/parse_datetime.html).  
 
 
-```{r results='hide', message=FALSE, warning=FALSE}
+```{r results='hide', echo=TRUE}
 ## Non-DHIS2 data --------------------------------------------------------------
 ## Use this section if you did not have DHIS2 data. 
 
 ## use the parse_date() function to make a first pass at date variables.
-# linelist_cleaned <- linelist_cleaned %>%
-#   mutate(
-#     across(.cols = matches("date|Date"),
-#            .fns  = ~parsedate::parse_date(.x)))
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(
+    across(.cols = matches("date|Date"),
+           .fns  = ~ymd(parsedate::parse_date(.x))))
 ```
 
-The code above successfully converted many of our date variables (remember you can check a variable's class like `class(linelist$date_of_onset`). However, this command did not detect the date variables named with "dt", such as `dtdeath` and `dthospitalization`. We must **add code to convert those variables manually**:  
+The code above successfully converted many of our date variables (remember you can check a variable's class like `class(linelist$date_of_onset`). 
+
+```{r, echo=TRUE}
+class(linelist_cleaned$date_of_onset)
+```
+
+
+However, this command did not detect the date variables named with "dt", such as `dtdeath` and `dthospitalization`. We must **add code to convert those variables manually**:  
 
 ```{r}
-# Check class of variable 
-class(linelist_cleaned$dtdeath)
-
 # Individually convert variable using the parse_date() function
 linelist_cleaned <- linelist_cleaned %>% 
-  mutate(dtdeath = parse_date(dtdeath),
-         dthospitalisation = parse_date(dthospitalisation))
+  mutate(dtdeath = ymd(parse_date(dtdeath)),
+         dthospitalisation = ymd(parse_date(dthospitalisation)))
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 Next we uncomment and **modify code to correct unrealistic dates**. We have browsed our data and know that there are observations with `date_of_onset` outside the reasonable range:
+
+
 ```{r}
 # Check range of date_of_onset values, ignoring (removing) missing values
 range(linelist_cleaned$date_of_onset, na.rm = TRUE)
 ```
 
-We convert dates outside the expected range (April 2016 to October 2017) to missing using `case_when()`. Note that when making the assignment on the right-hand side (RHS), wrap `NA` in `as.Date()`.  
+We convert dates outside the expected range (April 2016 to October 2017) to missing using `case_when()`. Note that when making the assignment on the right-hand side (RHS), wrap `NA` in `as.Date()` because all right-hand side values must be the same class ("Date" in this scenario).  
 
 As you modify this chunk for your own situation, remember that **each left-hand side (LHS) of the `~` must be a logical statement** (not just a value), and to include commas at the end of each `case_when()` line (except the last one). In addition, it is best to write `case_when()` lines from most specific at top to most general/catch-all at the bottom. You can read more about `case_when()` [on this tidyverse site](https://dplyr.tidyverse.org/reference/case_when.html).  
 
 
-{{% notice tip %}}
-All the right-hand side (RHS) values must be the *same class* (either character, numeric, etc.). So, *if your other RHS values are character* and you want one RHS value to be missing, you cannot just write `NA` on the RHS. Instead you must use the special character version of `NA` : `NA_character_`.
-{{% /notice %}}
-
-  
 
 ```{r}
 # Convert dates before April 2016 or after October 2017 to missing (NA)
-linelist_cleaned <- mutate(linelist_cleaned,
-                           date_of_onset = case_when(
-                                 date_of_onset < as.Date("2016-04-01")  ~ as.Date(NA),
-                                 date_of_onset > as.Date("2017-10-31")  ~ as.Date(NA),
-                                 TRUE                                   ~ date_of_onset
-                                 ))
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(date_of_onset = case_when(
+    date_of_onset < as.Date("2016-04-01")  ~ as.Date(NA),
+    date_of_onset > as.Date("2018-10-01")  ~ as.Date(NA),
+    TRUE                                   ~ date_of_onset))
                            
 ```
 
-We also must **use the provided code to create a variable called `epiweek`**. Although there are already variables that give the epidemiological weeks of various data points, it is safer to calculate a new variable ourselves, AND later code chunks rely on the variable being named `epiweek`. See the [documentation of the package **aweek**](https://cran.r-project.org/web/packages/aweek/vignettes/introduction.html) for more information.
+Check the range of dates again:  
+
+
+```{r}
+# Check range of date_of_onset values, ignoring (removing) missing values
+range(linelist_cleaned$date_of_onset, na.rm = TRUE)
+```
+
+We also must **use the provided code to create a column called `epiweek`**. Although there are already variables that give the epidemiological weeks of various data points, it is safer to calculate a new column ourselves, AND later code chunks rely on the column being named `epiweek`.
 
 ```{r}
 # Create variable epiweek
-linelist_cleaned$epiweek <- aweek::date2week(linelist_cleaned$date_of_onset, 
-                                             floor_day = TRUE, 
-                                             factor = TRUE)
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(
+    
+    ## create an epiweek variable 
+    epiweek = tsibble::yearweek(
+      date_of_onset,
+      week_start = 1),
+    
+    ## create a date version of epiweek 
+    epiweek_date = as.Date(epiweek))  
 ```
 
 
 
-{{% notice tip %}}
-A note on the epiweek variable and factors:  
-Notice that we converted dates to `NA` that were clear errors (outside the expected date range) **before** creating the `epiweek` variable. This is because the `epiweek` variable is created as a **factor**, and once a factor is created it is more difficult to remove factor levels. You can read more about factors and dropping unused factor levels in the R Basics - [Advanced and Miscellaneous](https://r4epis.netlify.com/training/r_basics/advanced_functions/) page. 
-{{% /notice %}}
+### Create age groups  
 
-
-
-### Create age group  
-
-**To create the variable `age_group` we must first clean the variable `age_years`**. If we look at the range of values in `age_years`, we see something strange:  
+**To create a column for `age_group` we must first clean the column `age_years`**. If we look at the range of values in `age_years`, we see something strange:  
 
 ```{r}
 # See the range of age_years values, removing (excluding) NA
@@ -764,13 +734,25 @@ range(linelist_cleaned$age_years, na.rm = TRUE)
 
 We know there are ages older than 9 years. So we check `class(linelist_cleaned$age_years)` and see that R is reading this variable as class *character*, not numeric!  
 
+```{r, echo=TRUE}
+class(linelist_cleaned$age_years)
+```
+
+
 We must convert it by **adding the following command** to the script:  
 
 ```{r}
 # Convert variable age_years to numeric class
-linelist_cleaned$age_years <- as.numeric(linelist_cleaned$age_years)
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(age_years = as.numeric(age_years))
 ```
+
 If we run the `range()` command again, we can see that the corrected range is 0.08 to 75.  
+
+```{r}
+# See the range of age_years values, removing (excluding) NA
+range(linelist_cleaned$age_years, na.rm = TRUE)
+```
 
 Then, the chunk contains three age-group commands marked "OPTIONAL":  
 
@@ -783,57 +765,56 @@ Then, the chunk contains three age-group commands marked "OPTIONAL":
 
 
 ```{r}
-# For patients under 5 years, the new variable age_months is based on age_years * 12 
-linelist_cleaned <- mutate(linelist_cleaned,
-                           age_months = if_else(age_years < 5, 
-                                                true  = age_years * 12, 
-                                                false = as.numeric(NA)
-                                               )
-                          )
+# OPTIONAL: create an age_months variable from decimal years variable
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(age_months = case_when(
+            age_years < 5 ~ age_years * 12))
 ```
 
 
-**Now we can create the variables `age_group` `age_group_mon`.**
+**Now we can create the variables `age_group_mon` and `age_group`.**
 
 First we use the code to create an `age_group_mon` variable for children under 5 years based on `age_months`.  
 
 ```{r}
-## create age group variable for under 5 years based on months
-linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months, 
-                                                 breakers = c(0, 6, 9, 12, 24), 
-                                                 ceiling = TRUE)
+## create age group variable for under 2 years based on months
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(age_group_mon = age_categories(
+    age_months, 
+    breakers = c(0, 6, 9, 12, 23), 
+    ceiling = TRUE))
 ```
 
-...and we use the similar code below to create `age_group` as groupings of the variable `age_years`. The function `age_categories()` is used with its `breakers =` argument set to a vector `c( )` of numbers: 0, 3, 15, 30, and 45. Thus, a 30-year old patient will be included in an age group named "30-44". Read more about `age_categories` by searching the Help pane.
+...and we use the similar code below to create `age_group` as groupings of the variable `age_years`. The function `age_categories()` is used with its `breakers =` argument set to a vector `c( )` of numbers: 0, 3, 15, 30, and 45. Thus, a 30-year old patient will be included in an age group named "30-44". Read more about `age_categories()` by searching the Help pane.
 
 ```{r}
 ## create an age group variable by specifying categorical breaks
-linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years, 
-                                             breakers = c(0, 3, 15, 30, 45))
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(age_group = age_categories(
+    age_years,
+    breakers = c(0, 2, 15, 30, 45)))
 ```
 
-Finally, ensure that the remaining code in `create_age_group` is commented out (#).  
+Finally, ensure that the remaining code in the `create_age_group` chunk is commented out (#).  
 
 
 
 ### Create and clean outcome variables  
 
-In the next chunk (`create_vars`) we can **comment out/ignore the code that makes a new numeric variable `obs_days`**, because we do not have a `date_of_exit` in our dataset. 
+In the next chunk (`create_vars`) we can **comment out/ignore the code that makes a new numeric column `obs_days`**, because we do not have a `date_of_exit` column in our dataset. 
 
-While the template directs us to next create a `DIED` variable based on `exit_status` containing the characters "Dead", we must first **clean our `exit_status` variable, which is currrently in French**. 
+While the template directs us to next create a `DIED` column based on the column `exit_status` containing the characters "Dead", we must first **clean our `exit_status` column, which is currently in French**. 
 
-**Add code that uses `case_when()` to assign new values in a new exit_status2 variable**, as in the code below. We do this by **modifing code from just below in the template.** The code uses the function `case_when()` to re-define `linelist_cleaned` as itself, but mutated to create the new variable `exit_status2`. The values in `exit_status2` are based on the values in `exit_status`, such that when `exist_status == "Décédé"`, the value in `exit_status2` is "Dead", and so on. 
+**Add code that uses `case_when()` to assign new values in a new `exit_status2` column**, as in the code below. We do this by **modifing code from just below in the template.** The code uses the function `case_when()` to re-define the dataframe `linelist_cleaned` as itself, but mutated to create the new column `exit_status2`. The values in `exit_status2` are based on the values in `exit_status`, such that when `exist_status == "Décédé"`, the value in `exit_status2` is "Dead", and so on. 
 
 As you modify this chunk for your own situation, remember that **each left-hand side (LHS) of the `~` must be a logical statement** (not just a value), and to include commas at the end of each `case_when()` line (except the last one). It is best to write `case_when()` lines from most specific at top to most general/catch-all at bottom. You can read more about `case_when()` [at this tidyverse site](https://dplyr.tidyverse.org/reference/case_when.html).  
 
-{{% notice tip %}}
-All the right-hand side (RHS) values must be the same class (either character, numeric, etc.). So, if your other RHS values are character and you want one RHS value to be missing, you cannot just write `NA` on the RHS. Instead you must use the special character version of `NA` : `NA_character_`.
-{{% /notice %}}
+Another tip is that all the right-hand side (RHS) values must be the same class (either character, numeric, etc.). So, if your other RHS values are character and you want one particular RHS value to be missing, you cannot just write `NA` on the RHS. Instead you must use the special character version of `NA`, `NA_character_`. This may seem like unnecessary trouble, but it ensures consistency among your data in the long term.  
 
 
 ```{r}
 # Tabulate to see all possible values of exit_status
-table(linelist_cleaned$exit_status, useNA = "always")
+linelist_cleaned %>% tabyl(exit_status, show_na = FALSE)
 
 # Create exit_status2 from values in exit_status
 linelist_cleaned <- linelist_cleaned %>% 
@@ -845,11 +826,12 @@ linelist_cleaned <- linelist_cleaned %>%
   ))
 
 # Tabulate the NEW exit_status2 variable to check correct assignment
-table(linelist_cleaned$exit_status2, useNA = "always")
+# Tabulate to see all possible values of exit_status
+linelist_cleaned %>% tabyl(exit_status2, show_na = FALSE)
 ```
 
 
-**Now we can make the `DIED` variable**, which is referenced in later code chunks. 
+**Now we can make the `DIED` column**, which is referenced in later code chunks. 
 
 This command creates `DIED` as a logical (`TRUE` or `FALSE`) variable, depending on whether each observation meets the criteria to the right of the assignment operator `<-`. For a similar example, read about the `%in%` operator on the R Basics - [Advanced and Miscellaneous](https://r4epis.netlify.com/training/r_basics/advanced_functions/) page.  
 
@@ -858,7 +840,8 @@ However, we must **modify the existing command to detect within the NEW variable
 
 ```{r}
 ## Note we are directing R to look within the NEW exit_status2 variable
-linelist_cleaned$DIED <- str_detect(linelist_cleaned$exit_status2, "Dead")
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(DIED = str_detect(exit_status2, "Dead"))
 ```
 
 
