@@ -693,7 +693,7 @@ As you modify this chunk for your own situation, remember that **each left-hand 
 linelist_cleaned <- linelist_cleaned %>% 
   mutate(date_of_onset = case_when(
     date_of_onset < as.Date("2016-04-01")  ~ as.Date(NA),
-    date_of_onset > as.Date("2018-10-01")  ~ as.Date(NA),
+    date_of_onset > as.Date("2017-10-01")  ~ as.Date(NA),
     TRUE                                   ~ date_of_onset))
                            
 ```
@@ -1197,7 +1197,7 @@ You can make this a pyramid of months by supplying `age_group_mon` to the `age_g
 
 
 
-```{r age_pyramid, width="100%"}
+```{r age_pyramid, fig.width=6}
 # plot age pyramid by sex 
 age_pyramid(linelist_cleaned,
                   age_group = "age_group", 
@@ -1215,7 +1215,7 @@ If you add this filtering step, **you must also modify `age_pyramid()` by removi
 
 Note that the filter step does not drop any observations from the `linelist_cleaned` object itself. Because the filter is **not** being assigned (`<-`) to over-write `linelist_cleaned`, this filter is only temporarily applied for the purpose of producing the age pyramid.
 
-```{r age_pyramid_under_two, width = "100%"}
+```{r age_pyramid_under_two, fig.width = 6}
 # plot age pyramid by month groups, for observations under 2 years
 linelist_cleaned %>% 
   filter(age_years <= 2) %>%
@@ -1293,7 +1293,7 @@ The step in data cleaning where we converted 0, 1, "yes", "pos", "neg", etc. to 
 
 
 
-## Case Fatality Ratio (CFR)
+### Case Fatality Ratio (CFR)
 
 The opening text of this chunk with in-line code must be edited to match our Am Timan data. The second in-line code references the variable `exit_status` - **this must now reference the variable `exit_status2`**. Also, we do not have "Dead on Arrival" recorded in our dataset, so **that part of the sentence should be deleted**.  
 
@@ -1409,7 +1409,7 @@ linelist_cleaned %>%
 
 
 
-## Attack Rate
+### Attack Rate
 To use the attack rate section, we need to create an object `population` from the sum of population counts in the population figures. **Because we only imported region-based population counts, we must change this command** to reflect that we do not have `population_data_age`, but rather `population_data_region`.
 
 ```{r eval=FALSE}
@@ -1456,7 +1456,750 @@ Mortality attributable to AJS is also not appropriate for this example. **Commen
 
 ## Time
 
+
+The next section of the template produces analyses and outputs related to time, such as epidemic curves.
+
+The first in-line code sentence clearly states how many cases are missing date of onset, as this is important to be able to correctly interpret the epidemic curve.  
+
+### Epidemic curve  
+
+The `basic_curve` epidemic curve is achieved using `ggplot()` and `geom_bar()` on the case linelist.  
+
+
+```{r epicurve, fig.width = 6}
+
+## make plot
+basic_curve <- linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date)) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           fill = "red",
+           colour = "black") +
+  ## align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  ## control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) + 
+  ## use pre-defined labels
+  epicurve_labels +
+  ## use pre-defined theme (design) settings
+  epicurve_theme
+
+# show your plot (stored for later use) 
+basic_curve
+```
+
+This x-axis is difficult to read with every week displayed. To increase readability we can uncomment and use the helper code at the bottom of that code chunk. This modifies the already-defined `basic_curve` object (with a `+`) to specify that the x-axis shows only a specified number of breaks/dates (in this case 6). Note: A warning that a scale for x is being replaced is okay.  
+
+
+The data are still shown by week - it is only the labels on the scale that have changed.
+
+
+
+```{r, fig.width = 6}
+# Modifies basic_curve to show only 6 breaks in the x-axis 
+basic_curve + scale_x_date(breaks = "3 months", date_labels = "%b %Y")
+```
+
+An in-line code sentence then calculates and prints the week of the peak of the outbreak.  
+
+### Moving average  
+
+The next code chunk uses the {slider} function to calculate a moving average (mean) of number of cases in the two weeks prior, plotted as a line on top of the epidemic curve. You can adjust the window in the top line of this chunk (default set to 14 days).  
+
+```{r epicurve_moving, fig.width = 6}
+## define the width of the moving average window here
+moving_window_days <- 14
+
+## calculates the moving average using counts by epiweek
+moving_avg <- linelist_cleaned %>% 
+  ## count cases by epiweek
+  count(epiweek_date) %>% 
+  ## create column with sliding window for day and window prior
+  mutate(indexed_window = slider::slide_index_dbl(
+    n,                       # calculate on new_cases
+    .i = epiweek_date,       # indexed with epiweek_date 
+    .f = ~mean(.x, na.rm = TRUE),     # function is mean() with missing values removed
+    .before = days(moving_window_days - 1)))
+
+## create plot
+moving_plot <-  basic_curve + 
+  geom_line(data = moving_avg,
+       mapping = aes(x = epiweek_date, y = indexed_window)) +
+  
+  # adjust title and subtitle for this particular plot
+  labs(title = str_glue("Cases by date of onset"),
+       subtitle = str_glue("{moving_window_days}-day moving average
+                           Source: MSF data from {reporting_week}"))
+
+# show your plot (stored for later use) 
+moving_plot + scale_x_date(breaks = "3 months", date_labels = "%b %Y")
+```
+
+
+### Biweekly epicurve  
+
+A biweekly epidemic curve can be produces using the next code chunk. In the first step, the linelist is aggregated into weekly counts and then a biweekly sum is created using {slider}. Finally, In the `geom_bar()` function, the `width = ` argument is set to equal `14` (days).  
+
+```{r biweekly_epicurve, fig.width = 6}
+
+## calculates the moving sum using counts by epiweek
+moving_sum <- linelist_cleaned %>% 
+  ## count cases by date of onset
+  count(epiweek_date) %>% 
+  mutate(biweekly = slide_sum(x = n, 
+            after = 1, 
+            step = 2)) %>% 
+  filter(!is.na(biweekly))
+
+ggplot(moving_sum, aes(x = epiweek_date, y = biweekly)) +
+  ## plot as a bar
+  geom_bar(
+    ## use the count we calculated above
+    stat = "identity", 
+    ## make each bar two weeks wide
+    width = 14,
+    fill = "red",
+    colour = "black") +
+  ## align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  ## control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) + 
+  ## use pre-defined labels
+  epicurve_labels +
+  ## use pre-defined theme (design) settings
+  epicurve_theme +
+  scale_x_date(breaks = "3 months", date_labels = "%b %Y")
+
+```
+
+
+Using the next code chunk, you can group the data in the epidemic curve by the values in `sex`, thus producing a "stacked" epidemic curve. You can also change out `sex` for another column.  
+
+
+```{r incidence_by_gender, fig.width = 6, fig.height=8}
+
+# get counts by gender
+linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(sex)))) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) + 
+  # use pre-defined labels
+  epicurve_labels +
+  # use pre-defined theme (design) settings
+  epicurve_theme + 
+  scale_x_date(breaks = "3 months", date_labels = "%b %Y")
+```
+
+Such as by, `case_def`:  
+
+```{r incidence_by_case_def, fig.width=6, fig.height=8}
+
+linelist_cleaned %>%
+  filter(!is.na(epiweek_date)) %>%
+  
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_date, fill = fct_rev(fct_explicit_na(case_def)))) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
+  # use pre-defined labels
+  epicurve_labels +
+  # use pre-defined theme (design) settings
+  epicurve_theme + 
+  scale_x_date(breaks = "3 months", date_labels = "%b %Y")
+```
+
+Remember also that you can limit the entire plot to a subset of observations by first filtering the dataset and passing the result to the `ggplot()` function, as is done in the above examples filtering to remove rows with a missing `epiweek_date` value.   
+
+
+### Analysis of other indicators by time  
+
+The chunk `attack_rate_per_week` does not produce an epidemic curve, but does print a table of the the attack rate by week. This table could be very long if your epidemic is protracted, so you may choose to use a different unit of time than week.   
+
+
+```{r attack_rate_per_week}
+
+# counts and cumulative counts by week
+cases <- linelist_cleaned %>%
+  arrange(date_of_onset) %>%        # arrange by date of onset
+  count(epiweek, .drop = FALSE) %>% # count all epiweeks and include zero counts
+  mutate(cumulative = cumsum(n))    # add a cumulative sum
+
+
+# attack rate for each week
+ar <- attack_rate(cases$n, population, multiplier = 10000) %>% 
+  bind_cols(select(cases, epiweek), .) # add the epiweek column to table
+
+
+ar %>%
+  merge_ci_df(e = 4) %>% # merge the lower and upper CI into one column
+  rename("Epiweek" = epiweek, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 10,000)" = ar, 
+         "95%CI" = ci) %>% 
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(j = -1, digits = 1)
+```
+
+The next chunks offers a similar calculation, but for cumulative attack rate, and CFR  
+
+
+### Plotting AR, CFR, and the Epidemic Curve togethr
+
+
+These code chunks produce plots of the AR (in the population), CFR (among inpatients only), and the AF and CFR as line graphs together with the Epidemic Curve.  
+
+**The chunk, `ar_line_graph`, prepares a plot of attack rate by epiweek, but does not yet print it.** You can print it alone by running a command of its name `ar_plot`.
+
+This `ar_plot` depends on you having already run the `attack_rate_per_week` chunk. If you have not, you may see "Error: epiweek not found"
+
+Each of the plots involves several steps:  
+
+1. Creating the data object e.g. `ar` or `cfr`  
+2. Creating the plot e.g. `ar_plot` or `cfr_plot`  
+
+The plots are finally combined with the {patchwork} package into one image.  
+
+The code below uses the `ar` object created above to produce *and store* the AR plot.  
+
+
+```{r ar_line_graph, fig.width=6, fig.height=8}
+
+ar_plot <- ggplot(ar, aes(x = as.Date(epiweek), group = 1)) +
+  # add confidence intervals as a ribbon
+  geom_ribbon(aes(ymin = lower, ymax = upper), 
+              color = "blue",  fill = "blue", 
+              linetype = 2, alpha = 0.2, show.legend = FALSE) +
+  # add AR as a line
+  geom_line(aes(y = ar), color = "blue", show.legend = FALSE) +
+  # set origin for axes
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "AR [95% CI]", subtitle = "Attack Rate (per 10,000)") + 
+  # change visuals of dates and remove legend title
+  epicurve_theme
+```
+
+
+Then code is run to produce *and store* the CFR plot.  
+
+First we make `cfr` from the `linelist_cleaned`:  
+
+```{r cfr_per_week, warning = FALSE, message = FALSE}
+
+# calculate CFR among inpatients by week
+cfr <- linelist_cleaned %>%
+  filter(patient_facility_type == "Inpatient") %>%
+  mutate(epiweek = as.character(epiweek)) %>% 
+  case_fatality_rate_df(str_detect(exit_status, "Dead"), group = epiweek)
+```
+
+Then we make the plot and save it as `cfr_plot`. Note that it is not yet printed.  
+
+```{r cfr_line_graph, fig.width=6, fig.height=8}
+
+cfr_plot <- ggplot(cfr, aes(x = as.Date(yearweek(as.character(epiweek)))), group = 1) +
+  # add confidence intervals as a ribbon
+  geom_ribbon(aes(ymin = lower, ymax = upper), 
+              color = "red", fill = "red", 
+              linetype = 2, alpha = 0.2, show.legend = FALSE) +
+  # add CFR as a line
+  geom_line(aes(y = cfr), color = "red", show.legend = FALSE) +
+  # set origin for axes
+  scale_y_continuous(expand = c(0, NA)) +  
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = all_weeks_date,
+    labels = all_weeks) +
+  # add labels to axes and below chart
+  labs(x = "Calendar week", y = "CFR [95% CI]", 
+       subtitle = "Case Fatality Ratio [95% CI] Among Inpatients") + 
+  # change visuals of dates and remove legend title
+  epicurve_theme + 
+  scale_x_date(breaks = "3 months", date_labels = "%b %Y")
+```
+
+To create a combination visualisation, we must adjust some final setting for the x-axes.  
+
+```{r epicurve_ar_cfr, warning = FALSE, message = FALSE, fig.height = 10}
+
+no_x <- theme(axis.text.x = element_blank(),
+              axis.title.x = element_blank())
+```
+
+And finally we plot the Epidemic Curve, the AR plot, and the CFR plot all over each other.  
+
+```{r, fig.height=10, fig.width=8}
+## use patchwork to stack the three plots on top of one another
+(basic_curve + no_x) / (ar_plot + no_x) / cfr_plot
+```
+
+### Admissions and exits
+
+The final two tables print the admissions and exits by epidemic week, using code previously described.  
+
+
+
+
+
+
+
+
+
+
+
+
 ## Place
+
+
+
+The final section of the template produces tabular analysis outputs related to *place*. If you have shapefiles for your situation, you can also produce maps.
+
+### Tabular place analyses (non-maps)
+
+To get a basic **descriptive table of cases by region** (which in our case was originally the variable *quartier* from the raw linelist), we use `tbl_cross()` function from {gtsummary} on the columns `patient_origin` and `patient_facility_type` (inpatient, outpatient, or missing). 
+
+```{r describe_by_region_facility}
+
+linelist_cleaned %>% 
+  tbl_cross(
+    row = patient_origin, 
+    col = patient_facility_type, 
+    percent = "column", 
+    label = list(patient_origin = "Region", 
+                 patient_facility_type = "Facility type")
+  ) %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+
+```
+
+
+A table of attack rates by region may be useful, and is produced in the chunk `attack_rate_by_region`.  
+
+**First**, like when we calculated attack rate by epiweek in the `time_analysis` section, the cases are counted by `patient_origin`. This list of counts is then **joined** to the imported population data for each region **by `patient_origin` (the name of the region/quartier)**. These data are stored in the object `cases`.  
+
+*Recall that this join requires exact matches* between `patient_origin` values in `linelist_cleaned$patient_origin` and `population_data_region$patient_origin` to match a region's cases to its population. In the data cleaning steps we converted the values in `linelist_cleaned` to all capital letters to match those in `population_data_region`.  
+
+```{r attack_rate_by_region, warning = FALSE}
+
+# count cases by region
+cases <- linelist_cleaned %>% 
+  count(patient_origin) %>%
+  # add in population data
+  left_join(population_data_region, by = "patient_origin") 
+
+
+# calculate attack rate for region
+ar_region <- attack_rate(cases$n, cases$population, multiplier = 10000) %>% 
+  # add the region column to table
+  bind_cols(select(cases, patient_origin), .) %>% 
+  rename("Region" = patient_origin, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 10,000)" = ar, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper) 
+
+ar_region %>% 
+  merge_ci_df(e = 4) %>% # merge lower and upper CI in to one column 
+  rename("95%CI" = ci) %>%  # rename single 95%CI column
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
+```
+
+
+You could then also plot this on a bar chart with confidence intervals.  
+
+```{r, fig.width=8, fig.height=8}
+ar_region %>% 
+  drop_na(`AR (per 10,000)`) %>% 
+ggplot(aes(x = reorder(Region, `AR (per 10,000)`),
+               y = `AR (per 10,000)`)) +
+  # plot as bars (identity = as is)
+  geom_bar(stat = "identity", col = "black", fill = "red") + 
+  # add CIs
+  geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) +
+  # set origin for axes
+  scale_y_continuous(expand = c(0,0)) +  
+  # add labels to axes and below chart
+  labs(x = "Region", y = "AR (per 10,000)", 
+       captions = str_glue("Source: MSF data from {reporting_week}")) + 
+  epicurve_theme
+```
+
+
+Note that there were many quartiers without population denominators that make the graph difficult to read. Thus, **we modified the code by filtering `ar_region` with `drop_na()` to remove these. Now any quartiers with missing denominators will not appear in the graph.  
+
+
+
+
+```{r bar_attack_rate_by_region, fig.width=8, fig.height=8}
+# filter ar for non-zero quartiers
+ar_region <- filter(ar_region, !is.na(`AR (per 10,000)`))
+
+# plot with the region on the x axis sorted by increasing ar
+# ar value on the y axis 
+ggplot(ar_region, aes(x = reorder(Region, `AR (per 10,000)`),
+               y = `AR (per 10,000)`)) + 
+  geom_bar(stat = "identity", col = "black", fill = "red") + # plot as bars (identity = as is)
+  geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) + # add CIs
+  scale_y_continuous(expand = c(0,0)) +  # set origin for axes
+  # add labels to axes and below chart
+  labs(x = "Region", y = "AR (per 10,000)", 
+       captions = str_glue("Source: MSF data from {reporting_week}")) + 
+  epicurve_theme
+```
+
+A similar analysis can be done to show mortality rates (be sure to use `exit_status2`!)
+
+
+
+### Maps 
+
+Mapping in R can be intimidating at first because it is different than ArcGIS, QGIS, or other mapping software that primarily use a point-and-click interface. However, you will see that using commands to create maps can be much faster, more replicable, and transparent for whomever you share code with.  
+
+
+*Shapefiles are a format for storing geometric location and attribute data for geographic features - for example **either points (e.g. GPS points of cases or households surveyed), lines (e.g. road network), or polygons (e.g. district boundaries)* 
+
+We do have shapefiles for the Am Timan exercise. The shapefile for the quartiers is accessible from within the {sitrep} R package by running the following command:  
+
+```{r}
+# saves shapefile stored in R package as "map"
+map <- quartier_shape
+```
+ 
+
+A shapefile is actually made of several files. Viewing the shapefile in your computer's internal folders you will often see 4 or 5 files with the same name but different extensions (e.g. .shp, .prj, etc.). As long as these files are located in the same folder the shapefile will load correctly when you import with the .shp extension.
+
+Because we have shapefiles for this exercise, we **must delete the command that generates the fake shapefile** 
+
+`map <- gen_polygon(regions = unique(linelist_cleaned$patient_origin))`
+
+Note the checklist for using shapefiles:  
+
+* Your shapefile can be a polygon or points (polygons do not have to be contiguous - they do not have to touch each other)  
+* Ensure that the region names in the shapefile match *exactly* the region names in `linelist_cleaned` (in most shapefiles there is an ID or NAME variable in the spreadsheet file)  
+* Make sure the coordinate reference system (CRS) of the shapefile is WGS84 (this is the standard coordinate system used by most GPS systems, but it is good to ask whomever collected to data to be sure)  
+ 
+When giving the name of a shapefile to `here()`, list the file name with a .shp extension.
+   
+A generic example of importing a shapefile might look like this:  
+  
+  
+```{r read_shapefiles_display, eval=FALSE}
+## reading in a shapefile 
+map <- read_sf(here("my_map_folder", "Quartiersshape.shp"))
+```
+
+
+The next code will check the coordinate reference system (CRS) of the shapefile, as it was read-in. In our exercise, we see an EPSG code of 4326, which is the correct code for WGS84 (you can also see below the EPSG code that the datum is WGS84).
+
+```{r}
+## check the coordinate reference system (CRS)
+st_crs(map)
+```
+
+If there is no CRS specified for your shapefile, you can set the CRS to WGS84 with the following command, which uses the EPSG code of 4326.   
+
+```{r, eval=FALSE }
+## set the CRS if not present using EPSG value
+## this is the most commonly used 
+map <- st_set_crs(map, value = 4326) # Sets to WGS84
+```
+
+### Attack rate map  
+
+These commands reference the `ar_region` table prepared in previous sections of the report, which contains region names, number of cases, populaton AR, and 95%CI.  
+
+#### Create categories of ARs by region  
+
+**Create a *categorical* variable of the attack rate.** These categories will appear in the map as the legend - and the regions will be colored by these groups.  
+
+1) The first command defines `max_ar` as the highest attack rate value in the object `ar_region`. This is referenced later.  
+
+2) In the next command, `breakers` is defined as a sequence of integers. Zero is included by default because it should be a separate color on the final map. After zero, quartiles are determined up to the `max_ar` using the {sitrep} function `find_breaks()`.  
+
+3) In the last command, `mutate()` is used to make `ar_map` (a copy `ar_region`), and add the `categories` variable. This variable is created using `breakers` to define the breaks in the numeric variable `AR (per 10,000)`. 
+
+```{r}
+# save the maximum AR in the ar_region table
+max_ar    <- max(ar_region$`Upper 95%CI`, na.rm = TRUE)
+
+# create groups - one group will be 0 only, then up to 4 more groups evenly
+# divided to maximum
+breakers <- as.integer(c(
+                         # include zero as a standalone group
+                         0, 
+                         # 1 to 4 divisions, snapping the boundaries to the nearest 100
+                         find_breaks(n = max_ar, breaks = 4, snap = 100)
+             ))
+
+## create a categorical variable using the age_categories function 
+## (we aren't using ages - but it functions the same way!)
+ar_map <- mutate(ar_region, 
+             categories = age_categories(`AR (per 10,000)`, 
+                                         breakers = breakers))
+
+
+
+```
+
+
+#### Join the table to the shapefile  
+
+**Join the object `map` (shapefile) to `ar_map` (a data frame)**. The spatial object `map` is joined to the data frame `ar_map` with a **left join**. Both of these objects contain tables (you can click them in the Environment pane to see this). In the command, they are linked by the `Name` variable in `ar` and the `Region` variable in `map`.  
+
+**You may need to modify your code so that the join occurs on `Name` in the object `map`, and not `name`.**
+
+```{r}
+## Join table to shapefile -----------------------------------------------------
+mapsub <- left_join(map, ar_map, by = c("Name" = "Region"))
+
+```
+
+Make sure you modify your `left_join` code to use "Name" with a capital N, as that is how the variable is spelled in the object 'map'. In your other data these variable names may be completely different and must be changed
+
+The resulting object `mapsub` is a product of this **left join**. A left join will include all values from the Left-hand Side (LHS) and only include values from the Right-hand Side (RHS) if they match to LHS values. Now, the attack rates are joined to the region names and to their GIS geometries. You can verify this by Viewing the object `mapsub` (click on it in the Environment pane).
+
+#### Plot cases or AR by region
+
+
+**Now, `ggplot()` is used to create the map.** Remember that `ggplot()` subcommands must be connected by plus symbols at the end of each line (`+`) (except the last line). Read more about ggplot2 and `ggplot()` in the Advanced R Basics page.  
+
+**`geom_sf()`** identifies `mapsub` as providing the data for the map, and filling the polygons by values in the variable `categories`.  
+
+**`coord_sf()`** set to `NA` prevents gridlines from being drawn on the map.  
+
+**`annotation_scale()`** adds a scalebar at the bottom of the map.  
+
+**`scale_fill_brewer()`** uses a color palatte from orange to red ("OrRd"), keeps all color levels even if there are no polygons at that level (`drop=FALSE`), and specifies a title for the legend. If you want a different color scale, use this code from the package **RColorBrewer** to see the possible options (hint: after running this code click "Zoom" in your Plot/Viewer pane to see more clearly). Then replace "OrRd" with your desired code. You can read more about colors [here](http://www.sthda.com/english/wiki/print.php?id=85).  
+
+```{r, fig.width=6}
+library(RColorBrewer)
+display.brewer.all()
+```
+
+**`geom_sf_text()`** specifies labels for the polygons, including which variable to use for labels (`Name`), and the text colour. **Again, we need to modify this `ggplot()` reference to the variable "name" to now reference "Name" with a capital N. In your other data the variable may be completely different.**
+
+**`theme_void()`** specifies a theme for the map that does not include coordinates or axes.  
+
+```{r fig.width=8}
+## you could also fill by cases using `Cases (n)` in the fill option instead of `AR (per 10,000)`
+ggplot() +
+  # shapefile as polygon
+  geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + 
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() + 
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") + 
+  # label polygons
+  geom_sf_text(data = mapsub, aes(label = Name), colour = "grey50", size = 2) + 
+  # remove coordinates and axes
+  theme_void() 
+```
+
+**You can use this alternative to make the labels not overlap.** 
+
+**`ggrepel()`** arranges point/polygon labels so they do not overlap and are easier to read. You can see more examples of `ggrepel()` [in this vignette](https://mran.microsoft.com/snapshot/2017-08-20/web/packages/ggrepel/vignettes/ggrepel.html)  
+
+
+
+The `geom_sf_text()` line has been replaced by ggrepel.
+
+
+
+```{r fig.width=8, fig.height=8}
+## plotting with polygons ------------------------------------------------------
+
+ggplot() +
+  geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + # shapefile as polygon
+  coord_sf(datum = NA) + # needed to avoid gridlines being drawn
+  annotation_scale() + # add a scalebar
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") + 
+  
+  # Optional ggrepel section to make labels appear more nicely
+  ggrepel::geom_label_repel(data = mapsub, aes(label = Name, geometry = geometry), 
+                            stat = "sf_coordinates", 
+                            min.segment.length = 0) +
+
+  theme_void()  # remove coordinates and axes
+```
+
+
+### Map iteration  
+
+
+Lastly, **there is an efficient way to create attack rate maps and bar plots of incidence for each epiweek**. In this case, we want to make the map and bar chart for each region. You can read more about iteration in the Epidemiologist R Handbook chapter [Iteration, Loops, and Lists](https://epirhandbook.com/en/iteration-loops-and-lists.html).  
+
+A few things to note about this chunk:  
+
+* The first half is very similar to the set-up of the previous map.  
+* You must also modify the `left_join` command to list the correct variable names (e.g. **modify to join on `Name` instead of `name`**)
+* These maps are not labeled with region names.  
+* The creation of the barplots depends on the object `epicurve_theme`, which was defined in the Time section of the template. If that section is not created, then this object will be missing and cause errors.  
+
+First we run preparation code that should look very familiar to the steps above.
+```{r map_for_loop_epiweek, fig.width=8, fig.height=8}
+## Prepare data ---------------------------------------------------------------
+
+# change region variable to a factor so that zero counts can be included
+linelist_cleaned$patient_origin <- as.factor(linelist_cleaned$patient_origin)
+
+
+# case counts
+cases <- linelist_cleaned %>% 
+  group_by(epiweek) %>%
+  count(patient_origin, .drop = FALSE) %>%   # cases for each week by region
+  left_join(population_data_region, by = "patient_origin")    # merge population data 
+
+
+# attack rate for region
+ar <- attack_rate(cases$n, cases$population, multiplier = 10000) %>% 
+  # add the region column to table
+  bind_cols(select(cases, epiweek, patient_origin), .) %>% 
+  rename("Region" = patient_origin, 
+         "Cases (n)" = cases, 
+         "Population" = population, 
+         "AR (per 10,000)" = ar, 
+         "Lower 95%CI" = lower,
+         "Upper 95%CI" = upper)
+
+## define the last 10 weeks available in your dataset
+which_weeks <- tail(unique(cases$epiweek), n = 10)
+
+## only keep the last four weeks of data 
+ar <- ar %>% 
+  filter(epiweek %in% which_weeks)
+
+# define the maximum number of cases / max AR for the color palette 
+max_cases <- max(cases$n, na.rm = TRUE) 
+max_ar    <- max(ar$`Upper 95%CI`, na.rm = TRUE)
+
+
+# define breaks for standardising color palette
+breakers <- as.integer(c(0, # include zero as a standalone group
+             find_breaks(max_ar, breaks = 4, snap = 25) # four breaks rounded to nearest 25
+             ))
+
+
+# add a categorical variable for AR
+# (replace with `Cases (n)` if you want to map cases)
+ar <- mutate(ar, 
+             categories = age_categories(`AR (per 10,000)`, 
+                                         breakers = breakers))
+```
+
+Now, we can use the {purrr} package to *iterate* (repeat a process many times). For each week in the final 10 weeks of the outbreak, we left join the attack rate and the shapefile. Then we create a map, create a barplot, and combine the two plots together.  
+
+
+```{r, fig.width=8, fig.height=8}
+
+# go through each epiweek, filter and plot the data
+purrr::walk(.x = which_weeks, 
+           .f = ~{
+  this_ar <- filter(ar, epiweek == yearweek(.x))
+  
+  ## map 
+  mapsub <- left_join(map, this_ar, by = c("Name" = "Region"))
+  
+  ## choropleth 
+  map_plot <- ggplot() +
+    ## shapefile as polygon
+    geom_sf(data = mapsub, aes(fill = categories), col = "grey50") + 
+    ## needed to avoid gridlines being drawn
+    coord_sf(datum = NA) + 
+    ## add a scalebar
+    annotation_scale() + 
+    ## color the scale to be perceptually uniform (keep levels)
+    scale_fill_brewer(drop = FALSE, 
+                    palette = "OrRd", 
+                    name = "AR (per 10,000)") +  
+    ## remove coordinates and axes
+    theme_void() 
+  
+  
+  ## plot with the region on the x axis sorted by increasing ar
+  ## ar value on the y axis 
+  barplot <- this_ar %>%
+    # Filter values in this_ar to only show quartiers with attack rates > 0 in barplot
+    filter(`AR (per 10,000)` > 0) %>% 
+    # make plot
+    ggplot(aes(x = reorder(Region, `AR (per 10,000)`),
+                                 y = `AR (per 10,000)`)) + 
+    ## plot as bars (identity = as is)
+    geom_col(col = "black", fill = "red") + 
+     ## add CIs
+    geom_errorbar(aes(ymin = `Lower 95%CI`, ymax = `Upper 95%CI`), width = 0.2) +
+    ## set origin for axes
+    scale_y_continuous(expand = c(0, 0), limits = c(0, max_ar)) +  
+    ## add labels to axes and below chart
+    labs(x = "Region", y = "AR (per 10,000)") +  
+    epicurve_theme
+  
+  
+  
+  ## combine the barplot and map plot into one with patchwork and add a title
+  ## in the top-left corner and a caption in the bottom-right
+  print(
+    barplot + map_plot + plot_annotation(
+    title   = str_glue("Epiweek: {.x}"),
+    caption = str_glue("Source: MSF data from {reporting_week}")
+    )
+  )
+  
+})
+```
+
 
 
 
