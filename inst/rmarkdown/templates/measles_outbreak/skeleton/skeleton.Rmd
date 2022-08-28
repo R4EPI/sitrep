@@ -695,36 +695,41 @@ linelist_cleaned <- linelist_cleaned %>%
 
 
 ## OPTIONAL: change those who are above or below a certain age to NA
-# linelist_cleaned <- mutate(linelist_cleaned,
-#                            age_years = case_when(
-#                              is.na(age_years) ~ NA_integer_,
-#                              age_years < 0   ~ NA_integer_,
-#                              age_years > 120 ~ NA_integer_,
-#                              TRUE            ~ as.integer(age_years) #Preserves other values
-#                            ))
+# linelist_cleaned <- linelist_cleaned %>%
+#   mutate(age_years = case_when(
+#     is.na(age_years) ~ NA_integer_,
+#     age_years < 0   ~ NA_integer_,
+#     age_years > 120 ~ NA_integer_,
+#     TRUE            ~ as.integer(age_years) #Preserves other values
+#     ))
 
 ## OPTIONAL: create an age_months variable from decimal years variable
-# linelist_cleaned <- mutate(linelist_cleaned,
-#                            age_months = case_when(
-#                              age_years < 5 ~ age_years * 12
-#                              )) 
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(age_months = case_when(
+#             age_years < 5 ~ age_years * 12))
 
 
 ## create age group variable for under 2 years based on months
-linelist_cleaned$age_group_mon <- age_categories(linelist_cleaned$age_months, 
-                                                 breakers = c(0, 6, 9, 12, 23), 
-                                                 ceiling = TRUE)
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(age_group_mon = age_categories(
+    age_months, 
+    breakers = c(0, 6, 9, 12, 23), 
+    ceiling = TRUE))
 
 ## create an age group variable by specifying categorical breaks
-linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years, 
-                                             breakers = c(0, 2, 15, 30, 45))
+linelist_cleaned <- linelist_cleaned %>% 
+  mutate(age_group = age_categories(
+    age_years,
+    breakers = c(0, 2, 15, 30, 45)))
 
 ## alternatively, create an age group variable by specifying a sequence
 ## this creates age groups for every ten years between 0 and 100.
-# linelist_cleaned$age_group <- age_categories(linelist_cleaned$age,
-#                                              lower = 0, 
-#                                              upper = 100, 
-#                                              by = 10)
+# linelist_cleaned <- linelist_cleaned %>% 
+#   mutate(age_group = age_categories(
+#     age, 
+#     lower = 0,
+#     upper = 100,
+#     by = 10)))
 
 ## If you already have an age group variable defined, you should manually
 ## arrange the categories in order.
@@ -741,6 +746,7 @@ linelist_cleaned$age_group <- age_categories(linelist_cleaned$age_years,
 # linelist_cleaned <- group_age_categories(linelist_cleaned, 
 #                                          years = age_group, 
 #                                          months = age_group_mon)
+
 ## drop the 0-2 years age level! (need to fix group_age_categories)
 # linelist_cleaned <- linelist_cleaned %>% 
 #   mutate(age_category = factor(age_category, 
