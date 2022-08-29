@@ -27,60 +27,60 @@
 #'
 #' @name add_ar
 #' @importFrom epitabulate add_ar
-#' @export
 #' @rdname add_ar
-"add_ar"
+#' @export
+epitabulate::add_ar
 
 #' @name add_cfr
 #' @importFrom epitabulate add_cfr
-#' @export
 #' @rdname add_ar
-"add_cfr"
+#' @export
+epitabulate::add_cfr
 
 #' @name add_crosstabs
 #' @importFrom epitabulate add_crosstabs
-#' @export
 #' @rdname add_crosstabs
-"add_crosstabs"
+#' @export
+epitabulate::add_crosstabs
 
 #' @name add_mr
 #' @importFrom epitabulate add_mr
-#' @export
 #' @rdname add_ar
-"add_mr"
+#' @export
+epitabulate::add_mr
 
 #' @name gt_mh_odds
 #' @importFrom epitabulate gt_mh_odds
-#' @export
 #' @rdname gt_mh_odds
-"gt_mh_odds"
+#' @export
+epitabulate::gt_mh_odds
 
 #' @name gt_remove_stat
 #' @importFrom epitabulate gt_remove_stat
-#' @export
 #' @rdname gt_remove_stat
-"gt_remove_stat"
+#' @export
+epitabulate::gt_remove_stat
 
 #' @name tab_survey
 #' @importFrom epitabulate tab_survey
-#' @export
 #' @rdname tab_linelist
-"tab_survey"
+#' @export
+epitabulate::tab_survey
 
 #' @name tab_linelist
 #' @importFrom epitabulate tab_linelist
-#' @export
 #' @rdname tab_linelist
-"tab_linelist"
+#' @export
+epitabulate::tab_linelist
 
 #' @name tab_univariate
 #' @importFrom epitabulate tab_univariate
-#' @export
 #' @rdname tab_linelist
-"tab_univariate"
+#' @export
+epitabulate::tab_univariate
 
 #' @name data_frame_from_2x2
 #' @importFrom epitabulate data_frame_from_2x2
-#' @export
 #' @rdname tab_linelist
-"data_frame_from_2x2"
+#' @export
+epitabulate::data_frame_from_2x2
