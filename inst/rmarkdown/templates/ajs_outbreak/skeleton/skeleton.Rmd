@@ -742,7 +742,7 @@ linelist_cleaned <- linelist_cleaned %>%
 
 ## to combine different age categories use the following function 
 ## this prioritises the smaller unit, i.e. if given months and years, will return months first
-## generally, these delineations are NOT used for measles.
+## generally, these delineations are NOT used for AJS.
 ##
 # linelist_cleaned <- group_age_categories(linelist_cleaned, 
 #                                          years = age_group, 
