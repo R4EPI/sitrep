@@ -308,7 +308,7 @@ Data used for this template should be in a "linelist" format, with one row for e
 
 -   Use data that was not collected with Kobo
 
-Each of these options will result in the use of different code chunks in the template. **This walk-through uses data collected with Kobo**.
+Each of these options will result in the use of different code chunks in the template. **This vignette uses data collected with Kobo**.
 
 You can deactivate (place a \# comment symbol to the left of) or delete the code in the code chunk `read_fake_data`, which is used to generate fake data for the template.
 
@@ -326,7 +326,7 @@ linelist_raw <- AJS_linelist
 
 For this vignette, **comment out (using \#) or delete the `read_fake_data`, `read_DHIS_data`, and `prep_DHIS_data` chunks**, as they are not necessary and will cause errors.
 
-A successful import should result in a dataframe object named `linelist_raw` in your RStudio Environment pane, consisting of 1447 observations and 122 columns.The data for this walk-through can be accessed using the following command:
+A successful import should result in a dataframe object named `linelist_raw` in your RStudio Environment pane, consisting of 1447 observations and 122 columns.The data for this vignette can be accessed using the following command:
 
 This {sitrep} template offers three (3) dataset options:
 
@@ -443,7 +443,7 @@ And now you can see the result:
 
 ![](images/AJS_Rename_Variables_Proof.png){width="549"}
 
-Below is the code for the column assignments used in this case study walk-through. You can copy or reference this when building your template for this vignette.
+Below is the code for the column assignments used in this case study vignette. You can copy or reference this when building your template for this vignette.
 
 ```{r, echo=TRUE}
 ## Below are the column assignments used in this case study example
