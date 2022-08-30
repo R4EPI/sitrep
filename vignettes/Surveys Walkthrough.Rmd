@@ -302,7 +302,9 @@ pacman::p_load(
   )
 ```
 
-## Import data
+
+
+## Survey data
 
 Data used for this template should be in a "linelist" format, with one row for each survey respondent person. You have two options:
 
@@ -314,23 +316,54 @@ Each of these options will result in the use of different code chunks in the tem
 
 You can deactivate (place a \# comment symbol to the left of) or delete the code in the code chunk `read_fake_data`, which is used to generate fake data for the template.
 
-### Import data for this vignette
+### Download data used in this vignette
 
-**This vignette will demonstrate using *data collected with Kobo***. The data are stored in the {sitrep} R package and can be accessed by running these commands:
+**This vignette will demonstrate using *data collected with Kobo***. 
+
+
+#### Access the survey responses  
+
+For this vignette, the individual and household reponses are stored in an .xslx spreadsheet with two sheets. The spreadsheet is named "mortality_survey_data.xlsx", and is stored in the {sitrep} R package. We created the function `download_survey()` which will copy this file into a location of your choice on your computer.  
+
+Run the commands below. Now look for a pop-up window and use it to select your RStudio project folder (the pop-up may appear *behind* RStudio out-of-sight).  
 
 ```{r, echo=TRUE}
 # load the sitrep package
 library(sitrep)
 ```
 
-#### Access the survey responses  
+```{r, eval= FALSE, echo=TRUE}
+# run the command below as it is (empty parentheses).
+# Look for a pop-up window, and select your RStudio project as the destination
+download_survey()
+```
 
-Because these datasets are already stored within the {sitrep} R package, once that package is loaded, the commands below will open the datasets in your RStudio environment for analysis.
 
-```{r}
-# access the survey responses for this vignette and store in your R Environment for use
-survey_data_ind <- survey_data   # the survey responses
-survey_data_hh <- survey_hhdata  # responses from household members
+Now that the data are saved in your RStudio project, you can import them into R using `import()`, as described in the Epidemiologist R Handbook's [Import and export](https://epirhandbook.com/en/import-and-export.html) chapter.
+
+To import a specific sheet from an xlsx spreadsheet, use the `which = ` argument as shown below. You can also use the `na = ` argument to specify a value that should be converted to `NA` across the entire sheet (e.g. 99 or "Missing", or "" which represents an empty space). 
+
+Th example command below imports an Excel spreadsheet called "mortality_survey_data.xlsx" which is not password protected, and is stored in the RStudio project you are using for this analysis. The `which =` argument of `import()` specifies that the sheet "Mortality Survey" should be imported. You would edit this command as appropriate for your situation.
+
+```{r echo=TRUE, eval=FALSE}
+# example code for importing an Excel file saved in RStudio project
+
+# Import the sheet contining individual responses
+survey_data_ind <- import("mortality_survey_data.xlsx"), which = "Mortality Survey", na = "")
+
+# import the sheet containing household responses
+survey_data_hh <- import("mortality_survey_data.xlsx"), which = "hh_member", na = "")
+```
+
+
+
+```{r, echo=FALSE}
+# BACK-END INVISIBLE - load data for vignette use
+
+survey_data_ind <- rio::import(system.file("extdata", "mortality_survey_data.xlsx", package = "sitrep"), which = "Mortality Survey", na = "")
+
+survey_data_hh <- rio::import(system.file("extdata", "mortality_survey_data.xlsx", package = "sitrep"), which = "hh_member", na = "")
+
 ```
 
 Here is a look at the first 25 individual responses:  
@@ -346,57 +379,6 @@ And here is a preview of the first 25 responses from household members:
 ```{r, echo=FALSE}
 DT::datatable(head(survey_data_hh, 25), rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T), class = 'white-space: nowrap' )
 ```
-
-
-#### Kobo data dictionary
-
-Surveys conducted with Kobo produce a data dictionary file, in which information about the variables are stored in one sheet, and informaton about the values ("choices") are stored in an adjacent sheet in the same Excel workbook. 
-
-Both of these have been stored with the {sitrep} R package and are easy to bring into your RStudio environment with the following commands.  
-
-```{r, echo=TRUE}
-# access the kobo data dictionary tables
-kobo_vars <- kobo_vars     # the variable names and labels
-kobo_values <- kobo_values # the survey choices and labels
-```
-
-Successfully running the above commands should result in 4 data frame objects in your RStudio Environment pane, as shown below:  
-
-![](images/mort_import.png){width="549"}
-
-You can click on the names of these files to open them in a Viewer pane.
-
-The Kobo data dictionary of the survey variables should look like this (first 25 rows):  
-
-```{r, echo=FALSE}
-DT::datatable(head(kobo_vars, 25), rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T), class = 'white-space: nowrap' )
-```
-
-</br>
-
-...and the first 25 rows of the data dictionary on the survey question values should look like this:  
-
-```{r, echo=FALSE}
-DT::datatable(head(kobo_values, 25), rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T), class = 'white-space: nowrap' )
-```
-
-
-
-### General data import tips
-
-In your real-life situations, you will store the survey results and the data dictionary (e.g. .xlsx or .csv) in the RStudio project folder, and import them using `import()` and `here()`, as described in the Epidemiologist R Handbook's [Import and export](https://epirhandbook.com/en/import-and-export.html) chapter.
-
-To import a specific sheet from an xlsx spreadsheet, use the `which = ` argument as shown below. You can also use the `na = ` argument to specify a value that should be converted to `NA` across the entire sheet (e.g. 99 or "Missing", or "" which represents an empty space). 
-
-Th example command below imports an Excel spreadsheet called "kobo_dictionary.xlsx" which is not password protected, and is stored in a "survey" subfolder of the RStudio project. The `which =` argument of `import()` specifies that the sheet "variables" should be imported. You would edit this command as appropriate for your situation.
-
-```{r echo=TRUE, eval=FALSE}
-# example code for importing data from an Excel file saved in RStudio project
-# This imports a specific sheet, named "Sheet1"
-linelist_raw <- import(here("survey", "kobo_dictionary.xlsx"), which = "variables", na = "")
-```
-
-
 
 
 
@@ -425,14 +407,39 @@ DT::datatable(head(study_data_raw, 25), rownames = FALSE, filter="top", options 
 ## Convert Kobo data dictionary
 
 
-```{r}
-a <- msf_dict_survey(name = system.file("extdata", "_gen_KoboMortalitySurvey.xls", package = "sitrep"),
+#### Kobo data dictionary
+
+Surveys conducted with Kobo produce a data dictionary file, in which information about the variables are stored in one sheet, and information about the values ("choices") are stored in an adjacent sheet in the same Excel workbook. For this example, this file is named "mortality_survey_dict.xlsx", and is stored in the {sitrep} R package. We created the function `download_kobo()` which will copy this file into a location of your choice on your computer.  
+
+Run the commands below. Now look for a pop-up window and use it to select your RStudio project folder (the pop-up may appear *behind* RStudio out-of-sight).  
+
+```{r, echo=TRUE}
+# load the sitrep package
+library(sitrep)
+```
+
+```{r, eval= FALSE, echo=TRUE}
+# run the command below as it is (empty parentheses).
+# Look for a pop-up window, and select your RStudio project as the destination
+download_kobo()
+```
+
+
+### Format data dictionary  
+
+
+```{r, eval=FALSE}
+# Import Kobo data dictionary into R and re-format to support data cleaning
+msf_dict <- msf_dict_survey(name = "mortality_survey_dict.xlsx",
+                            template = FALSE)
+```
+
+```{r, echo=FALSE, eval=TRUE}
+# BACK-END for vignette
+msf_dict <- msf_dict_survey(name = system.file("extdata", "mortality_survey_dict.xlsx", package = "sitrep"),
                      template = FALSE)
 ```
 
 
-```{r, eval=FALSE}
-msf_dict <- msf_dict_survey(name = "C:/Users/neale/Documents/Applied Epi/repos/sitrep/inst/extdata/_gen_KoboMortalitySurvey.xls", template = FALSE)
-```
 
 
