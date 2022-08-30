@@ -229,31 +229,6 @@ Green text located between these special characters (`<!--` and `-->`), is for y
 
 ## Installing and loading packages
 
-```{r include=FALSE}
-# Install and load required packages for this template
-pacman::p_load(
-  knitr,       # create output docs
-  here,        # find your files
-  rio,         # for importing data
-  janitor,     # clean/shape data
-  dplyr,       # clean/shape data
-  tidyr,       # clean/shape data
-  forcats,     # manipulate and rearrange factors
-  stringr,     # manipulate texts
-  ggplot2,     # create plots and charts
-  ggalluvial,  # for visualising population flows
-  apyramid,    # plotting age pyramids
-  sitrep,      # MSF field epi functions
-  survey,      # for survey functions
-  srvyr,       # dplyr wrapper for survey package
-  gtsummary,   # produce tables
-  flextable,   # for styling output tables
-  labelled,    # add labels to variables
-  matchmaker,  # recode datasets with dictionaries
-  lubridate,   # working with dates
-  parsedate    # guessing dates
-  )
-```
 
 **The first code chunk, `setup`, is very important and must be kept.** When the final report is knit, this chunk will run without producing any output, but it is required for the template to work correctly.
 
@@ -300,6 +275,33 @@ This `setup` code chunk does the following:
 | {matchmaker} | to clean data using data dictionaries                              |
 | {labelled}   | to add labels to columns                                           |
 
+
+```{r echo=TRUE, eval=TRUE, warning=FALSE, message=FALSE}
+# Install and load required packages for this template
+pacman::p_load(
+  knitr,       # create output docs
+  here,        # find your files
+  rio,         # for importing data
+  janitor,     # clean/shape data
+  dplyr,       # clean/shape data
+  tidyr,       # clean/shape data
+  forcats,     # manipulate and rearrange factors
+  stringr,     # manipulate texts
+  ggplot2,     # create plots and charts
+  ggalluvial,  # for visualising population flows
+  apyramid,    # plotting age pyramids
+  sitrep,      # MSF field epi functions
+  survey,      # for survey functions
+  srvyr,       # dplyr wrapper for survey package
+  gtsummary,   # produce tables
+  flextable,   # for styling output tables
+  labelled,    # add labels to variables
+  matchmaker,  # recode datasets with dictionaries
+  lubridate,   # working with dates
+  parsedate    # guessing dates
+  )
+```
+
 ## Import data
 
 Data used for this template should be in a "linelist" format, with one row for each survey respondent person. You have two options:
@@ -320,53 +322,56 @@ You can deactivate (place a \# comment symbol to the left of) or delete the code
 # load the sitrep package
 library(sitrep)
 
-# access the case linelist dataset for this vignette and store in your R Environment for use
-linelist_raw <- AJS_linelist    
+# access the survey responses for this vignette and store in your R Environment for use
+survey_data_ind <- survey_data      # the survey responses
+survey_data_hh <- survey_hhdata  # responese from household members
+
+# access the kobo data dictionary tables
+kobo_vars <- kobo_vars     # the variable names and labels
+kobo_values <- kobo_values # the survey choices and labels
 ```
 
-For this vignette, **comment out (using \#) or delete the `read_fake_data`, `read_DHIS_data`, and `prep_DHIS_data` chunks**, as they are not necessary and will cause errors.
+A successful import should result in 4 data frame objects in your RStudio Environment pane, as shown below:  
 
-A successful import should result in a dataframe object named `linelist_raw` in your RStudio Environment pane, consisting of 1447 observations and 122 columns.The data for this vignette can be accessed using the following command:
 
-This {sitrep} template offers three (3) dataset options:
 
-1.  Generating a fake linelist for practice\
-2.  Using standardised DHIS2 data\
-3.  Using non-standard data
+![](images/mort_import.png){width="549"}
 
-Ensure that you use the code chunks for your situation, and either delete or commend out (using \#) the code for the other scenarios.
 
-![](images/AJS_data_import.png){width="549"}
-
-### Import data for this vignette
-
-**This vignette will demonstrate using *non-standard data***. The data are stored in the {sitrep} R package and can be accessed by running these commands:
-
-```{r, echo=TRUE}
-# load the sitrep package
-library(sitrep)
-
-# access the case linelist dataset for this vignette and store in your R Environment for use
-linelist_raw <- AJS_linelist    
-```
-
-For this vignette, **comment out (using \#) or delete the `read_fake_data`, `read_DHIS_data`, and `prep_DHIS_data` chunks**, as they are not necessary and will cause errors.
-
-A successful import should result in a dataframe object named `linelist_raw` in your RStudio Environment pane, consisting of 1447 observations and 122 columns.
-
-![](images/linelist_raw_imported.png){width="549"}
 
 ### General data import tips
 
-In your real-life situations, you will store your datasets (e.g. .xlsx or .csv in the RStudio project folder, and import them using `import()` and `here()`, as described in the Epidemiologist R Handbook's [Import and export](https://epirhandbook.com/en/import-and-export.html) chapter.
+In your real-life situations, you will store the survey results and the data dictionary (e.g. .xlsx or .csv) in the RStudio project folder, and import them using `import()` and `here()`, as described in the Epidemiologist R Handbook's [Import and export](https://epirhandbook.com/en/import-and-export.html) chapter.
 
-For non-DHIS2 datasets, you would import using the `read_nonDHIS_data` code chunk. The `import()` function of the {rio} package imports an Excel file that is not password protected, and is stored in a "Data" subfolder of the RStudio project. The `which =` argument of `import()` specifies that the sheet "linelist" should be imported. You would edit this command as appropriate for your situation.
+To import a specific sheet from an xlsx spreadsheet, use the `which = ` argument as shown below. You can also use the `na = ` argument to specify a value that should be converted to `NA` across the entire sheet (e.g. 99 or "Missing", or "" which represents an empty space). 
+
+Th example command below imports an Excel spreadsheet that is not password protected, and is stored in a "Data" subfolder of the RStudio project. The `which =` argument of `import()` specifies that the sheet "Sheet1" should be imported. You would edit this command as appropriate for your situation.
 
 ```{r echo=TRUE, eval=FALSE}
 # example code for importing data from an Excel file saved in RStudio project
-# tThis imports a specific sheet, named "Sheet1"
-linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), which = "Sheet1")
+# This imports a specific sheet, named "Sheet1"
+linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), which = "Sheet1", na = "")
 ```
+
+
+
+
+
+## Merge data levels
+
+As we are using a Kobo dataset that has both invididual and household data (stored in separate data frames), we will need to combine them using code in the `merge_data_levels` code chunk.  
+
+Uncomment this code, and replace the defaults to reflect our datasets, as below:  
+
+```{r}
+
+## join the individual and household data to form a complete data set
+study_data_raw <- left_join(survey_data_ind, survey_data_hh, by = c("_index" = "_parent_index"))
+
+```
+
+
+
 
 ## Align columns with data dictionary
 
