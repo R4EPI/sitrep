@@ -217,7 +217,7 @@ matches the "_parent_index" at the individual level.
 ```{r merge_data_levels}
 
 ## join the individual and household data to form a complete data set
-#study_data_raw <- left_join(study_data_indiv, study_data_hh, by = c("_index" = "_parent_index"))
+#study_data_raw <- left_join(study_data_hh, study_data_indiv, by = c("_index" = "_parent_index"))
 ```
 
 

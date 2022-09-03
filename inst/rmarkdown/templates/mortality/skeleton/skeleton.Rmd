@@ -209,7 +209,7 @@ matches the "_parent_index" at the individual level.
 ```{r merge_data_levels}
 
 ## join the individual and household data to form a complete data set
-#study_data_raw <- left_join(study_data_indiv, study_data_hh, by = c("_index" = "_parent_index"))
+#study_data_raw <- left_join(study_data_hh, study_data_indiv, by = c("_index" = "_parent_index"))
 
 ```
 
@@ -253,7 +253,7 @@ re-format this for you so it can be used easily to recode.
 study_data_cleaned <- study_data_raw
 
 ## Sometimes you want to rename specific variables
-## For example we want to add details to violance_natur_other
+## For example we want to add details to violance_nature_other
 ## This is because otherwise it will be duplicated after we clean names below
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 ## You can add multiple column name recodes by simply separating them with a comma

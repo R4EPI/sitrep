@@ -1,6 +1,6 @@
-#' Quartier shapefile for example outbreak Hepatatis E virus or Acute Jaundice Syndrome (AJS)
+#' Example population data for Hepatatis E virus or Acute Jaundice Syndrome (AJS)
 #'
-#' Shapefile for blocks (polygons) from a real outbreak of Hepatitis E virus (HEV) infection which
+#' Population data from a real outbreak of Hepatitis E virus (HEV) infection which
 #' occurred in the Chadian town of Am Timan between October 2016 and
 #' April 2017. The Chadian Ministry of Health (MoH) has approved the use
 #'  of this data for training purposes.
@@ -11,7 +11,7 @@
 #'
 #' @docType data
 #'
-#' @usage data(block_shape)
+#' @usage data(AJS_pop_internal)
 #'
 #' @format An object of class \code{"cross"}; see \code{\link[qtl]{read.cross}}.
 #'
@@ -23,6 +23,6 @@
 #' @source \href{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0188240}{Article}
 #'
 #' @examples
-#' data(block_shape)
-#' head(block_shape)
-"block_shape"
+#' data(AJS_pop_internal)
+#' head(AJS_pop_internal)
+"AJS_pop_internal"

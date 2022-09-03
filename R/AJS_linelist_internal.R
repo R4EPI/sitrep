@@ -11,7 +11,7 @@
 #'
 #' @docType data
 #'
-#' @usage data(AJS_linelist)
+#' @usage data(AJS_linelist_internal)
 #'
 #' @format An object of class \code{"cross"}; see \code{\link[qtl]{read.cross}}.
 #'
@@ -23,6 +23,6 @@
 #' @source \href{https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0188240}{Article}
 #'
 #' @examples
-#' data(AJS_linelist)
-#' head(AJS_linelist)
-"AJS_linelist"
+#' data(AJS_linelist_internal)
+#' head(AJS_linelist_internal)
+"AJS_linelist_internal"

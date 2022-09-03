@@ -13,6 +13,9 @@
     <loc>https://r4epi.github.io/sitrep/articles/Outbreaks Walkthrough.html</loc>
   </url>
   <url>
+    <loc>https://r4epi.github.io/sitrep/articles/Surveys Walkthrough.html</loc>
+  </url>
+  <url>
     <loc>https://r4epi.github.io/sitrep/authors.html</loc>
   </url>
   <url>
@@ -46,7 +49,13 @@
     <loc>https://r4epi.github.io/sitrep/reference/AJS_linelist.html</loc>
   </url>
   <url>
+    <loc>https://r4epi.github.io/sitrep/reference/AJS_linelist_internal.html</loc>
+  </url>
+  <url>
     <loc>https://r4epi.github.io/sitrep/reference/AJS_pop.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/AJS_pop_internal.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/apyramid.html</loc>
@@ -68,6 +77,24 @@
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/descriptive.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_kobo.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_outbreak_linelist.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_outbreak_pop.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_shape_block.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_shape_quartier.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_survey.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/epikit-exports.html</loc>
@@ -113,6 +140,12 @@
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/sample_size_households.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/shape_block_internal.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/shape_quartier_internal.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/sitrep-package.html</loc>

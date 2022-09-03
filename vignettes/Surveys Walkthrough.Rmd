@@ -148,9 +148,7 @@ You will need to use an estimate of the prevalence/coverage of the your main out
  (prevalence of malnutrition, measles vaccination coverage, etc.). You will use published or grey literature to determine a logical 
 estimate of this parameter.
 
-{{% notice note %}}
 The largest sample size you will need will be that which is calculated using an estimate of prevalence of 50%. The closer to 0% or 100% prevalence you set your estimate, the smaller your sample size will be. Therefore, if you have no idea what your estimate of prevalence is, try and use 50% and the largest possible sample size.
-{{% /notice %}}
 
 ### Design effect
 The easiest way to remember the design effect (which we usually refer to as DEFF), is that it is a measure of the variability of the outcome of interest within your clusters (if you are conducting a cluster based survey) and between your clusters. 
@@ -323,7 +321,7 @@ You can deactivate (place a \# comment symbol to the left of) or delete the code
 
 #### Access the survey responses  
 
-For this vignette, the individual and household reponses are stored in an .xslx spreadsheet with two sheets. The spreadsheet is named "mortality_survey_data.xlsx", and is stored in the {sitrep} R package. We created the function `download_survey()` which will copy this file into a location of your choice on your computer.  
+For this vignette, the household-level information and the individual-level information are stored in an .xslx spreadsheet with two sheets. The spreadsheet is named "mortality_survey_data.xlsx", and is stored in the {sitrep} R package. We created the function `download_survey()` which will copy this file into a location of your choice on your computer.  
 
 Run the commands below. Now look for a pop-up window and use it to select your RStudio project folder (the pop-up may appear *behind* RStudio out-of-sight).  
 
@@ -343,16 +341,16 @@ Now that the data are saved in your RStudio project, you can import them into R 
 
 To import a specific sheet from an xlsx spreadsheet, use the `which = ` argument as shown below. You can also use the `na = ` argument to specify a value that should be converted to `NA` across the entire sheet (e.g. 99 or "Missing", or "" which represents an empty space). 
 
-Th example command below imports an Excel spreadsheet called "mortality_survey_data.xlsx" which is not password protected, and is stored in the RStudio project you are using for this analysis. The `which =` argument of `import()` specifies that the sheet "Mortality Survey" should be imported. You would edit this command as appropriate for your situation.
+Th example command below imports an Excel spreadsheet called "mortality_survey_data.xlsx", which is not password protected, and is stored in the RStudio project you are using for this analysis. The `which =` argument of `import()` specifies that the sheet "Mortality Survey" should be imported. You would edit this command as appropriate for your situation.
 
 ```{r echo=TRUE, eval=FALSE}
 # example code for importing an Excel file saved in RStudio project
 
-# Import the sheet contining individual responses
-survey_data_ind <- import("mortality_survey_data.xlsx"), which = "Mortality Survey", na = "")
+# Import the sheet containing household responses
+survey_data_hh <- import("mortality_survey_data.xlsx"), which = "Mortality Survey", na = "")
 
-# import the sheet containing household responses
-survey_data_hh <- import("mortality_survey_data.xlsx"), which = "hh_member", na = "")
+# import the sheet containing individual responses
+survey_data_ind <- import("mortality_survey_data.xlsx"), which = "hh_member", na = "")
 ```
 
 
@@ -360,47 +358,70 @@ survey_data_hh <- import("mortality_survey_data.xlsx"), which = "hh_member", na 
 ```{r, echo=FALSE}
 # BACK-END INVISIBLE - load data for vignette use
 
-survey_data_ind <- rio::import(system.file("extdata", "mortality_survey_data.xlsx", package = "sitrep"), which = "Mortality Survey", na = "")
+survey_data_hh <- rio::import(system.file("extdata", "mortality_survey_data.xlsx", package = "sitrep"), which = "Mortality Survey", na = "")
 
-survey_data_hh <- rio::import(system.file("extdata", "mortality_survey_data.xlsx", package = "sitrep"), which = "hh_member", na = "")
+survey_data_ind <- rio::import(system.file("extdata", "mortality_survey_data.xlsx", package = "sitrep"), which = "hh_member", na = "")
 
 ```
 
-Here is a look at the first 25 individual responses:  
 
-```{r, echo=FALSE}
-DT::datatable(head(survey_data_ind, 25), rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T), class = 'white-space: nowrap' )
-```
-
-</br>
-
-And here is a preview of the first 25 responses from household members:  
+Here is a preview of the first 25 entries with household informaton:  
 
 ```{r, echo=FALSE}
 DT::datatable(head(survey_data_hh, 25), rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T), class = 'white-space: nowrap' )
 ```
 
+</br>
 
+And here is a look at the first 25 individual responses:  
 
-## Merge data levels
+```{r, echo=FALSE}
+DT::datatable(head(survey_data_ind, 25), rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T), class = 'white-space: nowrap' )
+```
 
-As we are using a Kobo dataset that has both invididual and household data (stored in separate data frames), we will need to combine them using code in the `merge_data_levels` code chunk.  
+### Merge data levels
+
+As we are using a Kobo dataset that has both individual and household data (stored in separate data frames), we will need to combine them using code in the `merge_data_levels` code chunk.  
 
 Uncomment this code, and replace the defaults to reflect our datasets, as below:  
 
 ```{r}
 
 ## join the individual and household data to form a complete data set
-study_data_raw <- left_join(survey_data_ind, survey_data_hh, by = c("_index" = "_parent_index"))
+study_data_raw <- left_join(survey_data_hh, survey_data_ind, by = c("_index" = "_parent_index"))
 
 ```
 
-Here are the first 25 rows of this combined data frame `study_data_raw`. Scroll to the far right side to see the joined columns from `survey_data_hh`:  
+Here are the first 25 rows of this combined data frame `study_data_raw`. Scroll to the far right side to see the joined columns from `survey_data_ind`:  
 
 ```{r, echo=FALSE}
 DT::datatable(head(study_data_raw, 25), rownames = FALSE, filter="top", options = list(pageLength = 5, scrollX=T), class = 'white-space: nowrap' )
 ```
 
+
+### Prep Kobo data
+
+In this chunk called `prep_kobo_data`, we run the command that creates `study_data_cleaned` as an exact copy of `study_data_raw`. This new data frame will be fully cleaned in subsequent sections.  
+
+```{r}
+study_data_cleaned <- study_data_raw
+```
+
+The next uncommented command is unnecessary and should be deactivated with # symbols. We do not have a column called `violence_nature_other` in our survey dataset.  
+
+```{r}
+# study_data_cleaned <- rename(study_data_cleaned,
+#                              violence_nature_other_details    =  violence_nature_other)
+```
+
+Finally, we run the command to clean the column names. The `clean_names()` function from the {janitor} package will standardise the syntax of all the column names (headers) by converting all to lowercase, replacing spaces and special characters with underscores, etc.  
+
+```{r}
+## define clean variable names using clean_names from the janitor package. 
+study_data_cleaned <- janitor::clean_names(study_data_cleaned)
+```
+
+Further data cleaning will occur in later data cleaning chunks.  
 
 
 
@@ -427,18 +448,247 @@ download_kobo()
 
 ### Format data dictionary  
 
+The {sitrep} package contains a function to import the Kobo data dictionary into R and format it to facilitate further data cleaning. You can uncomment this code in the chunk `prep_kobo_data`, modify it such that the `name = ` argument points to the location of your Kobo dictionary xlsx file, and run it. A new data frame object called `msf_dict` will be created in your R Environment.  
 
 ```{r, eval=FALSE}
 # Import Kobo data dictionary into R and re-format to support data cleaning
-msf_dict <- msf_dict_survey(name = "mortality_survey_dict.xlsx",
+study_data_dict <- msf_dict_survey(name = "mortality_survey_dict.xlsx",
                             template = FALSE)
 ```
 
+
 ```{r, echo=FALSE, eval=TRUE}
 # BACK-END for vignette
-msf_dict <- msf_dict_survey(name = system.file("extdata", "mortality_survey_dict.xlsx", package = "sitrep"),
+study_data_dict <- msf_dict_survey(name = system.file("extdata", "mortality_survey_dict.xlsx", package = "sitrep"),
                      template = FALSE)
 ```
+
+You can skip the code chunk `prep_nonkobo_data`.  
+
+
+
+## Population data
+
+This vignette does not include population data, so in the chunk `read_population_data` we will use the code that is uncommented by default - estimating populations using the proportions for sub-Saharan Africa in 2019 from the Doctors without Borders (MSF) OCBA population denominators tool v1.  
+
+* We set the total population as 10,000, as a default assumption. TODO  
+* We leave the proportion estimates as written  
+* We have observations from "Town A" and "Town B" (see column `location` in the `survey_data_ind` data frame), so we edit the inputs to the `health_district` column as written in the final line of each command (see below).  
+
+We run all the uncommented code provided in the template to generate the population estimates and combine them into one data frame.  
+
+
+```{r}
+population_data_age_district_a <- gen_population(total_pop = 10000, # set total population 
+  groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set groups
+  proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set proportions for each group
+  strata      = c("Male", "Female")) %>%           # stratify by gender
+  rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
+         sex        = strata,
+         population = n) %>% 
+  mutate(health_district = "Town A")           # add a column to identify region 
+
+
+## generate population data by age groups in years for district B
+population_data_age_district_b <- gen_population(total_pop = 10000, # set total population 
+  groups      = c("0-2", "3-14", "15-29", "30-44", "45+"), # set groups
+  proportions = c(0.0340, 0.1811, 0.1380, 0.0808, 0.0661), # set proportions for each group
+  strata      = c("Male", "Female")) %>%           # stratify by gender
+  rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
+         sex        = strata,
+         population = n) %>% 
+  mutate(health_district = "Town B")           # add a column to identify region 
+
+
+
+## bind region population data together to get overall population 
+population_data_age <- bind_rows(population_data_age_district_a, 
+                                 population_data_age_district_b)
+```
+
+
+
+### Cluster counts
+
+```{r cluster_counts}
+
+cluster_counts <- tibble(cluster = c("Town A", "Town B"), 
+                         households = c(500, 700))
+```
+
+
+## Browse data
+
+
+## Data cleaning
+
+
+### Standardise dates
+
+The first command creates an list of column names, called `DATEVARS`, using the imported and formatted Kobo data dictionary. The command looks into the `type` column of the dictionary, and extracts all the variables that are dates and that are also present in the `study_data_cleaned`. The names of these columns are saved as `DATEVARS`.  
+
+```{r}
+## get the names of variables which are dates
+DATEVARS <- study_data_dict %>% 
+  filter(type == "date") %>% 
+  filter(name %in% names(study_data_cleaned)) %>% 
+  ## filter to match the column names of your data
+  pull(name) # select date vars
+```
+
+
+In the next command, from this list `DATEVARS`, and columns that are completely empty are identified. 
+
+```{r}
+## find if there are date variables which are completely empty
+EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
+  is.na(study_data_cleaned[[.x]])
+  )) %>% 
+  unlist() %>% 
+  which()
+```
+
+Finally, we using indexing (square brackets) and a minus sign to remove those date variables that were empty from the list `DATEVARS`.  
+
+
+```{r}
+## remove exclude the names of variables which are completely emptys
+DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
+```
+
+
+Not that we have a complete and verified list of used date variables, we can run the `across()` function within `mutate()` to convert all of the dates to class "Date". Recall that date columns must be properly recognized by R as dates in order to be used effectively.  
+
+To convert the dates to class "Date" we use the function `parse_date()` from the {parsedate} package. This function does not assume a standard format to the dates, and evaluates every data frame cell individually, using intelligent guessing to decide whether the date is written as Month-Day-Year, Day-Month-Year, or Year-Month-Day, etc.
+
+The result of `parse_date()` is actually class "POSIXct" (a specific type of date class), so the result is piped to `as.Date()` to convert it to a class that is more easily accepted by subsequent functions.  
+
+```{r}
+## change to dates 
+## use the parse_date() function to make a first pass at date variables.
+## parse_date() produces a complicated format - so we use as.Date() to simplify
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(
+    across(.cols = all_of(DATEVARS),
+           .fns = ~parsedate::parse_date(.x) %>% as.Date()))
+```
+
+
+### Define recall period
+
+After skipping the section on cleaning dates in *non-Kobo* data, we arrive at a command that defines the "recall period".  
+
+In this vignette, the recall period begins 15 July 2020. We know this because in the data dictionary, the later questions ask about arrivals, departures, births, and deaths since 15 July 2020. *Therefore, we adjust the code so that for every entry in `study_data_cleaned` uses `as.Date("2020-07-15)` as the value in the new column `recall_start`.  
+
+The date for the `recall_end` is assigned to 15 July 2021.  
+
+
+
+```{r}
+## set the start/end of recall period
+## can be changed to date variables from dataset 
+## (e.g. arrival date & date questionnaire)
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(recall_start = as.Date("2020-07-15"),  
+         recall_end   = as.Date("2021-07-15")   
+  )
+```
+
+
+
+### Fix wrong dates
+
+
+We can check the ranges of our dates using `range()`
+
+
+```{r}
+range(study_data_cleaned$date)
+```
+They all appear to be within the expected range (July 2021), so there is no need to perform corrections.  
+
+
+
+### Create age groups
+
+In our survey data, the column `age_in_years` contain the age of the surveyed individual. Unfortunately, its values have been interpreted by R as class "character" (words), and not as numbers.  
+
+```{r}
+class(study_data_cleaned$age_in_years)
+```
+
+Before we can create age groups, we need to convert this column to class "integer".  
+
+The R Markdown template expects the age columns to be named `age_years` and `age_months`, so for ease we will rename our columns to align with this expectation.  
+
+Modify the first code in this chunk with two new lines, as shown below:    
+
+```{r}
+## make sure age is an integer 
+study_data_cleaned <- study_data_cleaned %>% 
+  rename(age_years = age_in_years,       # rename age columns
+         age_months = age_in_months) %>%   
+  mutate(age_years = as.integer(age_years))
+```
+
+
+We can now run the subsequent commands as written, to create age group columns reflecting years and months.  
+
+The first command uses `mutate()` to create a column called `age_group`, using the function `age_categories()` from the {sitrep} package. This function can work in several ways, but we provide a list of break point values ("breakers") for our age groups.  
+
+```{r}
+## create an age group variable by specifying categorical breaks (of years)
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_group = age_categories(age_years, 
+                                    breakers = c(0, 3, 15, 30, 45)
+                                    ))
+```
+
+
+The second command is very similar, but looks at the column `age_months` and checks whether the age in months is less than 12. If so, it applies the same `age_categories()` function but uses break points more relevant to the months values (e.g. 6 months, 9 months, and 12 months). If the value in `age_months` is greater than 12, it is replaced with missing.  
+
+
+```{r}
+## create age group variable for under 2 years based on months
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(age_group_mon = if_else(
+    ## if months <= 12 then calculated age groups 
+    age_months <= 12, 
+    age_categories(study_data_cleaned$age_months, 
+                                        breakers = c(0, 6, 9, 12), 
+                                        ceiling = TRUE), 
+    ## otherwise set new variable to missing
+    factor(NA)))
+```
+
+
+
+# we can wait on this for the study protocol 
+
+# msf_dict_rename_helper()
+# remove district for the stratified code,
+# keep both as FALSE
+# run all the analyses by age and sex
+# (regular cluster survey)
+# still weighting it like a stratefied cluster, but it probably is just cluster.
+# in survey design chunk, just use stratefied cluster bc survey_design is what's used elsewhere
+
+
+# counting per household how many people are in the house
+# cl = dataset with populaton per cluster
+# interviewed is how many people were interviewed in the hourse
+# clusterx = tell which variables correspond
+# the creating variables telling which are in each
+# Include both hoursehold and cluster
+
+
+# Docker
+# build yourself a docker container and test locally
+
+
+
+
+
 
 
 
