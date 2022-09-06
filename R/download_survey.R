@@ -4,6 +4,9 @@
 #'
 #' @param path **Run with no arguments to pick a directory interactively**. Path on your computer where the file(s) should be saved to *string*
 #'
+#' @importFrom rstudioapi selectDirectory
+#' @importFrom cli cli_alert_success
+#'
 #' @export
 download_survey <- function(path = rstudioapi::selectDirectory()){
 

@@ -46,6 +46,8 @@ Imports:
     broom,
     patchwork,
     clipr,
+    cli,
+    rstudioapi,
     dplyr (>= 0.8.0),
     tidyr (>= 1.0.0),
     rlang (>= 0.4.0),
