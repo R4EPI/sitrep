@@ -11,24 +11,24 @@
 
 #' @name msf_dict
 #' @importFrom epidict msf_dict
-#' @export
 #' @rdname msf_dict
-"msf_dict"
+#' @export
+epidict::msf_dict
 
 #' @name msf_dict_survey
 #' @importFrom epidict msf_dict_survey
-#' @export
 #' @rdname msf_dict
-"msf_dict_survey"
+#' @export
+epidict::msf_dict_survey
 
 #' @name msf_dict_rename_helper
 #' @importFrom epidict msf_dict_rename_helper
-#' @export
 #' @rdname msf_dict
-"msf_dict_rename_helper"
+#' @export
+epidict::msf_dict_rename_helper
 
 #' @name gen_data
 #' @importFrom epidict gen_data
-#' @export
 #' @rdname msf_dict
-"gen_data"
+#' @export
+epidict::gen_data
