@@ -253,7 +253,7 @@ re-format this for you so it can be used easily to recode.
 study_data_cleaned <- study_data_raw
 
 ## Sometimes you want to rename specific variables
-## For example we want to add details to violance_natur_other
+## For example we want to add details to violance_nature_other
 ## This is because otherwise it will be duplicated after we clean names below
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME). 
 ## You can add multiple column name recodes by simply separating them with a comma

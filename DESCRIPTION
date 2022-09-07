@@ -44,6 +44,7 @@ Imports:
     binom,
     broom,
     clipr,
+    cli,
     dplyr (>= 0.8.0),
     epitabulate (>= 0.0.0.9007),
     epidict (>= 0.0.0.9001),
@@ -68,6 +69,7 @@ Imports:
     rio,
     rlang (>= 0.4.0),
     rmarkdown,
+    rstudioapi,
     scales,
     sf,
     slider,
@@ -103,7 +105,8 @@ Collate:
     'epidict_exports.R'
     'epikit_exports.R'
     'epitabulate_exports.R'
-    'AJS_linelist.R'
-    'AJS_pop.R'
-    'quartier_shape.R'
-    'block_shape.R'
+    'AJS_linelist_internal.R'
+    'AJS_pop_internal.R'
+    'shape_quartier_internal.R'
+    'shape_block_internal.R'
+    'download_datasets.R'
