@@ -45,8 +45,8 @@ The **{sitrep}** package, is currently stored in a [GitHub
 repository](https://github.com/R4EPI/sitrep). Therefore, the procedure
 to install these packages have one extra step required.
 
-To install **sitrep** from GitHub you must first install the
-**devtools** package.
+To install **sitrep** from GitHub you must first install the **remotes**
+package.
 
 ``` r
 # install.packages("remotes")
@@ -94,7 +94,7 @@ available_sitrep_templates(categorise = TRUE)
 
 # generate the measles outbreak template in the output directory
 check_sitrep_templates("measles_outbreak", path = output_dir)
-#> [1] "C:\\Users\\alexf\\AppData\\Local\\Temp\\RtmpqMzhqG/sitrep_example"
+#> [1] "C:\\Users\\alexf\\AppData\\Local\\Temp\\Rtmpcv1H8d/sitrep_example"
 
 # view the contents
 list.files(output_dir, recursive = TRUE)

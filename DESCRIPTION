@@ -1,22 +1,22 @@
 Type: Package
 Package: sitrep
 Title: Report templates and helper functions for applied epidemiology
-Version: 0.1.8
+Version: 0.1.9
 Authors@R: 
-    c(person(given = "Dirk",
+    c(person(given = "Alexander",
+             family = "Spina",
+             email = "aspina@appliedepi.org", 
+             comment = c(ORCID = "0000-0001-8425-1867"),
+             role = c("aut", "cre")),
+      person(given = "Zhian N.",
+             family = "Kamvar",
+             role = "aut",
+             email = "zkamvar@gmail.com",
+             comment = c(ORCID = "0000-0003-1458-7108")), 
+      person(given = "Dirk",
              family = "Schumacher",
              role = "aut",
              email = "mai@dirk-schumacher.net"),
-      person(given = "Zhian N.",
-             family = "Kamvar",
-             role = c("aut", "cre"),
-             email = "zkamvar@gmail.com",
-             comment = c(ORCID = "0000-0003-1458-7108")), 
-      person(given = "Alexander",
-             family = "Spina",
-             email = "alexfspina@gmail.com", 
-             comment = c(ORCID = "0000-0001-8425-1867"),
-             role = "aut"),
       person(given = "Kate",
              family = "Doyle",
              role = "aut"),
@@ -35,48 +35,53 @@ Authors@R:
 Description: Report templates and helper functions for applied epidemiology
 License: GPL-3
 BugReports: https://github.com/R4EPI/sitrep/issues
-URL: https://r4epis.netlify.com,
-    https://github.com/R4EPI/sitrep,
+URL: https://github.com/R4EPI/sitrep,
     https://r4epi.github.io/sitrep/
 Depends: R (>= 3.2)
 Imports: 
     anthro,
-    aweek (>= 1.0.0),
+    apyramid (>= 0.1.0),
     binom,
     broom,
-    patchwork,
     clipr,
     cli,
     rstudioapi,
     dplyr (>= 0.8.0),
-    tidyr (>= 1.0.0),
-    rlang (>= 0.4.0),
+    epitabulate (>= 0.0.0.9007),
+    epidict (>= 0.0.0.9001),
+    epikit(>= 0.1.4), 
+    forcats,
+    flextable,
+    ggalluvial,
     ggplot2 (>= 3.0.0),
     ggspatial,
-    purrr,
-    tibble,
-    tidyselect,
-    forcats,
-    epitrix,
+    gtsummary,
     glue,
     here,
-    incidence (>= 1.7.2),
+    janitor,
     knitr,
-    linelist,
+    labelled,
+    lubridate,
     matchmaker,
-    scales,
+    pacman, 
+    parsedate, 
+    patchwork,
+    purrr,
     rio,
+    rlang (>= 0.4.0),
     rmarkdown,
+    scales,
     sf,
-    survey,
+    slider,
     srvyr,
     stats,
-    utils,
-    apyramid (>= 0.1.0),
-    epitabulate (>= 0.0.0.9005),
-    epidict (>= 0.0.0.9001),
-    epikit, 
-    pacman
+    stringr, 
+    survey,
+    tibble,
+    tidyr (>= 1.0.0),
+    tidyselect,
+    tsibble,
+    utils
 Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
@@ -84,10 +89,10 @@ Suggests:
     covr, 
     summarytools
 Remotes:
-  reconhub/linelist,
   R4EPI/apyramid,
   R4EPI/epitabulate,
-  R4EPI/epidict
+  R4EPI/epidict,
+  R4EPI/epikit
 Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
