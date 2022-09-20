@@ -586,7 +586,7 @@ study_data_cleaned <- study_data_cleaned %>%
 ## parse_date() produces a complicated format - so we use as.Date() to simplify# study_data_cleaned <- study_data_cleaned %>%
 #   mutate(
 #     across(.cols = matches("date|Date"),
-#            .fns  = ~parsedate::parse_date(.x)))
+#            .fns  = ~parsedate::parse_date(.x) %>% as.Date()))
 
 
 ## Define recall period --------------------------------------------------------
