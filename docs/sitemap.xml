@@ -13,7 +13,13 @@
     <loc>https://r4epi.github.io/sitrep/articles/Outbreaks Walkthrough.html</loc>
   </url>
   <url>
+    <loc>https://r4epi.github.io/sitrep/articles/Outbreaks_Walkthrough.html</loc>
+  </url>
+  <url>
     <loc>https://r4epi.github.io/sitrep/articles/Surveys Walkthrough.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/articles/Surveys_Walkthrough.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/authors.html</loc>
@@ -35,6 +41,12 @@
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/news/index.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/add_ar.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/add_crosstabs.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/add_weights_cluster.html</loc>
@@ -112,10 +124,19 @@
     <loc>https://r4epi.github.io/sitrep/reference/fmt_count.html</loc>
   </url>
   <url>
+    <loc>https://r4epi.github.io/sitrep/reference/generic_download.html</loc>
+  </url>
+  <url>
     <loc>https://r4epi.github.io/sitrep/reference/gen_polygon.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/gen_population.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/gt_mh_odds.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/gt_remove_stat.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/index.html</loc>
