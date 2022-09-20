@@ -604,13 +604,16 @@ Next, we want to rename some of our columns. Using the command `msf_dict_rename_
 We can edit the above, or simply refer to it to construct our `rename()` command, as below:   
 
 ```{r}
-study_data_cleaned <- rename(
-  study_data_cleaned,
+study_data_cleaned <- rename(study_data_cleaned,
+  uid = `_index.y`,
   consent = household_consents_to_particip,
   date_arrived = doa,
   date_birth = dob,
   date_left = dod,
-  date_died = dodeath)
+  date_death = dodeath,
+  village_name = location,
+  member_number = no_household
+  )
 
 ```
 
@@ -675,7 +678,7 @@ This vignette does not include population data, so in the chunk `read_population
 
 * We set the total population as 10,000, as a default assumption.  
 * We leave the proportion estimates as written  
-* We have observations from "Town A" and "Town B" (see column `location` in the `survey_data_ind` data frame), so we edit the inputs to the `health_district` column as written in the final line of each command (see below).  
+* We have observations from "Town A" and "Town B", so we edit the inputs to the `health_district` column as written in the final line of each command (see below).  
 
 We run all the uncommented code provided in the template to generate the population estimates and combine them into one data frame.  
 
@@ -688,7 +691,7 @@ population_data_age_district_a <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "Town A")           # add a column to identify region 
+  mutate(village_name = "Town A")           # add a column to identify region 
 
 
 ## generate population data by age groups in years for district B
@@ -699,7 +702,7 @@ population_data_age_district_b <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(health_district = "Town B")           # add a column to identify region 
+  mutate(village_name = "Town B")           # add a column to identify region 
 
 
 
@@ -712,12 +715,82 @@ population_data_age <- bind_rows(population_data_age_district_a,
 
 ### Cluster counts
 
-In the cluster counts chunk, we specify that Town A has 500 households, whereas Town B has 700.  
+We can see that there are 17 clusters, from each town:  
+
+```{r}
+study_data_cleaned %>% 
+  tabyl(cluster_number, village_name)
+```
+
+<!-- We can also see from the ordering in the table above, that cluster number is recognized as a character and not as a number, so we fix this with a quick `mutate()` command:   -->
+
+<!-- ```{r} -->
+<!-- study_data_cleaned <- study_data_cleaned %>%  -->
+<!--   mutate(cluster_number = as.integer(cluster_number)) -->
+<!-- ``` -->
+
+The fact that there are clusters 1-17 in each of the Towns will complicate later analyses. Each cluster should have a unique identification value. So, let us create one. We use the `str_glue()` function from {stringr} to combine the cluster number and the letter of the town. The letter of the town is extracted from the town name using `str_sub()`, which is also from the {stringr} package. The -1 extracts the last letter of the village name, and places it into the ID.  
+
+```{r}
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(cluster_number_uid = str_glue(
+    "{town_letter}_{cluster_number}",
+    town_letter = str_sub(village_name, -1)))
+```
+
+We verify:
+
+```{r}
+study_data_cleaned %>% 
+  tabyl(cluster_number_uid, village_name)
+```
+
+
+Now, our task is to create a *new* data frame that contains the number of households in each cluster. This is not the number of households chosen to be interviewed, but the universe of *possible* households that could have been chosen in each cluster.  
+
+To create a *new* dataframe, the R Markdown template uses the `tibble()` function for your to manually input the names of the clusters, and the number of households. Below, we use a slight adaptation for ease of use: we use the `tribble()` function (note the "r") so that we can type this information in "rows" that look like a normal data frame. Note how the columns are specified at the top with tildes (~).  
+
+  
 
 ```{r cluster_counts}
 
-cluster_counts <- tibble(cluster = c("Town A", "Town B"), 
-                         households = c(500, 700))
+cluster_counts <- tribble(
+  ~cluster, ~households,
+  "A_1",     100,
+  "A_2", 100, 
+  "A_3", 100, 
+  "A_4", 100,
+  "A_5", 100,
+  "A_6", 100, 
+  "A_7", 100,
+  "A_8", 100, 
+  "A_9", 100, 
+  "A_10", 100, 
+  "A_11", 100, 
+  "A_12", 100, 
+  "A_13", 100,
+  "A_14", 100, 
+  "A_15", 100, 
+  "A_16", 100, 
+  "A_17", 100, 
+  
+  "B_1", 100,
+  "B_2", 100, 
+  "B_3", 100, 
+  "B_4", 100,
+  "B_5", 100,
+  "B_6", 100, 
+  "B_7", 100,
+  "B_8", 100, 
+  "B_9", 100, 
+  "B_10", 100, 
+  "B_11", 100, 
+  "B_12", 100, 
+  "B_13", 100,
+  "B_14", 100, 
+  "B_15", 100, 
+  "B_16", 100, 
+  "B_17", 100)
 ```
 
 
@@ -949,15 +1022,17 @@ study_data_cleaned <- study_data_cleaned %>%
   ## from births, household arrivals, and camp arrivals 
   find_start_date("date_birth",
                   "date_arrived",
+                  "recall_start",
                   period_start = "recall_start",
                   period_end   = "recall_end",
                   datecol      = "startdate",
                   datereason   = "startcause" 
                  ) %>%
-  ## choose earliest date entered in survey
+  ## choose latest date entered in survey
   ## from camp departures, death and end of the study
   find_end_date("date_left",
                 "date_death",
+                "recall_end",
                 period_start = "recall_start",
                 period_end   = "recall_end",
                 datecol      = "enddate",
@@ -999,65 +1074,52 @@ study_data_cleaned <- study_data_cleaned %>%
   mutate(obstime = as.numeric(enddate - startdate))
 ```
 
-Running some summary statistics on these data show that most rows were not able to be calculated:  
+Running some summary statistics on these data show that most rows did not have births or deaths, and so their observation time reverted to the default of the recall period (1 year).  
 
 ```{r}
 summary(study_data_cleaned$obstime)
 ```
 
-For row that had data, this is the distribution of `obstime`:  
-
-```{r}
-ggplot(study_data_cleaned, aes(x = obstime))+
-  geom_histogram()
-```
 
 ### Labelling columns  
 
 Earlier, we used the {matchmaker} package to clean the *values* in columns, using the data dictionary. In this chunk, we use the {labelled} package to assign labels to the *column names (headings)*, so that when printed they display names with spaces and other human-readable formatting.  
 
-In the command below, we create the object `var_labels`, using the `setNames()` function (from the ackage {stats}). The "short names" from the data dictionary are set as the display labels, while the current variables names are retained.  
+We will use the code for manual labelling, because we have adjusted our columns names so they no longer align with our data dictionary.  
 
 ```{r}
-## define a list of names and labels based on the dictionary 
-var_labels <- setNames(
-  ## add variable labels as a list
-  as.list(study_data_dict$short_name), 
-  ## name the list with the current variable names
-  study_data_dict$name)
-```
-
-Now we use this object `var_labels` within the function `set_variable_labels()`, to set the labels of our dataset.  
-
-```{r}
-
-## add the variable labels to dataset 
+## it is possible to update individual variables manually too
 study_data_cleaned <- study_data_cleaned %>% 
   set_variable_labels(
-    ## set the labels with the object defined above
-    .labels = var_labels, 
-    ## do not throw an error if some names dont match 
-    ## not all names in the dictionary appear in the dataset 
-    .strict = FALSE)
+    ## variable name = variable label 
+    age_years     = "Age (years)",
+    age_group     = "Age group (years)",
+    age_months    = "Age (months)", 
+    age_group_mon = "Age group (months)",
+    age_category  = "Age category", 
+    died          = "Died", 
+    startcause    = "Observation start", 
+    endcause      = "Observation end"
+    )
 ```
 
-Lastly, an option is shown for how to manually adjust column labels (if you did not want to use the data dictionary)
+
 
 
 ### Remove unused data  
 
-This chunk contains code to drop and examine rows for which there is no consent, there are missing start or end dates, village_name is "Other", age is missing, or sex is missing. These rows are first saved as `dropped`. This allows you to inspect them before actually dropping the rows.
+This chunk contains code to drop and examine rows for which there is no consent, there are missing start or end dates, village name (town A or B) is "Other", age is missing, or sex is missing. These rows are first saved as `dropped`. This allows you to inspect them before actually dropping the rows.
 
 In the second command, an `anti_join()` is used to actually drop the rows from `study_data_cleaned`. An anti join is a "filtering join" which looks in the `dropped` data frame and leaves only rows in `study_data_cleaned` which are *not* present in `dropped`. Its a fancy way of doing a filter, but allowing you the opportunity to inspect the rows first.  
 
 
-```{r}
+```{r, eval=FALSE}
 ## store the cases that you drop so you can describe them (e.g. non-consenting 
 ## or wrong village/cluster)
 dropped <- study_data_cleaned %>% 
   filter(!consent | is.na(startdate) | is.na(enddate) | 
            ## note that whatever you use for weights cannot be missing!
-           village_name == "Other"| is.na(age_years) | is.na(sex))
+           is.na(village_name) | is.na(age_years) | is.na(sex))
 
 ## use the dropped cases to remove the unused rows from the survey data set  
 study_data_cleaned <- anti_join(study_data_cleaned, dropped, by = names(dropped))
@@ -1085,14 +1147,66 @@ A second option available to you is commented out. This option allows you to ins
 
 ### Survey weights
 
-Its a cluster survey but because we have poip counts for age and sex, we are able to adjust to reflect the population better and produce stratefied estimate by age and sex. 
+These data come from a cluster survey, but because we have population counts for age and sex, we are able to make adjustments to better reflect the population, and therefore produce stratified estimates by age and sex. 
+
+At the end of the first command, we remove "health_district" because we only want to stratify by age and sex.  
+
 
 ```{r}
 
+## create a variable called "surv_weight_strata" 
+## contains weights for each individual - by age group, sex and health district
+study_data_cleaned <- add_weights_strata(x = study_data_cleaned, 
+                                         p = population_data_age, 
+                                         surv_weight = "surv_weight_strata",
+                                         surv_weight_ID = "surv_weight_ID_strata",
+                                         age_group, sex, village_name)
 ```
 
 
-survey design- delete the others and just run strat cluster
+In the second set of commands:  
+
+* The data frame `cluster_counts` is referenced, which we created in an earlier step. The arguments that end with `_cl` should reference columns in this data frame. Use the help documentation for this function by running `?add_weights_cluster`.  
+
+
+
+```{r}
+## cluster ---------------------------------------------------------------------
+
+## get the number of individuals interviewed per household 
+## adds a variable with counts of the household (parent) index variable
+study_data_cleaned <- study_data_cleaned %>% 
+  add_count(index, name = "interviewed")
+
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(member_number = as.numeric(member_number))
+
+
+## create cluster weights 
+study_data_cleaned <- add_weights_cluster(x = study_data_cleaned, 
+                                          cl = cluster_counts, 
+                                          eligible = member_number, 
+                                          interviewed = interviewed, 
+                                          cluster_x = cluster_number_uid, 
+                                          cluster_cl = cluster, 
+                                          household_x = id, 
+                                          household_cl = households, 
+                                          surv_weight = "surv_weight_cluster", 
+                                          surv_weight_ID = "surv_weight_ID_cluster", 
+                                          ignore_cluster = FALSE, 
+                                          ignore_household = FALSE)
+
+## stratified and cluster ------------------------------------------------------
+
+## create a survey weight for cluster and strata 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(surv_weight_cluster_strata = surv_weight_strata * surv_weight_cluster)
+```
+
+
+
+
+
 
 
 # we can wait on this for the study protocol 
