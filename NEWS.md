@@ -1,4 +1,10 @@
+# sitrep 0.1.9 
+
+* Update re-exports (@aspina #304)
+* Add example datasets, download functions and draft vignettes (@nsbatra #305)
+
 # sitrep 0.1.8
+
 * Move functions to other packages and then re-export (@aspina #134)
 
 # sitrep 0.1.7
