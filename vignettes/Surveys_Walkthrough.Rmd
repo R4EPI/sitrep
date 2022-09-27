@@ -1,6 +1,6 @@
 ---
 title: "{sitrep} surveys template vignette"
-subtitle: "A guided example of how to use the R Markdown template to analyse a CLUSTER SURVEY (TODO)"
+subtitle: "A guided example of how to use the R Markdown template to analyse a stratified cluster survey"
 output: 
   rmarkdown::html_vignette:
     toc: true
@@ -16,13 +16,15 @@ knitr::opts_chunk$set(
   message = FALSE,
   collapse = TRUE,
   comment = "#>",
-  echo = TRUE
+  echo = TRUE,
+  fig.width = 6,
+  fig.height = 6
 )
 ```
 
 ## Overview
 
-This page demonstrate use of the {sitrep} R Markdown template for analysis of a retrospective mortality survey, using data that was produced using Kobo, a common survey and data collection tool in settings where MSF works.
+This page demonstrate use of the {sitrep} R Markdown template for analysis of a retrospective mortality survey, using data that was produced using Kobo, a common survey and data collection tool in settings where MSF works. The data do not use the standard MSF EBB-approved data dictionary, and therefore represent a challenging use case for data cleaning.  
 
 ## Getting started
 
@@ -134,7 +136,7 @@ The templates can accommodate analysis of data from all of these sampling design
 
 ### Sample size
 
-Before implementing a survey you will need to calculate the sample size for that survey.
+Before implementing a survey you will need to calculate the sample size for that survey. Note that a chapter on samples size is anticipated to be in the [Epidemiologist R Handbook](www.epiRhandbook.com) soon.  
 
 When calculating a sample size for your survey you take the below parameters into consideration:
 
@@ -417,6 +419,8 @@ study_data_cleaned <- study_data_raw
 
 Next, we want to rename some of our columns. Using the command `msf_dict_rename_helper("mortality", varnames = "name")` we get a "helped" command copied to our clipboard. This contains many more variables than we need, but it is useful to review.  
 
+<details><summary>Click to see this code chunk></summary>
+
 ```{r, eval=FALSE, echo = TRUE}
 
 ## Add the appropriate column names after the equals signs
@@ -601,19 +605,32 @@ Next, we want to rename some of our columns. Using the command `msf_dict_rename_
 
 ```
 
+</details>
+
+
 We can edit the above, or simply refer to it to construct our `rename()` command, as below:   
 
 ```{r}
 study_data_cleaned <- rename(study_data_cleaned,
+  # pattern is NEW name = OLD name
   uid = `_index.y`,
   consent = household_consents_to_particip,
+  age_years = age_in_years,       
+  age_months = age_in_months,
   date_arrived = doa,
   date_birth = dob,
   date_left = dod,
   date_death = dodeath,
-  village_name = location,
   member_number = no_household
   )
+
+```
+
+In the template, there is a command that creates the column `health_district`. For us, this information is already stored in the column `location`. So we run this command to re-name `location` as `health_district`.  
+
+```{r}
+study_data_cleaned <- rename(study_data_cleaned,
+  health_district = location)
 
 ```
 
@@ -691,7 +708,7 @@ population_data_age_district_a <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(village_name = "Town A")           # add a column to identify region 
+  mutate(health_district = "Town A")           # add a column to identify region 
 
 
 ## generate population data by age groups in years for district B
@@ -702,7 +719,7 @@ population_data_age_district_b <- gen_population(total_pop = 10000, # set total 
   rename(age_group  = groups,                      # rename columns (NEW NAME = OLD NAME)
          sex        = strata,
          population = n) %>% 
-  mutate(village_name = "Town B")           # add a column to identify region 
+  mutate(health_district = "Town B")           # add a column to identify region 
 
 
 
@@ -719,15 +736,8 @@ We can see that there are 17 clusters, from each town:
 
 ```{r}
 study_data_cleaned %>% 
-  tabyl(cluster_number, village_name)
+  tabyl(cluster_number, health_district)
 ```
-
-<!-- We can also see from the ordering in the table above, that cluster number is recognized as a character and not as a number, so we fix this with a quick `mutate()` command:   -->
-
-<!-- ```{r} -->
-<!-- study_data_cleaned <- study_data_cleaned %>%  -->
-<!--   mutate(cluster_number = as.integer(cluster_number)) -->
-<!-- ``` -->
 
 The fact that there are clusters 1-17 in each of the Towns will complicate later analyses. Each cluster should have a unique identification value. So, let us create one. We use the `str_glue()` function from {stringr} to combine the cluster number and the letter of the town. The letter of the town is extracted from the town name using `str_sub()`, which is also from the {stringr} package. The -1 extracts the last letter of the village name, and places it into the ID.  
 
@@ -735,14 +745,14 @@ The fact that there are clusters 1-17 in each of the Towns will complicate later
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(cluster_number_uid = str_glue(
     "{town_letter}_{cluster_number}",
-    town_letter = str_sub(village_name, -1)))
+    town_letter = str_sub(health_district, -1)))
 ```
 
 We verify:
 
 ```{r}
 study_data_cleaned %>% 
-  tabyl(cluster_number_uid, village_name)
+  tabyl(cluster_number_uid, health_district)
 ```
 
 
@@ -880,24 +890,31 @@ study_data_cleaned <- study_data_cleaned %>%
 
 ### Create age groups
 
-In our survey data, the column `age_in_years` contain the age of the surveyed individual. Unfortunately, its values have been interpreted by R as class "character" (words), and not as numbers.  
+Information on age is spread across two columns: `age_years` and `age_months`.
+
+
+Unfortunately, the values in these columns have been interpreted by R as class "character" (words), and not as numbers.  
 
 ```{r}
-class(study_data_cleaned$age_in_years)
+class(study_data_cleaned$age_years)
+class(study_data_cleaned$age_months)
 ```
 
-Before we can create age groups, we need to convert this column to class "integer".  
-
-The R Markdown template expects the age columns to be named `age_years` and `age_months`, so for ease we will rename our columns to align with this expectation.  
-
-Modify the first code in this chunk with two new lines, as shown below:    
+We can also review the dataset and see that if the age of respondents less than 1 year, the months are given in the `age_months` column but the `age_years` value is `NA` (missing). We will need the `age_years` column in this circumstance to have the value `0` for later calculations. So, we write and run the following command:  
 
 ```{r}
-## make sure age is an integer 
 study_data_cleaned <- study_data_cleaned %>% 
-  rename(age_years = age_in_years,       # rename age columns
-         age_months = age_in_months) %>%   
-  mutate(age_years = as.integer(age_years))
+  
+  # convert both columns to class integer
+  mutate(age_years = as.integer(age_years),
+         age_months = as.integer(age_months)) %>%
+  
+  # convert age_years to 0 if age_months is less than 12
+  mutate(age_years = case_when(
+    age_months < 12 ~ as.integer(0),    # if age is less than 12 months, put 0
+    TRUE            ~ age_years         # otherwise, leave as age_years value
+  ))
+
 ```
 
 
@@ -914,7 +931,9 @@ study_data_cleaned <- study_data_cleaned %>%
 ```
 
 
-The second command is very similar, but looks at the column `age_months` and checks whether the age in months is less than 12. If so, it applies the same `age_categories()` function but uses break points more relevant to the months values (e.g. 6 months, 9 months, and 12 months). If the value in `age_months` is greater than 12, it is replaced with missing.  
+
+
+The second command in the template is very similar to the first, but looks at the column `age_months` and checks whether the age in months is less than 12. If so, it applies the same `age_categories()` function but uses break points more relevant to the months values (e.g. 6 months, 9 months, and 12 months). If the value in `age_months` is greater than 12, it is replaced with missing.  
 
 
 ```{r}
@@ -962,7 +981,7 @@ For example, looking in the data dictionary (`study_data_dict`) we can see that 
 
 A command like the below would revise all the raw option values to their display label version, across the entire dataset. The function `match_df()` accepts the name of our data frame, and the dictionary, the columns in the data dictionary to guide the value conversion (`from = ` and `to = `). Note that if provided in the data dictionary, you could also run the code with `to = "option_label_french"` to convert the values to French.  
 
-Again - it is NOT necessary to run this code for this vignette because the values are already in display format.  
+Again - it is **NOT** necessary to run this code for this vignette because the values are already in display format.  
 
 ```{r, eval=FALSE}
 ## recode values with matchmaker package (value labels cant be used for analysis) 
@@ -1113,16 +1132,22 @@ This chunk contains code to drop and examine rows for which there is no consent,
 In the second command, an `anti_join()` is used to actually drop the rows from `study_data_cleaned`. An anti join is a "filtering join" which looks in the `dropped` data frame and leaves only rows in `study_data_cleaned` which are *not* present in `dropped`. Its a fancy way of doing a filter, but allowing you the opportunity to inspect the rows first.  
 
 
-```{r, eval=FALSE}
+```{r}
 ## store the cases that you drop so you can describe them (e.g. non-consenting 
 ## or wrong village/cluster)
 dropped <- study_data_cleaned %>% 
   filter(!consent | is.na(startdate) | is.na(enddate) | 
            ## note that whatever you use for weights cannot be missing!
-           is.na(village_name) | is.na(age_years) | is.na(sex))
+           is.na(health_district) | is.na(age_years) | is.na(sex))
 
 ## use the dropped cases to remove the unused rows from the survey data set  
 study_data_cleaned <- anti_join(study_data_cleaned, dropped, by = names(dropped))
+```
+
+We can see how many rows were dropped:  
+
+```{r}
+nrow(dropped)
 ```
 
 
@@ -1149,9 +1174,6 @@ A second option available to you is commented out. This option allows you to ins
 
 These data come from a cluster survey, but because we have population counts for age and sex, we are able to make adjustments to better reflect the population, and therefore produce stratified estimates by age and sex. 
 
-At the end of the first command, we remove "health_district" because we only want to stratify by age and sex.  
-
-
 ```{r}
 
 ## create a variable called "surv_weight_strata" 
@@ -1160,7 +1182,7 @@ study_data_cleaned <- add_weights_strata(x = study_data_cleaned,
                                          p = population_data_age, 
                                          surv_weight = "surv_weight_strata",
                                          surv_weight_ID = "surv_weight_ID_strata",
-                                         age_group, sex, village_name)
+                                         age_group, sex, health_district)
 ```
 
 
@@ -1209,7 +1231,6 @@ study_data_cleaned <- study_data_cleaned %>%
 In the next chunk, we use only the "stratified cluster" code:  
 
 * We change `village_name` to `cluster_number_uid`, which is our unique cluster ID column.  
-* We change `health_district` to `village_name`, as this is our strata
 
 
 ```{r survey_design}
@@ -1243,15 +1264,10 @@ In the next chunk, we use only the "stratified cluster" code:
 survey_design <- study_data_cleaned %>% 
   as_survey_design(ids = cluster_number_uid, # cluster ids 
                    weights = surv_weight_cluster_strata, # weight variable created above 
-                   strata = village_name # sampling was stratified by district
+                   strata = health_district # sampling was stratified by district
                   )
 
 ```
-
-
-
-
-
 
 
 
@@ -1513,15 +1529,13 @@ age_pyramid(study_data_cleaned,
 
 
 
-Replace `health_district` with `village_name`.  
-
 
 ```{r age_pyramid_strata, warning=FALSE}
 
 age_pyramid(study_data_cleaned, 
                  age_group, 
                  split_by = sex,
-                 stack_by = village_name,
+                 stack_by = health_district,
                  proportional = TRUE, 
                  pal = c("red", "blue")) + 
   labs(y = "Proportion", x = "Age group (years)") +    # change axis labels
@@ -1547,6 +1561,7 @@ age_pyramid(survey_design,
 
 
 ## Mortality
+
 ```{r CMR, warning = FALSE, message = FALSE}
 
 ## weighted counts and proportion of dead
@@ -1590,15 +1605,12 @@ design effect of `r #inline_text(death_props, variable = "died",  column = "add_
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
 
 
-
-Below, again, we replace `health_district` with `village_name`
-
 ```{r CMR_strata, warning = FALSE, message = FALSE}
 
 ## weighted counts and proportion of dead
 death_props_strat <- survey_design %>% 
-  select(died, village_name) %>%
-  tbl_svysummary(by = village_name) %>% 
+  select(died, health_district) %>%
+  tbl_svysummary(by = health_district) %>% 
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
@@ -1617,7 +1629,7 @@ death_props_strat <- survey_design %>%
 
 ## mortality per 10,000 persons/day with CI
 CMR_strat <- survey_design %>% 
-  group_by(village_name) %>% 
+  group_by(health_district) %>% 
   ## survey ratio used to account for observation time 
   summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
   ## if negative CIs set to zero
@@ -1629,49 +1641,47 @@ CMR_strat <- survey_design %>%
 
 ```
 
-We also edit the in-line code (dynamic text) so that any reference to `health_district` changes to `village_name`, and "district_a" and "district_b" are changed to "Town A", and "Town B".  
-
-
-<!-- In District A the weighted number of deaths was  -->
-<!-- `r inline_text(death_props_strat, variable = "died",  column = "stat_1")`,  -->
-<!-- which gives a weighted proportion of  -->
-<!-- `r #death_props_strat %>% pull("Town A ci")`, and a design effect of -->
-<!-- `r #death_props_strat %>% pull("district_a deff") %>% round(digits = 3)`.   -->
-<!-- In comparison, the weighted number of deaths in District B was -->
-<!-- `r inline_text(death_props_strat, variable = "died",  column = "stat_2")`,  -->
-<!-- the weighted proportion was  -->
-<!-- `r #death_props_strat %>% pull("district_b ci")` and the design effect was  -->
-<!-- `r #death_props_strat %>% pull("district_b deff") %>% round(digits = 3)`.   -->
-<!-- The crude mortality rate in District A was  -->
-<!-- `r CMR_strat %>% filter(village_name == "Town A") %>% pull(Mortality)` -->
-<!-- deaths per 10000 person-days and in District B was  -->
-<!-- `r CMR_strat %>% filter(village_name == "Town B") %>% pull(Mortality)` -->
 
 
 
+In District A the weighted number of deaths was
+`r inline_text(death_props_strat, variable = "died",  column = "stat_1")`,
+which gives a weighted proportion of
+`r #death_props_strat %>% pull("Town A ci")`, and a design effect of
+`r #death_props_strat %>% pull("district_a deff") %>% round(digits = 3)`.
+In comparison, the weighted number of deaths in District B was
+`r inline_text(death_props_strat, variable = "died",  column = "stat_2")`,
+the weighted proportion was
+`r #death_props_strat %>% pull("district_b ci")` and the design effect was
+`r #death_props_strat %>% pull("district_b deff") %>% round(digits = 3)`.
+The crude mortality rate in District A was
+`r CMR_strat %>% filter(health_district == "Town A") %>% pull(Mortality)`
+deaths per 10000 person-days and in District B was
+`r CMR_strat %>% filter(health_district == "Town B") %>% pull(Mortality)`
 
 
-# we can wait on this for the study protocol 
-
-# msf_dict_rename_helper()
-# remove district for the stratified code,
-# keep both as FALSE
-# run all the analyses by age and sex
-# (regular cluster survey)
-# still weighting it like a stratefied cluster, but it probably is just cluster.
-# in survey design chunk, just use stratefied cluster bc survey_design is what's used elsewhere
 
 
-# counting per household how many people are in the house
-# cl = dataset with populaton per cluster
-# interviewed is how many people were interviewed in the hourse
-# clusterx = tell which variables correspond
-# the creating variables telling which are in each
-# Include both hoursehold and cluster
+
+<!-- # msf_dict_rename_helper() -->
+<!-- # remove district for the stratified code, -->
+<!-- # keep both as FALSE -->
+<!-- # run all the analyses by age and sex -->
+<!-- # (regular cluster survey) -->
+<!-- # still weighting it like a stratefied cluster, but it probably is just cluster. -->
+<!-- # in survey design chunk, just use stratefied cluster bc survey_design is what's used elsewhere -->
 
 
-# Docker
-# build yourself a docker container and test locally
+<!-- # counting per household how many people are in the house -->
+<!-- # cl = dataset with populaton per cluster -->
+<!-- # interviewed is how many people were interviewed in the hourse -->
+<!-- # clusterx = tell which variables correspond -->
+<!-- # the creating variables telling which are in each -->
+<!-- # Include both hoursehold and cluster -->
+
+
+<!-- # Docker -->
+<!-- # build yourself a docker container and test locally -->
 
 
 
