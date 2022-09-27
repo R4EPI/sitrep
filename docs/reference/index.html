@@ -23,7 +23,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.9</span>
       </span>
     </div>
 
@@ -47,10 +47,10 @@
       <a href="../articles/Background.html">Origin Story</a>
     </li>
     <li>
-      <a href="../articles/Outbreaks%20Walkthrough.html">{sitrep} outbreaks template vignette</a>
+      <a href="../articles/Outbreaks_Walkthrough.html">{sitrep} outbreaks template vignette</a>
     </li>
     <li>
-      <a href="../articles/Surveys%20Walkthrough.html">{sitrep} surveys template vignette</a>
+      <a href="../articles/Surveys_Walkthrough.html">{sitrep} surveys template vignette</a>
     </li>
   </ul></li>
 <li>
@@ -97,47 +97,31 @@
       </tr><tr><td>
           <p><code><a href="download_kobo.html">download_kobo()</a></code> </p>
         </td>
-        <td><p>download_kobo
-
-Access kobo data dictionary</p></td>
+        <td><p>Access kobo data dictionary</p></td>
       </tr><tr><td>
           <p><code><a href="download_outbreak_linelist.html">download_outbreak_linelist()</a></code> </p>
         </td>
-        <td><p>download_outbreak_linelist
-
-Access AJS outbreak linelist</p></td>
+        <td><p>Access AJS outbreak linelist</p></td>
       </tr><tr><td>
           <p><code><a href="download_outbreak_pop.html">download_outbreak_pop()</a></code> </p>
         </td>
-        <td><p>download_outbreak_pop
-
-Access AJS outbreak population data</p></td>
+        <td><p>Access AJS outbreak population data</p></td>
       </tr><tr><td>
           <p><code><a href="download_shape_block.html">download_shape_block()</a></code> </p>
         </td>
-        <td><p>download_shape_block
-
-Access Am Timan blocks shapefile</p></td>
+        <td><p>Access Am Timan blocks shapefile</p></td>
       </tr><tr><td>
           <p><code><a href="download_shape_quartier.html">download_shape_quartier()</a></code> </p>
         </td>
-        <td><p>download_shape_quartier
-
-Access Am Timan quartier shapefile</p></td>
+        <td><p>Access Am Timan quartier shapefile</p></td>
       </tr><tr><td>
           <p><code><a href="download_survey.html">download_survey()</a></code> </p>
         </td>
-        <td><p>download_survey
-
-Access fake mortality survey data</p></td>
+        <td><p>Access fake mortality survey data</p></td>
       </tr><tr><td>
-          <p><code><a href="epikit-exports.html">add_weights_cluster</a></code> <code><a href="epikit-exports.html">add_weights_strata</a></code> <code><a href="epikit-exports.html">age_categories</a></code> <code><a href="epikit-exports.html">assert_positive_timespan</a></code> <code><a href="epikit-exports.html">attack_rate</a></code> <code><a href="epikit-exports.html">augment_redundant</a></code> <code><a href="epikit-exports.html">case_fatality_rate</a></code> <code><a href="epikit-exports.html">case_fatality_rate_df</a></code> <code><a href="epikit-exports.html">constrain_dates</a></code> <code><a href="epikit-exports.html">dots_to_charlist</a></code> <code><a href="epikit-exports.html">fac_from_num</a></code> <code><a href="epikit-exports.html">find_breaks</a></code> <code><a href="epikit-exports.html">find_date_cause</a></code> <code><a href="epikit-exports.html">find_end_date</a></code> <code><a href="epikit-exports.html">find_start_date</a></code> <code><a href="epikit-exports.html">fmt_ci</a></code> <code><a href="epikit-exports.html">fmt_ci_df</a></code> <code><a href="epikit-exports.html">fmt_count</a></code> <code><a href="epikit-exports.html">fmt_pci</a></code> <code><a href="epikit-exports.html">fmt_pci_df</a></code> <code><a href="epikit-exports.html">gen_polygon</a></code> <code><a href="epikit-exports.html">gen_population</a></code> <code><a href="epikit-exports.html">group_age_categories</a></code> <code><a href="epikit-exports.html">merge_ci_df</a></code> <code><a href="epikit-exports.html">merge_pci_df</a></code> <code><a href="epikit-exports.html">mortality_rate</a></code> <code><a href="epikit-exports.html">rename_redundant</a></code> <code><a href="epikit-exports.html">unite_ci</a></code> <code><a href="epikit-exports.html">zcurve</a></code> </p>
+          <p><code><a href="generic_download.html">generic_download()</a></code> </p>
         </td>
-        <td><p>Exported functions from epikit</p></td>
-      </tr><tr><td>
-          <p><code><a href="msf_dict.html">msf_dict</a></code> <code><a href="msf_dict.html">msf_dict_survey</a></code> <code><a href="msf_dict.html">msf_dict_rename_helper</a></code> <code><a href="msf_dict.html">gen_data</a></code> </p>
-        </td>
-        <td><p>Functions re-expored from epidict</p></td>
+        <td><p>Internal function (not exported - i.e. not userfacing) to reduce code duplication</p></td>
       </tr><tr><td>
           <p><code><a href="shape_block_internal.html">shape_block_internal</a></code> </p>
         </td>
@@ -146,10 +130,6 @@ Access fake mortality survey data</p></td>
           <p><code><a href="shape_quartier_internal.html">shape_quartier_internal</a></code> </p>
         </td>
         <td><p>Quartier shapefile for example outbreak Hepatatis E virus or Acute Jaundice Syndrome (AJS)</p></td>
-      </tr><tr><td>
-          <p><code><a href="tab_linelist.html">tab_survey</a></code> <code><a href="tab_linelist.html">tab_linelist</a></code> <code><a href="tab_linelist.html">tab_univariate</a></code> <code><a href="tab_linelist.html">data_frame_from_2x2</a></code> </p>
-        </td>
-        <td><p>Functions re-expored from epitabulate</p></td>
       </tr></tbody></table></div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -159,7 +139,7 @@ Access fake mortality survey data</p></td>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Dirk Schumacher, Zhian N. Kamvar, Alexander Spina, Kate Doyle, Chris Jarvis, Lukas Richter.</p>
+  <p></p><p>Developed by Alexander Spina, Zhian N. Kamvar, Dirk Schumacher, Kate Doyle, Chris Jarvis, Lukas Richter.</p>
 </div>
 
 <div class="pkgdown">

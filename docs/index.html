@@ -46,7 +46,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">sitrep</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.9</span>
       </span>
     </div>
 
@@ -72,10 +72,10 @@
       <a href="articles/Background.html">Origin Story</a>
     </li>
     <li>
-      <a href="articles/Outbreaks%20Walkthrough.html">{sitrep} outbreaks template vignette</a>
+      <a href="articles/Outbreaks_Walkthrough.html">{sitrep} outbreaks template vignette</a>
     </li>
     <li>
-      <a href="articles/Surveys%20Walkthrough.html">{sitrep} surveys template vignette</a>
+      <a href="articles/Surveys_Walkthrough.html">{sitrep} surveys template vignette</a>
     </li>
   </ul>
 </li>
@@ -116,7 +116,7 @@ A reference website for the functions in {sitrep} can be found at <a href="https
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>The <strong>{sitrep}</strong> package, is currently stored in a <a href="https://github.com/R4EPI/sitrep" class="external-link">GitHub repository</a>. Therefore, the procedure to install these packages have one extra step required.</p>
-<p>To install <strong>sitrep</strong> from GitHub you must first install the <strong>devtools</strong> package.</p>
+<p>To install <strong>sitrep</strong> from GitHub you must first install the <strong>remotes</strong> package.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"r4epi/sitrep"</span><span class="op">)</span></span></code></pre></div>
@@ -153,7 +153,7 @@ A reference website for the functions in {sitrep} can be found at <a href="https
 <span></span>
 <span><span class="co"># generate the measles outbreak template in the output directory</span></span>
 <span><span class="fu"><a href="reference/check_sitrep_templates.html">check_sitrep_templates</a></span><span class="op">(</span><span class="st">"measles_outbreak"</span>, path <span class="op">=</span> <span class="va">output_dir</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "C:\\Users\\alexf\\AppData\\Local\\Temp\\RtmpqMzhqG/sitrep_example"</span></span>
+<span><span class="co">#&gt; [1] "C:\\Users\\alexf\\AppData\\Local\\Temp\\Rtmpcv1H8d/sitrep_example"</span></span>
 <span></span>
 <span><span class="co"># view the contents</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">output_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -199,9 +199,9 @@ A reference website for the functions in {sitrep} can be found at <a href="https
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
+<li>Alexander Spina <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0001-8425-1867" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Zhian N. Kamvar <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-1458-7108" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 <li>Dirk Schumacher <br><small class="roles"> Author </small>  </li>
-<li>Zhian N. Kamvar <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-1458-7108" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Alexander Spina <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0001-8425-1867" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 <li>Kate Doyle <br><small class="roles"> Author </small>  </li>
 <li>Chris Jarvis <br><small class="roles"> Author </small>  </li>
 <li>Lukas Richter <br><small class="roles"> Author </small>  </li>
@@ -225,7 +225,7 @@ A reference website for the functions in {sitrep} can be found at <a href="https
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Dirk Schumacher, Zhian N. Kamvar, Alexander Spina, Kate Doyle, Chris Jarvis, Lukas Richter.</p>
+<p>Developed by Alexander Spina, Zhian N. Kamvar, Dirk Schumacher, Kate Doyle, Chris Jarvis, Lukas Richter.</p>
 </div>
 
 <div class="pkgdown">
