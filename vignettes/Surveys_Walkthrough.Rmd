@@ -1206,6 +1206,448 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 
+In the next chunk, we use only the "stratified cluster" code:  
+
+* We change `village_name` to `cluster_number_uid`, which is our unique cluster ID column.  
+* We change `health_district` to `village_name`, as this is our strata
+
+
+```{r survey_design}
+
+## simple random ---------------------------------------------------------------
+# 
+# survey_design_simple <- study_data_cleaned %>% 
+#   as_survey_design(ids = 1, # 1 for no cluster ids 
+#                    weights = NULL, # No weight added
+#                    strata = NULL # sampling was simple (no strata)
+#                   )
+# 
+# ## stratified ------------------------------------------------------------------
+# 
+# survey_design_strata <- study_data_cleaned %>% 
+#   as_survey_design(ids = 1, # 1 for no cluster ids 
+#                    weights = surv_weight_strata, # weight variable created above 
+#                    strata = health_district # sampling was stratified by district
+#                   )
+# 
+# ## cluster ---------------------------------------------------------------------
+# 
+# survey_design_cluster <- study_data_cleaned %>% 
+#   as_survey_design(ids = village_name, # cluster ids 
+#                    weights = surv_weight_cluster, # weight variable created above 
+#                    strata = NULL # sampling was simple (no strata)
+#                   )
+
+## stratified cluster ----------------------------------------------------------
+
+survey_design <- study_data_cleaned %>% 
+  as_survey_design(ids = cluster_number_uid, # cluster ids 
+                   weights = surv_weight_cluster_strata, # weight variable created above 
+                   strata = village_name # sampling was stratified by district
+                  )
+
+```
+
+
+
+
+
+
+
+
+
+Run these to get the number of distinct
+Again, adapt `cluster_number` to `cluster_number_uid`.  
+
+
+```{r inclusion_counts}
+
+## get counts of number of clusters 
+num_clus <- study_data_cleaned %>%
+  ## trim data to unique clusters
+  distinct(cluster_number_uid) %>% 
+  ## get number of rows (count how many unique)
+  nrow()
+
+## get counts of number households 
+num_hh <- study_data_cleaned %>% 
+  ## get unique houses by cluster
+  distinct(cluster_number, id) %>% 
+  ## get number of rounds (count how many unique)
+  nrow()
+```
+
+Print to view
+
+```{r}
+num_clus
+
+num_hh
+```
+The dynamic text in the report will read as:  
+
+
+
+We included `r num_hh` households across `r num_clus` clusters in this survey analysis. 
+
+
+Among the `r nrow(dropped)` individuals excluded from the survey analysis, 
+`r fmt_count(dropped, consent)` individuals were excluded due to missing 
+start- or end-dates and `r fmt_count(dropped, !consent)` were excluded 
+for lack of consent. The reasons for no consent are shown below. 
+
+In our dataset, the reason for refusal was not collected, so the next section is not relevant.  
+
+
+
+```{r cluster_hh_size}
+
+## get counts of the number of households per cluster
+clustersize <- study_data_cleaned %>% 
+  ## trim data to only unique households within each cluster
+  distinct(cluster_number_uid, id) %>%
+  ## count the number of households within each cluster
+  count(cluster_number_uid) %>% 
+  pull(n)
+
+## get the median number of households per cluster
+clustermed <- median(clustersize)
+
+## get the min and max number of households per cluster
+## paste these together seperated by a dash 
+clusterrange <- str_c(range(clustersize), collapse = "--")
+
+## get counts of children per household 
+## do this by cluster as household IDs are only unique within clusters
+hhsize <- study_data_cleaned %>% 
+  count(cluster_number_uid, id) %>%
+  pull(n) 
+
+## get median number of children per household
+hhmed <- median(hhsize)
+## get the min and max number of children per household
+## paste these together seperated by a dash 
+hhrange <- str_c(range(hhsize), collapse = "--")
+
+## get standard deviation 
+hhsd <- round(sd(hhsize), digits = 1)
+```
+
+
+The median number of households per cluster was
+`r clustermed`, with a range of `r clusterrange`. The median number of children
+per household was `r hhmed` (range: `r hhrange`, standard deviation: `r hhsd`). 
+
+
+## Demographic information
+
+```{r descriptive_sampling_bias, warning = FALSE}
+## counts and props of the study population
+ag <- tabyl(study_data_cleaned, age_group, show_na = FALSE) %>% 
+  mutate(n_total = sum(n), 
+         age_group = fct_inorder(age_group))
+
+
+## counts and props of the source population
+propcount <- population_data_age %>% 
+  group_by(age_group) %>%
+    tally(population) %>%
+    mutate(percent = n / sum(n))
+
+## bind together the columns of two tables, group by age, and perform a 
+## binomial test to see if n/total is significantly different from population
+## proportion.
+  ## suffix here adds to text to the end of columns in each of the two datasets
+left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
+  group_by(age_group) %>%
+
+  ## broom::tidy(binom.test()) makes a data frame out of the binomial test and
+  ## will add the variables p.value, parameter, conf.low, conf.high, method, and
+  ## alternative. We will only use p.value here. You can include other
+  ## columns if you want to report confidence intervals
+  mutate(binom = list(broom::tidy(binom.test(n, n_total, percent_pop)))) %>%
+  unnest(cols = c(binom)) %>% # important for expanding the binom.test data frame
+  mutate(
+    across(.cols = contains("percent"), 
+            .fns = ~.x * 100)) %>%
+
+  ## Adjusting the p-values to correct for false positives 
+  ## (because testing multiple age groups). This will only make 
+  ## a difference if you have many age categories
+  mutate(p.value = p.adjust(p.value, method = "holm")) %>%
+                      
+  ## Only show p-values over 0.001 (those under report as <0.001)
+  mutate(p.value = ifelse(p.value < 0.001, "<0.001", as.character(round(p.value, 3)))) %>%
+
+  ## rename the columns appropriately
+  select(
+    "Age group" = age_group,
+    "Study population (n)" = n,
+    "Study population (%)" = percent,
+    "Source population (n)" = n_pop,
+    "Source population (%)" = percent_pop,
+    "P-value" = p.value
+  ) %>%
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() %>% 
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") %>% 
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1)
+```
+
+
+
+
+```{r median_age_sex_ratios}
+## compute the median age 
+medage <- median(study_data_cleaned$age_years)
+## paste the lower and upper quartile together
+iqr <- str_c(  # basically copy paste together the following
+  ## calculate the 25% and 75% of distribution, with missings removed
+  quantile(     
+    study_data_cleaned$age_years, 
+    probs = c(0.25, 0.75), 
+    na.rm = TRUE), 
+  ## between lower and upper place an en-dash
+  collapse = "--")
+
+
+## compute overall sex ratio 
+sex_ratio <- study_data_cleaned %>% 
+  count(sex) %>% 
+  pivot_wider(names_from = sex, values_from = n) %>%
+  mutate(ratio = round(Male/Female, digits = 1)) %>%
+  pull(ratio)
+
+## compute sex ratios by age group 
+sex_ratio_age <- study_data_cleaned %>% 
+  count(age_group, sex) %>% 
+  pivot_wider(names_from = sex, values_from = n) %>%
+  mutate(ratio = round(Male/Female, digits = 1)) %>%
+  select(age_group, ratio)
+
+## sort table by ascending ratio then select the lowest (first)
+min_sex_ratio_age <- arrange(sex_ratio_age, ratio) %>% slice(1)
+```
+
+
+Pregnancy was not collected in this survey, so the next section is not relevant and should be commented out. Any of the dynamic text that refers to pregnancy should also be removed.  
+
+The paragraph will now look like this:  
+
+
+Among the `r nrow(study_data_cleaned)` surveyed individuals, there were 
+`r fmt_count(study_data_cleaned, sex == "Female")` females and 
+`r fmt_count(study_data_cleaned, sex == "Male")` males (unweighted). The male to
+female ratio was `r sex_ratio` in the surveyed population. The lowest male to
+female ratio was `r min_sex_ratio_age$ratio` in the 
+`r min_sex_ratio_age$age_group` year age group.
+The median age of surveyed individuals was `r medage` years (Q1-Q3 of `r iqr`
+years). Children under five years of age made up 
+`r fmt_count(study_data_cleaned, age_years < 5)`of the surveyed individuals.
+The highest number of surveyed individuals (unweighted) were in the 
+`r table(study_data_cleaned$age_group) %>% which.max() %>% names()`
+year age group.
+
+
+```{r describe_by_age_group_and_sex}
+
+# get cross tabulated counts and proportions
+study_data_cleaned %>% 
+  tbl_cross( 
+    row = age_group, 
+    col = sex, 
+    percent = "cell") %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+```
+
+
+
+
+
+```{r describe_by_age_category_and_sex}
+
+# get cross tabulated counts and proportions
+study_data_cleaned %>% 
+  tbl_cross( 
+    row = age_category, 
+    col = sex, 
+    percent = "cell") %>% 
+  ## make variable names bold 
+  bold_labels() %>% 
+  # change to flextable format
+  as_flex_table() %>%
+  # make header text bold (using {flextable})
+  bold(part = "header") %>% 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+```
+
+
+
+
+
+```{r age_pyramid, warning=FALSE}
+
+age_pyramid(study_data_cleaned, 
+            age_group, 
+            split_by = sex, 
+            proportional = TRUE) + 
+  labs(y = "Proportion", x = "Age group (years)") +    # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+
+
+
+Replace `health_district` with `village_name`.  
+
+
+```{r age_pyramid_strata, warning=FALSE}
+
+age_pyramid(study_data_cleaned, 
+                 age_group, 
+                 split_by = sex,
+                 stack_by = village_name,
+                 proportional = TRUE, 
+                 pal = c("red", "blue")) + 
+  labs(y = "Proportion", x = "Age group (years)") +    # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+
+```{r age_pyramid_survey, warning=FALSE}
+
+age_pyramid(survey_design,
+                 age_group,
+                 split_by = sex, 
+                 proportion = TRUE) +
+  labs(y = "Proportion (weighted)", x = "Age group (years)") + # change axis labels
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+
+## Mortality
+```{r CMR, warning = FALSE, message = FALSE}
+
+## weighted counts and proportion of dead
+death_props <- survey_design %>% 
+  select(died) %>% 
+  tbl_svysummary() %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+  
+  ## add in deff 
+  
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_0 ~ "**Weighted Count (n)**"
+    )
+    )
+
+## mortality per 10,000 persons/day with CI
+CMR <- survey_design %>% 
+  ## survey ratio used to account for observation time 
+  summarize(mortality = survey_ratio(died * 10000, obstime, vartype = "ci")) %>% 
+  ## if negative CIs set to zero
+  mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
+  ## merge confidence intervals for mortality in to one column (do not change to percent)
+  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE) %>%
+  pull("Mortality")
+```
+
+And the paragraph will read as:  
+
+
+During the recall period the weighted number and proportion of deaths in the 
+population was `r inline_text(death_props, variable = "died",  column = "stat_0")`,
+with a weighted confidence interval of
+`r #inline_text(death_props, variable = "died",  column = "add_stat_1")`, and a 
+design effect of `r #inline_text(death_props, variable = "died",  column = "add_stat_2")`.
+This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
+
+
+
+Below, again, we replace `health_district` with `village_name`
+
+```{r CMR_strata, warning = FALSE, message = FALSE}
+
+## weighted counts and proportion of dead
+death_props_strat <- survey_design %>% 
+  select(died, village_name) %>%
+  tbl_svysummary(by = village_name) %>% 
+  ## add the weighted total
+  add_n() %>%   
+  ## add in confidence intervals
+
+  ## add in deff 
+
+  ## modify the column headers
+  modify_header(
+    list(
+      n ~ "**Weighted total (N)**",
+      stat_1 ~ "**District A Weighted Count (n)** \n N={n}", 
+      stat_2 ~ "**District B Weighted Count (n)** \n N={n}" 
+    )
+    )
+
+
+## mortality per 10,000 persons/day with CI
+CMR_strat <- survey_design %>% 
+  group_by(village_name) %>% 
+  ## survey ratio used to account for observation time 
+  summarize(mortality = survey_ratio(as.numeric(died) * 10000, obstime, vartype = "ci")) %>% 
+  ## if negative CIs set to zero
+  mutate(mortality_low = if_else(mortality_low < 0, 0, mortality_low), 
+         mortality_upp = if_else(mortality_upp < 0, 0, mortality_upp)) %>% 
+  ## merge confidence intervals for mortality in to one column (do not change to percent)
+  unite_ci("Mortality", starts_with("mortality"), m100 = FALSE, percent = FALSE, digits = 1)
+
+
+```
+
+We also edit the in-line code (dynamic text) so that any reference to `health_district` changes to `village_name`, and "district_a" and "district_b" are changed to "Town A", and "Town B".  
+
+
+<!-- In District A the weighted number of deaths was  -->
+<!-- `r inline_text(death_props_strat, variable = "died",  column = "stat_1")`,  -->
+<!-- which gives a weighted proportion of  -->
+<!-- `r #death_props_strat %>% pull("Town A ci")`, and a design effect of -->
+<!-- `r #death_props_strat %>% pull("district_a deff") %>% round(digits = 3)`.   -->
+<!-- In comparison, the weighted number of deaths in District B was -->
+<!-- `r inline_text(death_props_strat, variable = "died",  column = "stat_2")`,  -->
+<!-- the weighted proportion was  -->
+<!-- `r #death_props_strat %>% pull("district_b ci")` and the design effect was  -->
+<!-- `r #death_props_strat %>% pull("district_b deff") %>% round(digits = 3)`.   -->
+<!-- The crude mortality rate in District A was  -->
+<!-- `r CMR_strat %>% filter(village_name == "Town A") %>% pull(Mortality)` -->
+<!-- deaths per 10000 person-days and in District B was  -->
+<!-- `r CMR_strat %>% filter(village_name == "Town B") %>% pull(Mortality)` -->
+
+
 
 
 
