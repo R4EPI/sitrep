@@ -6,4 +6,3 @@
 *.swp
 README.html
 inst/rmarkdown/templates/*/skeleton/*.xlsx
-docs
