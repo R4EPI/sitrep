@@ -16,9 +16,6 @@
     <loc>https://r4epi.github.io/sitrep/articles/Outbreaks_Walkthrough.html</loc>
   </url>
   <url>
-    <loc>https://r4epi.github.io/sitrep/articles/Surveys Walkthrough.html</loc>
-  </url>
-  <url>
     <loc>https://r4epi.github.io/sitrep/articles/Surveys_Walkthrough.html</loc>
   </url>
   <url>
@@ -58,13 +55,7 @@
     <loc>https://r4epi.github.io/sitrep/reference/age_categories.html</loc>
   </url>
   <url>
-    <loc>https://r4epi.github.io/sitrep/reference/AJS_linelist.html</loc>
-  </url>
-  <url>
     <loc>https://r4epi.github.io/sitrep/reference/AJS_linelist_internal.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/AJS_pop.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/AJS_pop_internal.html</loc>
@@ -77,9 +68,6 @@
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/available_sitrep_templates.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/block_shape.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/check_sitrep_templates.html</loc>
@@ -149,9 +137,6 @@
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/plot_age_pyramid.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/quartier_shape.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/rename_redundant.html</loc>
