@@ -1,7 +1,7 @@
 Type: Package
 Package: sitrep
 Title: Report templates and helper functions for applied epidemiology
-Version: 0.2.1
+Version: 0.2.2
 Authors@R: 
     c(person(given = "Alexander",
              family = "Spina",

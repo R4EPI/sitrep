@@ -1,3 +1,16 @@
+# sitrep 0.2.2 
+
+* hopefully fixing pkgodwn sites
+
+
+# sitrep 0.2.1 
+
+* continuing to fail with pkgdown sites 
+
+# sitrep 0.2.0
+
+* failing to update pkgdown sites
+
 # sitrep 0.1.9 
 
 * Update re-exports (@aspina #304)
