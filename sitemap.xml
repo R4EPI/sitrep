@@ -22,7 +22,10 @@
     <loc>https://r4epi.github.io/sitrep/articles/Background.html</loc>
   </url>
   <url>
-    <loc>https://r4epi.github.io/sitrep/articles/Outbreaks Walkthrough.html</loc>
+    <loc>https://r4epi.github.io/sitrep/articles/Outbreaks_Walkthrough.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/articles/Surveys_Walkthrough.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/articles/index.html</loc>
@@ -37,10 +40,10 @@
     <loc>https://r4epi.github.io/sitrep/news/index.html</loc>
   </url>
   <url>
-    <loc>https://r4epi.github.io/sitrep/reference/AJS_linelist.html</loc>
+    <loc>https://r4epi.github.io/sitrep/reference/AJS_linelist_internal.html</loc>
   </url>
   <url>
-    <loc>https://r4epi.github.io/sitrep/reference/AJS_pop.html</loc>
+    <loc>https://r4epi.github.io/sitrep/reference/AJS_pop_internal.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/add_ar.html</loc>
@@ -55,13 +58,31 @@
     <loc>https://r4epi.github.io/sitrep/reference/available_sitrep_templates.html</loc>
   </url>
   <url>
-    <loc>https://r4epi.github.io/sitrep/reference/block_shape.html</loc>
-  </url>
-  <url>
     <loc>https://r4epi.github.io/sitrep/reference/check_sitrep_templates.html</loc>
   </url>
   <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_kobo.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_outbreak_linelist.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_outbreak_pop.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_shape_block.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_shape_quartier.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/download_survey.html</loc>
+  </url>
+  <url>
     <loc>https://r4epi.github.io/sitrep/reference/epikit-exports.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/generic_download.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/gt_mh_odds.html</loc>
@@ -76,7 +97,10 @@
     <loc>https://r4epi.github.io/sitrep/reference/msf_dict.html</loc>
   </url>
   <url>
-    <loc>https://r4epi.github.io/sitrep/reference/quartier_shape.html</loc>
+    <loc>https://r4epi.github.io/sitrep/reference/shape_block_internal.html</loc>
+  </url>
+  <url>
+    <loc>https://r4epi.github.io/sitrep/reference/shape_quartier_internal.html</loc>
   </url>
   <url>
     <loc>https://r4epi.github.io/sitrep/reference/sitrep-package.html</loc>
