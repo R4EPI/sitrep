@@ -167,7 +167,8 @@ pacman::p_load(
   sf,              # encode spatial vector data
   ggspatial,       # plot maps
   purrr,           # iterate over data
-  ggrepel          # text on maps
+  ggrepel,         # text on maps
+  DT               # interactive tables for this walkthrough
 )
 ```
 

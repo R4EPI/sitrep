@@ -297,7 +297,8 @@ pacman::p_load(
   labelled,    # add labels to variables
   matchmaker,  # recode datasets with dictionaries
   lubridate,   # working with dates
-  parsedate    # guessing dates
+  parsedate,   # guessing dates
+  DT           # interactive tables for this walkthrough
   )
 ```
 
