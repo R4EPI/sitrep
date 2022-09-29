@@ -166,7 +166,8 @@ pacman::p_load(
   tsibble,         # epiweeks
   sf,              # encode spatial vector data
   ggspatial,       # plot maps
-  purrr            # iterate over data
+  purrr,           # iterate over data
+  ggrepel          # text on maps
 )
 ```
 
