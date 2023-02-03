@@ -8,8 +8,7 @@
 #'
 #' @seealso [epikit::add_weights_cluster()], [epikit::add_weights_strata()],
 #' [epikit::age_categories()], [epikit::assert_positive_timespan()],
-#' [epikit::attack_rate()], [epikit::augment_redundant()],
-#' [epikit::case_fatality_rate()], [epikit::case_fatality_rate_df()],
+#' [epikit::augment_redundant()],
 #' [epikit::constrain_dates()], [epikit::dots_to_charlist()],
 #' [epikit::fac_from_num()], [epikit::find_breaks()],
 #' [epikit::find_date_cause()], [epikit::find_end_date()],
@@ -17,7 +16,7 @@
 #' [epikit::fmt_ci_df()], [epikit::fmt_count()], [epikit::fmt_pci()],
 #' [epikit::fmt_pci_df()], [epikit::group_age_categories()],
 #' [epikit::merge_ci_df()], [epikit::merge_pci_df()],
-#' [epikit::mortality_rate()],[epikit::rename_redundant()],
+#' [epikit::rename_redundant()],
 #' [epikit::unite_ci()], [epikit::zcurve()]
 #'
 #' @name add_weights_cluster
@@ -44,29 +43,13 @@ epikit::age_categories
 #' @export
 epikit::assert_positive_timespan
 
-#' @name attack_rate
-#' @importFrom epikit attack_rate
-#' @rdname epikit-exports
-#' @export
-epikit::attack_rate
+
 
 #' @name augment_redundant
 #' @importFrom epikit augment_redundant
 #' @rdname epikit-exports
 #' @export
 epikit::augment_redundant
-
-#' @name case_fatality_rate
-#' @importFrom epikit case_fatality_rate
-#' @rdname epikit-exports
-#' @export
-epikit::case_fatality_rate
-
-#' @name case_fatality_rate_df
-#' @importFrom epikit case_fatality_rate_df
-#' @rdname epikit-exports
-#' @export
-epikit::case_fatality_rate_df
 
 #' @name constrain_dates
 #' @importFrom epikit constrain_dates
@@ -169,12 +152,6 @@ epikit::merge_ci_df
 #' @rdname epikit-exports
 #' @export
 epikit::merge_pci_df
-
-#' @name mortality_rate
-#' @importFrom epikit mortality_rate
-#' @rdname epikit-exports
-#' @export
-epikit::mortality_rate
 
 #' @name rename_redundant
 #' @importFrom epikit rename_redundant

@@ -6,10 +6,7 @@
 \alias{add_weights_strata}
 \alias{age_categories}
 \alias{assert_positive_timespan}
-\alias{attack_rate}
 \alias{augment_redundant}
-\alias{case_fatality_rate}
-\alias{case_fatality_rate_df}
 \alias{constrain_dates}
 \alias{dots_to_charlist}
 \alias{fac_from_num}
@@ -27,7 +24,6 @@
 \alias{group_age_categories}
 \alias{merge_ci_df}
 \alias{merge_pci_df}
-\alias{mortality_rate}
 \alias{rename_redundant}
 \alias{unite_ci}
 \alias{zcurve}
@@ -35,8 +31,7 @@
 \seealso{
 \code{\link[epikit:add_weights_cluster]{epikit::add_weights_cluster()}}, \code{\link[epikit:add_weights_strata]{epikit::add_weights_strata()}},
 \code{\link[epikit:age_categories]{epikit::age_categories()}}, \code{\link[epikit:find_date_cause]{epikit::assert_positive_timespan()}},
-\code{\link[epikit:attack_rate]{epikit::attack_rate()}}, \code{\link[epikit:rename_redundant]{epikit::augment_redundant()}},
-\code{\link[epikit:attack_rate]{epikit::case_fatality_rate()}}, \code{\link[epikit:attack_rate]{epikit::case_fatality_rate_df()}},
+\code{\link[epikit:rename_redundant]{epikit::augment_redundant()}},
 \code{\link[epikit:find_date_cause]{epikit::constrain_dates()}}, \code{\link[epikit:dots_to_charlist]{epikit::dots_to_charlist()}},
 \code{\link[epikit:fac_from_num]{epikit::fac_from_num()}}, \code{\link[epikit:find_breaks]{epikit::find_breaks()}},
 \code{\link[epikit:find_date_cause]{epikit::find_date_cause()}}, \code{\link[epikit:find_date_cause]{epikit::find_end_date()}},
@@ -44,7 +39,7 @@
 \code{\link[epikit:fmt_ci]{epikit::fmt_ci_df()}}, \code{\link[epikit:fmt_count]{epikit::fmt_count()}}, \code{\link[epikit:fmt_ci]{epikit::fmt_pci()}},
 \code{\link[epikit:fmt_ci]{epikit::fmt_pci_df()}}, \code{\link[epikit:age_categories]{epikit::group_age_categories()}},
 \code{\link[epikit:unite_ci]{epikit::merge_ci_df()}}, \code{\link[epikit:unite_ci]{epikit::merge_pci_df()}},
-\code{\link[epikit:attack_rate]{epikit::mortality_rate()}},\code{\link[epikit:rename_redundant]{epikit::rename_redundant()}},
+\code{\link[epikit:rename_redundant]{epikit::rename_redundant()}},
 \code{\link[epikit:unite_ci]{epikit::unite_ci()}}, \code{\link[epikit:zcurve]{epikit::zcurve()}}
 }
 \keyword{internal}
@@ -53,6 +48,6 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{epikit}{\code{\link[epikit]{add_weights_cluster}}, \code{\link[epikit]{add_weights_strata}}, \code{\link[epikit]{age_categories}}, \code{\link[epikit:find_date_cause]{assert_positive_timespan}}, \code{\link[epikit]{attack_rate}}, \code{\link[epikit:rename_redundant]{augment_redundant}}, \code{\link[epikit:attack_rate]{case_fatality_rate}}, \code{\link[epikit:attack_rate]{case_fatality_rate_df}}, \code{\link[epikit:find_date_cause]{constrain_dates}}, \code{\link[epikit]{dots_to_charlist}}, \code{\link[epikit]{fac_from_num}}, \code{\link[epikit]{find_breaks}}, \code{\link[epikit]{find_date_cause}}, \code{\link[epikit:find_date_cause]{find_end_date}}, \code{\link[epikit:find_date_cause]{find_start_date}}, \code{\link[epikit]{fmt_ci}}, \code{\link[epikit:fmt_ci]{fmt_ci_df}}, \code{\link[epikit]{fmt_count}}, \code{\link[epikit:fmt_ci]{fmt_pci}}, \code{\link[epikit:fmt_ci]{fmt_pci_df}}, \code{\link[epikit]{gen_polygon}}, \code{\link[epikit]{gen_population}}, \code{\link[epikit:age_categories]{group_age_categories}}, \code{\link[epikit:unite_ci]{merge_ci_df}}, \code{\link[epikit:unite_ci]{merge_pci_df}}, \code{\link[epikit:attack_rate]{mortality_rate}}, \code{\link[epikit]{rename_redundant}}, \code{\link[epikit]{unite_ci}}, \code{\link[epikit]{zcurve}}}
+  \item{epikit}{\code{\link[epikit]{add_weights_cluster}}, \code{\link[epikit]{add_weights_strata}}, \code{\link[epikit]{age_categories}}, \code{\link[epikit:find_date_cause]{assert_positive_timespan}}, \code{\link[epikit:rename_redundant]{augment_redundant}}, \code{\link[epikit:find_date_cause]{constrain_dates}}, \code{\link[epikit]{dots_to_charlist}}, \code{\link[epikit]{fac_from_num}}, \code{\link[epikit]{find_breaks}}, \code{\link[epikit]{find_date_cause}}, \code{\link[epikit:find_date_cause]{find_end_date}}, \code{\link[epikit:find_date_cause]{find_start_date}}, \code{\link[epikit]{fmt_ci}}, \code{\link[epikit:fmt_ci]{fmt_ci_df}}, \code{\link[epikit]{fmt_count}}, \code{\link[epikit:fmt_ci]{fmt_pci}}, \code{\link[epikit:fmt_ci]{fmt_pci_df}}, \code{\link[epikit]{gen_polygon}}, \code{\link[epikit]{gen_population}}, \code{\link[epikit:age_categories]{group_age_categories}}, \code{\link[epikit:unite_ci]{merge_ci_df}}, \code{\link[epikit:unite_ci]{merge_pci_df}}, \code{\link[epikit]{rename_redundant}}, \code{\link[epikit]{unite_ci}}, \code{\link[epikit]{zcurve}}}
 }}
 
