@@ -6,13 +6,16 @@
 #' Functions re-exported from {epitabulate}
 #'
 #' @seealso \pkg{epitabulate} functions:
-#'
-#'  - [epitabulate::add_ar()]: a {gtsummary} wrapper for epikit::attack_rate()
+#'  - [epitabulate::attack_rate()],
+#'  - [epitabulate::case_fatality_rate()]
+#'  - [epitabulate::case_fatality_rate_df()],
+#'  - [epitabulate::mortality_rate()]
+#'  - [epitabulate::add_ar()]: a {gtsummary} wrapper for epitabulate::attack_rate()
 #'  - [epitabulate::add_cfr()]: a {gtsummary} wrapper for
-#'    epikit::case_fatality_rate()
+#'    epitabulate::case_fatality_rate()
 #'  - [epitabulate::add_crosstabs()]: a {gtsummary} wrapper to add counts to
 #'    a gtsummary::tbl_uvregression()
-#'  - [epitabulate::add_mr()]: a {gtsummary} wrapper for epikit::mortality_rate()
+#'  - [epitabulate::add_mr()]: a {gtsummary} wrapper for epitabulate::mortality_rate()
 #'  - [epitabulate::gt_mh_odds()]: a {gtsummary} wrapper for stratified
 #'    univariate regression and mantel-haenszel estimates
 #'  - [epitabulate::gt_remove_stat()]: a {gtsummary} wrapper to remove variables
@@ -24,7 +27,32 @@
 #'  - [epitabulate::data_frame_from_2x2()]: convert a 2x2(x2) table to a data
 #'    frame clearly labelling the (un)exposed (non)case combinations and their
 #'    totals.
-#'
+
+
+#' @name attack_rate
+#' @importFrom epitabulate attack_rate
+#' @rdname eptabulate-exports
+#' @export
+epitabulate::attack_rate
+
+#' @name case_fatality_rate
+#' @importFrom epitabulate case_fatality_rate
+#' @rdname epitabulate-exports
+#' @export
+epitabulate::case_fatality_rate
+
+#' @name case_fatality_rate_df
+#' @importFrom epitabulate case_fatality_rate_df
+#' @rdname epitabulate-exports
+#' @export
+epitabulate::case_fatality_rate_df
+
+#' @name mortality_rate
+#' @importFrom epitabulate mortality_rate
+#' @rdname epitabulate-exports
+#' @export
+epitabulate::mortality_rate
+
 #' @name add_ar
 #' @importFrom epitabulate add_ar
 #' @rdname add_ar
