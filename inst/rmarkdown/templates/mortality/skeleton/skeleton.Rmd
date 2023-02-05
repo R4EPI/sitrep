@@ -1649,13 +1649,13 @@ Note the possibility of negative confidence intervals if there are low counts
 ## weighted counts and proportion of dead
 death_props <- survey_design %>% 
   select(died) %>% 
-  tbl_svysummary() %>% 
+  ## note add_ci() does not allow logical variables 
+  ## type "categorical" changes to a character variable
+  tbl_svysummary(type = died ~ "categorical") %>% 
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1678,10 +1678,9 @@ CMR <- survey_design %>%
 
 
 During the recall period the weighted number and proportion of deaths in the 
-population was `r inline_text(death_props, variable = "died",  column = "stat_0")`,
+population was `r inline_text(death_props, variable = "died",  column = "stat_0", level = "TRUE")`,
 with a weighted confidence interval of
-`r #inline_text(death_props, variable = "died",  column = "add_stat_1")`, and a 
-design effect of `r #inline_text(death_props, variable = "died",  column = "add_stat_2")`.
+`r inline_text(death_props, variable = "died",  column = "ci_stat_0", level = "TRUE")`.
 This is a crude mortality rate of `r CMR` deaths per 10000 person-days. 
 
 
@@ -1705,13 +1704,12 @@ Note the possibility of negative confidence intervals if there are low counts
 ## weighted counts and proportion of dead
 death_props_strat <- survey_design %>% 
   select(died, health_district) %>%
-  tbl_svysummary(by = health_district) %>% 
+  tbl_svysummary(type = died ~ "categorical", 
+                 by = health_district) %>% 
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-
-  ## add in deff 
-
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1737,16 +1735,14 @@ CMR_strat <- survey_design %>%
 ```
 
 
-In District A the weighted number of deaths was 
-`r inline_text(death_props_strat, variable = "died",  column = "stat_1")`, 
-which gives a weighted proportion of 
-`r #death_props_strat %>% pull("district_a ci")`, and a design effect of
-`r #death_props_strat %>% pull("district_a deff") %>% round(digits = 3)`.  
-In comparison, the weighted number of deaths in District B was
-`r inline_text(death_props_strat, variable = "died",  column = "stat_2")`, 
-the weighted proportion was 
-`r #death_props_strat %>% pull("district_b ci")` and the design effect was 
-`r #death_props_strat %>% pull("district_b deff") %>% round(digits = 3)`.  
+In District A the weighted number and proportion of deaths was
+`r inline_text(death_props_strat, variable = "died", level = "TRUE", column = "stat_1")`, 
+with a weighted confidence interval of
+`r inline_text(death_props_strat, variable = "died", level = "TRUE", column = "ci_stat_1")`.  
+In comparison, the weighted number and proportion of deaths in District B was
+`r inline_text(death_props_strat, variable = "died", level = "TRUE", column = "stat_2")`, 
+the weighted confidence interval was 
+`r inline_text(death_props_strat, variable = "died", level = "TRUE", column = "ci_stat_2")`.  
 The crude mortality rate in District A was 
 `r CMR_strat %>% filter(health_district == "district_a") %>% pull(Mortality)`
 deaths per 10000 person-days and in District B was 
@@ -1861,8 +1857,9 @@ cause_of_death_prop <- survey_design %>%
   # proportions only among those who died
   filter(died) %>% 
   select(cause) %>% 
-  tbl_svysummary()
+  tbl_svysummary() %>% 
   ## add ci 
+  add_ci()
 
 ## weighted cause-specific mortality ratios
 cause_of_death_mort <- survey_design %>% 
@@ -1893,7 +1890,7 @@ cause_of_death_prop %>%
   ## modify the column headers
   modify_header(
     list(
-      stat_0 ~ "**Deaths \n N={round(N, digits = 0)}**", 
+      stat_0 ~ "Deaths \n N={round(N, digits = 0)}", 
       mortality ~ "**Mortality per 10,000 person/days (95% CI)**" 
     )
     ) %>% 
@@ -1929,7 +1926,7 @@ survey_design %>%
   select(cause, health_district) %>%
   tbl_svysummary(by = health_district) %>%   
   ## add in confidence intervals
-
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -2042,7 +2039,7 @@ survey_design %>%
   select(cause, age_group) %>%
   tbl_svysummary(by = age_group) %>%   
   ## add in confidence intervals
-
+  # add_ci() %>%
   ## modify the column headers
   modify_spanning_header(
     all_stat_cols() ~ "**Age group (years)**"
@@ -2079,7 +2076,7 @@ survey_design %>%
   select(cause, sex) %>%
   tbl_svysummary(by = sex) %>% 
   ## add in confidence intervals
-  
+  add_ci() %>% 
   ## make variable names bold 
   bold_labels() %>% 
   # change to flextable format
@@ -2313,7 +2310,7 @@ survey_design %>%
   select(cause_illness) %>%
   tbl_svysummary() %>% 
   ## add in confidence intervals
-
+  add_ci() %>% 
   ## make variable names bold 
   bold_labels() %>% 
   # change to flextable format
@@ -2344,7 +2341,7 @@ survey_design %>%
   select(cause_illness, age_group) %>%
   tbl_svysummary(by = age_group) %>%   
   ## add in confidence intervals
-
+  add_ci() %>% 
   ## make variable names bold 
   bold_labels() %>% 
   # change to flextable format
@@ -2375,7 +2372,7 @@ survey_design %>%
   select(cause_illness, sex) %>%
   tbl_svysummary(by = sex) %>%   
   ## add in confidence intervals
-  
+  add_ci() %>% 
   ## make variable names bold 
   bold_labels() %>% 
   # change to flextable format
@@ -2408,7 +2405,7 @@ survey_design %>%
   select(no_care_illness) %>%
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
+  add_ci() %>% 
   ## make variable names bold 
   bold_labels() %>% 
   # change to flextable format
@@ -2440,7 +2437,7 @@ survey_design %>%
   select(violent_episodes_number, violence_nature, uniform, place_violence) %>%
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
+  add_ci() %>% 
   ## make variable names bold 
   bold_labels() %>% 
   # change to flextable format
@@ -2473,7 +2470,7 @@ survey_design %>%
   select(fever_now, care_fever) %>%
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
+  add_ci() %>% 
   ## make variable names bold 
   bold_labels() %>% 
   # change to flextable format
@@ -2504,7 +2501,7 @@ survey_design %>%
   select(reason_no_care) %>%
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
+  add_ci() %>% 
   ## make variable names bold 
   bold_labels() %>% 
   # change to flextable format
