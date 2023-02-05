@@ -46,9 +46,6 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
 
 
-## set default NA to - in output, define figure width/height
-options(knitr.kable.NA = "-")
-
 
 # Ensures the package "pacman" is installed
 if (!require("pacman")) {
