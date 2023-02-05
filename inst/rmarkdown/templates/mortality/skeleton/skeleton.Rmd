@@ -2211,7 +2211,7 @@ ggplot(data = flow_table,
        aes(axis1 = startcause, axis2 = endcause,
            y = n)) +
   ## define x axis limits and labels
-  scale_x_discrete(limits = c("Start\ncause", "End\ncause")) +
+  scale_x_discrete(limits = c("Start\ncause", "End\ncause"), expand = c(0,0)) +
   ## colour lines by sex 
   geom_alluvium(aes(fill = sex)) +
   ## fill in the label boxes grey
