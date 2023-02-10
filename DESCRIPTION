@@ -54,7 +54,7 @@ Imports:
     ggalluvial,
     ggplot2 (>= 3.0.0),
     ggspatial,
-    gtsummary,
+    gtsummary (>= 1.7.0),
     glue,
     here,
     janitor,
