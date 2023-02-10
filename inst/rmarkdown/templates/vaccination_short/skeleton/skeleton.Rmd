@@ -1507,9 +1507,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1544,9 +1542,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1584,9 +1580,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1626,9 +1620,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>%  
   ## modify the column headers
   modify_header(
     list(
@@ -1665,9 +1657,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1707,9 +1697,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1749,9 +1737,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1787,9 +1773,7 @@ survey_design %>%
   select(reason_route_vacc) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1822,9 +1806,7 @@ survey_design %>%
   select(reason_msf_vacc) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1856,9 +1838,7 @@ survey_design %>%
   select(reason_sia_vacc) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1889,9 +1869,7 @@ survey_design %>%
   select(diagnosis_disease) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1925,9 +1903,7 @@ survey_design %>%
   select(time_since_group) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
