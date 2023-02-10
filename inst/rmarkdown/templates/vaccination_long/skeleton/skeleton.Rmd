@@ -1574,9 +1574,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1626,9 +1624,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1696,9 +1692,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1748,9 +1742,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1799,9 +1791,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1851,9 +1841,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1898,13 +1886,11 @@ survey_design %>%
   select(reason_vars$option_name) %>% 
   tbl_svysummary(value = list(everything() ~ 1)) %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
-      stat_0 ~ "**Weighted Count (n) \n (N={round(N, digits = 0)})**"
+      stat_0 ~ "Weighted Count (n) \n (N={round(N, digits = 0)})"
     )
     ) %>% 
   ## make variable names bold 
