@@ -1647,8 +1647,6 @@ Note the possibility of negative confidence intervals if there are low counts
 ## weighted counts and proportion of dead
 death_props <- survey_design %>% 
   select(died) %>% 
-  ## note add_ci() does not allow logical variables 
-  ## type "categorical" changes to a character variable
   tbl_svysummary(type = died ~ "categorical") %>% 
   ## add the weighted total
   add_n() %>%   
@@ -1702,8 +1700,7 @@ Note the possibility of negative confidence intervals if there are low counts
 ## weighted counts and proportion of dead
 death_props_strat <- survey_design %>% 
   select(died, health_district) %>%
-  tbl_svysummary(type = died ~ "categorical", 
-                 by = health_district) %>% 
+  tbl_svysummary(by = health_district) %>% 
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
@@ -1734,13 +1731,13 @@ CMR_strat <- survey_design %>%
 
 
 In District A the weighted number and proportion of deaths was
-`r inline_text(death_props_strat, variable = "died", level = "TRUE", column = "stat_1")`, 
+`r inline_text(death_props_strat, variable = "died", column = "stat_1")`, 
 with a weighted confidence interval of
-`r inline_text(death_props_strat, variable = "died", level = "TRUE", column = "ci_stat_1")`.  
+`r inline_text(death_props_strat, variable = "died", column = "ci_stat_1")`.  
 In comparison, the weighted number and proportion of deaths in District B was
-`r inline_text(death_props_strat, variable = "died", level = "TRUE", column = "stat_2")`, 
+`r inline_text(death_props_strat, variable = "died", column = "stat_2")`, 
 the weighted confidence interval was 
-`r inline_text(death_props_strat, variable = "died", level = "TRUE", column = "ci_stat_2")`.  
+`r inline_text(death_props_strat, variable = "died", column = "ci_stat_2")`.  
 The crude mortality rate in District A was 
 `r CMR_strat %>% filter(health_district == "district_a") %>% pull(Mortality)`
 deaths per 10000 person-days and in District B was 
@@ -2028,6 +2025,10 @@ by age group.
 Note that low counts or short observation times may lead to a confidence interval 
 that crosses zero (i.e. negative) for mortality ratios. These should be interpreted
 as if no deaths or recoded to zero (impossible to have negative deaths). 
+Note that confidence intervals would make this table crowded; in addition 
+groups with zero counts result in an error, from the original survey package. 
+If you would like to have confidence intervals we suggest only showing a subset
+of the levels or groups in your data. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r weighted_death_cause_by_age, warning = FALSE}
