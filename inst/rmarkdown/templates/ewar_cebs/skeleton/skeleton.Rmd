@@ -1,11 +1,11 @@
 ---
 title: "EWAR situation report and monitoring"
 output:
-  html_document:
-    df_print: paged
-  pdf_document: default
   word_document:
     keep_md: yes
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 # Introduction to this template 
@@ -91,7 +91,8 @@ pacman::p_load(
   OpenStreetMap, # to add OSM basemap in ggplot map
   sf,            # encode spatial vector data
   ggspatial,     # plot maps
-  purrr          # iteration
+  purrr,         # iteration
+  naniar         # Missing data
 )
 
 
