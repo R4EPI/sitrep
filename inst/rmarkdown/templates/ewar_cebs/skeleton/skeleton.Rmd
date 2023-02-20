@@ -82,12 +82,9 @@ pacman::p_load(
   tidyr,         # clean/shape data
   stringr,       # clean text
   ggplot2,       # create plots and charts
-  slider,        # moving averages
   parsedate,     # guessing dates
-  patchwork,     # combine plots in one
   sitrep,        # MSF field epi functions
   janitor,       # clean data
-  matchmaker,    # dictionary-based standardization of variables
   gtsummary,     # tables
   flextable,
   tsibble,       # epiweeks
@@ -95,7 +92,7 @@ pacman::p_load(
   sf,            # encode spatial vector data
   tmap,          # to produce simple maps, works for both interactive and static maps
   ggspatial,     # plot maps
-  purrr            # iterate over data
+  purrr          # iteration
 )
 
 
@@ -341,8 +338,8 @@ the full-text value.
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME).
 
 # ewar_cleaned <- rename(ewar_cleaned, 
-#                            sex       = gender, # TEXT
-#                            age_years = age     # INTEGER_POSITIVE
+#                        sex           = gender, # TEXT
+#                        age_years     = age     # INTEGER_POSITIVE
 # )
 
 ```
@@ -442,22 +439,36 @@ DATEVARS <- ewar_dict %>%
   ## filter to match the column names of your data
   pull(name) 
 
+## find if there are date variables which are completely empty
+## (otherwise the parsedate package does not work)
+EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
+  is.na(ewar_cleaned[[.x]])
+  )) %>% 
+  unlist() %>% 
+  which()
+
+
+## remove exclude the names of variables which are completely emptys
+DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
+
 ## change to dates 
 ewar_cleaned <- ewar_cleaned %>%
-  mutate_at(DATEVARS, linelist::guess_dates,
-            error_tolerance = 0.5)
+    mutate(
+      across(.cols = all_of(DATEVARS),
+           .fns = ~ymd(parsedate::parse_date(.x))))
 
 
 
 ## Non-KoBo data --------------------------------------------------------------
-## Use this section if you did not have DHIS2 data. 
+## Use this section if you did not have KoBo data. 
 
-## use the guess_dates() function to make a first pass at date variables.
+## use the parse_dates() function to make a first pass at date variables.
 # ewar_cleaned <- ewar_cleaned %>%
-#   mutate_at(vars(matches("date|Date")), linelist::guess_dates,
-#           error_tolerance = 0.5)
+#   mutate(
+#     across(.cols = matches("date|Date"),
+#            .fns  = ~ymd(parsedate::parse_date(.x))))
 
-## once you have run guess_dates(), take a look at your date variables.
+## once you have run parse_date(), take a look at your date variables.
 ## here is an example:
 # table(ewar_cleaned$date_signal)
 
@@ -478,11 +489,19 @@ ewar_cleaned <- ewar_cleaned %>%
 ## This step creates an epiweek variable from the date of onset.
 ## You can use date_of_consultation_admission if you are missing many date_of_onset.
 
-ewar_cleaned$epiweek <- tsibble::yearweek(ewar_cleaned$date_signal)
-
-
-## Create epimonth variable
-ewar_cleaned$epimonth <- tsibble::yearmonth(ewar_cleaned$date_signal)
+ewar_cleaned <- ewar_cleaned %>% 
+  mutate(
+    ## create an epiweek variable 
+    epiweek = tsibble::yearweek(
+      date_signal,
+      week_start = 1),  # 1 is Monday start; use 7 for Sundays or 5 for Fridays
+    ## create a date version of epiweek 
+    epiweek_date = as.Date(epiweek)) %>% 
+  mutate(
+    #create an epimonth variable
+    epimonth = tsibble::yearmonth(
+      date_signal)
+  )
 
 ```
 
