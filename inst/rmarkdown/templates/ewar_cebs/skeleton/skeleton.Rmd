@@ -1,0 +1,1414 @@
+---
+title: "EWAR analysis"
+output:
+  word_document:
+    keep_md: yes
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+# Introduction to this template 
+
+This is a template which can be used to create an automated EWAR situation report
+and for routine monitoring purposes. It can be used to report on community 
+and/or health facility event-based surveillance and equally community 
+and/or health facility indicator-based surveillance, according to how
+surveillance is set up in the project.
+
+- The EWAR sitrep is organised by time and place and can be run and shared on a weekly/monthly basis, as needed  
+
+- The monitoring and evaluation of surveillance attributes section could be reviewed on a more irregular basis, for example every 3 months  
+
+- The annex contains a variety of additional tables that could be examined for reference purposes but wouldn't need to be included in the routine EWAR sitrep  
+
+- Comment out the code or delete the output that you don't need when producing your Sitrep or M&E report
+
+
+For a more detailed explanation of this template, please visit https://r4epis.netlify.app/
+- Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
+- Text within <! > will not show in your final document. These comments are used
+to explain the template. You can delete them if you want.
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This comment will not show up when you knit the document.
+
+A comment with a title with slashes indicates a name of a code chunk.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+<!-- ## Installing and loading required packages  -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// setup \\\
+--------------------------------------------------------------------------------
+
+Several packages are required for different aspects of  analysis with *R*. 
+You will need to install these before starting. 
+
+These packages can be quite large and may take a while to download in the
+field. If you have access to a USB key with these packages, it makes sense to
+copy and paste the packages into your computer's R package library 
+(run the command .libPaths() to see the folder path). 
+
+For help installing packages, please visit https://r4epis.netlify.com/welcome
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
+## hide all code chunks in the output, but show errors
+knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
+                      error = TRUE,       # show errors if they appear, but don't stop
+                      fig.width = 6*1.25, # Figure width
+                      fig.height = 6      # Figure height
+                     )
+
+## set default NA to - in output, define figure width/height
+options(knitr.kable.NA = "-")
+
+
+# Ensures the package "pacman" is installed
+if (!require("pacman")) {
+     install.packages("pacman") }
+
+## Installing required packages for this template
+pacman::p_load(
+  knitr,         # create output docs
+  here,          # find your files
+  rio,           # read in data
+  openxlsx,      # import/export of multi-sheet Excel workbooks 
+  forcats,       # clean/shape data
+  lubridate,     # handle dates
+  dplyr,         # clean/shape data
+  tidyr,         # clean/shape data
+  stringr,       # clean text
+  ggplot2,       # create plots and charts
+  parsedate,     # guessing dates
+  sitrep,        # MSF field epi functions
+  janitor,       # clean data
+  gtsummary,     # tables
+  flextable,
+  tsibble,       # epiweeks
+  OpenStreetMap, # to add OSM basemap in ggplot map
+  sf,            # encode spatial vector data
+  ggspatial,     # plot maps
+  purrr,         # iteration
+  naniar         # Missing data
+)
+
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// define_current_week \\\
+--------------------------------------------------------------------------------
+
+You need to set the week you want to report on. Generally, this is the previous
+week. Put it below.
+
+aweek::set_week_start will define the beginning of the week. The standard is
+Monday.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r define_current_week}
+
+## set current week 
+reporting_week <- tsibble::yearweek("2018-W15")
+
+
+## set 4 weeks prior to reporting week
+past4weeks <- reporting_week - 3
+
+
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_fake_data \\\
+--------------------------------------------------------------------------------
+
+
+To play with this template, you can create fake data based off the KoBo data
+dictionary. Comment out this chunk when you are using real data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_fake_data, warning = FALSE, message = FALSE}
+
+
+## generates MSF standard dictionary for KoBo
+ewar_data_dict <- msf_dict_survey("EWAR")
+
+
+## generates a fake dataset for use as an example in this template
+ewar_raw <- gen_data(dictionary = "EWAR",
+                           varnames   = "name",
+                           numcases   = 400)
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You should load your data as a linelist, where each row is one case.
+
+There are two options:
+- Your data is from KoBo: use read_KoBo_data
+- Your data is NOT FROM KoBo and in Excel or CSV format: 
+use read_Excel_data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_KoBo_data \\\
+--------------------------------------------------------------------------------
+
+This section is for data from KoBo.
+It uses the standardised MSF data dictionary.
+If you didn't use the standardized data dictionary, go to read_Excel_data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_KoBo_data, warning = FALSE, message = FALSE}
+### Read in data ---------------------------------------------------------------
+
+# Uncomment the below when you want to import your data
+
+## Signal verification form
+## Excel file ------------------------------------------------------------------
+## For a specific sheet, use "which"
+# signal_raw <- rio::import(here::here("Data", "signal.xlsx"), which = "Sheet1") %>%
+#               ## convert all column names to lower case
+#               janitor::clean_names()
+
+
+## Risk assessment form
+## Excel file ------------------------------------------------------------------
+## For a specific sheet, use "which"
+# risk_assess_raw <- rio::import(here::here("Data", "risk_assessment.xlsx"), which = "Sheet1") %>%
+#               ## convert all column names to lower case
+#               janitor::clean_names()
+
+
+## Response form
+## Excel file ------------------------------------------------------------------
+## For a specific sheet, use "which"
+# response_raw <- rio::import(here::here("Data", "response.xlsx"), which = "Sheet1") %>%
+#               ## convert all column names to lower case
+#               janitor::clean_names()
+
+``` 
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// merge_data_sets \\\
+--------------------------------------------------------------------------------
+For KoBo datasets spread across signal, risk assessment and response forms, 
+these levels will need to be merged in to one dataset. 
+
+This is done using a unique identifier for the signal 
+(which is present in each of the three forms)
+For a KoBo dataset this variable is "event_id".
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r merge_data_sets}
+
+## join the signal and risk assessment
+# ewar_raw <- left_join(signal_raw, risk_assess_raw, by = "event_id") %>% 
+              ## join the combined forms with the response form
+              # left_join(response_raw, by = "event_id")
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// prep_KoBo_data \\\
+--------------------------------------------------------------------------------
+
+This section is for data from KoBo that you loaded in read_KoBo_data.
+
+If you didn't use KoBo data, go to read_nonKoBo_data.
+
+This step shows you the data dictionary. The data dictionary has variable names
+in the data_element_shortname column. Possible values for each variable are
+specified in code and name columns. Code has the shortened value and Name has
+the full-text value.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r prep_KoBo_data, warning = FALSE, message = FALSE}
+
+## MSF ewar Dictionary ----------------------------------------------------------
+## get MSF standard dictionary for ewar
+ewar_dict <- msf_dict_survey("EWAR", compact = FALSE)
+
+## look at the standard dictionary by uncommenting the line below
+# View(ewar_dict) 
+
+
+
+## Clean column names ----------------------------------------------------------
+## make a copy of your original dataset and name it ewar_cleaned
+ewar_cleaned <- ewar_raw
+
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_nonKoBo_data \\\
+--------------------------------------------------------------------------------
+
+This section is for data not from KoBo.
+If you have already loaded data from KoBo, go to xxx
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_nonKoBo_data, warning = FALSE, message = FALSE}
+
+## Excel file ------------------------------------------------------------------
+## to read in a specific sheet use "which"
+# ewar_raw <- rio::import(here::here("Data", "ewar.xlsx"), which = "Sheet1")
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// prep_nonKoBo_data \\\
+--------------------------------------------------------------------------------
+
+This section is for data not from KoBo 
+If you have already loaded data from KoBo, go to XXX.
+
+It is more difficult to prepare the nonKoBo data. You can do it! It will just
+take a little more work.
+
+Checklist to update this script to match your data:
+[ ] Comment out all lines in read_KoBo_data and prep_KoBo_data
+[ ] Recode your variable names to match the dictionary
+[ ] Recode variable contents to match the dictionary
+
+
+This step shows you the data dictionary. The data dictionary has variable names
+in the data_element_shortname column. Possible values for each variable are
+specified in code and name columns. Code has the shortened value and Name has
+the full-text value.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r prep_nonKoBo_data, warning = FALSE, message = FALSE}
+## MSF ewar Dictionary ----------------------------------------------------------
+## get MSF standard dictionary for ewar 
+# ewar_dict <- msf_dict("ewar", compact = FALSE) %>%
+#   select(option_code, option_name, everything())
+
+## look at the standard dictionary by uncommenting the line below
+# View(ewar_dict) 
+
+## You will need to recode your variables to match the data dictionary. This is
+## addressed below.
+
+
+## make a copy of your orginal dataset and name it ewar_cleaned
+# ewar_cleaned <- ewar_raw
+
+
+
+## Match column names ---------------------------------------------------------
+## This step helps you match your variables to the standard variables.
+## This step will require some patience. Courage!
+
+## Use the function msf_dict_rename_helper() to create a template based on the
+## AJS dictionary. This will copy a rename command like the one above to your
+## clipboard.
+
+# msf_dict_rename_helper("ewar")
+
+## Paste the result below and your column names to the matching variable.
+## Be careful! You still need to be aware of what each variable means and what
+## values it takes.
+## If there are any variables that are in the MSF dictionary that are not in
+## your data set, then you should comment them out, but be aware that some
+## analyses may not run because of this. 
+
+
+
+## Here is an EXAMPLE for changing a few specific names. function. In this
+## example, we have the columns "gender" and "age" that we want to rename as
+## "sex" and "age_years". 
+## The formula for this is rename(data, NEW_NAME = OLD_NAME).
+
+# ewar_cleaned <- rename(ewar_cleaned, 
+#                        sex           = gender, # TEXT
+#                        age_years     = age     # INTEGER_POSITIVE
+# )
+
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// browse_data \\\
+--------------------------------------------------------------------------------
+
+You'll want to look at your data. Here are a few ways you can explore.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r browse_data, eval = FALSE}
+## view the first ten rows of data
+head(ewar_cleaned, n = 10)
+
+## view your whole dataset interactively (in an excel style format)
+View(ewar_cleaned)
+
+## overview of variable types and contents
+str(ewar_cleaned)
+
+## get summary: 
+## mean, median and max values of numeric variables
+## counts for categorical variables
+## also gives number of NAs
+summary(ewar_cleaned)
+
+## view unique values contained in variables 
+## you can run this for any column -- just replace the column name
+unique(ewar_cleaned$signal_type) 
+
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
+# summarytools::dfSummary(ewar_cleaned) %>%
+#   summarytools::view()
+```
+
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// remove_unused_data \\\
+--------------------------------------------------------------------------------
+
+Your data might have empty rows or columns you want to remove.
+You can also use this section to create temporary datasets so you can review
+specific variables or rows.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r remove_unused_data}
+## Drop unused rows  -----------------------------------------------------------
+## This step removes blank rows that don't have both a date of signal
+ewar_cleaned <- ewar_cleaned %>% 
+  filter(!is.na(date_signal)) 
+
+
+## Drop columns ----------------------------------------------------------------
+## OPTIONAL: This step shows you how you can remove certain variables.
+
+# ewar_cleaned <- ewar_cleaned %>%
+#   select(-c(var1, var2))
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This part of the script will create and clean variables in your data.
+
+All your cleaning and variable creation should happen in these chunks.
+That way, in case something goes wrong, you can push the small arrow at the top
+of the chunk to re-run all the code chunks up to the current one.
+
+The chunks are:
+- standardise_dates -- will set up and clean dates.
+- create_vars       -- creates variables based on other variables
+
+
+You must adapt this section according to your data!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// standardise_dates \\\
+--------------------------------------------------------------------------------
+
+This chunk will help you set up and clean your date variables.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r standardise_dates}
+## KoBo standard data ---------------------------------------------------------
+## If you got your data from KoBo, use this portion of the code.
+## If not, comment this section out and use the below.
+
+## make sure all date variables are formatted as dates 
+DATEVARS <- ewar_dict %>% 
+  filter(type == "date") %>%
+  filter(name %in% names(ewar_cleaned)) %>% 
+  ## filter to match the column names of your data
+  pull(name) 
+
+## find if there are date variables which are completely empty
+## (otherwise the parsedate package does not work)
+EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
+  is.na(ewar_cleaned[[.x]])
+  )) %>% 
+  unlist() %>% 
+  which()
+
+
+## remove exclude the names of variables which are completely emptys
+DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
+
+## change to dates 
+ewar_cleaned <- ewar_cleaned %>%
+    mutate(
+      across(.cols = all_of(DATEVARS),
+           .fns = ~ymd(parsedate::parse_date(.x))))
+
+
+
+## Non-KoBo data --------------------------------------------------------------
+## Use this section if you did not have KoBo data. 
+
+## use the parse_dates() function to make a first pass at date variables.
+# ewar_cleaned <- ewar_cleaned %>%
+#   mutate(
+#     across(.cols = matches("date|Date"),
+#            .fns  = ~ymd(parsedate::parse_date(.x))))
+
+## once you have run parse_date(), take a look at your date variables.
+## here is an example:
+# table(ewar_cleaned$date_signal)
+
+
+## Some dates will be unrealistic or wrong.
+## Here is an example of how to manually fix dates. 
+## Look at your data and edit as needed.
+# ewar_cleaned <- mutate(ewar_cleaned,
+#                            date_signal = case_when(
+#                              date_signal < as.Date("2017-11-01")  ~ as.Date(NA),
+#                              date_signal == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
+#                              TRUE                                   ~ date_signal
+#                            ))
+  
+
+
+## Create epiweek variable -----------------------------------------------------
+## This step creates an epiweek variable from the date of onset.
+## You can use date_of_consultation_admission if you are missing many date_of_onset.
+
+ewar_cleaned <- ewar_cleaned %>% 
+  mutate(
+    ## create an epiweek variable 
+    epiweek = tsibble::yearweek(
+      date_signal,
+      week_start = 1),  # 1 is Monday start; use 7 for Sundays or 5 for Fridays
+    ## create a date version of epiweek 
+    epiweek_date = as.Date(epiweek)) %>% 
+  mutate(
+    #create an epimonth variable
+    epimonth = tsibble::yearmonth(
+      date_signal)
+  )
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// create_vars \\\
+--------------------------------------------------------------------------------
+
+This chunk will help you construct new variables from other variables. It
+includes numeric, factor, and character vectors.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r create_vars}
+
+## Numeric variables -----------------------------------------------------------
+## This step creates numeric variables related to timeliness of ewar activities
+## You can adapt this step to create other calculated variables
+
+## create timeliness-related variables
+ewar_cleaned <- ewar_cleaned %>%
+  ## Time in days to detect the signal
+  mutate(detection_time = as.numeric(date_signal - date_event_start)) %>% 
+  ## Time in days to verify a signal
+  mutate(verification_time = as.numeric(date_verification - date_signal)) %>% 
+  ## Time in days to risk assess a signal after verification
+  mutate(assessment_time = as.numeric(date_assessment - date_verification)) %>% 
+  ## Time in days to response from detection
+  mutate(response_detect_time = as.numeric(date_response_started - date_signal)) %>% 
+  ## Time in days to response after risk assessment
+  mutate(response_assess_time = as.numeric(date_response_started - date_assessment)) %>% 
+  ## Identify when verification done within 24 hours of signal being detected
+  mutate(verif_24 = case_when(
+    as.numeric(date_verification - date_signal) <= 1 ~ "Verified <= 24 hours",
+    TRUE ~ "Verified > 24 hours"
+  )) %>% 
+  ## Identify when risk assessment done within 48 hours of signal being detected
+  mutate(assess_48 = case_when(
+    as.numeric(date_assessment - date_signal) <= 2 ~ "Risk assessed <= 48 hours",
+    TRUE ~ "Risk assessed > 48 hours"
+  ))
+
+
+## Factor (categorical) variables ----------------------------------------------
+
+## This step creates a variable from another character/factor variable
+## You can adapt this step to create other calculated variables
+
+## The variable ALERT will be binary (TRUE/FALSE) -- if an alert was declared 
+## or not
+ewar_cleaned$ALERT <- str_detect(ewar_cleaned$alert_status, "1")
+  
+
+## Recode character variables -------------------------------------------------
+## This step shows how to fix misspellings in the geographic region variable.
+## Ideally, you want these values to match your shapefile and population data!
+
+# ewar_cleaned <- ewar_cleaned %>%
+#   mutate(location_signal = case_when(
+#     location_signal == "Valliages D"       ~ "Village D",
+#     location_signal == "VillageD"          ~ "Village D",
+#     location_signal == "Town C"            ~ "Village C",
+#     TRUE ~ as.character(location_signal))
+#   ))
+
+
+```
+  
+
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// report_setup \\\
+--------------------------------------------------------------------------------
+
+This chunk removes cases after your reporting week and defines the start and end
+of the reporting period.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r report_setup}
+# TODO return the last day of the reporting week
+# obs_end   <- aweek::week2date(str_glue("{reporting_week}-7"))
+# 
+# # filter out cases after end of reporting week
+# ewar_cleaned <- ewar_cleaned %>% 
+#   filter(date_signal <= obs_end)
+
+
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// duplicates \\\
+--------------------------------------------------------------------------------
+
+This chunk removes duplicate signals based on signal_type, date_signal and CHWinitials. 
+(you can edit to use whichever unique identifiers you think relevant)
+
+There are two options for this. Option 1 simply keeps the first occurence of a 
+duplicated case. 
+Option 2 gives you the ability to create a TRUE/FALSE variable to flag rows that
+are duplicated - giving you more flexibility around browsing which ones to drop. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r duplicates}
+
+## option 1: only keep the first occurrence of duplicate case 
+
+ewar_cleaned <- ewar_cleaned %>% 
+  ## find duplicates based on signal_type, date_signal, initials 
+  ## only keep the first occurrence 
+  distinct(signal_type, date_signal, initials, .keep_all = TRUE)
+
+
+# ## option 2: create flagging variables for duplicates (then use to browse)
+# 
+# ewar_cleaned <- ewar_cleaned %>% 
+#   ## choose which variables to use for finding unique rows 
+#   group_by(signal_type, date_signal, initials) %>% 
+#   mutate(
+#     ## get the number of times duplicate occurs 
+#     num_dupes = n(), 
+#     duped = if_else(num_dupes > 1 , TRUE, FALSE)
+#   )
+# 
+# ## browse duplicates based on flagging variables 
+# ewar_cleaned %>% 
+#   ## only keep rows that are duplicated
+#   filter(duped) %>% 
+#   ## arrange by variables of interest 
+#   arrange(case_number, sex, age_group) %>% 
+#   View()
+# 
+# ## filter duplicates to only keep the row with the earlier entry 
+# ewar_cleaned %>% 
+#   ## choose which variables to use for finding unique rows 
+#   group_by(signal_type, date_signal, initials) %>% 
+#   ## sort to have the earliest date by person first
+#   arrange(date_signal) %>% 
+#   ## only keep the earliest row 
+#   slice(1)
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// save_cleaned_data \\\
+--------------------------------------------------------------------------------
+
+You can save your cleaned dataset as an Excel. 
+This automatically names your file "ewar_cleaned_DATE", where DATE is the
+current date.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r save_cleaned_data}
+# rio::export(ewar_cleaned, here::here("data", str_glue("ewar_cleaned_{Sys.Date()}.xlsx")))
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+After adjusting and running the above code, you will have a clean dataset.
+This marks the start of the ANALYSIS portion of the template.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+### Routine EWAR Sitrep
+#### Recommendations
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Add relevant recommendations based on interpretation of data presented in the report
+Include this paragraph in the body of the email when sharing the Sitrep
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+#### Overview for `r reporting_week`
+In `r reporting_week`, there were `r nrow(filter(ewar_cleaned, epiweek == reporting_week))` signals received, of which `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), event_status == "1")` were verified. There were `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), is.na(date_assessment) == FALSE)` risk assessments completed resulting in `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), ALERT)` alerts and `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), response_undertaken == "y")` responses. 
+
+#### Overview of performance in past 4 weeks
+
+```{r performance_overview_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## filter to only include the last 4 weeks data
+  filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of total signals, number required verification,
+  # verified signals, alerts and responses
+  summarise(total_signals = n(),
+            verified_signals = sum(event_status == "1", na.rm = T),
+            risk_assessments = sum(is.na(date_assessment) == F,  na.rm = T),
+            alerts = sum(ALERT, na.rm  = T),
+            responses = sum(response_undertaken == "y", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>%
+  ## Add total value
+  janitor::adorn_totals("row") %>% 
+  ## Rename variables to make a cleaner table
+  dplyr::rename("Epiweek" = epiweek, 
+                "Total signals" = total_signals,
+                "Verified signals" = verified_signals,
+                "Risk assessments" = risk_assessments,
+                "Alerts" = alerts,
+                "Responses" = responses) %>% 
+  ## make a flex table
+  flextable() %>% 
+  ## fit the table automatically
+  autofit()
+
+
+```
+
+#### Time
+
+##### Overview of signal processes by type in `r reporting_week`
+
+```{r summary_table_reporting_week_type, ft.align = "left"}
+
+
+ewar_cleaned %>% 
+ ## Filter to only include data for the past 6 weeks
+  filter(epiweek == reporting_week) %>% 
+  ## Group by epiweek
+  group_by(signal_type) %>% 
+  ## Count the number of total signals, number required verification,
+  # verified signals, alerts and responses
+  summarise(total_signals = n(),
+            verified_signals = sum(event_status == "1", na.rm = T),
+            risk_assessments = sum(is.na(date_assessment) == F,  na.rm = T),
+            alerts = sum(ALERT, na.rm  = T),
+            responses = sum(response_undertaken == "y", na.rm = T)) %>% 
+  dplyr::rename("Signal type" = signal_type, "
+                Total signals" = total_signals,
+                "Verified signals" = verified_signals,
+                "Risk assessments" = risk_assessments,
+                "Alerts" = alerts,
+                "Responses" = responses) %>% 
+  janitor::adorn_totals("row") %>% 
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
+
+
+
+```
+
+
+#### Place
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This section focuses on where verified signals and alerts were detected.
+
+There is code to include maps based on distribution of verified signals and alerts
+You must have a shapefile to create this map.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+<!-- #### Maps  -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_shapefiles \\\
+--------------------------------------------------------------------------------
+
+To create maps, you need to have a shapefile of the area. Often, the MSF GIS
+unit can provide shapefiles.
+
+Your shapefile can be a polygon or points. Polygons do not need to be contiguous.
+
+The names of the polygons or points MUST match the names in your linelist.
+
+Your coordinate reference system needs to be WGS84.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r read_shapefiles, message=FALSE}
+## fake map data - DELETE if you are using real data
+map <- gen_polygon(regions = unique(ewar_cleaned$location_signal))
+
+
+## Clean up map
+map <- map %>% 
+  ## remove the NAs
+  filter(is.na(name) == F ) %>% 
+  ## rename name variables to match ewar_cleaned
+  mutate(name = case_when(
+         name == "1" ~ "location_1",
+         name == "2" ~ "location_2",
+         name == "3" ~ "location_3",
+         name == "4" ~ "location_4",
+         name == "5" ~ "location_5",
+         name == "6" ~ "location_6",
+         TRUE ~ NA_character_
+         )
+)
+
+## read in shapefile
+# map <- read_sf(here::here("mapfolder", "region.shp"))
+
+## check the coordinate reference system (CRS)
+# st_crs(map)
+
+## if CRS not WGS84, reset it
+# map <- st_set_crs(map, value = 4326) # Sets to WGS84
+
+```
+
+
+##### Verified signals by type by location in `r reporting_week`
+```{r place_verified_signals_type_map, message = FALSE, warning = FALSE}
+
+## Count number of verified signals in last week  ----------------------------------------
+verif_sig <- ewar_cleaned %>% 
+    ## specify the time period of interest
+    filter(epiweek == reporting_week ) %>% 
+    ## Group by location and signal type
+    group_by(location_signal, signal_type) %>% 
+    ## Count verified signals by location and type
+    summarise(verified_signals = sum(event_status == "1", na.rm = T)) %>% 
+    ## Only keep rows where there were verified signals
+    filter(verified_signals > 0)
+
+## left join with polygon
+map_verif_sig <- left_join(map, verif_sig, by = c("name" = "location_signal")) %>% 
+  ## filter any locations with no verified signals
+  filter(is.na(verified_signals) == F)
+ 
+    
+    
+
+## Plot verified signals by location  -----------------------------------------------
+
+ggplot() +
+  geom_sf(data = map, fill = "white") +
+  # shapefile as polygon
+  geom_sf(data = map_verif_sig, aes(fill = as.factor(verified_signals)))+
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() +
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", 
+                    name = "No. verified signals") + 
+  # label polygons
+  geom_sf_text(data = map_verif_sig, aes(label = name), size = 2.5,
+               colour = "black") + 
+  # remove coordinates and axes
+  theme_void() +
+  facet_wrap("signal_type") + 
+  labs( captions = str_glue("Source: MSF data from {reporting_week}"),
+       title = str_glue("Number of verified signals in MSF-OCA catchment areas by signal type, {reporting_week}"))
+
+
+
+```
+
+
+##### Alerts by type by location in `r reporting_week`
+```{r place_alerts_type_map, message = FALSE, warning = FALSE}
+
+## Count number of alerts in reporting week  ----------------------------------------
+alerts <- ewar_cleaned %>% 
+    ## specify the time period of interest
+    filter(epiweek == reporting_week ) %>% 
+    ## convert
+    ## Group by location
+    group_by(location_signal, signal_type) %>% 
+    ## Count verified signals by location
+    summarise(alerts = sum(ALERT, na.rm = T)) %>% 
+   ## Remove rows where there were 0 alerts
+    filter(alerts > 0)
+
+## left join with polygon
+map_alerts <- left_join(map, alerts, by = c("name" = "location_signal")) %>% 
+  ## filter locations where there were no alerts
+  filter(is.na(alerts) == F)
+ 
+    
+    
+
+## Plot alerts by location
+# -----------------------------------------------
+
+ggplot() +
+  ## Add the map layer as an empty white shape
+  geom_sf(data = map, fill = "white") +
+  # shapefile as polygon
+  geom_sf(data = map_alerts, aes(fill = as.factor(alerts)))+
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() +
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", 
+                    name = "No. alerts") + 
+  # label polygons
+  geom_sf_text(data = map_alerts, aes(label = name), size = 2.5,
+               colour = "black") + 
+  # remove coordinates and axes
+  theme_void() +
+  facet_wrap("signal_type") + 
+  labs( captions = str_glue("Source: MSF data from {reporting_week}"),
+       title = str_glue("Number of alerts in MSF-OCA catchment areas by type, {reporting_week}"))
+
+
+
+
+```
+
+
+##### Response by location in `r reporting_week`
+```{r place_response_type_map, message = FALSE, warning = FALSE}
+
+## Count number of alerts in reporting week  ----------------------------------------
+responses <- ewar_cleaned %>% 
+    ## specify the time period of interest
+    filter(epiweek == reporting_week ) %>% 
+    ## convert
+    ## Group by location
+    group_by(location_signal) %>% 
+    ## Count verified signals by location
+    summarise(response = sum(response_undertaken == "y", na.rm = T)) %>% 
+   ## Remove rows where there were 0 alerts
+    filter(response > 0)
+
+## left join with polygon
+map_response <- left_join(map, responses, by = c("name" = "location_signal")) %>% 
+  ## filter locations where there were no alerts
+  filter(is.na(response) == F)
+ 
+    
+    
+
+## Plot responses by location
+# -----------------------------------------------
+
+ggplot() +
+  ## Add the map layer as an empty white shape
+  geom_sf(data = map, fill = "white") +
+  # shapefile as polygon
+  geom_sf(data = map_response, aes(fill = as.factor(response)))+
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() +
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", 
+                    name = "No. responses") + 
+  # label polygons
+  geom_sf_text(data = map_response, aes(label = name), size = 3,
+               colour = "black") + 
+  # remove coordinates and axes
+  theme_void() +
+  # facet_wrap("signal_type") + 
+  labs( captions = str_glue("Source: MSF data from {reporting_week}"),
+       title = str_glue("Number of responses in MSF-OCA catchment areas, 
+                        {reporting_week}"))
+
+
+
+
+```
+
+\newpage
+\pagebreak
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can delete the following if not doing a routine monitoring of the data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+### Monitoring and Evaluation of surveillance attributes
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This section focuses on the following quantitative surveillance attributes
+There is code to examine the following:
+- Characteristics of signals, events, alerts and responses.
+- The usefulness of surveillance system
+- The timeliness of verification, risk assessment and response
+- The completeness of various variables
+- The positive predictive value of signals
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r set_start}
+
+## Identify the start week for monitoring/evaluation period
+# start_week <- aweek::as.aweek("2020-W04")
+
+```
+
+
+
+#### Characteristics of surveillance data collected
+
+##### Overview of EBS performance indicators full dataset
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Include this summary table when sharing the Sitrep
+It shows the number of signals collected, discarded at triage, verified, number of
+alerts and responses in the 6 weeks prior to the reporting week
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+```{r time_overview_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of total signals, number required verification,
+  # verified signals, alerts and responses
+  summarise(total_signals = n(),
+            verified_signals = sum(event_status == "1", na.rm = T),
+            risk_assessments = sum(is.na(date_assessment) == F,  na.rm = T),
+            alerts = sum(ALERT, na.rm  = T),
+            responses = sum(response_undertaken == "y", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>%
+  ## Add total value
+  janitor::adorn_totals("row") %>% 
+  ## Rename variables to make a cleaner table
+  dplyr::rename("Epiweek" = epiweek, 
+                "Total signals" = total_signals,
+                "Verified signals" = verified_signals,
+                "Risk assessments" = risk_assessments,
+                "Alerts" = alerts,
+                "Responses" = responses) %>% 
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
+
+
+```
+
+
+#### Usefulness
+##### Number of alerts of the CEBS that resulted in public health action
+
+Across the period of evaluation, there were `r nrow(filter(ewar_cleaned, ALERT))` alerts of which `r nrow(filter(ewar_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
+
+
+#### Responses by type by location - full dataset
+<!-- The below shows all responses by signal type and location for the entire dataset  -->
+
+```{r place_responses_type_table_eval, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and responses
+  filter(response_undertaken == "y") %>% 
+  ## Select the variables of interest - signal type and location of signal
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+```
+
+
+
+#### Timeliness of signal detection, verification, risk assessment and response - full dataset
+The below table shows the median delay in days between identification and detection/reporting of a signal, detection of a signal
+and verification, verification of a signal and assessment, assessment of a signal and a response.
+
+```{r timeliness, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select timeliness-related variables
+  select(detection_time, verification_time, assessment_time, 
+         response_detect_time, response_assess_time) %>% 
+  ## calculate mean and SD for each
+  tbl_summary(missing = "no",
+              type = (all_categorical() ~ "continuous"),
+              label = list(detection_time ~ "Time to detect signal" ,
+                verification_time ~ "Time to verify signal",
+                assessment_time ~ "Time to risk assess verified signal",
+                response_detect_time ~ "Time from detection to response",
+                response_assess_time ~ "Time from risk assessment to response")) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+
+
+```
+
+#### Timeliness of signal verification and risk assessment compared to expected- full dataset
+The below table shows the proportion of signals that were verified within 24 hours of detection and proportion of signals risk assessed within 48 hours of detection
+
+```{r timeliness_prop, ft.align = "left"}
+
+ewar_cleaned %>%
+  ## select timeliness-related variables
+  select(verif_24, assess_48) %>%
+  ## calculate mean and SD for each
+  tbl_summary(label = list(
+    verif_24 ~ "Time to verify signal",
+    assess_48 ~ "Time to conduct risk assessment"
+  )) %>%
+  ## convert to flextable
+  gtsummary::as_flex_table()
+
+
+```
+
+
+#### Timeliness of signal detection, verification, risk assessment and response - by month
+```{r timeliness_month, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select timeliness-related variables
+  select(detection_time, verification_time, assessment_time, 
+         response_detect_time, response_assess_time, epimonth) %>% 
+  ## Group by epimonth
+  group_by(epimonth) %>% 
+  ## calculate mean and SD for each
+  tbl_summary(missing = "no",
+              type = (all_categorical() ~ "continuous"),
+              label = list(detection_time ~ "Time to detect signal" ,
+                verification_time ~ "Time to verify signal",
+                assessment_time ~ "Time to risk assess verified signal",
+                response_detect_time ~ "Time from detection to response",
+                response_assess_time ~ "Time from risk assessment to response"), by = epimonth) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+
+
+```
+
+
+#### Timeliness of verification and risk assessment - by % and month
+```{r timeliness_month_prop, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select timeliness-related variables
+  select(verif_24, assess_48, epimonth) %>% 
+  ## Group by epimonth
+  group_by(epimonth) %>% 
+  ## calculate mean and SD for each
+   tbl_summary(label = list(
+    verif_24 ~ "Time to verify signal",
+    assess_48 ~ "Time to conduct risk assessment"),
+    by = epimonth) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+
+
+```
+
+#### Completeness of selected variables - full dataset
+```{r completeness, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select variables of interest
+  select(source_signal, date_signal, location_signal, signal_type,
+         total_affected, date_verification, date_assessment) %>% 
+  ## create a summary table of number and proportion of missing values
+  miss_var_summary() %>% 
+  ## rename columns
+  dplyr::rename("Variable" = variable,
+                "Number missing" = n_miss,
+                "% missing" = pct_miss) %>% 
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
+
+```
+
+
+
+#### Positive predictive value - overview full dataset
+```{r ppv_general, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select variables to make calculations
+  select(event_status, ALERT, response_undertaken) %>% 
+  ## calculate proportion of signals that become events
+  summarise(ppv_sig_eve = round(sum(event_status == 1, na.rm = T)/n(), digits = 2),
+            ppv_sig_alerts = round(sum(ALERT, na.rm = T)/n(), 
+                                   digits = 2),
+            ppv_sig_response = round(sum(response_undertaken == "y",
+                                         na.rm = T)/n(), 
+                                     digits = 2),
+            ppv_eve_alerts = round(sum(ALERT, na.rm = T)/sum(event_status == 1,
+                                                       na.rm = T),
+                                   digits = 2)) %>% 
+  ## rename variables
+  dplyr::rename("PPV signals as events" = ppv_sig_eve,
+                "PPV signals as alerts" = ppv_sig_alerts,
+                "PPV signals as response"  = ppv_sig_response,
+                "PPV events as alerts" = ppv_eve_alerts) %>% 
+  ## Make a long dataset out of the PPV calculations
+  pivot_longer(everything(), names_to = "PPV", values_to = "%") %>% 
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
+
+```
+
+
+<!-- #### Positive predictive value - event to signal ratio full dataset -->
+
+```{r ppv_event_signal_ratio}
+
+# ewar_cleaned %>% 
+#   ## select variables of interest
+#   select(epiweek, event_status) %>% 
+#   ## Group by epiweek
+#   group_by(epiweek) %>% 
+#   ## calculate ratio of events to signals
+#   summarise(event_signal = round(sum(event_status == "1", na.rm = T)/n(),
+#                                  digits = 2)) %>% 
+#   ## Make a barplot
+#   ggplot()+
+#   geom_point(aes(x = as.factor(epiweek), y = event_signal)) +
+#   theme(axis.text.x = element_text(angle = 90)) +
+#   labs(x = "Epi week",
+#        y = "Event:signal ratio",
+#        title = "Event to signal ratio by epiweek")
+
+```
+
+
+#### Positive predictive value - by signal type full dataset
+```{r ppv_signal_type, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## select variables to make calculations
+  select(event_status, ALERT, response_undertaken, signal_type) %>% 
+  ## Group by signal type
+  group_by(signal_type) %>% 
+  ## calculate proportion of signals that become events
+  summarise(ppv_sig_eve = round(sum(event_status == 1, na.rm = T)/n(), digits = 2),
+            ppv_sig_alerts = round(sum(ALERT, na.rm = T)/n(), 
+                                   digits = 2),
+            ppv_sig_response = round(sum(response_undertaken == "y",
+                                         na.rm = T)/n(), 
+                                     digits = 2),
+            ppv_eve_alerts = round(sum(ALERT, na.rm = T)/sum(event_status == 1,
+                                                       na.rm = T),
+                                   digits = 2)) %>% 
+  ## rename variables
+  dplyr::rename("PPV signals as events" = ppv_sig_eve,
+                "PPV signals as alerts" = ppv_sig_alerts,
+                "PPV signals as response"  = ppv_sig_response,
+                "PPV events as alerts" = ppv_eve_alerts,
+                "Signal type" = signal_type) %>% 
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
+
+```
+
+
+
+#### Annex
+
+##### Verified signals by type past 4 weeks
+```{r time_verified_signals_type_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and verified signals
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & event_status == "1") %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(verified_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            verified_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            verified_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            verified_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            verified_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            verified_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>% 
+  ## rename to make a cleaner table and labels can be adjusted further
+  dplyr::rename("Epiweek" = epiweek) %>% 
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
+
+
+```
+
+
+##### Alerts by type in the past 4 weeks
+```{r time_alerts_type_figure, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and alerts
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == TRUE) %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(alert_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            alert_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            alert_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            alert_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            alert_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            alert_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>% 
+  ## rename to make a cleaner table and labels can be adjusted further
+  dplyr::rename("Epiweek" = epiweek) %>% 
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
+
+```
+
+##### Responses by type in the past 4 weeks
+```{r time_responses_type_figure, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and alerts
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
+  ## Group by epiweek
+  group_by(epiweek) %>% 
+  ## Count the number of verified signals by signal type
+  ## You will need to replace the new variable names below to reflect the 
+  ## signals included in your surveillance system
+  summarise(response_signal1 = sum(signal_type == "signal_1", na.rm = T),
+            response_signal2 = sum(signal_type == "signal_2", na.rm = T),
+            response_signal3 = sum(signal_type == "signal_3", na.rm = T),
+            response_signal4 = sum(signal_type == "signal_4", na.rm = T),
+            response_signal5 = sum(signal_type == "signal_5", na.rm = T),
+            response_signal6 = sum(signal_type == "signal_6", na.rm = T)) %>% 
+  ## convert epiweek to a factor
+  mutate(epiweek = as.factor(epiweek)) %>% 
+  ## rename to make a cleaner table and labels can be adjusted further
+  dplyr::rename("Epiweek" = epiweek) %>% 
+  ## convert to flextable
+  flextable::flextable() %>% 
+  ## autofit table
+  flextable::autofit()
+
+```
+
+##### Verified signals by type by location - past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_verified_signals_type_table, ft.align = "left"}
+
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 6 weeks and verified signals
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & event_status == "1") %>% 
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+
+```
+
+
+##### Alerts by type by location in the past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_alerts_type_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and alerts
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == "TRUE") %>% 
+  ## Select the variables of interest - signal type and location of signal
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+```
+
+##### Responses by type by location in the past 4 weeks
+<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- as needed -->
+```{r place_responses_type_table, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## Filter to only include data for the past 4 weeks and responses
+  filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
+  ## Select the variables of interest - signal type and location of signal
+  select(signal_type, location_signal) %>% 
+  ## summarise data by signal type
+  tbl_summary(by = "signal_type") %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+  
+```
+
+
+##### Reporting source of signals - past 4 weeks
+```{r reporting_source, ft.align = "left"}
+
+ewar_cleaned %>% 
+  ## examine only the last 4 weeks
+  filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
+  ## select variables of interest
+  select(epiweek, reporter_signal) %>% 
+  ## Summarise value by epiweek
+  tbl_summary(by = epiweek, 
+              label = list(reporter_signal ~ "Reporter")) %>% 
+  ## convert to flextable
+  gtsummary::as_flex_table()
+
+
+```

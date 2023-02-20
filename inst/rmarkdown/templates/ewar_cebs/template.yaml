@@ -1,0 +1,4 @@
+name: EWAR analysis
+description: >
+  An automated EWAR analysis template
+create_dir: false
