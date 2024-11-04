@@ -1,5 +1,5 @@
 ---
-title: "EWAR analysis"
+title: "EBS analysis"
 output:
   word_document:
     keep_md: yes
@@ -10,17 +10,17 @@ output:
 
 # Introduction to this template 
 
-This is a template which can be used to create an automated EWAR situation report
+This is a template which can be used to create an automated EBS situation report
 and for routine monitoring purposes. It can be used to report on community 
 and/or health facility event-based surveillance and equally community 
 and/or health facility indicator-based surveillance, according to how
 surveillance is set up in the project.
 
-- The EWAR sitrep is organised by time and place and can be run and shared on a weekly/monthly basis, as needed  
+- The EBS sitrep is organised by time and place and can be run and shared on a weekly/monthly basis, as needed  
 
 - The monitoring and evaluation of surveillance attributes section could be reviewed on a more irregular basis, for example every 3 months  
 
-- The annex contains a variety of additional tables that could be examined for reference purposes but wouldn't need to be included in the routine EWAR sitrep  
+- The annex contains a variety of additional tables that could be examined for reference purposes but wouldn't need to be included in the routine EBS sitrep  
 
 - Comment out the code or delete the output that you don't need when producing your Sitrep or M&E report
 
@@ -86,13 +86,16 @@ pacman::p_load(
   sitrep,        # MSF field epi functions
   janitor,       # clean data
   gtsummary,     # tables
-  flextable,
+  flextable,     # tables
   tsibble,       # epiweeks
   OpenStreetMap, # to add OSM basemap in ggplot map
   sf,            # encode spatial vector data
   ggspatial,     # plot maps
   purrr,         # iteration
-  naniar         # Missing data
+  naniar,        # Missing data
+  httr,          # for using KoBo API 
+  jsonlite,      # for using KoBo API
+  keyring        # for inputting pasword for KoBo
 )
 
 
@@ -113,7 +116,7 @@ Monday.
 ```{r define_current_week}
 
 ## set current week 
-reporting_week <- tsibble::yearweek("2018-W15")
+reporting_week <- tsibble::yearweek("2024-W15")
 
 
 ## set 4 weeks prior to reporting week
@@ -138,18 +141,18 @@ dictionary. Comment out this chunk when you are using real data.
 
 
 ## generates MSF standard dictionary for KoBo
-ewar_data_dict <- msf_dict_survey("EWAR")
+ebs_data_dict <- msf_dict_survey("ebs")
 
 
 ## generates a fake dataset for use as an example in this template
-ewar_raw <- gen_data(dictionary = "EWAR",
+ebs_raw <- gen_data(dictionary = "ebs",
                            varnames   = "name",
                            numcases   = 400)
 ```
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-You should load your data as a linelist, where each row is one case.
+You should load your data as a linelist, where each row is one signal.
 
 There are two options:
 - Your data is from KoBo: use read_KoBo_data
@@ -173,18 +176,27 @@ If you didn't use the standardized data dictionary, go to read_Excel_data.
 
 # Uncomment the below when you want to import your data
 
+## Signal collection form
+## Excel file ------------------------------------------------------------------
+## For a specific sheet, use "which"
+# signal_collect_raw <- rio::import(here::here("data", "signal_collection.xlsx"), which = "Sheet1") %>%
+#               ## convert all column names to lower case
+#               janitor::clean_names()
+
+
 ## Signal verification form
 ## Excel file ------------------------------------------------------------------
 ## For a specific sheet, use "which"
-# signal_raw <- rio::import(here::here("Data", "signal.xlsx"), which = "Sheet1") %>%
+# signal_verif_raw <- rio::import(here::here("data", "signal_verification.xlsx"), which = "Sheet1") %>%
 #               ## convert all column names to lower case
 #               janitor::clean_names()
+
 
 
 ## Risk assessment form
 ## Excel file ------------------------------------------------------------------
 ## For a specific sheet, use "which"
-# risk_assess_raw <- rio::import(here::here("Data", "risk_assessment.xlsx"), which = "Sheet1") %>%
+# risk_assess_raw <- rio::import(here::here("data", "risk_assessment.xlsx"), which = "Sheet1") %>%
 #               ## convert all column names to lower case
 #               janitor::clean_names()
 
@@ -192,7 +204,7 @@ If you didn't use the standardized data dictionary, go to read_Excel_data.
 ## Response form
 ## Excel file ------------------------------------------------------------------
 ## For a specific sheet, use "which"
-# response_raw <- rio::import(here::here("Data", "response.xlsx"), which = "Sheet1") %>%
+# response_raw <- rio::import(here::here("data", "response.xlsx"), which = "Sheet1") %>%
 #               ## convert all column names to lower case
 #               janitor::clean_names()
 
@@ -214,8 +226,9 @@ For a KoBo dataset this variable is "event_id".
 ```{r merge_data_sets}
 
 ## join the signal and risk assessment
-# ewar_raw <- left_join(signal_raw, risk_assess_raw, by = "event_id") %>% 
-              ## join the combined forms with the response form
+# ebs_raw <- left_join(signal_collect_raw, signal_verfication_raw, by = "signal_id") %>% 
+              ## join the combined forms with the risk assessment form
+              # left_join(risk_assement_raw, by = "signal_id") %>% 
               # left_join(response_raw, by = "event_id")
 ```
 
@@ -237,18 +250,18 @@ the full-text value.
 
 ```{r prep_KoBo_data, warning = FALSE, message = FALSE}
 
-## MSF ewar Dictionary ----------------------------------------------------------
-## get MSF standard dictionary for ewar
-ewar_dict <- msf_dict_survey("EWAR", compact = FALSE)
+## MSF ebs Dictionary ----------------------------------------------------------
+## get MSF standard dictionary for ebs
+ebs_dict <- msf_dict_survey("ebs", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
-# View(ewar_dict) 
+# View(ebs_dict) 
 
 
 
 ## Clean column names ----------------------------------------------------------
-## make a copy of your original dataset and name it ewar_cleaned
-ewar_cleaned <- ewar_raw
+## make a copy of your original dataset and name it ebs_cleaned
+ebs_cleaned <- ebs_raw
 
 
 ```
@@ -267,7 +280,7 @@ If you have already loaded data from KoBo, go to xxx
 
 ## Excel file ------------------------------------------------------------------
 ## to read in a specific sheet use "which"
-# ewar_raw <- rio::import(here::here("Data", "ewar.xlsx"), which = "Sheet1")
+# ebs_raw <- rio::import(here::here("data", "ebs.xlsx"), which = "Sheet1")
 
 ```
 
@@ -296,20 +309,20 @@ the full-text value.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r prep_nonKoBo_data, warning = FALSE, message = FALSE}
-## MSF ewar Dictionary ----------------------------------------------------------
-## get MSF standard dictionary for ewar 
-# ewar_dict <- msf_dict("ewar", compact = FALSE) %>%
+## MSF ebs Dictionary ----------------------------------------------------------
+## get MSF standard dictionary for ebs 
+# ebs_dict <- msf_dict("ebs", compact = FALSE) %>%
 #   select(option_code, option_name, everything())
 
 ## look at the standard dictionary by uncommenting the line below
-# View(ewar_dict) 
+# View(ebs_dict) 
 
 ## You will need to recode your variables to match the data dictionary. This is
 ## addressed below.
 
 
-## make a copy of your orginal dataset and name it ewar_cleaned
-# ewar_cleaned <- ewar_raw
+## make a copy of your orginal dataset and name it ebs_cleaned
+# ebs_cleaned <- ebs_raw
 
 
 
@@ -321,7 +334,7 @@ the full-text value.
 ## AJS dictionary. This will copy a rename command like the one above to your
 ## clipboard.
 
-# msf_dict_rename_helper("ewar")
+# msf_dict_rename_helper("ebs")
 
 ## Paste the result below and your column names to the matching variable.
 ## Be careful! You still need to be aware of what each variable means and what
@@ -337,7 +350,7 @@ the full-text value.
 ## "sex" and "age_years". 
 ## The formula for this is rename(data, NEW_NAME = OLD_NAME).
 
-# ewar_cleaned <- rename(ewar_cleaned, 
+# ebs_cleaned <- rename(ebs_cleaned, 
 #                        sex           = gender, # TEXT
 #                        age_years     = age     # INTEGER_POSITIVE
 # )
@@ -353,27 +366,27 @@ You'll want to look at your data. Here are a few ways you can explore.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r browse_data, eval = FALSE}
 ## view the first ten rows of data
-head(ewar_cleaned, n = 10)
+head(ebs_cleaned, n = 10)
 
 ## view your whole dataset interactively (in an excel style format)
-View(ewar_cleaned)
+View(ebs_cleaned)
 
 ## overview of variable types and contents
-str(ewar_cleaned)
+str(ebs_cleaned)
 
 ## get summary: 
 ## mean, median and max values of numeric variables
 ## counts for categorical variables
 ## also gives number of NAs
-summary(ewar_cleaned)
+summary(ebs_cleaned)
 
 ## view unique values contained in variables 
 ## you can run this for any column -- just replace the column name
-unique(ewar_cleaned$signal_type) 
+unique(ebs_cleaned$signal_type) 
 
 ## use the dfSummary function in combination with view
 ## note that view is not capitalised with this package
-# summarytools::dfSummary(ewar_cleaned) %>%
+# summarytools::dfSummary(ebs_cleaned) %>%
 #   summarytools::view()
 ```
 
@@ -391,14 +404,14 @@ specific variables or rows.
 ```{r remove_unused_data}
 ## Drop unused rows  -----------------------------------------------------------
 ## This step removes blank rows that don't have both a date of signal
-ewar_cleaned <- ewar_cleaned %>% 
+ebs_cleaned <- ebs_cleaned %>% 
   filter(!is.na(date_signal)) 
 
 
 ## Drop columns ----------------------------------------------------------------
 ## OPTIONAL: This step shows you how you can remove certain variables.
 
-# ewar_cleaned <- ewar_cleaned %>%
+# ebs_cleaned <- ebs_cleaned %>%
 #   select(-c(var1, var2))
 
 ```
@@ -433,16 +446,16 @@ This chunk will help you set up and clean your date variables.
 ## If not, comment this section out and use the below.
 
 ## make sure all date variables are formatted as dates 
-DATEVARS <- ewar_dict %>% 
+DATEVARS <- ebs_dict %>% 
   filter(type == "date") %>%
-  filter(name %in% names(ewar_cleaned)) %>% 
+  filter(name %in% names(ebs_cleaned)) %>% 
   ## filter to match the column names of your data
   pull(name) 
 
 ## find if there are date variables which are completely empty
 ## (otherwise the parsedate package does not work)
 EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
-  is.na(ewar_cleaned[[.x]])
+  is.na(ebs_cleaned[[.x]])
   )) %>% 
   unlist() %>% 
   which()
@@ -452,7 +465,7 @@ EMPTY_DATEVARS <- purrr::map(DATEVARS, ~all(
 DATEVARS <- DATEVARS[-EMPTY_DATEVARS]
 
 ## change to dates 
-ewar_cleaned <- ewar_cleaned %>%
+ebs_cleaned <- ebs_cleaned %>%
     mutate(
       across(.cols = all_of(DATEVARS),
            .fns = ~ymd(parsedate::parse_date(.x))))
@@ -463,20 +476,20 @@ ewar_cleaned <- ewar_cleaned %>%
 ## Use this section if you did not have KoBo data. 
 
 ## use the parse_dates() function to make a first pass at date variables.
-# ewar_cleaned <- ewar_cleaned %>%
+# ebs_cleaned <- ebs_cleaned %>%
 #   mutate(
 #     across(.cols = matches("date|Date"),
 #            .fns  = ~ymd(parsedate::parse_date(.x))))
 
 ## once you have run parse_date(), take a look at your date variables.
 ## here is an example:
-# table(ewar_cleaned$date_signal)
+# table(ebs_cleaned$date_signal)
 
 
 ## Some dates will be unrealistic or wrong.
 ## Here is an example of how to manually fix dates. 
 ## Look at your data and edit as needed.
-# ewar_cleaned <- mutate(ewar_cleaned,
+# ebs_cleaned <- mutate(ebs_cleaned,
 #                            date_signal = case_when(
 #                              date_signal < as.Date("2017-11-01")  ~ as.Date(NA),
 #                              date_signal == as.Date("2081-01-01") ~ as.Date("2018-01-01"),
@@ -489,7 +502,7 @@ ewar_cleaned <- ewar_cleaned %>%
 ## This step creates an epiweek variable from the date of onset.
 ## You can use date_of_consultation_admission if you are missing many date_of_onset.
 
-ewar_cleaned <- ewar_cleaned %>% 
+ebs_cleaned <- ebs_cleaned %>% 
   mutate(
     ## create an epiweek variable 
     epiweek = tsibble::yearweek(
@@ -517,11 +530,11 @@ includes numeric, factor, and character vectors.
 ```{r create_vars}
 
 ## Numeric variables -----------------------------------------------------------
-## This step creates numeric variables related to timeliness of ewar activities
+## This step creates numeric variables related to timeliness of ebs activities
 ## You can adapt this step to create other calculated variables
 
 ## create timeliness-related variables
-ewar_cleaned <- ewar_cleaned %>%
+ebs_cleaned <- ebs_cleaned %>%
   ## Time in days to detect the signal
   mutate(detection_time = as.numeric(date_signal - date_event_start)) %>% 
   ## Time in days to verify a signal
@@ -551,14 +564,14 @@ ewar_cleaned <- ewar_cleaned %>%
 
 ## The variable ALERT will be binary (TRUE/FALSE) -- if an alert was declared 
 ## or not
-ewar_cleaned$ALERT <- str_detect(ewar_cleaned$alert_status, "1")
+ebs_cleaned$ALERT <- str_detect(ebs_cleaned$alert_status, "1")
   
 
 ## Recode character variables -------------------------------------------------
 ## This step shows how to fix misspellings in the geographic region variable.
 ## Ideally, you want these values to match your shapefile and population data!
 
-# ewar_cleaned <- ewar_cleaned %>%
+# ebs_cleaned <- ebs_cleaned %>%
 #   mutate(location_signal = case_when(
 #     location_signal == "Valliages D"       ~ "Village D",
 #     location_signal == "VillageD"          ~ "Village D",
@@ -585,7 +598,7 @@ of the reporting period.
 # obs_end   <- aweek::week2date(str_glue("{reporting_week}-7"))
 # 
 # # filter out cases after end of reporting week
-# ewar_cleaned <- ewar_cleaned %>% 
+# ebs_cleaned <- ebs_cleaned %>% 
 #   filter(date_signal <= obs_end)
 
 
@@ -609,7 +622,7 @@ are duplicated - giving you more flexibility around browsing which ones to drop.
 
 ## option 1: only keep the first occurrence of duplicate case 
 
-ewar_cleaned <- ewar_cleaned %>% 
+ebs_cleaned <- ebs_cleaned %>% 
   ## find duplicates based on signal_type, date_signal, initials 
   ## only keep the first occurrence 
   distinct(signal_type, date_signal, initials, .keep_all = TRUE)
@@ -617,7 +630,7 @@ ewar_cleaned <- ewar_cleaned %>%
 
 # ## option 2: create flagging variables for duplicates (then use to browse)
 # 
-# ewar_cleaned <- ewar_cleaned %>% 
+# ebs_cleaned <- ebs_cleaned %>% 
 #   ## choose which variables to use for finding unique rows 
 #   group_by(signal_type, date_signal, initials) %>% 
 #   mutate(
@@ -627,7 +640,7 @@ ewar_cleaned <- ewar_cleaned %>%
 #   )
 # 
 # ## browse duplicates based on flagging variables 
-# ewar_cleaned %>% 
+# ebs_cleaned %>% 
 #   ## only keep rows that are duplicated
 #   filter(duped) %>% 
 #   ## arrange by variables of interest 
@@ -635,7 +648,7 @@ ewar_cleaned <- ewar_cleaned %>%
 #   View()
 # 
 # ## filter duplicates to only keep the row with the earlier entry 
-# ewar_cleaned %>% 
+# ebs_cleaned %>% 
 #   ## choose which variables to use for finding unique rows 
 #   group_by(signal_type, date_signal, initials) %>% 
 #   ## sort to have the earliest date by person first
@@ -649,11 +662,11 @@ ewar_cleaned <- ewar_cleaned %>%
 --------------------------------------------------------------------------------
 
 You can save your cleaned dataset as an Excel. 
-This automatically names your file "ewar_cleaned_DATE", where DATE is the
+This automatically names your file "ebs_cleaned_DATE", where DATE is the
 current date.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r save_cleaned_data}
-# rio::export(ewar_cleaned, here::here("data", str_glue("ewar_cleaned_{Sys.Date()}.xlsx")))
+# rio::export(ebs_cleaned, here::here("data", str_glue("ebs_cleaned_{Sys.Date()}.xlsx")))
 ```
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -662,7 +675,7 @@ This marks the start of the ANALYSIS portion of the template.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
-### Routine EWAR Sitrep
+### Routine ebs Sitrep
 #### Recommendations
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Add relevant recommendations based on interpretation of data presented in the report
@@ -670,13 +683,13 @@ Include this paragraph in the body of the email when sharing the Sitrep
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 #### Overview for `r reporting_week`
-In `r reporting_week`, there were `r nrow(filter(ewar_cleaned, epiweek == reporting_week))` signals received, of which `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), event_status == "1")` were verified. There were `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), is.na(date_assessment) == FALSE)` risk assessments completed resulting in `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), ALERT)` alerts and `r fmt_count(filter(ewar_cleaned, epiweek == reporting_week), response_undertaken == "y")` responses. 
+In `r reporting_week`, there were `r nrow(filter(ebs_cleaned, epiweek == reporting_week))` signals received, of which `r fmt_count(filter(ebs_cleaned, epiweek == reporting_week), event_status == "1")` were verified. There were `r fmt_count(filter(ebs_cleaned, epiweek == reporting_week), is.na(date_assessment) == FALSE)` risk assessments completed resulting in `r fmt_count(filter(ebs_cleaned, epiweek == reporting_week), ALERT)` alerts and `r fmt_count(filter(ebs_cleaned, epiweek == reporting_week), response_undertaken == "y")` responses. 
 
 #### Overview of performance in past 4 weeks
 
 ```{r performance_overview_table, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## filter to only include the last 4 weeks data
   filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
   ## Group by epiweek
@@ -714,7 +727,7 @@ ewar_cleaned %>%
 ```{r summary_table_reporting_week_type, ft.align = "left"}
 
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
  ## Filter to only include data for the past 6 weeks
   filter(epiweek == reporting_week) %>% 
   ## Group by epiweek
@@ -768,14 +781,14 @@ Your coordinate reference system needs to be WGS84.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r read_shapefiles, message=FALSE}
 ## fake map data - DELETE if you are using real data
-map <- gen_polygon(regions = unique(ewar_cleaned$location_signal))
+map <- gen_polygon(regions = unique(ebs_cleaned$location_signal))
 
 
 ## Clean up map
 map <- map %>% 
   ## remove the NAs
   filter(is.na(name) == F ) %>% 
-  ## rename name variables to match ewar_cleaned
+  ## rename name variables to match ebs_cleaned
   mutate(name = case_when(
          name == "1" ~ "location_1",
          name == "2" ~ "location_2",
@@ -803,7 +816,7 @@ map <- map %>%
 ```{r place_verified_signals_type_map, message = FALSE, warning = FALSE}
 
 ## Count number of verified signals in last week  ----------------------------------------
-verif_sig <- ewar_cleaned %>% 
+verif_sig <- ebs_cleaned %>% 
     ## specify the time period of interest
     filter(epiweek == reporting_week ) %>% 
     ## Group by location and signal type
@@ -854,7 +867,7 @@ ggplot() +
 ```{r place_alerts_type_map, message = FALSE, warning = FALSE}
 
 ## Count number of alerts in reporting week  ----------------------------------------
-alerts <- ewar_cleaned %>% 
+alerts <- ebs_cleaned %>% 
     ## specify the time period of interest
     filter(epiweek == reporting_week ) %>% 
     ## convert
@@ -909,7 +922,7 @@ ggplot() +
 ```{r place_response_type_map, message = FALSE, warning = FALSE}
 
 ## Count number of alerts in reporting week  ----------------------------------------
-responses <- ewar_cleaned %>% 
+responses <- ebs_cleaned %>% 
     ## specify the time period of interest
     filter(epiweek == reporting_week ) %>% 
     ## convert
@@ -1000,7 +1013,7 @@ alerts and responses in the 6 weeks prior to the reporting week
 
 ```{r time_overview_table, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## Group by epiweek
   group_by(epiweek) %>% 
   ## Count the number of total signals, number required verification,
@@ -1033,7 +1046,7 @@ ewar_cleaned %>%
 #### Usefulness
 ##### Number of alerts of the CEBS that resulted in public health action
 
-Across the period of evaluation, there were `r nrow(filter(ewar_cleaned, ALERT))` alerts of which `r nrow(filter(ewar_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
+Across the period of evaluation, there were `r nrow(filter(ebs_cleaned, ALERT))` alerts of which `r nrow(filter(ebs_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
 
 
 #### Responses by type by location - full dataset
@@ -1041,7 +1054,7 @@ Across the period of evaluation, there were `r nrow(filter(ewar_cleaned, ALERT))
 
 ```{r place_responses_type_table_eval, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## Filter to only include data for the past 4 weeks and responses
   filter(response_undertaken == "y") %>% 
   ## Select the variables of interest - signal type and location of signal
@@ -1061,7 +1074,7 @@ and verification, verification of a signal and assessment, assessment of a signa
 
 ```{r timeliness, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## select timeliness-related variables
   select(detection_time, verification_time, assessment_time, 
          response_detect_time, response_assess_time) %>% 
@@ -1085,7 +1098,7 @@ The below table shows the proportion of signals that were verified within 24 hou
 
 ```{r timeliness_prop, ft.align = "left"}
 
-ewar_cleaned %>%
+ebs_cleaned %>%
   ## select timeliness-related variables
   select(verif_24, assess_48) %>%
   ## calculate mean and SD for each
@@ -1103,7 +1116,7 @@ ewar_cleaned %>%
 #### Timeliness of signal detection, verification, risk assessment and response - by month
 ```{r timeliness_month, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## select timeliness-related variables
   select(detection_time, verification_time, assessment_time, 
          response_detect_time, response_assess_time, epimonth) %>% 
@@ -1128,7 +1141,7 @@ ewar_cleaned %>%
 #### Timeliness of verification and risk assessment - by % and month
 ```{r timeliness_month_prop, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## select timeliness-related variables
   select(verif_24, assess_48, epimonth) %>% 
   ## Group by epimonth
@@ -1148,7 +1161,7 @@ ewar_cleaned %>%
 #### Completeness of selected variables - full dataset
 ```{r completeness, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## select variables of interest
   select(source_signal, date_signal, location_signal, signal_type,
          total_affected, date_verification, date_assessment) %>% 
@@ -1170,7 +1183,7 @@ ewar_cleaned %>%
 #### Positive predictive value - overview full dataset
 ```{r ppv_general, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## select variables to make calculations
   select(event_status, ALERT, response_undertaken) %>% 
   ## calculate proportion of signals that become events
@@ -1202,7 +1215,7 @@ ewar_cleaned %>%
 
 ```{r ppv_event_signal_ratio}
 
-# ewar_cleaned %>% 
+# ebs_cleaned %>% 
 #   ## select variables of interest
 #   select(epiweek, event_status) %>% 
 #   ## Group by epiweek
@@ -1224,7 +1237,7 @@ ewar_cleaned %>%
 #### Positive predictive value - by signal type full dataset
 ```{r ppv_signal_type, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## select variables to make calculations
   select(event_status, ALERT, response_undertaken, signal_type) %>% 
   ## Group by signal type
@@ -1259,7 +1272,7 @@ ewar_cleaned %>%
 ##### Verified signals by type past 4 weeks
 ```{r time_verified_signals_type_table, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## Filter to only include data for the past 4 weeks and verified signals
   filter(epiweek >= past4weeks & epiweek <= reporting_week & event_status == "1") %>% 
   ## Group by epiweek
@@ -1289,7 +1302,7 @@ ewar_cleaned %>%
 ##### Alerts by type in the past 4 weeks
 ```{r time_alerts_type_figure, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## Filter to only include data for the past 6 weeks and alerts
   filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == TRUE) %>% 
   ## Group by epiweek
@@ -1317,7 +1330,7 @@ ewar_cleaned %>%
 ##### Responses by type in the past 4 weeks
 ```{r time_responses_type_figure, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## Filter to only include data for the past 6 weeks and alerts
   filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
   ## Group by epiweek
@@ -1348,7 +1361,7 @@ ewar_cleaned %>%
 ```{r place_verified_signals_type_table, ft.align = "left"}
 
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## Filter to only include data for the past 6 weeks and verified signals
   filter(epiweek >= past4weeks & epiweek <= reporting_week & event_status == "1") %>% 
   select(signal_type, location_signal) %>% 
@@ -1366,7 +1379,7 @@ ewar_cleaned %>%
 <!-- as needed -->
 ```{r place_alerts_type_table, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## Filter to only include data for the past 4 weeks and alerts
   filter(epiweek >= past4weeks & epiweek <= reporting_week & ALERT == "TRUE") %>% 
   ## Select the variables of interest - signal type and location of signal
@@ -1383,7 +1396,7 @@ ewar_cleaned %>%
 <!-- as needed -->
 ```{r place_responses_type_table, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## Filter to only include data for the past 4 weeks and responses
   filter(epiweek >= past4weeks & epiweek <= reporting_week & response_undertaken == "y") %>% 
   ## Select the variables of interest - signal type and location of signal
@@ -1399,7 +1412,7 @@ ewar_cleaned %>%
 ##### Reporting source of signals - past 4 weeks
 ```{r reporting_source, ft.align = "left"}
 
-ewar_cleaned %>% 
+ebs_cleaned %>% 
   ## examine only the last 4 weeks
   filter(epiweek >= past4weeks & epiweek <= reporting_week) %>% 
   ## select variables of interest

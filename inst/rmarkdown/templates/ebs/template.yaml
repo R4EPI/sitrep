@@ -1,0 +1,4 @@
+name: EBS analysis
+description: >
+  An automated EBS analysis template
+create_dir: false
