@@ -656,11 +656,11 @@ study_data_cleaned <- study_data_cleaned %>%
   mutate(age_group_mon = if_else(
     ## if months <= 12 then calculated age groups 
     age_months <= 12, 
-    age_categories(study_data_cleaned$age_months, 
-                                        breakers = c(0, 6, 9, 12), 
-                                        ceiling = TRUE), 
+    age_categories(age_months, 
+                   breakers = c(0, 6, 9, 12), 
+                   ceiling = TRUE), 
     ## otherwise set new variable to missing
-    factor(NA)))
+    NA))
 
 
 ## alternatively, create an age group variable specify a sequence
@@ -1646,6 +1646,7 @@ Note the possibility of negative confidence intervals if there are low counts
 
 ## weighted counts and proportion of dead
 death_props <- survey_design %>% 
+  ungroup() %>% 
   select(died) %>% 
   tbl_svysummary(type = died ~ "categorical") %>% 
   ## add the weighted total
