@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Report templates and helper functions for applied epidemiology
+Report templates and helper functions for applied epidemiology.
 }
 \seealso{
 Useful links:
