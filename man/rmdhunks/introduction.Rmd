@@ -42,7 +42,7 @@ templates will generate the following:
 You can access the list of templates in *R Studio* by clicking (see example below): 
 file > New file > R Markdown... > From Template
 
-![Example of how to open and save the cholera template](https://github.com/R4EPI/R4EPIs-website/raw/master/content/welcome/images/opening_template.gif)
+![Example of how to open and save the cholera template](../../vignettes/images/opening_template.gif)
 
 
 You can generate an example template by using the `check_sitrep_templates()`

@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 ## Origin 
 
 Applied Epi Tools originated out of the R4epis project. 
-R4epis started in 2018 as a partnership between Médecins Sans Frontières ([MSF](https://www.artsenzondergrenzen.nl/)
+R4epis started in 2018 as a partnership between Médecins Sans Frontières ([MSF](https://www.artsenzondergrenzen.nl/)) and 
 the R for Epidemics Consortium ([RECON](http://www.repidemicsconsortium.org/)). 
 In 2021, [Applied Epi](https://appliedepi.org/) was contracted by MSF to finalise 
 the project. 
