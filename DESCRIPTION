@@ -44,7 +44,6 @@ Imports:
     binom,
     broom,
     clipr,
-    cli,
     dplyr (>= 0.8.0),
     epitabulate (>= 0.0.0.9007),
     epidict (>= 0.0.0.9001),
@@ -69,7 +68,6 @@ Imports:
     rio,
     rlang (>= 0.4.0),
     rmarkdown,
-    rstudioapi,
     scales,
     sf,
     slider,
@@ -97,7 +95,7 @@ Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Collate: 
     'sitrep-package.R'
     'check_templates.R'
@@ -105,8 +103,3 @@ Collate:
     'epidict_exports.R'
     'epikit_exports.R'
     'epitabulate_exports.R'
-    'AJS_linelist_internal.R'
-    'AJS_pop_internal.R'
-    'shape_quartier_internal.R'
-    'shape_block_internal.R'
-    'download_datasets.R'
