@@ -1503,7 +1503,7 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 survey_design %>% 
   select(vaccination_status_simple) %>% 
-  tbl_svysummary() %>% 
+  tbl_svysummary(statistic = everything() ~ "{n} ({p}%) [{deff}]") %>% 
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals

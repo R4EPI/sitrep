@@ -1993,7 +1993,8 @@ overall <- survey_design %>%
   select(all_of(MUAC)) %>% 
   ## only show the row with TRUE
   tbl_svysummary(missing = "no", 
-                 value = everything() ~ TRUE) %>% 
+                 value = everything() ~ TRUE, 
+                 statistic = everything() ~ "{n} ({p}%) [{deff}]") %>% 
   ## add confidence intervals
   add_ci()
 

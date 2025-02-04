@@ -1648,7 +1648,8 @@ Note the possibility of negative confidence intervals if there are low counts
 death_props <- survey_design %>% 
   ungroup() %>% 
   select(died) %>% 
-  tbl_svysummary(type = died ~ "categorical") %>% 
+  tbl_svysummary(type = died ~ "categorical", 
+                 statistic = all_categorical() ~ "{n} ({p}%) [DEFF {deff}]") %>% 
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals

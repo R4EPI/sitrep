@@ -1570,7 +1570,8 @@ survey_design %>%
   ## only keep variables of interest
   select(any_vaccine, vaccine_card, hf_records) %>% 
   ## only display one line for each variable (with counts for "Yes")
-  tbl_svysummary(value = list(everything() ~ "Yes")) %>% 
+  tbl_svysummary(value = list(everything() ~ "Yes"), 
+                 statistic = everything() ~ "{n} ({p}%) [{deff}]") %>% 
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
