@@ -46,9 +46,6 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
 
 
-## set default NA to - in output, define figure width/height
-options(knitr.kable.NA = "-")
-
 
 # Ensures the package "pacman" is installed
 if (!require("pacman")) {
@@ -1573,13 +1570,12 @@ survey_design %>%
   ## only keep variables of interest
   select(any_vaccine, vaccine_card, hf_records) %>% 
   ## only display one line for each variable (with counts for "Yes")
-  tbl_svysummary(value = list(everything() ~ "Yes")) %>% 
+  tbl_svysummary(value = list(everything() ~ "Yes"), 
+                 statistic = everything() ~ "{n} ({p}%) [{deff}]") %>% 
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1629,9 +1625,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1699,9 +1693,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1751,9 +1743,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1802,9 +1792,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1854,9 +1842,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1901,13 +1887,11 @@ survey_design %>%
   select(reason_vars$option_name) %>% 
   tbl_svysummary(value = list(everything() ~ 1)) %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
-      stat_0 ~ "**Weighted Count (n) \n (N={round(N, digits = 0)})**"
+      stat_0 ~ "Weighted Count (n) \n (N={round(N, digits = 0)})"
     )
     ) %>% 
   ## make variable names bold 

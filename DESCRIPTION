@@ -32,7 +32,7 @@ Authors@R:
       person(given = "Neale",
              family = "Batra",
              role = "ctb"))
-Description: Report templates and helper functions for applied epidemiology
+Description: Report templates and helper functions for applied epidemiology.
 License: GPL-3
 BugReports: https://github.com/R4EPI/sitrep/issues
 URL: https://github.com/R4EPI/sitrep,
@@ -54,7 +54,7 @@ Imports:
     ggalluvial,
     ggplot2 (>= 3.0.0),
     ggspatial,
-    gtsummary,
+    gtsummary (>= 2.0.0),
     glue,
     here,
     janitor,

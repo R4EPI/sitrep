@@ -79,9 +79,6 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
 
 
-## set default NA to - in output, define figure width/height
-options(knitr.kable.NA = "-")
-
 # Ensures the package "pacman" is installed
 if (!require("pacman")) {
      install.packages("pacman") }
@@ -908,9 +905,9 @@ study_data_cleaned <- study_data_cleaned %>%
   mutate(
     across(
       .cols = c(stunting_haz, 
-                         moderate_stunting_haz, 
-                         severe_stunting_haz), # select the indicator variables
-      .funs = ~if_else(!is.na(flen) & flen == 1, NA, .))) # NA if flagged, else leave as is
+                moderate_stunting_haz, 
+                severe_stunting_haz), # select the indicator variables
+      .fns = ~if_else(!is.na(flen) & flen == 1, NA, .))) # NA if flagged, else leave as is
 
 
 
@@ -1996,7 +1993,10 @@ overall <- survey_design %>%
   select(all_of(MUAC)) %>% 
   ## only show the row with TRUE
   tbl_svysummary(missing = "no", 
-                 value = everything() ~ TRUE)
+                 value = everything() ~ TRUE, 
+                 statistic = everything() ~ "{n} ({p}%) [{deff}]") %>% 
+  ## add confidence intervals
+  add_ci()
 
 age_strat <- survey_design %>% 
   ## tabulate multiple variables with same values
@@ -2013,7 +2013,8 @@ tbl_merge(list(overall, age_strat)) %>%
     list(
       ## rename the spanning header
       ## you can see what the columns are called by putting in an object and inspecting table_body
-      stat_0_1    ~ "**Overall**", 
+      c(stat_0_1, 
+        ci_stat_0_1) ~ "**Overall**",  
       c(stat_1_2,
         stat_2_2, 
         stat_3_2,
@@ -2052,7 +2053,9 @@ overall <- survey_design %>%
   select(all_of(MUAC)) %>% 
   ## only show the row with TRUE
   tbl_svysummary(missing = "no", 
-                 value = everything() ~ TRUE)
+                 value = everything() ~ TRUE) %>% 
+  ## add confidence intervals
+  add_ci()
 
 age_strat <- survey_design %>% 
   ## only keep children less than 87cm
@@ -2063,7 +2066,7 @@ age_strat <- survey_design %>%
   tbl_svysummary(missing = "no", 
                  value = everything() ~ TRUE, 
                  ## stratify by age group
-                 by = age_group)
+                 by = age_group) 
 
 ## combine the overall and stratified tables 
 tbl_merge(list(overall, age_strat)) %>% 
@@ -2071,7 +2074,8 @@ tbl_merge(list(overall, age_strat)) %>%
     list(
       ## rename the spanning header
       ## you can see what the columns are called by putting in an object and inspecting table_body
-      stat_0_1    ~ "**Overall**", 
+      c(stat_0_1, 
+        ci_stat_0_1) ~ "**Overall**", 
       c(stat_1_2,
         stat_2_2, 
         stat_3_2,
@@ -2110,7 +2114,9 @@ overall <- survey_design %>%
   select(all_of(HAZ)) %>% 
   ## only show the row with TRUE
   tbl_svysummary(missing = "no", 
-                 value = everything() ~ TRUE)
+                 value = everything() ~ TRUE) %>% 
+  ## add confidence intervals
+  add_ci()
 
 age_strat <- survey_design %>% 
   ## tabulate multiple variables with same values
@@ -2127,7 +2133,8 @@ tbl_merge(list(overall, age_strat)) %>%
     list(
       ## rename the spanning header
       ## you can see what the columns are called by putting in an object and inspecting table_body
-      stat_0_1    ~ "**Overall**", 
+      c(stat_0_1, 
+        ci_stat_0_1) ~ "**Overall**",  
       c(stat_1_2,
         stat_2_2, 
         stat_3_2,
@@ -2165,7 +2172,9 @@ overall <- survey_design %>%
   select(all_of(WAZ)) %>% 
   ## only show the row with TRUE
   tbl_svysummary(missing = "no", 
-                 value = everything() ~ TRUE)
+                 value = everything() ~ TRUE) %>% 
+  ## add confidence intervals
+  add_ci()
 
 age_strat <- survey_design %>% 
   ## tabulate multiple variables with same values
@@ -2182,7 +2191,8 @@ tbl_merge(list(overall, age_strat)) %>%
     list(
       ## rename the spanning header
       ## you can see what the columns are called by putting in an object and inspecting table_body
-      stat_0_1    ~ "**Overall**", 
+      c(stat_0_1, 
+        ci_stat_0_1) ~ "**Overall**",   
       c(stat_1_2,
         stat_2_2, 
         stat_3_2,
@@ -2221,7 +2231,9 @@ overall <- survey_design %>%
   select(all_of(WHZ)) %>% 
   ## only show the row with TRUE
   tbl_svysummary(missing = "no", 
-                 value = everything() ~ TRUE)
+                 value = everything() ~ TRUE) %>% 
+  ## add confidence intervals
+  add_ci()
 
 age_strat <- survey_design %>% 
   ## tabulate multiple variables with same values
@@ -2238,7 +2250,8 @@ tbl_merge(list(overall, age_strat)) %>%
     list(
       ## rename the spanning header
       ## you can see what the columns are called by putting in an object and inspecting table_body
-      stat_0_1    ~ "**Overall**", 
+      c(stat_0_1, 
+        ci_stat_0_1) ~ "**Overall**", 
       c(stat_1_2,
         stat_2_2, 
         stat_3_2,

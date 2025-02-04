@@ -46,9 +46,6 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 knitr::opts_chunk$set(echo = FALSE, error = TRUE, fig.width = 6*1.25, fig.height = 6)
 
 
-## set default NA to - in output, define figure width/height
-options(knitr.kable.NA = "-")
-
 
 # Ensures the package "pacman" is installed
 if (!require("pacman")) {
@@ -1287,7 +1284,7 @@ left_join(ag, propcount, by = "age_group", suffix = c("", "_pop")) %>%
     "Source population (%)" = percent_pop,
     "P-value" = p.value
   ) %>%
-  kable(digits = 1)
+  qflextable()
 
 ```
 
@@ -1506,13 +1503,11 @@ as if no deaths or recoded to zero (impossible to have negative deaths).
 
 survey_design %>% 
   select(vaccination_status_simple) %>% 
-  tbl_svysummary() %>% 
+  tbl_svysummary(statistic = everything() ~ "{n} ({p}%) [{deff}]") %>% 
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1547,9 +1542,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1587,9 +1580,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1629,9 +1620,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>%  
   ## modify the column headers
   modify_header(
     list(
@@ -1668,9 +1657,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1710,9 +1697,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1752,9 +1737,7 @@ survey_design %>%
   ## add the weighted total
   add_n() %>%   
   ## add in confidence intervals
-   
-  ## add in deff 
-   
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1790,9 +1773,7 @@ survey_design %>%
   select(reason_route_vacc) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1825,9 +1806,7 @@ survey_design %>%
   select(reason_msf_vacc) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1859,9 +1838,7 @@ survey_design %>%
   select(reason_sia_vacc) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1892,9 +1869,7 @@ survey_design %>%
   select(diagnosis_disease) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(
@@ -1928,9 +1903,7 @@ survey_design %>%
   select(time_since_group) %>% 
   tbl_svysummary() %>% 
   ## add in confidence intervals
-  
-  ## add in deff 
-  
+  add_ci() %>% 
   ## modify the column headers
   modify_header(
     list(

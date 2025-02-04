@@ -50,9 +50,6 @@ knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
 
 
 
-## set default NA to - in output, define figure width/height
-options(knitr.kable.NA = "-")
-
 # Ensures the package "pacman" is installed
 if (!require("pacman")) {
      install.packages("pacman") }
