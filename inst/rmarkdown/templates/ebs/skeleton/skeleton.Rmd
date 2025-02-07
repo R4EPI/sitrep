@@ -228,8 +228,8 @@ For a KoBo dataset this variable is "event_id".
 ## join the signal and risk assessment
 # ebs_raw <- left_join(signal_collect_raw, signal_verification_raw, by = c("signal_id" = "c_signal_id") %>% 
               ## join the combined forms with the risk assessment form
-              # left_join(risk_assessment_raw, by = "c_signal_id") %>% 
-              # left_join(response_raw, by = "c_signal_id")
+              # left_join(risk_assessment_raw, by = c("signal_id" = "c_signal_id") %>% 
+              # left_join(response_raw, by = c("signal_id" = "c_signal_id")
 ```
 
 
