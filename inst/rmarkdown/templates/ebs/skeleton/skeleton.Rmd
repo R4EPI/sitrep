@@ -116,7 +116,7 @@ Monday.
 ```{r define_current_week}
 
 ## set current week 
-reporting_week <- tsibble::yearweek("2024-W15")
+reporting_week <- tsibble::yearweek("2018-W10")
 
 
 ## set 4 weeks prior to reporting week
@@ -226,10 +226,10 @@ For a KoBo dataset this variable is "event_id".
 ```{r merge_data_sets}
 
 ## join the signal and risk assessment
-# ebs_raw <- left_join(signal_collect_raw, signal_verfication_raw, by = "signal_id") %>% 
+# ebs_raw <- left_join(signal_collect_raw, signal_verification_raw, by = c("signal_id" = "c_signal_id") %>% 
               ## join the combined forms with the risk assessment form
-              # left_join(risk_assement_raw, by = "signal_id") %>% 
-              # left_join(response_raw, by = "event_id")
+              # left_join(risk_assessment_raw, by = "c_signal_id") %>% 
+              # left_join(response_raw, by = "c_signal_id")
 ```
 
 
@@ -702,7 +702,8 @@ ebs_cleaned %>%
             alerts = sum(ALERT, na.rm  = T),
             responses = sum(response_undertaken == "y", na.rm = T)) %>% 
   ## convert epiweek to a factor
-  mutate(epiweek = as.factor(epiweek)) %>%
+  mutate(epiweek = factor(epiweek)) %>% 
+  # mutate(epiweek = factor(paste0(year(epiweek), " W", sprintf("%02d", week(epiweek))))) %>%
   ## Add total value
   janitor::adorn_totals("row") %>% 
   ## Rename variables to make a cleaner table
@@ -1024,7 +1025,7 @@ ebs_cleaned %>%
             alerts = sum(ALERT, na.rm  = T),
             responses = sum(response_undertaken == "y", na.rm = T)) %>% 
   ## convert epiweek to a factor
-  mutate(epiweek = as.factor(epiweek)) %>%
+  mutate(epiweek = factor(paste0(year(epiweek), " W", sprintf("%02d", week(epiweek))))) %>%
   ## Add total value
   janitor::adorn_totals("row") %>% 
   ## Rename variables to make a cleaner table
