@@ -72,7 +72,6 @@ pacman::p_load(
   knitr,         # create output docs
   here,          # find your files
   rio,           # read in data
-  openxlsx,      # import/export of multi-sheet Excel workbooks 
   forcats,       # clean/shape data
   lubridate,     # handle dates
   dplyr,         # clean/shape data
@@ -88,8 +87,7 @@ pacman::p_load(
   OpenStreetMap, # to add OSM basemap in ggplot map
   sf,            # encode spatial vector data
   ggspatial,     # plot maps
-  purrr,         # iteration
-  naniar       # Missing data
+  purrr         # iteration
 )
 
 
@@ -1155,15 +1153,22 @@ ebs_cleaned %>%
 ```{r completeness, ft.align = "left"}
 
 ebs_cleaned %>% 
-  ## select variables of interest
-  select(source_signal, date_signal, location_signal, signal_type,
+     ## select variables of interest
+     select(source_signal, date_signal, location_signal, signal_type,
          total_affected, date_verification, date_assessment) %>% 
-  ## create a summary table of number and proportion of missing values
-  miss_var_summary() %>% 
-  ## rename columns
-  dplyr::rename("Variable" = variable,
-                "Number missing" = n_miss,
-                "% missing" = pct_miss) %>% 
+   ## create a summary table of number and proportion of missing values
+   ## iterate over each variable selected
+    map_dfr(
+       ## create counts and percentages (always include counts of NA)
+       ~ tabyl(as.numeric(.), useNA = "always")  %>% 
+           ## only keep the NA counts and percentages
+           filter(is.na(`as.numeric(.)`)), 
+           ## put the variable as row name
+            .id = "variable") %>% 
+    ## rename columns
+    select("Variable" = variable,
+                "Number missing" = n,
+                "% missing" = percent) %>% 
   ## convert to flextable
   flextable::flextable() %>% 
   ## autofit table
