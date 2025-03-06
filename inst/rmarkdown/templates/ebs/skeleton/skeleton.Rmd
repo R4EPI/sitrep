@@ -3,9 +3,6 @@ title: "EBS analysis"
 output:
   word_document:
     keep_md: yes
-  pdf_document: default
-  html_document:
-    df_print: paged
 ---
 
 # Introduction to this template 
@@ -92,10 +89,7 @@ pacman::p_load(
   sf,            # encode spatial vector data
   ggspatial,     # plot maps
   purrr,         # iteration
-  naniar,        # Missing data
-  httr,          # for using KoBo API 
-  jsonlite,      # for using KoBo API
-  keyring        # for inputting pasword for KoBo
+  naniar       # Missing data
 )
 
 
@@ -109,9 +103,7 @@ pacman::p_load(
 
 You need to set the week you want to report on. Generally, this is the previous
 week. Put it below.
-
-aweek::set_week_start will define the beginning of the week. The standard is
-Monday.
+The standard is Monday.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r define_current_week}
 
@@ -594,8 +586,8 @@ This chunk removes cases after your reporting week and defines the start and end
 of the reporting period.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r report_setup}
-# TODO return the last day of the reporting week
-# obs_end   <- aweek::week2date(str_glue("{reporting_week}-7"))
+# return the last day of the reporting week
+# obs_end   <- as.Date(reporting_week- 7)
 # 
 # # filter out cases after end of reporting week
 # ebs_cleaned <- ebs_cleaned %>% 
