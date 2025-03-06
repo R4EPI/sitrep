@@ -538,12 +538,14 @@ ebs_cleaned <- ebs_cleaned %>%
   ## Identify when verification done within 24 hours of signal being detected
   mutate(verif_24 = case_when(
     as.numeric(date_verification - date_signal) <= 1 ~ "Verified <= 24 hours",
-    TRUE ~ "Verified > 24 hours"
+    as.numeric(date_verification - date_signal) > 1 ~ "Verified > 24 hours",
+    TRUE ~ NA_character_
   )) %>% 
   ## Identify when risk assessment done within 48 hours of signal being detected
   mutate(assess_48 = case_when(
     as.numeric(date_assessment - date_signal) <= 2 ~ "Risk assessed <= 48 hours",
-    TRUE ~ "Risk assessed > 48 hours"
+    as.numeric(date_assessment - date_signal) > 2 ~  "Risk assessed > 48 hours",
+    TRUE ~ NA_character_
   ))
 
 
@@ -986,7 +988,7 @@ There is code to examine the following:
 ```{r set_start}
 
 ## Identify the start week for monitoring/evaluation period
-# start_week <- aweek::as.aweek("2020-W04")
+# start_week <- tsibble::yearweek("2020-W04")
 
 ```
 
@@ -1035,7 +1037,7 @@ ebs_cleaned %>%
 
 
 #### Usefulness
-##### Number of alerts of the CEBS that resulted in public health action
+##### Number of alerts of the EBS that resulted in public health action
 
 Across the period of evaluation, there were `r nrow(filter(ebs_cleaned, ALERT))` alerts of which `r nrow(filter(ebs_cleaned, ALERT, response_undertaken == "y"))` resulted in public health action.
 
@@ -1373,7 +1375,7 @@ ebs_cleaned %>%
 
 
 ##### Alerts by type by location in the past 4 weeks
-<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- The below shows all alerts in the past 4 weeks. The time period can be adjusted  -->
 <!-- as needed -->
 ```{r place_alerts_type_table, ft.align = "left"}
 
@@ -1390,7 +1392,7 @@ ebs_cleaned %>%
 ```
 
 ##### Responses by type by location in the past 4 weeks
-<!-- The below shows all signals in the past 4 weeks. The time period can be adjusted  -->
+<!-- The below shows all responses in the past 4 weeks. The time period can be adjusted  -->
 <!-- as needed -->
 ```{r place_responses_type_table, ft.align = "left"}
 
