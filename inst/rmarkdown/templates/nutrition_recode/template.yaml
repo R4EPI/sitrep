@@ -1,0 +1,4 @@
+name: Recode nutrition survey
+description: >
+  A script for recoding non-standard data to use the nutrition survey template
+create_dir: false

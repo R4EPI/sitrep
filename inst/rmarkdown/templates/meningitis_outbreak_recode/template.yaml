@@ -1,0 +1,4 @@
+name: Recode meningitis outbreak
+description: >
+  A script for recoding non-standard data to use the DHIS2 meningitis outbreak template
+create_dir: false
