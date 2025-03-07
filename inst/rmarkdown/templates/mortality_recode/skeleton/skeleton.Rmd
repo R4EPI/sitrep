@@ -40,10 +40,14 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r setup, include = FALSE, results='hide', message=FALSE, warning=FALSE}
-## hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(echo = FALSE, error = TRUE, warning = FALSE, message = FALSE, 
-                      fig.width = 6*1.25, fig.height = 6)
 
+
+## You need to activate code chunks by changing eval to true below
+
+## hide all code chunks in the output, but show errors
+knitr::opts_chunk$set(eval = FALSE,
+  echo = FALSE, error = TRUE, warning = FALSE, message = FALSE, 
+                      fig.width = 6*1.25, fig.height = 6)
 
 
 # Ensures the package "pacman" is installed
@@ -62,10 +66,6 @@ pacman::p_load(
 ```
 
 
-
-
-
-
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /// read_non_kobo_data \\\
 --------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ If you already have data in Kobo format - use the mortality survey template.
 
 ## Excel file ------------------------------------------------------------------
 ## to read in a specific sheet use "which"
-# study_data_hh <- rio::import(here::here("mortality_survey.xlsx"), which = "Sheet1")
+study_data_hh <- rio::import(here::here("mortality_survey.xlsx"), which = "Sheet1")
 
 ## Excel file -- Specific range ------------------------------------------------
 ## you can specify a range in an excel sheet.
@@ -125,9 +125,9 @@ In the choices tab, "name" has the shortened value and the "label::english" and
 ## MSF Survey Dictionary ----------------------------------------------------------
 
 ## generates MSF standard dictionary for Kobo 
-# study_data_dict <- msf_dict_survey("Mortality")
+study_data_dict <- msf_dict_survey("Mortality")
 ## generates MSF standard dictionary for Kobo in long format (for recoding)
-# study_data_dict_long <- msf_dict_survey(disease = "Mortality", compact = FALSE)
+study_data_dict_long <- msf_dict_survey(disease = "Mortality", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
 # View(study_data_dict) 
@@ -140,10 +140,10 @@ In the choices tab, "name" has the shortened value and the "label::english" and
 ## This step fixes the column names so they are easy to use in R.
 
 ## make a copy of your orginal dataset and name it study_data_cleaned
-# study_data_cleaned <- study_data_raw
+study_data_cleaned <- study_data_raw
 
 ## define clean variable names using clean_names from the janitor package. 
-# study_data_cleaned <- janitor::clean_names(study_data_cleaned)
+study_data_cleaned <- janitor::clean_names(study_data_cleaned)
 
 ## Match column names ---------------------------------------------------------
 ## This step helps you match your variables to the standard variables.
@@ -180,14 +180,117 @@ In the choices tab, "name" has the shortened value and the "label::english" and
 ```
 
 
-## refer to vignette 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// view_data_dict \\\
+--------------------------------------------------------------------------------
 
-## code chunk to see variable and values (shorten existing study_data_dict_long to 
-## just varname, vartype, value) - potentially combine with above function to see which variables actually necessary for the template
+Take a look at the standard data dictionary to see what values you need to recode. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-## code chunk to see all their unique values from messy data
+```{r view_data_dict}
 
-## generic recode for factor variables example. 
-## generic example for recoding age and other ??
+## use the long version of the dictionary
+## (repeats variable name for each value)
+recode_dict <- study_data_dict_long %>% 
+  ## only keep variables and values
+  select("variable" = name, 
+         "values" = option_name)
 
+## browse dictionary
+View(recode_dict)
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// browse_data \\\
+--------------------------------------------------------------------------------
+
+You'll want to look at your data. Here are a few ways you can explore.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r browse_data, eval = FALSE}
+
+## view your whole dataset interactivley (in an excel style format)
+View(study_data_raw)
+
+## view unique values contained in variables 
+## you can run this for any column -- just replace the column name
+unique(study_data_raw$sex)
+
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
+summarytools::dfSummary(study_data_cleaned) %>%
+  summarytools::view()
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// recode_factor_vars \\\
+--------------------------------------------------------------------------------
+
+This chunk demonstrates how to recode factor variables. You will need to add to 
+it based on your dataset by comparing to the variables in the standard data 
+dictionary. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r recode_factor_vars}
+
+## Recode character variables
+## This step shows how to fix misspellings in the geographic region variable.
+## Ideally, you want these values to match and population data!
+study_data_cleaned <- study_data_cleaned %>%
+  mutate(village_name = case_when(
+    village_name == "Valliages 1"       ~ "village 1",
+    village_name == "Village1"          ~ "village 1",
+    village_name == "Town 3"            ~ "village 3"
+    village_name == "Town3"             ~ "village 3",
+    TRUE ~ as.character(village_name))
+  )
+
+
+## create a character variable based off groups of a different variable 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(health_district = case_when(
+    cluster_number %in% c(1:5) ~ "district_a", 
+    TRUE ~ "district_b"
+  ))
+
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// recode_numeric_vars \\\ 
+--------------------------------------------------------------------------------
+
+This chunk will help recode numeric variables. You will need to add to 
+it based on your dataset by comparing to the variables in the standard data 
+dictionary. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r recode_numeric_vars}
+
+## split one age variable in to two 
+## the dictionary has all those less than 1 year of age recorded in months
+## If you have a numeric variable for age ('age_num') and an associated 
+## categorical variable for the unit 'age_unit' (days, month, years), recode like this 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    age_years = if_else(age_num >=1 & age_unit == "Year", age_num, NA), 
+    age_months = if_else(age_num <1 & age_unit == "Month", age_num, NA)
+  )
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// save_recoded_data \\\
+--------------------------------------------------------------------------------
+
+Save your recoded dataset as an Excel. 
+This automatically names your file "study_data_recoded_DATE", where DATE is the
+current date.
+You can now use this to use the analysis template. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r save_cleaned_data, eval = FALSE}
+rio::export(study_data_cleaned, here::here("data", str_glue("study_data_recoded_{Sys.Date()}.xlsx")))
+```
 
