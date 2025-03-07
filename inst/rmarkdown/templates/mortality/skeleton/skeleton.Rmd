@@ -461,7 +461,7 @@ study_data_cleaned <- study_data_cleaned %>%
 
 
 ## Non-standard data -------------------------------------------------------------
-## Use this section if you did not have dates defined Kobo data. 
+## Use this section if you did not have dates defined in a Kobo data dictionary. 
 
 ## use the parse_date() function to make a first pass at date variables.
 ## parse_date() produces a complicated format - so we use as.Date() to simplify# study_data_cleaned <- study_data_cleaned %>%

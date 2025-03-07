@@ -1,5 +1,5 @@
 ---
-title: "Recode mortality survey data"
+title: "Recode nutrition survey data"
 output: 
   word_document:
     keep_md: true
@@ -8,7 +8,7 @@ output:
 # Introduction to this template
 
 This is a template which can be used to recode data from non-Kobo formats to be 
-able to use the template for creating a report from a retrospective mortality 
+able to use the template for creating a report from a retrospective nutrition 
 survey. 
 This will produce a word document which can be kept as a log to show how the data 
 was changed. 
@@ -71,32 +71,32 @@ pacman::p_load(
 /// read_non_kobo_data \\\
 --------------------------------------------------------------------------------
 This section is for data not from Kobo.  
-If you already have data in Kobo format - use the mortality survey template. 
+If you already have data in Kobo format - use the nutrition survey template. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_non_kobo_data, warning = FALSE, message = FALSE}
 
 ## Excel file ------------------------------------------------------------------
 ## to read in a specific sheet use "which"
-study_data_hh <- rio::import(here::here("mortality_survey.xlsx"), which = "Sheet1")
+study_data_hh <- rio::import(here::here("nutrition_survey.xlsx"), which = "Sheet1")
 
 ## Excel file -- Specific range ------------------------------------------------
 ## you can specify a range in an excel sheet.
-# study_data_hh <- rio::import(here::here("mortality_survey.xlsx"), range = "B2:J102")
+# study_data_hh <- rio::import(here::here("nutrition_survey.xlsx"), range = "B2:J102")
 
 ## Excel file with password ----------------------------------------------------
 ## use this section if your Excel has a password.
 # install.packages(c("excel.link", "askpass"))
 # library(excel.link)
-# study_data_hh <- xl.read.file(here::here("mortality_survey.xlsx"),
+# study_data_hh <- xl.read.file(here::here("nutrition_survey.xlsx"),
 #                              xl.sheet = "Sheet1",
 #                              password = askpass::askpass(prompt = "please enter file password"))
 
 ## CSV file --------------------------------------------------------------------
-# study_data_hh <- rio::import(here::here("mortality_survey.csv"))
+# study_data_hh <- rio::import(here::here("nutrition_survey.csv"))
 
 ## Stata data file -------------------------------------------------------------
-# study_data_hh <- rio::import(here::here("mortality_survey.dat"))
+# study_data_hh <- rio::import(here::here("nutrition_survey.dat"))
 ```
 
 
@@ -126,9 +126,9 @@ In the choices tab, "name" has the shortened value and the "label::english" and
 ## MSF Survey Dictionary ----------------------------------------------------------
 
 ## generates MSF standard dictionary for Kobo 
-study_data_dict <- msf_dict_survey("Mortality")
+study_data_dict <- msf_dict_survey("Nutrition")
 ## generates MSF standard dictionary for Kobo in long format (for recoding)
-study_data_dict_long <- msf_dict_survey(disease = "Mortality", compact = FALSE)
+study_data_dict_long <- msf_dict_survey(disease = "Nutrition", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
 # View(study_data_dict) 
@@ -154,7 +154,7 @@ study_data_cleaned <- janitor::clean_names(study_data_cleaned)
 ## standard dictionary. This will copy a rename command like the one above to your
 ## clipboard.
 
-# msf_dict_rename_helper("mortality", varnames = "name")
+# msf_dict_rename_helper("nutrition", varnames = "name")
 
 ## Paste the result below and your column names to the matching variable.
 
