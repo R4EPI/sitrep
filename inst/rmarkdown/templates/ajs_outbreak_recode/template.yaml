@@ -1,0 +1,4 @@
+name: Recode AJS outbreak
+description: >
+  A script for recoding non-standard data to use the DHIS2 AJS outbreak template
+create_dir: false

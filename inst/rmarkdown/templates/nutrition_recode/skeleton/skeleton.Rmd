@@ -45,9 +45,12 @@ For help installing packages, please visit https://r4epis.netlify.com/welcome
 ## You need to activate code chunks by changing eval to true below
 
 ## hide all code chunks in the output, but show errors
-knitr::opts_chunk$set(eval = FALSE,
-  echo = FALSE, error = TRUE, warning = FALSE, message = FALSE, 
-                      fig.width = 6*1.25, fig.height = 6)
+knitr::opts_chunk$set(eval = FALSE,       # YOU NEED TO CHANGE THIS TO TRUE
+                      echo = TRUE,        # show all code chunks in output
+                      error = TRUE,       # show errors if they appear, but don't stop
+                      warning = TRUE,     # show warnings if they appear, but don't stop
+                      message = TRUE      # show messages if they appear, but don't stop
+                      )
 
 
 # Ensures the package "pacman" is installed

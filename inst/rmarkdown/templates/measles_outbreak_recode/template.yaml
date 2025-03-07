@@ -1,0 +1,4 @@
+name: Recode measles outbreak
+description: >
+  A script for recoding non-standard data to use the DHIS2 measles outbreak template
+create_dir: false
