@@ -1,5 +1,5 @@
 ---
-title: "Recode vaccination long survey data"
+title: "Recode vaccination short survey data"
 output: 
   word_document:
     keep_md: true
@@ -8,7 +8,7 @@ output:
 # Introduction to this template
 
 This is a template which can be used to recode data from non-Kobo formats to be 
-able to use the template for creating a report from a retrospective vaccination long 
+able to use the template for creating a report from a retrospective vaccination short 
 survey. 
 This will produce a word document which can be kept as a log to show how the data 
 was changed. 
@@ -71,7 +71,7 @@ pacman::p_load(
 /// read_non_kobo_data \\\
 --------------------------------------------------------------------------------
 This section is for data not from Kobo.  
-If you already have data in Kobo format - use the vaccination long survey template. 
+If you already have data in Kobo format - use the vaccination short survey template. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r read_non_kobo_data, warning = FALSE, message = FALSE}
@@ -127,9 +127,9 @@ In the choices tab, "name" has the shortened value and the "label::english" and
 ## MSF Survey Dictionary ----------------------------------------------------------
 
 ## generates MSF standard dictionary for Kobo 
-study_data_dict <- msf_dict_survey("vaccination_long")
+study_data_dict <- msf_dict_survey("vaccination_short")
 ## generates MSF standard dictionary for Kobo in long format (for recoding)
-study_data_dict_long <- msf_dict_survey(disease = "vaccination_long", compact = FALSE)
+study_data_dict_long <- msf_dict_survey(disease = "vaccination_short", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
 # View(study_data_dict) 
@@ -155,7 +155,7 @@ study_data_dict_long <- msf_dict_survey(disease = "vaccination_long", compact = 
 ## standard dictionary. This will copy a rename command like the one above to your
 ## clipboard.
 
-# msf_dict_rename_helper("vaccination_long", varnames = "name")
+# msf_dict_rename_helper("vaccination_short", varnames = "name")
 
 ## Paste the result below and your column names to the matching variable.
 

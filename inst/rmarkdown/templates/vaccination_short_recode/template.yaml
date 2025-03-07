@@ -1,0 +1,4 @@
+name: Recode vaccination short survey
+description: >
+  A script for recoding non-standard data to use the vaccination short survey template
+create_dir: false
