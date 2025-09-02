@@ -1,0 +1,312 @@
+---
+title: "Recode meningitis outbreak data"
+output: 
+  word_document:
+    keep_md: true
+---
+
+# Introduction to this template
+
+This is a template which can be used to recode data from non-DHIS2 formats to be 
+able to use the template for creating a report for an meningitis outbreak. 
+This will produce a word document which can be kept as a log to show how the data 
+was changed. 
+
+- There are sections for reading, reformatting and cleaning data  
+- For a more detailed explanation of this template, please visit https://r4epis.netlify.com/surveys  
+- Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
+
+- Text within <! > will not show in your final document. These comments are used
+to explain the template. You can delete them if you want.
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This comment will not show up when you knit the document.
+A comment with a title with slashes indicates a name of a code chunk.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+## Installing and loading required packages 
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// setup \\\
+--------------------------------------------------------------------------------
+
+Several packages are required for different aspects of  analysis with *R*. 
+You will need to install these before starting. 
+
+These packages can be quite large and may take a while to download in the
+field. If you have access to a USB key with these packages, it makes sense to
+copy and paste the packages into your computer's R package library 
+(run the command .libPaths() to see the folder path). 
+
+For help installing packages, please visit https://r4epis.netlify.com/welcome
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+## You need to activate code chunks by changing eval to true below
+
+## hide all code chunks in the output, but show errors
+knitr::opts_chunk$set(eval = FALSE,       # YOU NEED TO CHANGE THIS TO TRUE
+                      echo = TRUE,        # show all code chunks in output
+                      error = TRUE,       # show errors if they appear, but don't stop
+                      warning = TRUE,     # show warnings if they appear, but don't stop
+                      message = TRUE      # show messages if they appear, but don't stop
+                      )
+
+
+
+# Ensures the package "pacman" is installed
+if (!require("pacman")) {
+     install.packages("pacman") }
+
+# Install and load required packages for this template
+pacman::p_load(
+  knitr,           # create output docs
+  here,            # find your files
+  rio,             # read in data
+  dplyr,           # clean/shape data
+  tidyr,           # clean/shape data
+  sitrep,          # MSF field epi functions
+  janitor          # clean data
+)
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// read_data \\\
+--------------------------------------------------------------------------------
+
+This section is for importing data not from DHIS2. 
+There are several options below depending on whether you the file type you are 
+importing. Uncomment the code you need. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r read_data, warning = FALSE, message = FALSE}
+
+## Excel file ------------------------------------------------------------------
+## to read in a specific sheet use "which"
+linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), which = "Sheet1")
+
+
+
+## Excel file -- Specific range ------------------------------------------------
+## you can specify a range in an excel sheet.
+# linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), range = "B2:J102")
+
+
+
+## Excel file with password ----------------------------------------------------
+## use this section if your Excel has a password.
+
+# install.packages(c("excel.link", "askpass"))
+# library(excel.link)
+
+# linelist_raw <- xl.read.file(here::here("Data", "linelist.xlsx"),
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
+
+## CSV file --------------------------------------------------------------------
+# linelist_raw <- rio::import(here::here("Data", "linelist.csv"))
+
+
+
+## Stata data file -------------------------------------------------------------
+# linelist_raw <- rio::import(here::here("Data", "linelist.dat"))
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// view_data_dict \\\
+--------------------------------------------------------------------------------
+
+You will need to clean your dataset so that it matches the expected linelist 
+structure.
+
+Specifically, you will need to: 
+[ ] Recode your variable names to match the dictionary
+[ ] Recode variable contents to match the dictionary
+
+
+This step shows you the data dictionary. The data dictionary has variable names
+in the data_element_shortname column. Possible values for each variable are
+specified in "Code" and "Name" columns. 
+You will need to recode to the "values_short" content. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r view_data_dict, warning = FALSE, message = FALSE}
+
+## get MSF standard dictionary 
+recode_dict <- msf_dict("meningitis", compact = FALSE) %>% 
+  ## only keep variables and values
+  select("variable" = data_element_shortname, 
+         "values_short" = option_code, 
+         "values_long" = option_name)
+
+## browse dictionary
+View(recode_dict)
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// Clean column names  \\\
+--------------------------------------------------------------------------------
+This step fixes the column names. This is done in two steps:
+1) Use the clean_names function from janitor to automatically standardise column 
+    names as per good coding practice (lower case, remove spaces and punctuation)
+2) Manually clean column names to match linelist standard
+    a) Use the function msf_dict_rename_helper() to create a template based on the 
+        standard dictionary. This will copy a rename command  to your clipboard.
+    b)Paste the result below and edit your code so that your column names are 
+      renamed. Be careful! You still need to be aware of what each variable means 
+      and what values it takes. If there are any variables that are in the MSF 
+      dictionary that are not in your data set, then you should comment them out, 
+      but be aware that some analyses may not run because of this. 
+    
+Note example code at the bottom of this chunk. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r clean_column_names, warning = FALSE, message = FALSE}
+
+## 1) Automatically clean column names -----------------------------------------
+
+## make a copy of your orginal dataset and name it linelist_cleaned
+linelist_cleaned <- linelist_raw
+ 
+## define clean variable names using clean_names from the janitor package. 
+linelist_cleaned <- janitor::clean_names(linelist_cleaned)
+
+
+
+## 2) Manually clean column names to match linelist standard---------------------
+# 2A) Create template code for renaming your columns
+
+msf_dict_rename_helper("meningitis")
+
+# 2B) Paste the result below and your column names to the matching variable.
+
+
+## PASTE HERE
+
+
+## Below is an EXAMPLE for changing a few specific names. function. In this
+## example, we have the columns "gender" and "age" that we want to rename as
+## "sex" and "age_years". 
+## The formula for this is rename(data, NEW_NAME = OLD_NAME).
+
+# linelist_cleaned <- rename(linelist_cleaned, 
+#                            sex_id          = gender,
+#                            adm1_residence  = region)
+
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// browse_data \\\
+--------------------------------------------------------------------------------
+
+You'll want to look at your data. Here are a few ways you can explore.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r browse_data, eval = FALSE}
+
+## view your whole dataset interactively (in an excel style format)
+View(linelist_cleaned)
+
+## view unique values contained in variables 
+## you can run this for any column -- just replace the column name
+unique(linelist_cleaned$sex)
+
+## use the dfSummary function in combination with view
+## note that view is not capitalised with this package
+summarytools::dfSummary(linelist_cleaned) %>%
+  summarytools::view()
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// recode_factor_vars \\\
+--------------------------------------------------------------------------------
+
+This chunk is for recoding factor (categorical) variables. 
+You will need to edit this section to recode the values in your dataset to suit 
+the values in the expected linelist format. You can look at the data dictionary 
+object (`recode_dict`) and the outputs from the `browse_data` chunk to write 
+the correct code. 
+
+
+The chunk shows an initial example, showing you how to fix mispellings in 
+the geographic variable `patient_origin`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r recode_factor_vars}
+
+## Recode character variables
+## This step shows how to fix misspellings in the geographic region variable.
+## Ideally, you want these values to match and population data!
+linelist_cleaned <- linelist_cleaned %>%
+  mutate(patient_origin = case_when(
+    patient_origin == "Valliages D"       ~ "Village D",
+    patient_origin == "VillageD"          ~ "Village D",
+    patient_origin == "Town C"            ~ "Village C",
+    TRUE ~ as.character(patient_origin))
+  )
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// recode_numeric_vars \\\ 
+--------------------------------------------------------------------------------
+
+This chunk will help recode numeric variables. 
+The example shown below is for restructing age columns from 
+three (numerical columns for year, month, age) to two (age_num and age_unit).
+
+You will need to add to it based on your dataset by comparing to the variables 
+in the standard data dictionary. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r recode_numeric_vars}
+
+## split one age variable in to three 
+## the dictionary has all those less than 2 years of age recorded in months
+## and those less than 2 months recorded in days
+## If you have a numeric variable for age ('age_num') and an associated 
+## categorical variable for the unit 'age_unit' (days, month, years), recode like this 
+study_data_cleaned <- study_data_cleaned %>% 
+  mutate(
+    age_years = case_when(
+      age_num >=2 & age_unit == "Year" ~ age_num, 
+      age_num >= 24 & age_unit == "Month" ~ as.numeric(age_num / 12),
+      age_num >= 730 & age_unit == "Day" ~ as.numeric(age_num/365),
+      TRUE ~ NA), 
+    age_months = case_when(
+      age_num >=2 & age_unit == "Month" ~ age_num, 
+      age_num >=62 & age_num <730 & age_unit == "Day" ~ as.numeric(age_num / 30), 
+      TRUE ~ NA),
+    age_days = case_when(
+      age_num <62 & age_unit == "Day" ~ age_num, 
+      age_num <2 & age_unit == "Month" ~ as.numeric(age_num * 30),
+      TRUE ~ NA)
+  )
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/// save_recoded_data \\\
+--------------------------------------------------------------------------------
+
+Save your recoded dataset as an Excel. 
+This automatically names your file "linelist_recoded_DATE", where DATE is the
+current date.
+You can now use this data with the analysis template. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r save_cleaned_data}
+# rio::export(linelist_cleaned, here::here("Data", str_glue("linelist_recoded_{Sys.Date()}.xlsx")))
+```
+
