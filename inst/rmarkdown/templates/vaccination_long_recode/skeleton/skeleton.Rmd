@@ -130,9 +130,9 @@ In the choices tab, "name" has the shortened value and the "label::english" and
 ## MSF Survey Dictionary ----------------------------------------------------------
 
 ## generates MSF standard dictionary for Kobo 
-study_data_dict <- msf_dict_survey("vaccination_long")
+study_data_dict <- msf_dict("vaccination_long")
 ## generates MSF standard dictionary for Kobo in long format (for recoding)
-study_data_dict_long <- msf_dict_survey(disease = "vaccination_long", compact = FALSE)
+study_data_dict_long <- msf_dict(disease = "vaccination_long", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
 # View(study_data_dict) 

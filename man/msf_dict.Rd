@@ -2,50 +2,21 @@
 % Please edit documentation in R/epidict_exports.R
 \name{msf_dict}
 \alias{msf_dict}
-\alias{msf_dict_survey}
 \alias{msf_dict_rename_helper}
 \alias{gen_data}
 \title{Functions re-expored from {epidict}}
 \usage{
-msf_dict(
-  disease,
-  name = "MSF-outbreak-dict.xlsx",
-  tibble = TRUE,
-  compact = TRUE,
-  long = TRUE
-)
+msf_dict(disease, tibble = TRUE, compact = TRUE, long = TRUE)
 
-msf_dict_survey(
-  disease,
-  name = "MSF-survey-dict.xlsx",
-  tibble = TRUE,
-  compact = TRUE,
-  long = TRUE,
-  template = TRUE
-)
+msf_dict_rename_helper(dictionary, copy_to_clipboard = TRUE)
 
-msf_dict_rename_helper(
-  disease,
-  name,
-  varnames = "data_element_shortname",
-  varnames_type,
-  rmd,
-  template = TRUE,
-  copy_to_clipboard = TRUE
-)
-
-gen_data(
-  dictionary,
-  varnames = "data_element_shortname",
-  numcases = 300,
-  org = "MSF"
-)
+gen_data(dictionary, varnames = "name", numcases = 300, org = "MSF")
 }
 \description{
 Functions re-expored from {epidict}
 }
 \seealso{
-Dictionaries: \code{\link[epidict:msf_dict]{epidict::msf_dict()}}, \code{\link[epidict:msf_dict]{epidict::msf_dict_survey()}}\cr
+Dictionaries: \code{\link[epidict:msf_dict]{epidict::msf_dict()}}\cr
 Renaming: \code{\link[epidict:msf_dict_rename_helper]{epidict::msf_dict_rename_helper()}}\cr
 Generator: \code{\link[epidict:gen_data]{epidict::gen_data()}}
 }

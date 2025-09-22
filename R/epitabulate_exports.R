@@ -16,8 +16,6 @@
 #'  - [epitabulate::add_crosstabs()]: a {gtsummary} wrapper to add counts to
 #'    a gtsummary::tbl_uvregression()
 #'  - [epitabulate::add_mr()]: a {gtsummary} wrapper for epitabulate::mortality_rate()
-#'  - [epitabulate::gt_mh_odds()]: a {gtsummary} wrapper for stratified
-#'    univariate regression and mantel-haenszel estimates
 #'  - [epitabulate::gt_remove_stat()]: a {gtsummary} wrapper to remove variables
 #'    from a gtsummary table
 #'  - [epitabulate::tab_linelist()]: tabulate linelist data
@@ -76,12 +74,6 @@ epitabulate::add_crosstabs
 #' @rdname add_ar
 #' @export
 epitabulate::add_mr
-
-#' @name gt_mh_odds
-#' @importFrom epitabulate gt_mh_odds
-#' @rdname gt_mh_odds
-#' @export
-epitabulate::gt_mh_odds
 
 #' @name gt_remove_stat
 #' @importFrom epitabulate gt_remove_stat

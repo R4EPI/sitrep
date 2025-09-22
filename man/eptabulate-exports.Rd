@@ -29,8 +29,6 @@ epitabulate::case_fatality_rate()
 \item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::add_crosstabs()}}: a {gtsummary} wrapper to add counts to
 a gtsummary::tbl_uvregression()
 \item \code{\link[epitabulate:gt_attackrate]{epitabulate::add_mr()}}: a {gtsummary} wrapper for epitabulate::mortality_rate()
-\item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::gt_mh_odds()}}: a {gtsummary} wrapper for stratified
-univariate regression and mantel-haenszel estimates
 \item \code{\link[epitabulate:gtsummary_wrappers]{epitabulate::gt_remove_stat()}}: a {gtsummary} wrapper to remove variables
 from a gtsummary table
 \item \code{\link[epitabulate:tab_functions]{epitabulate::tab_linelist()}}: tabulate linelist data
