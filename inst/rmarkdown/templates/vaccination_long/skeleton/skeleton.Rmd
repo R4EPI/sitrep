@@ -711,7 +711,7 @@ NOTE: it is important to use matchmaker before working with factor vars
 ## define a list of names and labels based on the dictionary 
 var_labels <- setNames(
   ## add variable labels as a list
-  as.list(study_data_dict$short_name), 
+  as.list(study_data_dict$label_english), 
   ## name the list with the current variable names
   study_data_dict$name)
 
