@@ -1,0 +1,4 @@
+name: Diphtheria intersectional outbreak report
+description: >
+  An automated outbreak report template for diphtheria based on intersectional data dictionary
+create_dir: false
