@@ -257,13 +257,24 @@ linelist_raw |>
   tbl_summary()
 ```
 
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Clean variable names: Ensure variable naming follows good practice guidelines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r clean_variable_names}
+## define clean variable names using clean_names from the janitor package. 
+linelist_processing <- janitor::clean_names(linelist_raw)
+```
+
+
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Standardise dates: See section 3.4.1 in the cholera outbreak report guide
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r standardise_dates}
 ## Convert to date format --------------------------------------------------
 # This assumed they are ymd format. Otherwise you will need to edit
-linelist_processing <- linelist_raw |>
+linelist_processing <- linelist_processing |>
   mutate(across(starts_with("date_"), ~ ymd(parse_date(.x))))
 
 ## Fix logically inconsistent dates ----------------------------------------

@@ -271,7 +271,7 @@ Standardise dates: See section 3.4.1 in the AJS outbreak report guide
 
 ## Convert to date format --------------------------------------------------
 # This assumed they are ymd format. Otherwise you will need to edit
-linelist_processing <- linelist_raw |>
+linelist_processing <- linelist_processing |>
   mutate(across(starts_with("date_"), ~ ymd(parse_date(.x))))
 
 ## Fix logically inconsistent dates ----------------------------------------
