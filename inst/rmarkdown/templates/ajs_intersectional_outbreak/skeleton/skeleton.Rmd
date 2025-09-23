@@ -81,7 +81,7 @@ adm3_residence_name <- "Locality"
 # Define reporting week ------------------------
 
 ## replace the date below with the reporting date
-reporting_date <- ymd("2023-04-24")
+reporting_date <- ymd("2018-04-23")
 
 ## Set the reporting week below 
 ## Adjust the "1" (which means week start on Monday) to another number if desired.
@@ -160,7 +160,7 @@ population_data_age <- gen_population(total_pop = 5000,
 
 ## estimate population size by adm2_residence proportion
 population_data_adm2 <- gen_population(total_pop = 5000,   # set the total population
-  groups = c("Ayod", "Canal/Pigi", "Fangak", "Uror"),  # set the groups
+  groups = c("County 1", "County 2", "County 3", "County 4"),  # set the groups
   proportions = c(0.222, 0.175, 0.357, 0.246),         # set the proportions for each group
   strata = NULL) |>               # do not stratify
   rename(adm2_residence = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
@@ -176,8 +176,6 @@ Comment out this chunk when you are using real data.
 
 linelist_raw <- gen_data("AJS_intersectional")
 ```
-
-
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -243,10 +241,10 @@ linelist_raw |>
          adm2_residence,
          adm3_residence,
          status,
-         vacci_HEV_dose1_yn, 
-         vacci_HEV_dose2_yn,
-         vacci_HEV_dose3_yn,
-         HEV_RT_result,
+         vacci_hev_dose1_yn, 
+         vacci_hev_dose2_yn,
+         vacci_hev_dose3_yn,
+         hev_rt_result,
          pregnant_yn,
          post_partum,
          outcome,
@@ -254,6 +252,17 @@ linelist_raw |>
          date_notification) |> 
   tbl_summary()
 ```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Clean variable names: Ensure variable naming follows good practice guidelines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r clean_variable_names}
+## define clean variable names using clean_names from the janitor package. 
+linelist_processing <- janitor::clean_names(linelist_raw)
+```
+
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Standardise dates: See section 3.4.1 in the AJS outbreak report guide
@@ -387,27 +396,27 @@ linelist_processing <- linelist_processing |>
 ## Vaccination columns combined into 1
 linelist_processing <- linelist_processing |> 
   mutate(
-    vacci_HEV_dose1 = str_detect(vacci_HEV_dose1_yn, "Yes"),
-    vacci_HEV_dose2 = str_detect(vacci_HEV_dose2_yn, "Yes"),
-    vacci_HEV_dose3 = str_detect(vacci_HEV_dose3_yn, "Yes"),
+    vacci_hev_dose1 = str_detect(vacci_hev_dose1_yn, "Yes"),
+    vacci_hev_dose2 = str_detect(vacci_hev_dose2_yn, "Yes"),
+    vacci_hev_dose3 = str_detect(vacci_hev_dose3_yn, "Yes"),
     
-    vacci_HEV_doses = case_when(
-      vacci_HEV_dose1 & vacci_HEV_dose2 & vacci_HEV_dose3 ~ "3 doses",
-      vacci_HEV_dose1 & vacci_HEV_dose2 ~ "2 doses",
-      vacci_HEV_dose1 ~ "1 dose",
-      vacci_HEV_dose1_yn == "No" & (is.na(vacci_HEV_dose2_yn) & is.na(vacci_HEV_dose3_yn)) ~ "0 doses",
-      vacci_HEV_dose1_yn == "No" & vacci_HEV_dose2_yn == "No" & is.na(vacci_HEV_dose3_yn) ~ "0 doses",
-      vacci_HEV_dose1_yn == "No" & vacci_HEV_dose2_yn == "No" & vacci_HEV_dose3_yn == "No" ~ "0 doses",
-      is.na(vacci_HEV_dose1_yn) & is.na(vacci_HEV_dose2_yn) & is.na(vacci_HEV_dose3_yn) ~ NA,
+    vacci_hev_doses = case_when(
+      vacci_hev_dose1 & vacci_hev_dose2 & vacci_hev_dose3 ~ "3 doses",
+      vacci_hev_dose1 & vacci_hev_dose2 ~ "2 doses",
+      vacci_hev_dose1 ~ "1 dose",
+      vacci_hev_dose1_yn == "No" & (is.na(vacci_hev_dose2_yn) & is.na(vacci_hev_dose3_yn)) ~ "0 doses",
+      vacci_hev_dose1_yn == "No" & vacci_hev_dose2_yn == "No" & is.na(vacci_hev_dose3_yn) ~ "0 doses",
+      vacci_hev_dose1_yn == "No" & vacci_hev_dose2_yn == "No" & vacci_hev_dose3_yn == "No" ~ "0 doses",
+      is.na(vacci_hev_dose1_yn) & is.na(vacci_hev_dose2_yn) & is.na(vacci_hev_dose3_yn) ~ NA,
       TRUE ~ "Unclear"  # fallback for any mixed or inconsistent case
     )
   ) |> 
-  select(-vacci_HEV_dose1, -vacci_HEV_dose2, -vacci_HEV_dose3)
+  select(-vacci_hev_dose1, -vacci_hev_dose2, -vacci_hev_dose3)
 
 ##  Test results
 linelist_processing <- linelist_processing |> 
            
-  mutate(HEV_RT_result = factor(HEV_RT_result,
+  mutate(hev_rt_result = factor(hev_rt_result,
                              levels = c("Positive",
                                         "Negative", 
                                         "Not done"))) |> 
@@ -765,11 +774,11 @@ _Percentages calculated among those with non-missing vaccine or rapid test infor
 ```{r vaccination_test}
 
 linelist_cleaned |> 
-  select(vacci_HEV_doses, age_group, HEV_RT_result) |> 
+  select(vacci_hev_doses, age_group, hev_rt_result) |> 
   tbl_summary(percent = "column",
               by = "age_group",
-              label = list(vacci_HEV_doses = "Number of HEV vaccine doses",
-                           HEV_RT_result = "HEV Rapid Test results "),
+              label = list(vacci_hev_doses = "Number of HEV vaccine doses",
+                           hev_rt_result = "HEV Rapid Test results "),
               missing_text = "[Missing]") |> 
   add_overall()  |>
   ## make variable names bold 
@@ -921,8 +930,9 @@ if (max_n_recent == 0) max_n_recent <- 10
 breakers_ar <- as.integer(c(
                          # include zero as a standalone group
                          0, 
-                         # 1 to 4 divisions, snapping the boundaries to the nearest 500
-                         find_breaks(n = max_ar, breaks = 4, snap = 500)
+                         # 1 to 4 divisions, 
+                         # snapping the boundaries to the nearest 100
+                         find_breaks(n = max_ar, breaks = 4, snap = 100)
              ))
 
 
@@ -930,8 +940,9 @@ breakers_ar <- as.integer(c(
 breakers_n <- as.integer(c(
                          # include zero as a standalone group
                          0, 
-                         # 1 to 4 divisions, snapping the boundaries to the nearest 100
-                         find_breaks(n = max_n, breaks = 4, snap = 100)
+                         # 1 to 4 divisions, 
+                         # snapping the boundaries to the nearest 50
+                         find_breaks(n = max_n, breaks = 4, snap = 50)
               ))
 
 
@@ -939,7 +950,8 @@ breakers_n <- as.integer(c(
 breakers_n_recent <- as.integer(c(
                          # include zero as a standalone group
                          0, 
-                         # 1 to 4 divisions, snapping the boundaries to the nearest 5 cases
+                         # 1 to 4 divisions, snapping the boundaries 
+                         # to the nearest 5 cases
                          find_breaks(n = max_n_recent, breaks = 4, snap = 5)
               ))
 
