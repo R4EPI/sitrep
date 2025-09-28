@@ -129,9 +129,9 @@ In the choices tab, "name" has the shortened value and the "label::english" and
 ## MSF Survey Dictionary ----------------------------------------------------------
 
 ## generates MSF standard dictionary for Kobo 
-study_data_dict <- msf_dict_survey("Mortality")
+study_data_dict <- msf_dict("Mortality")
 ## generates MSF standard dictionary for Kobo in long format (for recoding)
-study_data_dict_long <- msf_dict_survey(disease = "Mortality", compact = FALSE)
+study_data_dict_long <- msf_dict(dictionary = "Mortality", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
 # View(study_data_dict) 

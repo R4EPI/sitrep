@@ -131,7 +131,7 @@ dictionary. Comment out this chunk when you are using real data.
 
 
 ## generates MSF standard dictionary for KoBo
-ebs_data_dict <- msf_dict_survey("ebs")
+ebs_data_dict <- msf_dict("ebs")
 
 
 ## generates a fake dataset for use as an example in this template
@@ -242,7 +242,7 @@ the full-text value.
 
 ## MSF ebs Dictionary ----------------------------------------------------------
 ## get MSF standard dictionary for ebs
-ebs_dict <- msf_dict_survey("ebs", compact = FALSE)
+ebs_dict <- msf_dict("ebs", compact = FALSE)
 
 ## look at the standard dictionary by uncommenting the line below
 # View(ebs_dict) 

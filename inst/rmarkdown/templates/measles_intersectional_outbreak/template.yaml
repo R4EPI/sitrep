@@ -1,0 +1,4 @@
+name: Measles intersectional outbreak report
+description: >
+  An automated outbreak report template for measles based on intersectional data dictionary
+create_dir: false

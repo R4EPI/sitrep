@@ -1,0 +1,4 @@
+name: Intersectional outbreak recoding
+description: >
+  A generic template for recoding datasets based on intersectional data
+create_dir: false

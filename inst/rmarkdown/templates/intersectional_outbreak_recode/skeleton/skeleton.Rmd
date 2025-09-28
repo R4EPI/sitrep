@@ -1,0 +1,220 @@
+---
+title: "Intersectional Outbreak Data Recode"
+output: 
+  word_document:
+    keep_md: true
+---
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+INTRODUCTION: This is a script intended to recode data into an intersectional data format. It is generic so can be used for different diseases. This means that the final column names, classes, values, and formats will match that of the MSF intersectional linelist for the specific disease. This template is accompanied by the Intersectional Data Recode Guide - please read this to understand how to edit and run this file.
+
+Once the data has been recoded, the disease-specific Outbreak Report Rmd template can be used to create a report. Each report-generating Rmd also is accompanied by a guide. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+## Installing and loading required packages 
+This section loads packages and is not shown in the rendered output.
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setup: See section 3.1.1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+## You need to activate code chunks by changing eval to true below
+
+## hide all code chunks in the output, but show errors
+knitr::opts_chunk$set(eval = FALSE,       # YOU NEED TO CHANGE THIS TO TRUE
+                      echo = TRUE,        # show all code chunks in output
+                      error = TRUE,       # show errors if they appear, but don't stop
+                      warning = TRUE,     # show warnings if they appear, but don't stop
+                      message = TRUE      # show messages if they appear, but don't stop
+                      )
+
+# Ensures the package "pacman" is installed
+if (!require("pacman")) {
+     install.packages("pacman") }
+
+# Install and load required packages for this template
+pacman::p_load(
+  knitr,           # create output docs
+  here,            # find your files
+  rio,             # read in data
+  dplyr,           # clean/shape data
+  tidyr,           # clean/shape data
+  sitrep,          # MSF field epi functions
+  janitor,          # clean data
+  readxl,          # Read in excel data specifically
+  gtsummary
+)
+
+```
+
+## Import and inspect data
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Read data: See section 3.1.2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r read_data, warning = FALSE, message = FALSE}
+
+## Excel file ------------------------------------------------------------------
+## to read in a specific sheet use "which"
+# linelist_raw <- import(file = "Measles_linelist_example1.xlsm", which = "sheet1")
+
+## Excel file -- Specific range ------------------------------------------------
+## you can specify a range in an excel sheet.
+# linelist_raw <- rio::import(here::here("Data", "linelist.xlsx"), range = "B2:J102")
+
+## Excel file with macros (import doesn't work) --------------------------------
+linelist_raw <- read_excel("Measles_linelist_example1.xlsm", sheet = "Line_List", skip=1)
+
+
+
+## Excel file with password ----------------------------------------------------
+## use this section if your Excel has a password.
+
+# install.packages(c("excel.link", "askpass"))
+# library(excel.link)
+
+# linelist_raw <- xl.read.file(here::here("Data", "linelist.xlsx"),
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
+
+## CSV file --------------------------------------------------------------------
+# linelist_raw <- rio::import(here::here("Data", "linelist.csv"))
+
+
+
+## Stata data file -------------------------------------------------------------
+# linelist_raw <- rio::import(here::here("Data", "linelist.dat"))
+```
+
+```{r inspect_data}
+
+# Number of rows
+nrow(linelist_raw)
+
+# Number of columns
+ncol(linelist_raw)
+
+# Column names
+names(linelist_raw)
+
+```
+
+## Clean data
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Clean column names: See section 3.1.4
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r clean_column_names}
+
+## 1) Automatically clean column names ----------------------------------------------------------
+
+## define clean variable names using clean_names from the janitor package. 
+linelist_processing <- clean_names(linelist_raw)
+
+## 2) Manually clean column names to match linelist standard-----------------------------------
+
+linelist_processing <- rename(linelist_processing, 
+                           sex_id          = sex,
+                           adm1_residence  = region,
+                           adm2_residence  = district,
+                           adm3_residence  = area,
+                           status = `Residential status`,
+                           date_notification = `Date of consultation or admission`,
+                           date_symptom_start = `Date of symptom onset`,
+                           muac_adm = `Nutrition status at admission`,
+                           vacci_measles_yn = `Previously vaccinated against measles`,
+                           vacci_measles_doses = `Doses of vaccine received`,
+                           sample_measles_result = `Result of lab test`,
+                           outcome = `Exit status`,
+                           date_hospitalisation_end = `Date of exit`
+                           )
+
+```
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Standardise capitalisation: See section 3.1.5
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r standard_cap}
+linelist_processing <- linelist_processing |> 
+  mutate(case_id = str_to_lower(case_id),
+         facility_name = str_to_sentence(facility_name),
+         sex_id = str_to_sentence(sex_id),
+         adm1_residence = str_to_sentence(adm1_residence), 
+         adm2_residence = str_to_sentence(adm2_residence),
+         adm3_residence = str_to_sentence(adm3_residence)
+)
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Browse data contents: See section 3.1.6
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r browse_data}
+
+## view your whole dataset interactively (in an excel style format)
+View(linelist_processing)
+
+## view unique values contained in variables 
+linelist_processing |> 
+  tbl_summary()
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Recode factor variables: See section 3.1.7
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r recode_factor_vars}
+
+## Recode character variables
+linelist_processing <- linelist_processing |> 
+  mutate(sex_id = case_match(
+    sex_id,
+    c("M", "m")       ~ "Male",
+    c("F", "FEMALE")  ~ "Female" ,
+    .default = sex_id )) |> 
+  
+  mutate(outcome = case_match(
+    outcome,
+    c() ~ "Dead in facility (<4h)",
+    c() ~ "Dead in facility (>4h)",
+    c() ~ "Discharged home",
+    c() ~ "Dead in community",
+    c() ~ "Dead in facility",
+    c() ~ "Dead on arrival",
+    c() ~ "Left against medical advice",
+    c() ~ "Transferred (to an MSF facility)",
+    c() ~ "Transferred (to External Facility)",
+    .default = outcome))
+
+
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Recode numeric variabes: See section 3.1.8
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r recode_numeric_vars}
+
+## go from age_years, age_months, and age_days to age_num and age_unit
+linelist_processing <- linelist_processing |> 
+  mutate(
+    age_num = case_when(
+      !is.na(age_years) ~ age_years,
+      is.na(age_years) & !is.na(age_months) ~ age_months,
+      is.na(age_years) & is.na(age_months) & !is.na(age_days) ~ age_days,
+      TRUE ~ NA_real_
+    ),
+    age_unit = case_when(
+      !is.na(age_years) ~ "Year",
+      is.na(age_years) & !is.na(age_months) ~ "Month",
+      is.na(age_years) & is.na(age_months) & !is.na(age_days) ~ "Day",
+      TRUE ~ NA_character_
+    )
+  )
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+save_recoded_data: See section 3.1.9
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r save_cleaned_data}
+export(linelist_processing, here::here("Data", str_glue("linelist_recoded_{Sys.Date()}.RDS")))
+```
+

@@ -147,7 +147,7 @@ when you are using real data.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r read_fake_data, warning = FALSE, message = FALSE}
 
-linelist_raw <- gen_data("AJS")
+linelist_raw <- gen_data("AJS", varnames = "data_element_shortname")
 
 ## fake lab data
 # lab_results <- linelist_cleaned %>% 
@@ -775,8 +775,7 @@ linelist_cleaned <- linelist_cleaned %>%
       # Looks for variables beginning with "test"
       .cols = starts_with("test"),  
       # Sets order of levels
-      .fns = ~fct_relevel(.x, 
-                          levels = c("Positive", "Negative", "Not done")))) %>% 
+      .fns = ~fct_relevel(.x, "Positive", "Negative", "Not done"))) %>% 
   ## stop a meaningless tidyverse warning from showing
   suppressWarnings()
 

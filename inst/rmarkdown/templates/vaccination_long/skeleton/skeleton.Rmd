@@ -95,10 +95,10 @@ Comment out this chunk when you are using real data.
 
 
 ## generates MSF standard dictionary for Kobo 
-study_data_dict <- msf_dict_survey("Vaccination_long")
+study_data_dict <- msf_dict("Vaccination_long")
 
 ## generates MSF standard dictionary for Kobo in long format (for recoding)
-study_data_dict_long <- msf_dict_survey(disease = "Vaccination_long", compact = FALSE)
+study_data_dict_long <- msf_dict(dictionary = "Vaccination_long", compact = FALSE)
 
 ## generates a fake dataset for use as an example in this template
 ## this dataset already has household and individual levels merged
@@ -193,7 +193,7 @@ in the "name" column of the survey sheet. Possible values for each variable are
 specified in choices sheet. 
 In the choices tab, "name" has the shortened value and the "label::english" and 
 "label::french" columns have the appropriate long versions. 
-Using the msf_dict_survey function to import a Kobo dictionary excel file will 
+Using the msf_dict function to import a Kobo dictionary excel file will 
 re-format this for you so it can be used easily to recode. 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
@@ -204,8 +204,7 @@ re-format this for you so it can be used easily to recode.
 
 ## read in a kobo data dictionary
 ## important to specify template is FALSE (otherwise you get the generic dict)
-# study_data_dict <- msf_dict_survey(name = here::here("vaccination_survey_dict.xlsx"), 
-#                                    template = FALSE)
+# study_data_dict <- read_dict(name = here::here("vaccination_survey_dict.xlsx"))
 
 ## look at the dictionary by uncommenting the line below
 # View(study_data_dict) 
@@ -712,7 +711,7 @@ NOTE: it is important to use matchmaker before working with factor vars
 ## define a list of names and labels based on the dictionary 
 var_labels <- setNames(
   ## add variable labels as a list
-  as.list(study_data_dict$short_name), 
+  as.list(study_data_dict$label_english), 
   ## name the list with the current variable names
   study_data_dict$name)
 

@@ -33,7 +33,7 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item Annick Lenglet [copyright holder]
+  \item Annick Lenglet [contributor]
   \item Neale Batra [contributor]
 }
 

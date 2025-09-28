@@ -28,7 +28,7 @@ Authors@R:
              role = "aut"),
       person(given = "Annick",
              family = "Lenglet",
-             role = "cph"),
+             role = "ctb"),
       person(given = "Neale",
              family = "Batra",
              role = "ctb"))
@@ -47,7 +47,7 @@ Imports:
     dplyr (>= 0.8.0),
     epitabulate (>= 0.0.0.9007),
     epidict (>= 0.0.0.9001),
-    epikit(>= 0.1.4), 
+    epikit,
     forcats,
     flextable,
     ggalluvial,
@@ -103,3 +103,4 @@ Collate:
     'epidict_exports.R'
     'epikit_exports.R'
     'epitabulate_exports.R'
+    

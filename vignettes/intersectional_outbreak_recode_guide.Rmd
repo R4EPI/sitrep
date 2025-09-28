@@ -1,0 +1,215 @@
+---
+title: "Guide: Intersectional Outbreak Data Recode"
+output: 
+  html_document:
+    number_sections: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+<style>
+  h1:not(.title) {
+    background-color: #b4e1f0;
+    border-radius: 5px;
+  }
+</style>
+
+_This guide was written by Applied Epi. Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)_
+
+# Introduction
+
+## Purpose of this guide
+
+This guide accompanies the Intersectional Outbreak Data Recode .Rmd file, which is intended to recode data into an intersectional data format for an outbreak report. This means that column names, classes, values, and formats will match that of the MSF intersectional linelist. While the code is generic, the examples in this guidance document refer to the measles report. 
+
+Once the data has been recoded, the disease-specific outbreak report .Rmd file can be used to create a report for a particular outbreak. 
+
+**Note that the Rmd file needs significant editing to be fit for purpose**. Specific cleaning code needs to be written, to suit the raw data, the disease, and therefore the relevant data requirements. 
+
+## Who this guide is for
+
+This guide and the sitrep code is intended for **individuals who already have some familiarity R** but want ready-made code to make the report production process faster. You need to be able to edit and troubleshoot code. 
+
+# Instructions
+
+## Structure of the recoding Rmd
+
+Running this code will clean and save your data. Knitting this .Rmd will also produce a word document which can be kept as a log to show how the data was changed. The sections are for:
+
+- Reading in data
+- Reviewing what the data should look like (intersectional linelist format)
+- Cleaning column names to match the intersectional format
+- Cleaning column content to match the intersectional format
+- Restructuring key columns to match the intersectional format
+- Saving the cleaned data
+
+## How to use the recording Rmd
+
+Each section of the code in Intersectional Outbreak Data Recode Rmd template is explained in the 'Detailed Guide' section below.
+
+With the help of this guide (specifically section 3), you should recode your data by: 
+
+1) **Going through the Rmd file in detail and edits as needed to make sure your data gets correctly cleaned and the code in your Rmd is correct.**
+2) **When you are happy with the Rmd code, change to `eval = TRUE` on line 24, and click "knit" at the top**. Which will produce a document as a record of your data cleaning process.  
+
+Note there are comments to help you and refer to the relevant sections in this guide. The comments look like this:
+
+```         
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Comments are shown between these specifically formatted lines (and will not appear in the sitrep output)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```
+
+## Requirements for this Rmd
+
+You will need:
+
+-   A linelist, with the following requirements:
+    -   One row per case
+    -   Key columns needed for analysis: sex, age, geography, date of notification, symptom onset date, vaccination status, illness outcome, as well as other disease-specific columns.
+
+# Detailed guide
+
+<div style="background-color: #edf3f5;  border-radius: 5px;">
+
+## Set up and loading data
+
+### `setup` chunk
+
+This chunk first sets up key preferences for this R Markdown file, in
+`opts_chunk$set()`. By default it is set to not show code, errors, or warning messages in the output. 
+
+### Import and inspect data
+
+The `read_data` chunk loads linelist data into RStudio. There are six options you
+can pick between to load data. Delete or comment out the code that you
+do not need, and make sure the code that you do need is recognised as
+code (not commented-out):
+
+1)  Load data from an excel file within a specific sheet.
+2)  Load data from an excel file with macros (this requires read_excel)
+3)  Load data from an excel file with a particular range of cells
+4)  Load data from an excel file within a particular sheet but also
+    with a password. Note this needs the installation of some additional
+    packages.
+5)  Load data from a csv file
+6)  Load data from a stata file
+
+When you load real data, you need to specify the right file name and
+path. The placeholders assume you are working in an RStudio project, and
+that the linelist is in a subfolder called `Data`.
+
+The `inspect_data` chunk will show you some basic information about your linelist: the dimensions and the column names. 
+
+### Understand your expected data format
+
+There is no R chunk for this step, but to ensure you clean your data correctly, make sure you are aware of the:
+
+- Columns required for your outbreak report, and their column names
+- The contents of columns, in particular the expected possible and their spellings for categorical columns
+
+You can use the function `msf_dict()` from the `{sitrep}` package for this. The package contains data dictionaries and simulated datasets for measles, meningitis, AJS, cholera, and diphtheria. The `msf_dict()` function will show you the data dictionary for your selected disease - see the example for measles below. 
+
+In this function: 
+
+- The data dictionary shows variable names in the `variable` column. 
+- Accepted values for each variable are specified in `values_short` and `values_long columns`. `values_short` has the shortened value and `values_long` has the full-text value. You will need to recode your current linelist values into the "values_short" content.
+
+```{r eval=F}
+## get MSF standard dictionary for measles 
+recode_dict <- msf_dict("measles", compact = FALSE)  |> 
+  select("variable" = data_element_shortname, 
+         "values_short" = option_code, 
+         "values_long" = option_name)
+
+## browse dictionary
+View(recode_dict)
+```
+
+### `clean_column_names` chunk
+
+This step fixes the column names. This is done in two steps:
+
+1) Use the `clean_names()` function from the package `{janitor}` to automatically standardise column names as per good coding practice (lower case, remove spaces and punctuation)
+2) Manually clean column names to match linelist standard. The example code shows some recoding for measles, e.g. we have the column `sex` that we want to rename as `sex_id`. The syntax for this is `rename(data, NEW_NAME = OLD_NAME).`
+
+To facilitate this step, you can also use the function `msf_dict_rename_helper()` to create a template based again on the data dictionary held for that disease in the `{sitrep}` package. Do this with the following steps:
+
+1) Run `msf_dict_rename_helper("xxxx")`, where "xxxx" refers to disease name. For instance, you can type `msf_dict_rename_helper("Measles")`. This will copy a rename command  to your clipboard.
+2) Paste the result in your code and edit to specifically rename certain columns. Be careful! You still need to be aware of what each variable means and what values it takes. If there are any columns that are in the MSF dictionary that are not in your data set, then you should comment them out, but be aware that some analyses may not run because of this. 
+    
+Here is an example of what the pasted code looks like, which you can then edit so that the name of the columns in your data is on the right-hand side. 
+ 
+```{r eval=F}
+## Add the appropriate column names after the equals signs
+
+linelist_cleaned <- rename(linelist_cleaned,
+  acute_otitis_media              =   , # BOOLEAN           (REQUIRED)
+  age_days                        =   , # INTEGER_POSITIVE  (REQUIRED)
+  age_months                      =   , # INTEGER_POSITIVE  (REQUIRED)
+  age_years                       =   , # INTEGER_POSITIVE  (REQUIRED)
+  candidiasis                     =   , # BOOLEAN           (REQUIRED)
+  case_number                     =   , # TEXT              (REQUIRED)
+  cough                           =   , # BOOLEAN           (REQUIRED)
+  croup                           =   , # BOOLEAN           (REQUIRED)
+  date_of_consultation_admission  =   , # DATE              (REQUIRED)
+  residential_status              =   , # TEXT              (optional)
+  residential_status_brief        =   , # TEXT              (optional)
+  treatment_facility_name         =   , # TEXT              (optional)
+  treatment_facility_site         =   , # TEXT              (optional)
+  treatment_location              =   , # ORGANISATION_UNIT (optional)
+  trimester                       =     # TEXT              (optional)
+)
+
+
+```
+
+### `standardise_capitalisation` chunk
+
+Before browsing data, you can standardise the capitalisation of categorical values. This minimises the number of corrections that are needed later on in the code.
+
+### `browse_data` chunk
+
+You'll want to look at your data, to know what errors and typos exist in the column values. This chunk shows you a few ways to explore. 
+
+The tbl_summary() function in particular will show you all the values within categorical columns. 
+
+### `recode_factor_vars` chunk
+
+This chunk is for recoding factor (categorical) variables. You will need to edit this section to recode the values in your dataset to suit the values in the expected linelist format. You can look at the data dictionary object (`recode_dict`) and the outputs from the `browse_data` chunk to write the correct code. 
+
+There is an initial example in this code which shows you how to fix mispellings in the columns `sex_id` and `outcome`. You should put the various incorrect spellings that need correction into the brackets. Multiple different incorrect spellings can be listed within the brackets. For example:
+
+```{r eval=F}
+linelist_processing <- linelist_processing |> 
+  mutate(sex_id = case_match(
+    sex_id,
+    c("M", "m")       ~ "Male",
+    c("F", "FEMALE")  ~ "Female" ,
+    .default = sex_id )) |> 
+  
+  mutate(outcome = case_match(
+    outcome,
+    c("Dead in facility - short") ~ "Dead in facility (<4h)",
+    c("Dead in facility - long") ~ "Dead in facility (>4h)",
+    c("Sent home", "Home") ~ "Discharged home",
+    c("Death in community", "Dead in community") ~ "Dead in community",
+    c("DOA") ~ "Dead on arrival",
+    c("Left") ~ "Left against medical advice",
+    c("Transferred - MSF") ~ "Transferred (to an MSF facility)",
+    c("Transferred - External") ~ "Transferred (to External Facility)",
+    .default = outcome))
+
+```
+
+### `recode_numeric_vars` chunk
+
+This chunk will help recode numeric variables, including restructuring the age column to be represented by two columns (age as a number, and unit). You will need to add to it based on your dataset by comparing to the variables in the standard data dictionary. 
+
+### `save_recoded_data` chunk
+
+Save your recoded dataset as an Excel. This automatically names your file "linelist_recoded_DATE", where DATE is the
+current date. You can now use this to use the analysis template. 
+
+</div>

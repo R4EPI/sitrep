@@ -1,0 +1,1369 @@
+---
+title: "Cholera outbreak report"
+subtitle: "Location: XXX"
+author: "MSF office: XXXX"
+date: "Date of report: XXXX-XX-XX"
+output: 
+  word_document:
+    toc: true
+---
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+INTRODUCTION: This is a script intended to create a outbreak report describing the basic epidemiology of a cholera outbreak, using a cholera linelist in MSF intersection data format. It is accompanied by the Cholera Outbreak Report Guide - please read this to understand how to edit and run this file.
+
+If your linelist is not in the structure of the MSF intersectional linelist, please first recode the data using the outbreak_recode file, supplemented by the Outbreak Report Recoding Guide. 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Rmarkdown set up: See section 3.2.1 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r setup, include=FALSE, results='hide', message=FALSE, warning=FALSE}
+## hide all code chunks in the output, but show errors
+knitr::opts_chunk$set(echo = FALSE,       # hide all code chunks in output
+                      error = TRUE,       # show errors if they appear, but don't stop
+                      warning = FALSE,    # Don't show warnings
+                      message = FALSE,    # Don't show messages
+                      fig.width = 8,     # Figure width
+                      fig.height = 6,     # Figure height
+                      dpi = 300       # Quality of images
+                     )
+
+# Ensures the package "pacman" is installed
+if (!require("pacman")) {
+     install.packages("pacman") }
+
+## Installing required packages for this template
+pacman::p_load(
+  knitr,       # create output docs
+  here,        # find your files
+  rio,         # read in data
+  forcats,     # clean/shape data
+  lubridate,   # handle dates
+  dplyr,       # clean/shape data
+  tidyr,       # clean/shape data
+  stringr,     # clean text
+  ggplot2,     # create plots and charts
+  slider,      # moving averages
+  parsedate,   # guessing dates
+  patchwork,   # combine plots in one
+  sitrep,      # MSF field epi functions
+  janitor,     # clean data
+  matchmaker,  # dictionary-based standardization of variables
+  gtsummary,   # tables
+  flextable,   # table styling
+  tsibble,     # epiweeks
+  sf,          # encode spatial vector data
+  ggspatial,   # plot maps
+  readxl,      # Read in excel data specifically
+  purrr        # iterate over data
+)
+
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Key definitions: See section 3.2.2 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r definitions}
+
+# Define geographics --------------------------
+
+adm1_residencecurrent_name <- "Province"
+adm2_residencecurrent_name <- "District"
+adm3_residencecurrent_name <- "Area"
+
+# Define reporting week ------------------------
+
+## replace the date below with the reporting date
+reporting_date <- ymd("2018-04-23")
+
+## Set the reporting week below 
+## Adjust the "1" (which means week start on Monday) to another number if desired.
+reporting_week <- yearweek(reporting_date, 1)
+
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Setting plot defaults: See section 3.2.3 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r set_plot_defaults}
+
+## Set default options for plots and charts
+## set default text size to 16 for plots
+## give classic black/white axes for plots
+ggplot2::theme_set(theme_classic(base_size = 16))
+
+## sets the theme in ggplot for epicurves
+epicurve_theme <- theme(
+  axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), 
+  legend.position = "bottom",
+  panel.grid.major.x = element_line(color = "grey60", linetype = 3),
+  panel.grid.major.y = element_line(color = "grey60", linetype = 3))
+
+## sets the labels in ggplot for the epicurves
+epicurve_labels <- labs(x = "Calendar week", 
+                        y = "Cases (n)", 
+                        caption = str_glue("Source: MSF data as of {reporting_date}"))
+
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Import population data:See section 3.3.1 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r read_population_data, warning = FALSE, message = FALSE}
+
+## OPTION 1: Read data -------------------------------------------------------------------
+
+## This step reads in your population data from Excel.
+## You may need to rename your columns
+
+# population_data_age <- rio::import(here::here("Data", "population.xlsx"), which = "Sheet1")
+# population_data_adm2 <- rio::import(here::here("Data", "population.xlsx"), which = "Sheet1")
+
+
+## OPTION 2: Enter counts directly -------------------------------------------------------
+
+# population_data_age <- gen_population(
+#   groups = c("0-2", "3-14", "15-29", "30-44", "45+"),
+#   counts = c(3600, 18110, 13600, 8080, 6600),
+#   strata = NULL) |>               # do not stratify by gender
+#   rename(age_group = groups,       # rename columns (syntax is NEW NAME = OLD NAME)
+#     population = n)
+
+# population_data_adm2 <- gen_population(
+#   groups = c("Village A", "Village B", "Village C", "Village D"),
+#   counts = c(10000, 20000, 15000, 5000),
+#   strata = NULL) |>               # do not stratify
+#   rename(adm2_residencecurrent = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
+#          population = n)
+
+
+## OPTION 3: Create counts from proportions ----------------------------------------------
+## This step helps you estimate sub-group size with proportions.
+## You need to replace the total_pop and proportions. 
+
+# estimate population size by age group in years
+population_data_age <- gen_population(total_pop = 5000,
+                                      groups = c("0-4", "5-14", "15-49", "50+"),
+                                      proportions = c(0.1, 0.2, 0.6, 0.1),
+                                      strata = NULL) |>
+  rename(age_group = groups,
+    population = n) |> 
+  mutate(population = round(population, 0)) |> 
+  select(-proportions)
+
+
+## estimate population size by adm2_residencecurrent proportion
+population_data_adm2 <- gen_population(total_pop = 5000, # set the total population
+  groups = c("County 1", "County 2", "County 3", "County 4"),  # set the groups
+  proportions = c(0.222, 0.175, 0.357, 0.246), # set the proportions for each group
+  strata = NULL) |>               # do not stratify
+  rename(adm2_residencecurrent = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
+         population = n) |> 
+  select(-proportions)
+
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Read fake data: To play with this template, you can create fake data. 
+Comment out this chunk when you are using real data.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r read_fake_data, warning = FALSE, message = FALSE}
+
+linelist_raw <- gen_data("Cholera_intersectional")
+```
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Import linelist data: See section 3.3.2 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r read_data, warning = FALSE, message = FALSE}
+
+
+## Excel file ------------------------------------------------------------------
+## to read in a specific sheet use "which"
+#linelist_raw <- import(here::here("Data", "linelist.xlsx"), which = "Sheet1")
+
+
+## Excel file with macros (import doesn't work) --------------------------------
+#linelist_raw <- read_excel("linelist.xlsm", sheet = "Sheet 1", skip=1)
+
+
+## Excel file -- Specific range ------------------------------------------------
+## you can specify a range in an excel sheet.
+# linelist_raw <- import(here::here("Data", "linelist.xlsx"), range = "B2:J102")
+
+
+## Excel file with password ----------------------------------------------------
+## use this section if your Excel has a password.
+
+# install.packages(c("excel.link", "askpass"))
+# library(excel.link)
+
+# linelist_raw <- xl.read.file(here::here("Data", "linelist.xlsx"),
+#                              xl.sheet = "Sheet1",
+#                              password = askpass::askpass(prompt = "please enter file password"))
+
+
+## CSV file --------------------------------------------------------------------
+# linelist_raw <- import(here::here("Data", "linelist.csv"))
+
+
+
+## Stata data file -------------------------------------------------------------
+# linelist_raw <- import(here::here("Data", "linelist.dat"))
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Browse data: See section 3.3.3 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r browse_data, eval = FALSE}
+
+## view your whole dataset interactively (in an excel style format)
+View(linelist_raw)
+
+## overview of variable types and contents
+str(linelist_raw)
+
+## view unique values in any column -- just replace the column name
+unique(linelist_raw$case_id) 
+
+## view columns that will be used in report (excluding unique IDs/names)
+linelist_raw |> 
+  select(facility_type,
+         sex_patient,
+         age_num,
+         age_unit,
+         adm1_residencecurrent,
+         adm2_residencecurrent,
+         adm3_residencecurrent,
+         origin,
+         visit_date,
+         symptoms_date,
+         dehydration,
+         vacci_status,
+         vacci_doses,
+         lab_result_rdt,
+         lab_result_culture,
+         #lab_result_pcr,
+         exit_status,
+         exit_date
+) |> 
+  tbl_summary()
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Clean variable names: Ensure variable naming follows good practice guidelines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r clean_variable_names}
+## define clean variable names using clean_names from the janitor package. 
+linelist_processing <- janitor::clean_names(linelist_raw)
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Standardise dates: See section 3.4.1 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r standardise_dates}
+## Convert to date format --------------------------------------------------
+# This assumed they are ymd format. Otherwise you will need to edit
+linelist_processing <- linelist_processing |>
+  mutate(across(starts_with("date_"), ~ ymd(parse_date(.x))))
+
+## Fix logically inconsistent dates ----------------------------------------
+# Replace onset date with missing if it comes after visit date
+linelist_processing <- linelist_processing |>
+  mutate(symptoms_date = if_else(
+    !is.na(visit_date) & !is.na(symptoms_date) & visit_date >= symptoms_date, 
+    symptoms_date,
+    NA_Date_)) 
+  
+# Coalesce dates ---------------------------------------------------------
+# Use visit date if onset not available
+
+linelist_processing <- linelist_processing |>
+  mutate(date_combined = coalesce(symptoms_date, visit_date))
+
+# Count how many date_onset were missing and replaced by clinic visit date
+linelist_processing <- linelist_processing |> 
+  mutate(date_source = case_when(is.na(symptoms_date) & !is.na(date_combined) & date_combined == visit_date ~ "Clinic visit date",
+                                 !is.na(symptoms_date) ~ "Onset date"))
+
+# Create column with week labels --------------------------------------
+
+## Epi week for symptom start, clinic visit date, and combined
+linelist_processing <- linelist_processing |> 
+  mutate(epiweek_symptom_start_num = yearweek(
+      symptoms_date,
+      week_start = 1))  |>  # 1 is Monday start; use 7 for Sundays or 5 for Fridays
+  mutate(epiweek_notification_num = yearweek(
+      visit_date,
+      week_start = 1)) |>  # 1 is Monday start; use 7 for Sundays or 5 for Fridays
+  mutate(epiweek_combined_num = yearweek(
+      date_combined,
+      week_start = 1))  # 1 is Monday start; use 7 for Sundays or 5 for Fridays
+
+
+## Start date of each week
+linelist_processing <- linelist_processing |> 
+  mutate(epiweek_symptom_start = as.Date(epiweek_symptom_start_num),
+         epiweek_notification = as.Date(epiweek_notification_num),
+         epiweek_combined = as.Date(epiweek_combined_num))   
+
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create age group column: See section 3.4.2 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r create_age_group}
+
+linelist_processing <- linelist_processing |> 
+  mutate(
+    age_years = if_else(age_unit == "Month", age_num / 12, age_num),
+    age_group = case_when(
+      age_years >= 0 & age_years < 5 ~ "0-4",
+      age_years >= 5 & age_years < 15 ~ "5-14",
+      age_years >= 15 & age_years < 50 ~ "15-49",
+      age_years >= 50 ~ "50+",
+      TRUE ~ NA_character_
+    ),
+    age_group = factor(age_group, levels = c("0-4", "5-14", "15-49", "50+"), ordered = TRUE)
+  )
+
+
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Standardise and correct columns: See section 3.4.3 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r standardise_values}
+
+## Recode typos in categorical values --------------------------------------------
+
+# Correct geographical categories
+linelist_processing <- linelist_processing |>
+  
+  # Standardise capitalisation 
+  mutate(adm2_residencecurrent = str_to_title(adm2_residencecurrent)) |>
+  
+  # Correct typos
+  mutate(adm2_residencecurrent = case_match(
+    adm2_residencecurrent,
+    c("District One", "District Oone")       ~ "District 1",
+    "District Two"       ~ "District 2" ,
+    .default = adm2_residencecurrent ))
+
+
+## Change all unknown or spaces to missing
+
+linelist_processing <- linelist_processing |> 
+  mutate(across(where(is.character), ~ str_trim(.))) |>       # trim spaces first
+  mutate(across(where(is.character), ~ na_if(., ""))) |>      # empty strings to NA
+  mutate(across(where(is.character), ~ na_if(., "unknown"))) |>  # "unknown" to NA
+  mutate(across(where(is.character), ~ na_if(., "Unknown")))  # "unknown" to NA
+
+```
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create and order other analysis columns: See section 3.4.4 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r create_vars}
+
+## Factor (categorical) variables ----------------------------------------------
+
+## Binary column for death outcome 
+linelist_processing <- linelist_processing |> 
+  mutate(died = str_detect(exit_status, "Dead")) |> 
+
+## Ensuring other columns are factoral so presented in correct order
+
+  mutate(facility_type = factor(facility_type,
+                             levels = c("Cholera Treatment Centre",
+                                        "Cholera Treatment Unit", 
+                                        "Oral Rehydration Point"))) |> 
+  
+  mutate(origin = factor(origin,
+                             levels = c("Host",
+                             "Refugee",
+                             "Returnee",
+                             "Internally displaced",
+                                        "Other"))) |> 
+  
+  mutate(dehydration = factor(dehydration,
+                             levels = c("None (plan A)",
+                             "Some (plan B)",
+                             "Severe (plan C)"))) |> 
+  
+ mutate(lab_result_rdt = factor(lab_result_rdt,
+                             levels = c("Positive - O1",
+                                        "Positive - O139", 
+                                        "Positive - O1 & O139",
+                                        "Positive - unknown serogroup",
+                                        "Negative",
+                                        "Contaminated",
+                                        "Awaiting result",
+                                        "Not performed"))) |> 
+  
+ mutate(lab_result_culture = factor(lab_result_culture,
+                             levels = c("Positive - O1",
+                                        "Positive - O139", 
+                                        "Positive - O1 & O139",
+                                        "Positive - unknown serogroup",
+                                        "Negative",
+                                        "Contaminated",
+                                        "Awaiting result",
+                                        "Not performed"))) |> 
+  
+ mutate(lab_result_pcr = factor(lab_result_pcr,
+                             levels = c("Positive - O1",
+                                        "Positive - O139", 
+                                        "Positive - O1 & O139",
+                                        "Positive - unknown serogroup",
+                                        "Negative",
+                                        "Contaminated",
+                                        "Awaiting result",
+                                        "Not performed"))) |> 
+  
+  mutate(vacci_status = factor(vacci_status, 
+                                  levels= c("Yes - vaccination card or ink",
+                                            "Yes - verbal",
+                                            "No",
+                                            "Does not know")))|> 
+  
+  mutate(vacci_doses = factor(vacci_doses, 
+                                levels = c("1", # Starting at 1 removes the 0 option
+                                           "2",
+                                           "3",
+                                           "4 or more"))) |> 
+  
+mutate(exit_status = factor(exit_status, 
+                        levels = c("Dead in facility (<4h)",
+                                   "Dead in facility (>4h)",
+                                   "Discharged home",
+                                 #  "Recovered in community",
+                                   "Dead in community",
+                                 #  "Dead on arrival",
+                                   "Left against medical advice",
+                                   "Transferred (to an MSF facility)",
+                                   "Transferred (to External Facility)"))) |> 
+
+    
+    mutate(date_source = factor(date_source, levels = c("Onset date", 
+                                                          "Clinic visit date")))
+   
+
+
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Duplicates: See section 3.4.5 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r duplicates}
+
+## option 1: only keep the first occurence of duplicate case (here based on case_id, sex, and age group)
+linelist_processing <- linelist_processing |> 
+  distinct(case_id, sex_patient, age_group, .keep_all = TRUE)
+
+
+# ## option 2: create flagging variables for duplicates (then use to browse)
+# 
+# linelist_cleaned <- linelist_cleaned |> 
+#   ## choose which variables to use for finding unique rows 
+#   group_by(case_number, sex, age_group) |> 
+#   mutate(
+#     ## get the number of times duplicate occurs 
+#     num_dupes = n(), 
+#     duped = if_else(num_dupes > 1 , TRUE, FALSE)
+#   )
+# 
+# ## browse duplicates based on flagging variables 
+# linelist_cleaned |> 
+#   ## only keep rows that are duplicated
+#   filter(duped) |> 
+#   ## arrange by variables of interest 
+#   arrange(case_number, sex, age_group) |> 
+#   View()
+# 
+# ## filter duplicates to only keep the row with the earlier entry 
+# linelist_cleaned |> 
+#   ## choose which variables to use for finding unique rows 
+#   group_by(case_number, sex, age_group) |> 
+#   ## sort to have the earliest date by person first
+#   arrange(date_of_consultation_admission) |> 
+#   ## only keep the earliest row 
+#   slice(1)
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Remove unused data: See section 3.4.6 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r remove_unused_data}
+
+# Drop unused rows ------------------------------------------------
+# filter out cases with onset after end of reporting week (where known)
+linelist_processing <- linelist_processing |> 
+  filter(symptoms_date <= reporting_date | is.na(symptoms_date))
+
+## For example, this removes rows without both a date of onset and ID number:
+# linelist_processing <- linelist_processing |> 
+#   filter(!is.na(case_id) & !is.na(symptoms_date)) 
+
+```
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Save cleaned data: See section 3.4.7 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+```{r save_cleaned_data}
+
+linelist_cleaned <- linelist_processing 
+
+export(linelist_cleaned, str_glue("cholera_linelist_cleaned_{Sys.Date()}.RDS"))
+```
+
+# Recommendations
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Recommendations: See section 3.5.1 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+\newpage
+# Summary
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Summary statistics: See section 3.5.2 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r summary_stats, message = FALSE}
+
+#Age group numbers
+age_highest <- tabyl(linelist_cleaned, age_group) |> slice(which.max(n)) 
+
+age_rate_highest <- linelist_cleaned |> 
+  count(age_group) |> 
+  left_join(population_data_age) |> 
+  mutate(attack_rate_result = n/population*10000) |> 
+  slice(which.max(attack_rate_result))
+  
+# adm2 numbers
+adm2_highest <- tabyl(linelist_cleaned, adm2_residencecurrent) |> slice(which.max(n)) 
+
+adm2rate_highest <- linelist_cleaned |> 
+  count(adm2_residencecurrent) |> 
+  left_join(population_data_adm2) |> 
+  mutate(attack_rate_result = n/population*10000) |> 
+  slice(which.max(attack_rate_result))
+```
+
+
+As of `r reporting_date` (`r reporting_week`): 
+
+- `r nrow(linelist_cleaned)` cholera cases have been reported since the start of the outbreak.
+- The first case had symptom onset on `r format(min(linelist_cleaned$date_combined, na.rm=T), "%d %b %Y")` (epiweek `r str_sub(min(linelist_cleaned$epiweek_combined_num, na.rm=T),-2)`), and the peak of the outbreak was in epiweek `r str_sub(tabyl(linelist_cleaned, epiweek_combined_num) |> slice(which.max(n)) |> pull(epiweek_combined_num),-2)` (week starting `r tabyl(linelist_cleaned, epiweek_combined) |> slice(which.max(n)) |> pull(epiweek_combined)`). Note `r fmt_count(linelist_cleaned, !is.na(date_combined))` cases have date information; `r fmt_count(linelist_cleaned, date_source  == "Clinic visit date")` used clinic visit date as a substitute for onset date.
+- There have been `r fmt_count(linelist_cleaned, dehydration == "Severe (plan C)")` patients with severe dehydration. 
+- There have been `r fmt_count(linelist_cleaned, sex_patient == "Female")` females and `r fmt_count(linelist_cleaned, sex_patient == "Male")` males. 
+- The age group with the highest number of cases was `r age_highest |>  pull(age_group)` years, with `r age_highest |> pull(n)` cases.
+- The age group with the highest AR was `r age_rate_highest |> pull(age_group)` years, `r round(age_rate_highest |> pull(attack_rate_result),1)` cases per 10,000 population. 
+- The `r str_to_lower(adm2_residencecurrent_name)` with the highest number of cases was `r adm2_highest |> pull(adm2_residencecurrent)`, with `r adm2_highest|> pull(n)` cases.
+- The `r str_to_lower(adm2_residencecurrent_name)` with the highest AR was `r adm2rate_highest |> pull(adm2_residencecurrent)`, `r round(adm2rate_highest |> pull(attack_rate_result),1)` cases per 10,000 population. 
+- The overall CFR was `r round(nrow(linelist_cleaned |> filter(died==T))/nrow(linelist_cleaned)*100,1)`%. 
+
+\newpage
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Epicurve: See section 3.5.3 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+**Cholera cases by week of symptom onset**  
+_Note `r fmt_count(linelist_cleaned, date_source  == "Clinic visit date")` used clinic visit date as a substitute for onset date. `r fmt_count(linelist_cleaned, is.na(date_combined))` cases excluded due to missing onset or clinic visit date_
+```{r epicurve_onset, fig.height = 5.5, message = FALSE}
+
+## Epicurve set up--------------------------------------------------------
+## pull the unique weeks which occur, based on combination of onset/clinic visit date
+all_weeks <- seq(min(linelist_cleaned$epiweek_combined, na.rm = TRUE),
+                 reporting_date, by = 7) 
+
+## change weeks to dates
+all_weeks_date <-  as.Date(all_weeks)  
+
+
+
+## make epicurve ----------------------------------------------------------
+linelist_cleaned |>
+  filter(!is.na(date_combined)) |>
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_combined, fill = date_source)) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  ## align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  ## Change colours
+  scale_fill_manual(values = c("Onset date" = "lightblue", 
+                               "Clinic visit date" = "navy"),
+                               name = "Source of date") +
+  ## use pre-defined labels
+  epicurve_labels +
+  ## use pre-defined theme (design) settings
+  epicurve_theme +
+    ## control x-axis breaks and display
+  scale_x_date(
+    limits = c(min(all_weeks_date), max(all_weeks_date)),
+    breaks = "1 week",
+    date_labels = "%d %b %Y") 
+
+```
+
+\newpage
+
+# Age and sex distribution
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Age and sex distribution: See section 3.5.4 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+- Among `r fmt_count(linelist_cleaned, !is.na(sex_patient) & sex_patient != "Unknown/unspecified")` cases with available sex information, `r fmt_count(linelist_cleaned, sex_patient == "Female")` were females and `r fmt_count(linelist_cleaned, sex_patient == "Male")` were males.
+- Among `r fmt_count(linelist_cleaned, !is.na(age_group))` cases with available age information, `r fmt_count(linelist_cleaned, age_years<5)` were cases under 5 years of age, and `r fmt_count(linelist_cleaned, age_years<1)` were cases under 1 year of age.
+
+
+**Distribution of age-group among cholera cases, by sex**  
+_Age-group percentages calculated among those with non-missing age_
+```{r total_props_agegroup_sex}
+
+linelist_cleaned |> 
+  select(age_group, sex_patient) |> 
+  mutate(sex_patient = forcats::fct_explicit_na(sex_patient, "Missing")) |>
+  tbl_summary(by = sex_patient,
+              percent = "cell",
+              label = list(age_group = "Age group"),
+              missing_text = "[Missing]") |> 
+  add_overall() |> 
+  ## make variable names bold 
+  bold_labels() |> 
+  # change to flextable format
+  as_flex_table() |>
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit")
+```
+
+
+**Age-sex pyramid**  
+_Excludes `r fmt_count(linelist_cleaned, is.na(date_combined) | is.na(sex_patient))` of `r nrow(linelist_cleaned)` cases with missing age or sex information_
+```{r age_pyramid, warning=FALSE, fig.height=5}
+
+# age sex pyramid
+age_pyramid(linelist_cleaned,
+                  age_group = "age_group", 
+                  split_by = "sex_patient") + 
+  epicurve_labels +
+  labs(y = "Cases (n)", x = "Age group (years)") + # change axis  labels
+  scale_fill_manual(values = c("#3182bd", "gray")) +
+  theme(legend.position = "bottom",     # move legend to bottom
+        legend.title = element_blank(), # remove title
+        text = element_text(size = 18)  # change text size
+       )
+```
+
+# Severity
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Severity: See section 3.5.5 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+**Dehydration status, by age group**  
+_Percentages calculated among those with non-missing information_
+```{r severity}
+
+linelist_cleaned |> 
+  select(dehydration, age_group) |> 
+  tbl_summary(percent = "column",
+              by = "age_group",
+              label = list(dehydration = "Severity of dehydration"),
+              missing_text = "[Missing]") |> 
+  add_overall()  |>
+  ## make variable names bold 
+  bold_labels() |> 
+  # change to flextable format
+  as_flex_table() |>
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+```
+
+\newpage
+# Attack rates and case fatality ratios
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Attack rate: See section 3.5.6 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+**Case counts, attack rates, and case fatality ratios (CFR), by age group**
+```{r attack_rate_by_agegroup, warning = FALSE}
+
+linelist_cleaned |> 
+  
+  # Bind dataframe again with 'total' for age_group to get total calculations
+  bind_rows(linelist_cleaned |> mutate(age_group = "Total")) |> 
+  mutate(age_group = factor(age_group, levels = c("0-4", "5-14", "15-49", "50+", "Total"),
+                            ordered = TRUE)) |> 
+  # Calculate cases and deaths within groups (including total)
+  group_by(age_group) |> 
+  summarise(cases = n(),
+            cases_recent = sum(visit_date > reporting_date-14),
+            deaths = sum(died, na.rm=T)) |> 
+  
+  # Calculate CFR and AR, including linkage of population data
+  mutate(CFR = deaths/cases*100) |> 
+  left_join(population_data_age |> adorn_totals()) |> 
+  mutate(attack_rate_result = cases/population*10000) |> 
+  
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() |> 
+  
+  # Change titles
+  set_header_labels( 
+    age_group = "Age group",
+    cases = "Number of cases",
+    cases_recent = paste0("Number of cases notified in past 14 days (since ", reporting_date-14, ")"),
+    deaths = "Number of deaths",
+    CFR = "CFR (%)",
+    population = "Population",
+    attack_rate_result = "Attack rate (per 10,000)"
+    ) |> 
+  
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  
+  ## set to only show 1 decimal place 
+  colformat_double(j = c(5, 7), digits = 1) |> 
+  
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+```
+
+**Case counts, attack rates, and case fatality ratios (CFR), by `r str_to_lower(adm2_residencecurrent_name)`**
+```{r attack_rate_by_adm2, warning = FALSE}
+
+table_ar_adm2 <- linelist_cleaned |> 
+  
+  # Bind dataframe again with 'total' for age_group to get total calculations
+  bind_rows(linelist_cleaned |> mutate(adm2_residencecurrent = "Total")) |> 
+  
+  # Calculate cases and deaths within groups (including total)
+  group_by(adm2_residencecurrent) |> 
+  summarise(cases = n(),
+            cases_recent = sum(visit_date > reporting_date-14), 
+            deaths = sum(died, na.rm=T)) |> 
+  
+  # Calculate CFR and AR, including linkage of population data
+  mutate(CFR = deaths/cases*100) |> 
+  left_join(population_data_adm2 |>  adorn_totals(), by = "adm2_residencecurrent") |> 
+  mutate(attack_rate_result = cases/population*10000) 
+
+
+table_ar_adm2 |> 
+
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() |> 
+  
+  # Change titles
+  set_header_labels( 
+    adm2_residencecurrent = paste0(adm2_residencecurrent_name, " of residence"),
+    cases = "Number of cases",
+    cases_recent = paste0("Number of cases notified in past 14 days (since ", reporting_date-14, ")"),
+    deaths = "Number of deaths",
+    CFR = "CFR (%)",
+    population = "Population",
+    attack_rate_result = "Attack rate (per 10,000)"
+    ) |> 
+  
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  
+  ## set to only show 1 decimal place 
+  colformat_double(j = c(5, 7), digits = 1) |> 
+  
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+  
+
+```
+
+\newpage
+**Case counts and case fatality ratios (CFR), by facility type**
+```{r attack_rate_by_facility, warning = FALSE}
+
+table_ar_facility <- linelist_cleaned |> 
+  
+  # Bind dataframe again with 'total' for age_group to get total calculations
+  bind_rows(linelist_cleaned |> mutate(facility_type = "Total")) |> 
+  
+  # Calculate cases and deaths within groups (including total)
+  group_by(facility_type) |> 
+  summarise(cases = n(),
+            cases_recent = sum(visit_date > reporting_date-14), 
+            deaths = sum(died, na.rm=T)) |> 
+  
+  # Calculate CFR and AR, including linkage of population data
+  mutate(CFR = deaths/cases*100) 
+
+
+table_ar_facility |> 
+
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() |> 
+  
+  # Change titles
+  set_header_labels( 
+    facility_type = "Facility type",
+    cases = "Number of cases",
+    cases_recent = paste0("Number of cases notified in past 14 days (since ", reporting_date-14, ")"),
+    deaths = "Number of deaths",
+    CFR = "CFR (%)") |> 
+  
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  
+  ## set to only show 1 decimal place 
+  colformat_double(j = 5, digits = 1) |> 
+  
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+
+```
+
+
+
+**Case counts and case fatality ratios (CFR), by facility name**
+```{r attack_rate_by_facilityname, warning = FALSE}
+
+table_ar_facilityname <- linelist_cleaned |> 
+  
+  # Bind dataframe again with 'total' for age_group to get total calculations
+  bind_rows(linelist_cleaned |> mutate(facility_name = "Total")) |> 
+  
+  # Calculate cases and deaths within groups (including total)
+  group_by(facility_name) |> 
+  summarise(cases = n(),
+            cases_recent = sum(visit_date > reporting_date-14), 
+            deaths = sum(died, na.rm=T)) |> 
+  
+  # Calculate CFR and AR, including linkage of population data
+  mutate(CFR = deaths/cases*100) 
+
+
+table_ar_facilityname |> 
+
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() |> 
+  
+  # Change titles
+  set_header_labels( 
+    facility_name = "Facility type",
+    cases = "Number of cases",
+    cases_recent = paste0("Number of cases notified in past 14 days (since ", reporting_date-14, ")"),
+    deaths = "Number of deaths",
+    CFR = "CFR (%)") |> 
+  
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  
+  ## set to only show 1 decimal place 
+  colformat_double(j = 5, digits = 1) |> 
+  
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+
+```
+
+
+
+**Case counts and case fatality ratios (CFR), by dehydration status**
+```{r attack_rate_by_dehydration, warning = FALSE}
+
+table_ar_dehydration <- linelist_cleaned |> 
+  
+  # Bind dataframe again with 'total' for age_group to get total calculations
+  bind_rows(linelist_cleaned |> mutate(dehydration = "Total")) |> 
+  
+  # Reintroduct the factor
+  mutate(dehydration = factor(dehydration,
+                             levels = c("None (plan A)",
+                             "Some (plan B)",
+                             "Severe (plan C)",
+                             "Total"))) |> 
+  
+  # Calculate cases and deaths within groups (including total)
+  group_by(dehydration) |> 
+  summarise(cases = n(),
+            cases_recent = sum(visit_date > reporting_date-14), 
+            deaths = sum(died, na.rm=T)) |> 
+  
+  # Calculate CFR and AR, including linkage of population data
+  mutate(CFR = deaths/cases*100) 
+
+
+table_ar_dehydration |> 
+
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() |> 
+  
+  # Change titles
+  set_header_labels( 
+    dehydration = "Dehydration status",
+    cases = "Number of cases",
+    cases_recent = paste0("Number of cases notified in past 14 days (since ", reporting_date-14, ")"),
+    deaths = "Number of deaths",
+    CFR = "CFR (%)") |> 
+  
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  
+  ## set to only show 1 decimal place 
+  colformat_double(j = 5, digits = 1) |> 
+  
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+
+```
+
+
+
+\newpage
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Vaccination and lab results: See section 3.5.7 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+# Vaccination
+
+**Vaccination status by age group**  
+_Percentages calculated among those with non-missing vaccination history_
+```{r vaccination}
+
+linelist_cleaned |> 
+  select(vacci_status, age_group) |> 
+  tbl_summary(percent = "column",
+              by = "age_group",
+              label = list(vacci_status = "Previously vaccinated"),
+              missing_text = "[Missing]") |> 
+  add_overall()  |>
+  ## make variable names bold 
+  bold_labels() |> 
+  # change to flextable format
+  as_flex_table() |>
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+```
+
+**Number of doses among previously vaccinated, by age group**  
+_Percentages calculated among those with non-missing dose information among those previously vaccinated_
+```{r vaccination_dosesl}
+
+linelist_cleaned |> 
+  filter(vacci_status %in% c("Yes - vaccination card or ink", "Yes - verbal")) |> 
+  select(vacci_doses, age_group) |> 
+  tbl_summary(percent = "column",
+              by = "age_group",
+              label = list(vacci_doses = "Number of doses"),
+              missing_text = "[Missing]") |> 
+  add_overall()  |>
+  ## make variable names bold 
+  bold_labels() |> 
+  # change to flextable format
+  as_flex_table() |>
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+```
+
+\newpage
+# Laboratory results
+
+**Lab results of cases by age group**  
+_Percentages calculated among those with non-missing laboratory results_
+```{r lab}
+
+linelist_cleaned |> 
+  select(lab_result_rdt,
+         lab_result_culture,
+         lab_result_pcr,
+         age_group) |> 
+  tbl_summary(percent = "column",
+              by = "age_group",
+              label = list(lab_result_rdt = "RDT result",
+                           lab_result_culture = "Culture result",
+                           lab_result_pcr = "PCR result"),
+              missing_text = "[Missing]") |> 
+  add_overall()  |>
+  ## make variable names bold 
+  bold_labels() |> 
+  # change to flextable format
+  as_flex_table() |>
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+```
+\newpage
+
+# Detailed outcomes
+
+**Outcomes by age group**  
+_Percentages calculated among those with non-missing outcome information_
+```{r outcomes}
+
+linelist_cleaned |> 
+  select(exit_status, age_group) |> 
+  tbl_summary(percent = "column",
+              by = "age_group",
+              label = list(exit_status = "Outcome"),
+              missing_text = "[Missing]") |> 
+  add_overall()  |>
+  ## make variable names bold 
+  bold_labels() |> 
+  # change to flextable format
+  as_flex_table() |>
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  ## fontsize
+  fontsize(part = "all", size=10)
+
+```
+
+\newpage
+
+
+# `r adm2_residencecurrent_name` distribution
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Geographic distribution - tables: See section 3.5.8 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+**Distribution of `r str_to_lower(adm2_residencecurrent_name)` of residence among cases, by age group**   
+_Percentages calculated among cases with non-missing `r str_to_lower(adm2_residencecurrent_name)` information_  
+```{r describe_by_adm2, warning = FALSE}
+
+linelist_cleaned |> 
+  select(adm2_residencecurrent, age_group) |> 
+  tbl_summary(percent = "column",
+              by = "age_group",
+              label = list(adm2_residencecurrent = paste0(adm2_residencecurrent_name, " of residence")),
+              missing_text = "[Missing]") |> 
+  add_overall()  |>
+  ## make variable names bold 
+  bold_labels() |> 
+  # change to flextable format
+  as_flex_table() |>
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  # make your table fit to the maximum width of the word document
+  set_table_properties(layout = "autofit") |> 
+  # fontsize
+  fontsize(part = "all", size=10)
+
+```
+
+\newpage
+**Cases by week of onset and `r str_to_lower(adm2_residencecurrent_name)`**  
+_Note `r fmt_count(linelist_cleaned, is.na(date_combined))` of `r nrow(linelist_cleaned)` cases excluded due to missing date. `r fmt_count(linelist_cleaned |> filter(!is.na(adm2_residencecurrent)), date_source  == "Clinic visit date")` of `r nrow(linelist_cleaned |> filter(!is.na(date_combined)))` cases included in this figure used clinic visit date as a substitute for onset date._  
+```{r epicurve_by_adm2, message = FALSE, fig.height=8}
+
+linelist_cleaned |>
+  filter(!is.na(epiweek_combined)) |>
+  ## plot those not missing using the date variable 
+  ggplot(aes(x = epiweek_combined, fill = date_source)) +
+  ## plot as a bar
+  geom_bar(width = 7,
+           colour = "black") +
+  # align plot with bottom of plot
+  scale_y_continuous(expand = c(0, NA)) +
+  # control x-axis breaks and display
+  scale_x_date(
+    breaks = "1 week",
+    date_labels = "%d %b %Y") + 
+  # Colour of fill
+  scale_fill_manual(values = c("Onset date" = "lightblue", 
+                               "Clinic visit date" = "navy"),
+                               name = "Source of date") +
+  # use pre-defined labels
+  epicurve_labels +
+  labs(fill = "Source of date") +
+  # use pre-defined theme (design) settings
+  epicurve_theme +
+  # facet by area
+  facet_wrap(.~adm2_residencecurrent, ncol=2) +
+  theme(strip.background = element_blank())
+```
+
+\newpage
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Geographic distribution - maps: See section 3.5.9 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+```{r read_shapefiles, message=FALSE}
+
+## fake map data - DELETE if you are using real data --------------------
+map <- gen_polygon(regions = unique(population_data_adm2$adm2_residencecurrent)) 
+
+## read in shapefile ----------------------------------------------------
+# map <- read_sf(here::here("mapfolder", "region.shp"))
+
+## check the coordinate reference system (CRS)
+# st_crs(map)
+
+## if CRS not WGS84, reset it
+# map <- st_set_crs(map, value = 4326) # Sets to WGS84
+
+```
+
+
+```{r choropleth_map_prep, message = FALSE, warning = FALSE}
+
+## Create a categories of ARs by region ----------------------------------------
+
+# define maximum
+max_n   <- table_ar_adm2 |> 
+  filter(adm2_residencecurrent!="Total") |> 
+  slice(which.max(cases)) |> pull(cases)
+
+max_ar <- table_ar_adm2 |> filter(adm2_residencecurrent!="Total") |> 
+  slice(which.max(attack_rate_result)) |> pull(attack_rate_result)
+
+max_n_recent   <- table_ar_adm2 |> 
+  filter(adm2_residencecurrent!="Total") |> 
+  slice(which.max(cases_recent)) |> pull(cases_recent)
+if (max_n_recent == 0) max_n_recent <- 10
+
+# create groups - one group will be 0 only, then up to 4 more groups evenly
+# divided to maximum
+breakers_ar <- as.integer(c(
+                         # include zero as a standalone group
+                         0, 
+                         # 1 to 4 divisions, snapping the boundaries to the nearest 500
+                         find_breaks(n = max_ar, breaks = 4, snap = 500)
+             ))
+
+
+# divided to maximum
+breakers_n <- as.integer(c(
+                         # include zero as a standalone group
+                         0, 
+                         # 1 to 4 divisions, snapping the boundaries to the nearest 100
+                         find_breaks(n = max_n, breaks = 4, snap = 50)
+              ))
+
+
+# divided to maximum
+breakers_n_recent <- as.integer(c(
+                         # include zero as a standalone group
+                         0, 
+                         # 1 to 4 divisions, snapping the boundaries to the nearest 5 cases
+                         find_breaks(n = max_n_recent, breaks = 4, snap = 5)
+              ))
+
+## Combine with shape file and create a categorical variable using the age_categories function 
+## (we aren't using ages - but it functions the same way!)
+table_ar_adm2_map <- table_ar_adm2 |>  
+  filter(adm2_residencecurrent!="Total")  
+
+table_ar_adm2_map<- map |> 
+  left_join(table_ar_adm2_map, by = c("name" = "adm2_residencecurrent")) |> 
+  mutate(across(where(is.numeric), ~ replace_na(.x, 0))) |> 
+  mutate(categories_ar = age_categories(attack_rate_result, 
+                                         breakers = breakers_ar),
+         categories_n = age_categories(cases, 
+                                         breakers = breakers_n),
+         categories_n_recent = age_categories(cases_recent, 
+                                         breakers = breakers_n_recent))
+```
+
+**Map of attack rate by `r str_to_lower(adm2_residencecurrent_name)`**  
+_`r fmt_count(linelist_cleaned, is.na(adm2_residencecurrent_name))` of `r nrow(linelist_cleaned)` cases excluded due to missing `r str_to_lower(adm2_residencecurrent_name)`_    
+```{r choropleth_map_ar, message = FALSE, warning = FALSE, fig.height=5}
+## Plot AR by geography -----------------------------------------------
+
+ggplot() +
+  # shapefile as polygon
+  geom_sf(data = table_ar_adm2_map, aes(fill = categories_ar), col = "grey50", show.legend = TRUE) + 
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() + 
+  # Add caption
+  epicurve_labels +
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "AR (per 10,000)") + 
+  # label polygons
+  geom_sf_text(data = table_ar_adm2_map, aes(label = name), colour = "black") + 
+  # remove coordinates and axes
+  theme_void()
+
+
+
+
+```
+
+**Map of total case counts by `r str_to_lower(adm2_residencecurrent_name)`**   
+_`r fmt_count(linelist_cleaned, is.na(adm2_residencecurrent_name))` of `r nrow(linelist_cleaned)` cases excluded due to missing `r str_to_lower(adm2_residencecurrent_name)`_    
+```{r choropleth_map_n, message = FALSE, warning = FALSE, fig.height=5}
+## Plot AR by geography -----------------------------------------------
+
+ggplot() +
+  # shapefile as polygon
+  geom_sf(data = table_ar_adm2_map, aes(fill = categories_n), col = "grey50", show.legend = TRUE) + 
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() + 
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "Total cases") + 
+  # Add caption
+  epicurve_labels +
+  # label polygons
+  geom_sf_text(data = table_ar_adm2_map, aes(label = name), colour = "black") + 
+  # remove coordinates and axes
+  theme_void() 
+
+```
+
+\newpage 
+**Map of case counts in the last 14 days by `r str_to_lower(adm2_residencecurrent_name)`**  
+_`r fmt_count(linelist_cleaned |> filter(visit_date > reporting_date-14), is.na(adm2_residencecurrent_name))` of `r nrow(linelist_cleaned |> filter(visit_date > reporting_date-14))` cases reported in the last 14 days (`r reporting_date-14` to `r  reporting_date`) excluded due to missing `r str_to_lower(adm2_residencecurrent_name)`_  
+```{r choropleth_map_n_recent, message = FALSE, warning = FALSE, fig.height=5}
+## Plot AR by geography -----------------------------------------------
+
+ggplot() +
+  # shapefile as polygon
+  geom_sf(data = table_ar_adm2_map, aes(fill = categories_n_recent), col = "grey50", show.legend = TRUE) + 
+  # needed to avoid gridlines being drawn
+  coord_sf(datum = NA) + 
+  # add a scalebar
+  annotation_scale() + 
+  # color the scale to be perceptually uniform 
+  # drop FALSE keeps all levels 
+  # name allows you to change the legend title 
+  scale_fill_brewer(drop = FALSE, palette = "OrRd", name = "Total cases") + 
+  # Add caption
+  epicurve_labels +
+  # label polygons
+  geom_sf_text(data = table_ar_adm2_map, aes(label = name), colour = "black") + 
+  # remove coordinates and axes
+  theme_void() 
+
+```
+
+
+\newpage
+# Geographical detail: `r adm2_residencecurrent_name`
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Geographic details: See section 3.5.10 in the cholera outbreak report guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+**Cases by `r str_to_lower(adm3_residencecurrent_name)` within `r str_to_lower(adm2_residencecurrent_name)`s**
+```{r describe_by_adm2_adm3}
+
+linelist_cleaned |> 
+  
+  # Calculate cases and deaths within groups (including total)
+  group_by(adm2_residencecurrent, adm3_residencecurrent) |> 
+  summarise(cases = n(),
+            cases_recent = sum(visit_date > reporting_date-14), # Setting this up for maps
+            deaths = sum(died, na.rm=T)) |> 
+  
+  # Calculate CFR and AR, including linkage of population data
+  mutate(CFR = deaths/cases*100) |> 
+  mutate(adm3_residencecurrent = if_else(is.na(adm3_residencecurrent), "[Missing]", adm3_residencecurrent)) |> 
+  
+  # left_join(population_data_adm2 |>  adorn_totals(), by = "adm2_residencecurrent") |> 
+  # mutate(attack_rate_result = cases/population*10000) |> 
+  
+  # Combine with totals
+  bind_rows(table_ar_adm2 |> mutate(adm3_residencecurrent = " Total") |> select(-population, -attack_rate_result)) |> 
+  
+  # Arrange by adm2_residencecurrent
+  arrange(adm2_residencecurrent, adm3_residencecurrent) |> 
+
+  # produce styled output table with auto-adjusted column widths with {flextable}
+  qflextable() |> 
+  
+  # Change titles
+  set_header_labels( 
+    adm2_residencecurrent = paste0(adm2_residencecurrent_name, " of residence"),
+    adm3_residencecurrent = adm3_residencecurrent_name,
+    cases = "Number of cases",
+    cases_recent = paste0("Number of cases notified in past 14 days (since ", reporting_date-14, ")"),
+    deaths = "Number of deaths",
+    CFR = "CFR (%)",
+    population = "Population",
+    attack_rate_result = "Attack rate (per 10,000)"
+    ) |> 
+  
+  # make header text bold (using {flextable})
+  bold(part = "header") |> 
+  # make your table fit to the maximum width of the word document
+  #set_table_properties(layout = "autofit") |> 
+  
+  # Specific adjustments
+  width(j=c(1,2), width=1.5) |> 
+  width(j=c(3:6), width= 0.9) |> 
+
+  ## set to only show 1 decimal place 
+  colformat_double(digits = 1) |> 
+  
+    # Format rows with region
+  bg(., j=c(1:6), i= ~ adm3_residencecurrent == " Total", part = "body", bg = "gray90") |> 
+  bold(i = ~ adm3_residencecurrent == " Total", part = "body", bold = TRUE) |> 
+  
+  ## fontsize
+  fontsize(part = "all", size=9.5)
+
+
+```
