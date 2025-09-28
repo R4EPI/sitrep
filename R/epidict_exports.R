@@ -9,20 +9,33 @@
 #'   Renaming: [epidict::msf_dict_rename_helper()]\cr
 #'   Generator: [epidict::gen_data()]
 
+
+#' @name dict_rename_helper
+#' @importFrom epidict dict_rename_helper
+#' @rdname epidict-exports
+#' @export
+epidict::dict_rename_helper
+
+#' @name gen_data
+#' @importFrom epidict gen_data
+#' @rdname epidict-exports
+#' @export
+epidict::gen_data
+
 #' @name msf_dict
 #' @importFrom epidict msf_dict
-#' @rdname msf_dict
+#' @rdname epidict-exports
 #' @export
 epidict::msf_dict
 
 #' @name msf_dict_rename_helper
 #' @importFrom epidict msf_dict_rename_helper
-#' @rdname msf_dict
+#' @rdname epidict-exports
 #' @export
 epidict::msf_dict_rename_helper
 
-#' @name gen_data
-#' @importFrom epidict gen_data
-#' @rdname msf_dict
+#' @name read_dict
+#' @importFrom epidict read_dict
+#' @rdname epidict-exports
 #' @export
-epidict::gen_data
+epidict::read_dict

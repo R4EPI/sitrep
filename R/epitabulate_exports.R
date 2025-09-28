@@ -18,18 +18,13 @@
 #'  - [epitabulate::add_mr()]: a {gtsummary} wrapper for epitabulate::mortality_rate()
 #'  - [epitabulate::gt_remove_stat()]: a {gtsummary} wrapper to remove variables
 #'    from a gtsummary table
-#'  - [epitabulate::tab_linelist()]: tabulate linelist data
-#'  - [epitabulate::tab_survey()]: tabulate survey data
-#'  - [epitabulate::tab_univariate()]: caluclate odds, risk, and incidence risk
-#'    ratios for multiple variables from linelist data.
-#'  - [epitabulate::data_frame_from_2x2()]: convert a 2x2(x2) table to a data
-#'    frame clearly labelling the (un)exposed (non)case combinations and their
-#'    totals.
+#'  - [epitabulate::tbl_cmh()]: a {gtsummary} wrapper to calculate stratified
+#'    odds, risk, and incidence risk ratios for multiple variables from linelist data.
 
 
 #' @name attack_rate
 #' @importFrom epitabulate attack_rate
-#' @rdname eptabulate-exports
+#' @rdname epitabulate-exports
 #' @export
 epitabulate::attack_rate
 
@@ -53,54 +48,37 @@ epitabulate::mortality_rate
 
 #' @name add_ar
 #' @importFrom epitabulate add_ar
-#' @rdname add_ar
+#' @rdname epitabulate-exports
 #' @export
 epitabulate::add_ar
 
 #' @name add_cfr
 #' @importFrom epitabulate add_cfr
-#' @rdname add_ar
+#' @rdname epitabulate-exports
 #' @export
 epitabulate::add_cfr
 
 #' @name add_crosstabs
 #' @importFrom epitabulate add_crosstabs
-#' @rdname add_crosstabs
+#' @rdname epitabulate-exports
 #' @export
 epitabulate::add_crosstabs
 
 #' @name add_mr
 #' @importFrom epitabulate add_mr
-#' @rdname add_ar
+#' @rdname epitabulate-exports
 #' @export
 epitabulate::add_mr
 
 #' @name gt_remove_stat
 #' @importFrom epitabulate gt_remove_stat
-#' @rdname gt_remove_stat
+#' @rdname epitabulate-exports
 #' @export
 epitabulate::gt_remove_stat
 
-#' @name tab_survey
-#' @importFrom epitabulate tab_survey
-#' @rdname tab_linelist
+#' @name tbl_cmh
+#' @importFrom epitabulate tbl_cmh
+#' @rdname epitabulate-exports
 #' @export
-epitabulate::tab_survey
+epitabulate::tbl_cmh
 
-#' @name tab_linelist
-#' @importFrom epitabulate tab_linelist
-#' @rdname tab_linelist
-#' @export
-epitabulate::tab_linelist
-
-#' @name tab_univariate
-#' @importFrom epitabulate tab_univariate
-#' @rdname tab_linelist
-#' @export
-epitabulate::tab_univariate
-
-#' @name data_frame_from_2x2
-#' @importFrom epitabulate data_frame_from_2x2
-#' @rdname tab_linelist
-#' @export
-epitabulate::data_frame_from_2x2

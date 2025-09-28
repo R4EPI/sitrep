@@ -1583,6 +1583,7 @@ Note the possibility of negative confidence intervals if there are low counts
 
 ## weighted counts and proportion of dead
 death_props_strat <- survey_design %>% 
+  ungroup() %>%
   select(died, health_district) %>%
   tbl_svysummary(by = health_district) %>% 
   ## add the weighted total
