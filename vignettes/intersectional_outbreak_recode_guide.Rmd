@@ -1,8 +1,13 @@
 ---
 title: "Guide: Intersectional Outbreak Data Recode"
 output: 
-  html_document:
+  rmarkdown::html_vignette:
+    toc: true
     number_sections: true
+vignette: >
+  %\VignetteIndexEntry{Intersectional Outbreak Recode Guide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 editor_options: 
   markdown: 
     wrap: 72
