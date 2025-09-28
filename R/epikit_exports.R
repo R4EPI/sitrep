@@ -1,10 +1,10 @@
-# These functions have been re-exported from the {epidict} package. They were
+# These functions have been re-exported from the \pkg{epikit} package. They were
 # previously part of the sitrep package, but have been moved into their own
 # separate package for maintenance. By re-exporting them, the user does not
 # see much of a difference.
 #
 
-#' Exported functions from epikit
+#' Exported functions from \pkg{epikit}
 #'
 #' @seealso [epikit::add_weights_cluster()], [epikit::add_weights_strata()],
 #' [epikit::age_categories()], [epikit::assert_positive_timespan()],

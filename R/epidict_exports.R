@@ -1,9 +1,9 @@
-# These functions have been re-exported from the {epidict} package. They were
+# These functions have been re-exported from the \pkg{epidict} package. They were
 # previously part of the sitrep package, but have been moved into their own
 # separate package for maintenance. By re-exporting them, the user does not
 # see much of a difference.
 
-#' Functions re-expored from {epidict}
+#' Functions re-expored from \pkg{epidict}
 #'
 #' @seealso Dictionaries: [epidict::msf_dict()]\cr
 #'   Renaming: [epidict::msf_dict_rename_helper()]\cr
