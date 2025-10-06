@@ -32,22 +32,30 @@ Authors@R:
       person(given = "Neale",
              family = "Batra",
              role = "ctb"))
-Description: Report templates and helper functions for applied epidemiology.
+Description: A meta-package that loads the complete sitrep ecosystem for applied 
+    epidemiology analysis. This package provides report templates and automatically 
+    loads companion packages: epitabulate (for epidemiological tables), epidict 
+    (for data dictionaries), epikit (for epidemiological utilities), and apyramid 
+    (for age-sex pyramids). Simply load sitrep to access all functions from the 
+    ecosystem.
 License: GPL-3
 BugReports: https://github.com/R4EPI/sitrep/issues
 URL: https://github.com/R4EPI/sitrep,
     https://r4epi.github.io/sitrep/
-Depends: R (>= 3.2)
+Depends: 
+    R (>= 3.2)
 Imports: 
-    anthro,
     apyramid (>= 0.1.0),
+    epitabulate (>= 0.0.0.9007),
+    epidict (>= 0.0.0.9001),
+    epikit,
+    utils
+Suggests:
+    anthro,
     binom,
     broom,
     clipr,
     dplyr (>= 0.8.0),
-    epitabulate (>= 0.0.0.9007),
-    epidict (>= 0.0.0.9001),
-    epikit,
     forcats,
     flextable,
     ggalluvial,
@@ -74,33 +82,28 @@ Imports:
     srvyr,
     stats,
     stringr, 
+    summarytools,
     survey,
     tibble,
     tidyr (>= 1.0.0),
     tidyselect,
     tsibble,
-    utils
-Suggests:
     testthat (>= 2.1.0),
     sessioninfo,
     vdiffr,
-    covr, 
-    summarytools
+    covr
 Remotes:
   R4EPI/apyramid,
   R4EPI/epitabulate,
   R4EPI/epidict,
   R4EPI/epikit
-Additional_repositories: https://r4epi.github.io/drat
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+VignetteBuilder: knitr
 Collate: 
     'sitrep-package.R'
     'check_templates.R'
-    'apyramid_exports.R'
-    'epidict_exports.R'
-    'epikit_exports.R'
-    'epitabulate_exports.R'
+    'metapackage_functions.R'
     
