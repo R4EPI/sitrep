@@ -408,9 +408,6 @@ analysis, for instance:
 
 ### `save_cleaned_data` chunk
 
-This chunk turns the `linelist_processing` dataframe, which has been
-cleaned over the last few chunks, into `linelist_clean`.
-
 You can save your cleaned dataset as an RDS to keep the correct
 class/format for all columns. The template code automatically names your
 file "linelist_cleaned_DATE", where DATE is the current date. Uncomment
