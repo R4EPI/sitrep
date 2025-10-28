@@ -263,7 +263,7 @@ Clean variable names: Ensure variable naming follows good practice guidelines
 
 ```{r clean_variable_names}
 ## define clean variable names using clean_names from the janitor package. 
-linelist_processing <- janitor::clean_names(linelist_raw)
+linelist_cleaned <- janitor::clean_names(linelist_raw)
 ```
 
 
@@ -273,12 +273,12 @@ Standardise dates: See section 3.4.1 in the diphtheria outbreak report guide
 ```{r standardise_dates}
 ## Convert to date format --------------------------------------------------
 # This assumed they are ymd format. Otherwise you will need to edit
-linelist_processing <- linelist_processing |>
+linelist_cleaned <- linelist_cleaned |>
   mutate(across(starts_with("date_"), ~ ymd(parse_date(.x))))
 
 ## Fix logically inconsistent dates ----------------------------------------
 # Replace onset date with missing if it comes after notification date
-linelist_processing <- linelist_processing |>
+linelist_cleaned <- linelist_cleaned |>
   mutate(date_symptom_start = if_else(
     !is.na(date_notification) & !is.na(date_symptom_start) & date_notification >= date_symptom_start, 
     date_symptom_start,
@@ -287,18 +287,18 @@ linelist_processing <- linelist_processing |>
 # Coalesce dates ---------------------------------------------------------
 # Use notification date if onset not available
 
-linelist_processing <- linelist_processing |>
+linelist_cleaned <- linelist_cleaned |>
   mutate(date_combined = coalesce(date_symptom_start, date_notification))
 
 # Count how many date_onset were missing and replaced by notification date
-linelist_processing <- linelist_processing |> 
+linelist_cleaned <- linelist_cleaned |> 
   mutate(date_source = case_when(is.na(date_symptom_start) & !is.na(date_combined) & date_combined == date_notification ~ "Notification date",
                                  !is.na(date_symptom_start) ~ "Onset date"))
 
 # Create column with week labels --------------------------------------
 
 ## Epi week for symptom start, notification date, and combined
-linelist_processing <- linelist_processing |> 
+linelist_cleaned <- linelist_cleaned |> 
   mutate(epiweek_symptom_start_num = yearweek(
       date_symptom_start,
       week_start = 1))  |>  # 1 is Monday start; use 7 for Sundays or 5 for Fridays
@@ -311,7 +311,7 @@ linelist_processing <- linelist_processing |>
 
 
 ## Start date of each week
-linelist_processing <- linelist_processing |> 
+linelist_cleaned <- linelist_cleaned |> 
   mutate(epiweek_symptom_start = as.Date(epiweek_symptom_start_num),
          epiweek_notification = as.Date(epiweek_notification_num),
          epiweek_combined = as.Date(epiweek_combined_num))   
@@ -323,7 +323,7 @@ Create age group column: See section 3.4.2 in the diphtheria outbreak report gui
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 ```{r create_age_group}
 
-linelist_processing <- linelist_processing |> 
+linelist_cleaned <- linelist_cleaned |> 
   mutate(
     age_years = if_else(age_unit == "Month", age_num / 12, age_num),
     age_group = case_when(
@@ -349,7 +349,7 @@ Standardise and correct columns: See section 3.4.3 in the diphtheria outbreak re
 ## Recode typos in categorical values --------------------------------------------
 
 # Correct geographical categories
-linelist_processing <- linelist_processing |>
+linelist_cleaned <- linelist_cleaned |>
   
   # Standardise capitalisation 
   mutate(adm2_residence = str_to_title(adm2_residence)) |>
@@ -363,7 +363,7 @@ linelist_processing <- linelist_processing |>
 
 ## Change all unknown or spaces to missing
 
-linelist_processing <- linelist_processing |> 
+linelist_cleaned <- linelist_cleaned |> 
   mutate(across(where(is.character), ~ str_trim(.))) |>       # trim spaces first
   mutate(across(where(is.character), ~ na_if(., ""))) |>      # empty strings to NA
   mutate(across(where(is.character), ~ na_if(., "unknown"))) |>  # "unknown" to NA
@@ -381,7 +381,7 @@ Create and order other analysis columns: See section 3.4.4 in the diphtheria out
 ## Factor (categorical) variables ----------------------------------------------
 
 ## Binary column for death outcome 
-linelist_processing <- linelist_processing |> 
+linelist_cleaned <- linelist_cleaned |> 
   mutate(died = str_detect(outcome, "Dead")) |> 
 
 ## Ensuring other columns are factoral so presented in correct order
@@ -442,7 +442,7 @@ Duplicates: See section 3.4.5 in the diphtheria outbreak report guide
 ```{r duplicates}
 
 ## option 1: only keep the first occurence of duplicate case (here based on case_id, sex, and age group)
-linelist_processing <- linelist_processing |> 
+linelist_cleaned <- linelist_cleaned |> 
   distinct(case_id, sex_id, age_group, .keep_all = TRUE)
 
 
@@ -483,11 +483,11 @@ Remove unused data: See section 3.4.6 in the diphtheria outbreak report guide
 
 # Drop unused rows ------------------------------------------------
 # filter out cases with onset after end of reporting week (where known)
-linelist_processing <- linelist_processing |> 
+linelist_cleaned <- linelist_cleaned |> 
   filter(date_symptom_start <= reporting_date | is.na(date_symptom_start))
 
 ## For example, this removes rows without both a date of onset and ID number:
-# linelist_processing <- linelist_processing |> 
+# linelist_cleaned <- linelist_cleaned |> 
 #   filter(!is.na(case_id) & !is.na(date_symptom_start)) 
 
 ```
@@ -497,8 +497,6 @@ Save cleaned data: See section 3.4.7 in the diphtheria outbreak report guide
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 ```{r save_cleaned_data}
-
-linelist_cleaned <- linelist_processing 
 
 export(linelist_cleaned, str_glue("diphtheria_linelist_cleaned_{Sys.Date()}.RDS"))
 ```
