@@ -1,12 +1,15 @@
-pandoc: 2.7.3
-pkgdown: 2.0.6
+pandoc: 3.1.11
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
+  ajs_intersectional_outbreak_guide: ajs_intersectional_outbreak_guide.html
   Background: Background.html
-  Outbreaks_Walkthrough: Outbreaks_Walkthrough.html
-  Surveys_Walkthrough: Surveys_Walkthrough.html
-last_built: 2022-09-29T05:08Z
+  cholera_intersectional_outbreak_guide: cholera_intersectional_outbreak_guide.html
+  diphtheria_intersectional_outbreak_guide: diphtheria_intersectional_outbreak_guide.html
+  intersectional_outbreak_recode_guide: intersectional_outbreak_recode_guide.html
+  measles_intersectional_outbreak_guide: measles_intersectional_outbreak_guide.html
+  meningitis_intersectional_outbreak_guide: meningitis_intersectional_outbreak_guide.html
+last_built: 2025-11-05T20:41Z
 urls:
   reference: https://r4epi.github.io/sitrep/reference
   article: https://r4epi.github.io/sitrep/articles
-

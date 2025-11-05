@@ -1,111 +1,28 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://r4epi.github.io/sitrep/404.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/CODE_OF_CONDUCT.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/CONTRIBUTING.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/ISSUE_TEMPLATE.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/SUPPORT.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/articles/Background.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/articles/Outbreaks_Walkthrough.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/articles/Surveys_Walkthrough.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/index.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/news/index.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/AJS_linelist_internal.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/AJS_pop_internal.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/add_ar.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/add_crosstabs.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/apyramid.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/available_sitrep_templates.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/check_sitrep_templates.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/download_kobo.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/download_outbreak_linelist.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/download_outbreak_pop.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/download_shape_block.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/download_shape_quartier.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/download_survey.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/epikit-exports.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/generic_download.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/gt_mh_odds.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/gt_remove_stat.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/msf_dict.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/shape_block_internal.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/shape_quartier_internal.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/sitrep-package.html</loc>
-  </url>
-  <url>
-    <loc>https://r4epi.github.io/sitrep/reference/tab_linelist.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://r4epi.github.io/sitrep/404.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/CODE_OF_CONDUCT.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/CONTRIBUTING.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/ISSUE_TEMPLATE.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/LICENSE.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/SUPPORT.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/articles/Background.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/articles/ajs_intersectional_outbreak_guide.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/articles/cholera_intersectional_outbreak_guide.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/articles/diphtheria_intersectional_outbreak_guide.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/articles/index.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/articles/intersectional_outbreak_recode_guide.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/articles/measles_intersectional_outbreak_guide.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/articles/meningitis_intersectional_outbreak_guide.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/authors.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/index.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/news/index.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/reference/available_sitrep_templates.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/reference/check_sitrep_templates.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/reference/index.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/reference/sitrep-package.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/reference/sitrep_check_deps.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/reference/sitrep_conflicts.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/reference/sitrep_functions.html</loc></url>
+<url><loc>https://r4epi.github.io/sitrep/reference/sitrep_install_deps.html</loc></url>
 </urlset>
+
