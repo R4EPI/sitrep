@@ -6,27 +6,24 @@
 <!-- badges: start -->
 
 [![Lifecycle:
-maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
+maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://lifecycle.r-lib.org/articles/stages.html#maturing)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/sitrep)](https://CRAN.R-project.org/package=sitrep)
+[![R-CMD-check](https://github.com/R4EPI/sitrep/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/R4EPI/sitrep/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
-coverage](https://codecov.io/gh/R4EPI/sitrep/branch/master/graph/badge.svg)](https://codecov.io/gh/R4EPI/sitrep?branch=master)
-[![R build
-status](https://github.com/R4EPI/sitrep/workflows/R-CMD-check/badge.svg)](https://github.com/R4EPI/sitrep/actions)
+coverage](https://codecov.io/gh/R4EPI/sitrep/graph/badge.svg)](https://app.codecov.io/gh/R4EPI/sitrep)
 <!-- badges: end -->
 
 The goal of {sitrep} is provide report templates for common
 epidemiological surveys and outbreak reports. The package further
 contains helper function that standardize certain analyses.
 
-While templates are primarily for MSF analyses - they have been setup to
-be as generic as possible for use by the general applied epidemiology
-community.
+While templates are primarily for Medecins Sans Frontieres analyses -
+they have been setup to be as generic as possible for use by the general
+applied epidemiology community.
 
-**Detailed information about the project and the templates can be found
-at <https://r4epis.netlify.com>.**  
-A reference website for the functions in {sitrep} can be found at
-<https://r4epi.github.io/sitrep>.
+**Detailed information about the project, the templates and functions in
+{sitrep} can be found at <https://r4epi.github.io/sitrep>.**
 
 {sitrep} includes a number of other *R* packages which facilitate
 specific analysis:  
@@ -53,14 +50,9 @@ package.
 remotes::install_github("r4epi/sitrep")
 ```
 
-If you are getting errors, check the [frequently asked
-questions](https://r4epis.netlify.com/faq/).
-
 ## Available templates
 
-Sitrep has [four outbreak
-templates](https://r4epis.netlify.com/outbreaks/) and [four survey
-templates](https://r4epis.netlify.com/surveys/) available. These
+Sitrep has outbreak templates and survey templates available. These
 templates will generate the following:
 
 1.  A word document with the situation report
@@ -71,8 +63,12 @@ templates will generate the following:
 You can access the list of templates in *R Studio* by clicking (see
 example below): file \> New file \> R Markdown… \> From Template
 
-![Example of how to open and save the cholera
-template](https://github.com/R4EPI/R4EPIs-website/raw/master/content/welcome/images/opening_template.gif)
+<figure>
+<img src="../../vignettes/images/opening_template.gif"
+alt="Example of how to open and save the cholera template" />
+<figcaption aria-hidden="true">Example of how to open and save the
+cholera template</figcaption>
+</figure>
 
 You can generate an example template by using the
 `check_sitrep_templates()` function:
@@ -85,16 +81,24 @@ dir.create(output_dir)
 # view the available templates, categorized by type
 available_sitrep_templates(categorise = TRUE)
 #> $outbreak
-#> [1] "ajs_outbreak"        "cholera_outbreak"    "measles_outbreak"   
-#> [4] "meningitis_outbreak"
+#>  [1] "ajs_intersectional_outbreak"        "ajs_outbreak"                      
+#>  [3] "ajs_outbreak_recode"                "cholera_intersectional_outbreak"   
+#>  [5] "cholera_outbreak"                   "cholera_outbreak_recode"           
+#>  [7] "diphtheria_intersectional_outbreak" "intersectional_outbreak_recode"    
+#>  [9] "measles_intersectional_outbreak"    "measles_outbreak"                  
+#> [11] "measles_outbreak_recode"            "meningitis_intersectional_outbreak"
+#> [13] "meningitis_outbreak"                "meningitis_outbreak_recode"        
 #> 
 #> $survey
-#> [1] "mortality"         "nutrition"         "vaccination_long" 
-#> [4] "vaccination_short"
+#> [1] "ebs"                      "mortality"               
+#> [3] "mortality_recode"         "nutrition"               
+#> [5] "nutrition_recode"         "vaccination_long"        
+#> [7] "vaccination_long_recode"  "vaccination_short"       
+#> [9] "vaccination_short_recode"
 
 # generate the measles outbreak template in the output directory
 check_sitrep_templates("measles_outbreak", path = output_dir)
-#> [1] "C:\\Users\\alexf\\AppData\\Local\\Temp\\Rtmpcv1H8d/sitrep_example"
+#> [1] "C:\\Users\\spina\\AppData\\Local\\Temp\\RtmpGQiM5O/sitrep_example"
 
 # view the contents
 list.files(output_dir, recursive = TRUE)

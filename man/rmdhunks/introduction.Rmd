@@ -2,11 +2,12 @@ The goal of {sitrep} is provide report templates for common epidemiological
 surveys and outbreak reports. The package further contains helper function that
 standardize certain analyses. 
 
-While templates are primarily for MSF analyses - they have been setup to be as
-generic as possible for use by the general applied epidemiology community. 
+While templates are primarily for Medecins Sans Frontieres analyses - they have 
+been setup to be as generic as possible for use by the general applied 
+epidemiology community. 
 
-**Detailed information about the project and the templates can be found at <https://r4epis.netlify.com>.**  
-A reference website for the functions in {sitrep} can be found at <https://r4epi.github.io/sitrep>.  
+**Detailed information about the project, the templates and functions in {sitrep} 
+can be found at <https://r4epi.github.io/sitrep>.**
 
 {sitrep} includes a number of other *R* packages which facilitate specific analysis:  
 [{epitabulate}](https://r4epi.github.io/epitabulate): Tables for epidemiological analysis  
@@ -27,13 +28,10 @@ To install **sitrep** from GitHub you must first install the **remotes** package
 remotes::install_github("r4epi/sitrep")
 ```
  
-If you are getting errors, check the [frequently asked questions](https://r4epis.netlify.com/faq/).
-
 ## Available templates
 
-Sitrep has [four outbreak templates](https://r4epis.netlify.com/outbreaks/) and
-[four survey templates](https://r4epis.netlify.com/surveys/) available. These
-templates will generate the following:
+Sitrep has outbreak templates and survey templates available. These templates 
+will generate the following:
 
 1. A word document with the situation report
 2. A plain text markdown document (for conversion to other formats such as HTML or PDF)
