@@ -54,7 +54,7 @@ In order to estimate underweight in the surveyed population, we looked at Weight
 * Severe underweight: WAZ <-3  
 
 
-Exclusion of z-scores from Observed mean SMART flags included:  
+Exclusion of z-scores from Observed mean WHO flags included:  
 * WHZ: <-5 or >5;  
 * HAZ: <-6 or >6;  
 * WAZ: <-6 or >5.  
@@ -752,7 +752,7 @@ study_data_cleaned <- bind_cols(study_data_cleaned, zscore_results)
 study_data_cleaned <- study_data_cleaned %>% 
   mutate(
     gam_whz = zwfl <  -2 | oedema == "Yes", 
-    mam_whz = zwfl >= -3 & zwei < -2, 
+    mam_whz = zwfl >= -3 & zwfl < -2 & oedema == "No", 
     sam_whz = zwfl <  -3 | oedema == "Yes"
   ) %>%
   ## set flagged children to NA for each of the indicator variables
