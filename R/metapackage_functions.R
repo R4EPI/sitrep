@@ -393,7 +393,7 @@ ignore_unused_imports <- function() {
   epidict::dict_rename_helper
   epidict::gen_data
   epidict::msf_dict
-  epidict::msf_dict_rename_helper
+  # epidict::msf_dict_rename_helper
   epidict::read_dict
   epikit::add_weights_cluster
   epikit::add_weights_strata
