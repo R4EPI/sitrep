@@ -31,7 +31,11 @@ Authors@R:
              role = "ctb"),
       person(given = "Neale",
              family = "Batra",
-             role = "ctb"))
+             role = "ctb"), 
+    person("Applied Epi Incorporated", 
+           role = "cph"), 
+    person("Medecins Sans Frontieres Operational Centre Amsterdam", 
+           role = "fnd"))
 Description: A meta-package that loads the complete sitrep ecosystem for applied 
     epidemiology analysis. This package provides report templates and automatically 
     loads companion packages: epitabulate (for epidemiological tables), epidict 
