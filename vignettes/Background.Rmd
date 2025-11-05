@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 ## Origin 
 
-Applied Epi Tools originated out of the R4epis project. 
+The Sitrep ecosystem originated out of the R4epis project. 
 R4epis started in 2018 as a partnership between Médecins Sans Frontières ([MSF](https://www.artsenzondergrenzen.nl/)) and 
 the R for Epidemics Consortium ([RECON](http://www.repidemicsconsortium.org/)). 
 In 2021, [Applied Epi](https://appliedepi.org/) was contracted by MSF to finalise 
@@ -50,7 +50,7 @@ Analysis of survey data
 
 
 ## Funding
-R4epis was initially funded through the [Sapling Nursery](https://msf.org.uk/sapling-nursery),
+R4epis was initially funded through the [Sapling Nursery](https://msf.org.uk/sapling-nursery/),
 an MSF internal innovation fund for new projects that aim to improve the medical 
 care MSF provides. This funding was secured by Annick Lenglet and Amrish Baidjoe. 
 In 2021, MSF Operational Centre Amsterdam awarded Applied Epi with a contract to

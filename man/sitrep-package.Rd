@@ -4,16 +4,16 @@
 \name{sitrep-package}
 \alias{sitrep}
 \alias{sitrep-package}
-\title{sitrep: Report templates and helper functions for applied epidemiology}
+\title{sitrep: Report Templates And Helper Functions For Applied Epidemiology}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-A meta-package that loads the complete sitrep ecosystem for applied epidemiology analysis. This package provides report templates and automatically loads companion packages: epitabulate (for epidemiological tables), epidict (for data dictionaries), epikit (for epidemiological utilities), and apyramid (for age-sex pyramids). Simply load sitrep to access all functions from the ecosystem.
+A meta-package that loads the complete sitrep ecosystem for applied epidemiology analysis. This package provides report templates and automatically loads companion packages, including epitabulate (for epidemiological tables), epidict (for data dictionaries), epikit (for epidemiological utilities), and apyramid (for age-sex pyramids). Simply load sitrep to access all functions from the ecosystem.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/R4EPI/sitrep}
+  \item \url{https://github.com/R4EPI/sitrep/}
   \item \url{https://r4epi.github.io/sitrep/}
   \item Report bugs at \url{https://github.com/R4EPI/sitrep/issues}
 }
@@ -35,6 +35,8 @@ Other contributors:
 \itemize{
   \item Annick Lenglet [contributor]
   \item Neale Batra [contributor]
+  \item Applied Epi Incorporated [copyright holder]
+  \item Medecins Sans Frontieres Operational Centre Amsterdam [funder]
 }
 
 }

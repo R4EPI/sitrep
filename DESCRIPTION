@@ -1,6 +1,6 @@
 Type: Package
 Package: sitrep
-Title: Report templates and helper functions for applied epidemiology
+Title: Report Templates And Helper Functions For Applied Epidemiology
 Version: 0.2.3
 Authors@R: 
     c(person(given = "Alexander",
@@ -38,13 +38,13 @@ Authors@R:
            role = "fnd"))
 Description: A meta-package that loads the complete sitrep ecosystem for applied 
     epidemiology analysis. This package provides report templates and automatically 
-    loads companion packages: epitabulate (for epidemiological tables), epidict 
-    (for data dictionaries), epikit (for epidemiological utilities), and apyramid 
-    (for age-sex pyramids). Simply load sitrep to access all functions from the 
-    ecosystem.
+    loads companion packages, including epitabulate (for epidemiological tables), 
+    epidict (for data dictionaries), epikit (for epidemiological utilities), 
+    and apyramid (for age-sex pyramids). Simply load sitrep to access all 
+    functions from the ecosystem.
 License: GPL-3
 BugReports: https://github.com/R4EPI/sitrep/issues
-URL: https://github.com/R4EPI/sitrep,
+URL: https://github.com/R4EPI/sitrep/,
     https://r4epi.github.io/sitrep/
 Depends: 
     R (>= 3.2)
@@ -110,4 +110,3 @@ Collate:
     'sitrep-package.R'
     'check_templates.R'
     'metapackage_functions.R'
-    
