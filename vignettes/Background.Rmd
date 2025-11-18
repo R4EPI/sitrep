@@ -50,7 +50,7 @@ Analysis of survey data
 
 
 ## Funding
-R4epis was initially funded through the [Sapling Nursery](https://msf.org.uk/inclusive-innovation/),
+R4epis was initially funded through the [Sapling Nursery](https://msf.org.uk/inclusive-innovation),
 an MSF internal innovation fund for new projects that aim to improve the medical 
 care MSF provides. This funding was secured by Annick Lenglet and Amrish Baidjoe. 
 In 2021, MSF Operational Centre Amsterdam awarded Applied Epi with a contract to
