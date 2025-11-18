@@ -4,7 +4,7 @@
 \name{sitrep-package}
 \alias{sitrep}
 \alias{sitrep-package}
-\title{sitrep: Report Templates And Helper Functions For Applied Epidemiology}
+\title{sitrep: Report Templates and Helper Functions for Applied Epidemiology}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
@@ -29,6 +29,7 @@ Authors:
   \item Kate Doyle
   \item Chris Jarvis
   \item Lukas Richter
+  \item Paula Blomquist
 }
 
 Other contributors:

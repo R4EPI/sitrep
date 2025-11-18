@@ -1,6 +1,6 @@
 Type: Package
 Package: sitrep
-Title: Report Templates And Helper Functions For Applied Epidemiology
+Title: Report Templates and Helper Functions for Applied Epidemiology
 Version: 0.2.3
 Authors@R: c(
     person("Alexander", "Spina", , "aspina@appliedepi.org", role = c("aut", "cre"),
