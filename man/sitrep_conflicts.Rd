@@ -6,6 +6,9 @@
 \usage{
 sitrep_conflicts()
 }
+\value{
+NULL (invisibly). Prints messages about conflicts to console.
+}
 \description{
 This function identifies any naming conflicts between functions
 in the sitrep ecosystem packages.

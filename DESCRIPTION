@@ -2,110 +2,85 @@ Type: Package
 Package: sitrep
 Title: Report Templates And Helper Functions For Applied Epidemiology
 Version: 0.2.3
-Authors@R: 
-    c(person(given = "Alexander",
-             family = "Spina",
-             email = "aspina@appliedepi.org", 
-             comment = c(ORCID = "0000-0001-8425-1867"),
-             role = c("aut", "cre")),
-      person(given = "Zhian N.",
-             family = "Kamvar",
-             role = "aut",
-             email = "zkamvar@gmail.com",
-             comment = c(ORCID = "0000-0003-1458-7108")), 
-      person(given = "Dirk",
-             family = "Schumacher",
-             role = "aut",
-             email = "mai@dirk-schumacher.net"),
-      person(given = "Kate",
-             family = "Doyle",
-             role = "aut"),
-      person(given = "Chris",
-             family = "Jarvis",
-             role = "aut"),
-      person(given = "Lukas",
-             family = "Richter",
-             role = "aut"),
-      person(given = "Annick",
-             family = "Lenglet",
-             role = "ctb"),
-      person(given = "Neale",
-             family = "Batra",
-             role = "ctb"), 
-    person("Applied Epi Incorporated", 
-           role = "cph"), 
-    person("Medecins Sans Frontieres Operational Centre Amsterdam", 
-           role = "fnd"))
-Description: A meta-package that loads the complete sitrep ecosystem for applied 
-    epidemiology analysis. This package provides report templates and automatically 
-    loads companion packages, including epitabulate (for epidemiological tables), 
-    epidict (for data dictionaries), epikit (for epidemiological utilities), 
-    and apyramid (for age-sex pyramids). Simply load sitrep to access all 
-    functions from the ecosystem.
+Authors@R: c(
+    person("Alexander", "Spina", , "aspina@appliedepi.org", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-8425-1867")),
+    person("Zhian N.", "Kamvar", , "zkamvar@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0003-1458-7108")),
+    person("Dirk", "Schumacher", , "mai@dirk-schumacher.net", role = "aut"),
+    person("Kate", "Doyle", role = "aut"),
+    person("Chris", "Jarvis", role = "aut"),
+    person("Lukas", "Richter", role = "aut"),
+    person("Annick", "Lenglet", role = "ctb"),
+    person("Neale", "Batra", role = "ctb"),
+    person("Applied Epi Incorporated", role = "cph"),
+    person("Medecins Sans Frontieres Operational Centre Amsterdam", role = "fnd")
+  )
+Description: A meta-package that loads the complete sitrep ecosystem for
+    applied epidemiology analysis. This package provides report templates
+    and automatically loads companion packages, including epitabulate (for
+    epidemiological tables), epidict (for data dictionaries), epikit (for
+    epidemiological utilities), and apyramid (for age-sex pyramids).
+    Simply load sitrep to access all functions from the ecosystem.
 License: GPL-3
+URL: https://github.com/R4EPI/sitrep/, https://r4epi.github.io/sitrep/
 BugReports: https://github.com/R4EPI/sitrep/issues
-URL: https://github.com/R4EPI/sitrep/,
-    https://r4epi.github.io/sitrep/
 Depends: 
     R (>= 3.2)
 Imports: 
     apyramid (>= 0.1.0),
-    epitabulate (>= 0.0.0.9007),
-    epidict (>= 0.0.0.9001),
+    epidict (>= 0.1.0),
     epikit,
+    epitabulate (>= 0.1.0),
     utils
 Suggests:
     anthro,
     binom,
     broom,
     clipr,
+    covr,
     dplyr (>= 0.8.0),
-    forcats,
     flextable,
+    forcats,
     ggalluvial,
     ggplot2 (>= 3.0.0),
     ggspatial,
-    gtsummary (>= 2.0.0),
     glue,
+    gtsummary (>= 2.0.0),
     here,
     janitor,
     knitr,
     labelled,
     lubridate,
     matchmaker,
-    pacman, 
-    parsedate, 
+    pacman,
+    parsedate,
     patchwork,
     purrr,
     rio,
     rlang (>= 0.4.0),
     rmarkdown,
     scales,
+    sessioninfo,
     sf,
     slider,
     srvyr,
     stats,
-    stringr, 
+    stringr,
     summarytools,
     survey,
+    testthat (>= 2.1.0),
     tibble,
     tidyr (>= 1.0.0),
     tidyselect,
     tsibble,
-    testthat (>= 2.1.0),
-    sessioninfo,
-    vdiffr,
-    covr
-Remotes:
-  R4EPI/apyramid,
-  R4EPI/epitabulate,
-  R4EPI/epidict,
-  R4EPI/epikit
+    vdiffr
+VignetteBuilder: 
+    knitr
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
-VignetteBuilder: knitr
+RoxygenNote: 7.3.3
 Collate: 
     'sitrep-package.R'
     'check_templates.R'

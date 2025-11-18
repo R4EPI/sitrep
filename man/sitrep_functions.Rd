@@ -9,6 +9,9 @@ sitrep_functions(pattern = NULL)
 \arguments{
 \item{pattern}{Optional regex pattern to filter function names}
 }
+\value{
+A data frame with columns 'package' and 'function_name', sorted by package and function name.
+}
 \description{
 Shows all available functions across the sitrep ecosystem packages.
 }

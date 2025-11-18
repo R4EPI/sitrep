@@ -9,14 +9,20 @@ sitrep_core <- c(
   "apyramid"
 )
 
-# Find packages that aren't already attached
+#' Find packages that aren't already attached
+#' @return Character vector of unloaded sitrep core packages
+#' @keywords internal
+#' @noRd
 sitrep_core_unloaded <- function() {
   search <- paste0("package:", sitrep_core)
   sitrep_core[!search %in% search()]
 }
 
-# Attach package from same library it was loaded from
-# (prevents library path issues)
+#' Attach package from same library it was loaded from
+#' (prevents library path issues)
+#' @return NULL (invisibly), called for side effects
+#' @keywords internal
+#' @noRd
 same_library <- function(pkg) {
   loc <- if (pkg %in% loadedNamespaces()) {
     dirname(getNamespaceInfo(pkg, "path"))
@@ -29,7 +35,10 @@ same_library <- function(pkg) {
   )
 }
 
-# Main attach function
+#' Main attach function
+#' @return Character vector of packages that were loaded (invisibly)
+#' @keywords internal
+#' @noRd
 sitrep_attach <- function() {
   to_load <- sitrep_core_unloaded()
 
@@ -45,7 +54,10 @@ sitrep_attach <- function() {
   invisible(available_to_load)
 }
 
-# Create startup message
+#' Create startup message
+#' @return Character string containing the formatted startup message
+#' @keywords internal
+#' @noRd
 sitrep_attach_message <- function(to_load) {
   if (length(to_load) == 0) {
     return("All sitrep ecosystem packages already loaded.")
@@ -76,17 +88,25 @@ sitrep_attach_message <- function(to_load) {
   paste0(header, paste(packages, collapse = "\n"), "\n")
 }
 
-# Helper function to check if package is attached
+#' Helper function to check if package is attached
+#' @return Logical indicating whether the package is attached
+#' @keywords internal
+#' @noRd
 is_attached <- function(x) {
   paste0("package:", x) %in% search()
 }
 
-# Check if we're loading for tests (skip messages during testing)
+#' Check if we're loading for tests (skip messages during testing)
+#' @return Logical indicating whether loading is happening during tests
+#' @keywords internal
+#' @noRd
 is_loading_for_tests <- function() {
   !interactive() && identical(Sys.getenv("DEVTOOLS_LOAD"), "sitrep")
 }
 
-# Main .onAttach function
+#' Main .onAttach function
+#' @return NULL (invisibly), called for side effects
+#' @noRd
 .onAttach <- function(libname, pkgname) {
   # Skip messages during testing
   if (is_loading_for_tests()) {
@@ -105,6 +125,8 @@ is_loading_for_tests <- function() {
 #' @description
 #' This function identifies any naming conflicts between functions
 #' in the sitrep ecosystem packages.
+#'
+#' @return NULL (invisibly). Prints messages about conflicts to console.
 #'
 #' @export
 sitrep_conflicts <- function() {
@@ -144,6 +166,9 @@ sitrep_conflicts <- function() {
 #' Shows all available functions across the sitrep ecosystem packages.
 #'
 #' @param pattern Optional regex pattern to filter function names
+#'
+#' @return A data frame with columns 'package' and 'function_name', sorted by package and function name.
+#'
 #' @export
 sitrep_functions <- function(pattern = NULL) {
   packages <- c("sitrep", sitrep_core)
@@ -194,6 +219,8 @@ sitrep_functions <- function(pattern = NULL) {
 #' This function reads the sitrep DESCRIPTION file and installs all packages
 #' listed in Depends, Imports, and Suggests fields. This ensures complete
 #' functionality in offline environments.
+#'
+#' @return Character vector of all dependency package names (invisibly).
 #'
 #' @examples
 #' \dontrun{
@@ -334,7 +361,8 @@ sitrep_install_deps <- function(upgrade = "ask", dependencies = TRUE,
 #'
 #' @param quiet Should output be suppressed? Default is FALSE
 #'
-#' @return Logical vector indicating which packages are available
+#' @return Named logical vector indicating which packages are available.
+#'   Names are package names, values are TRUE if available, FALSE otherwise.
 #'
 #' @examples
 #' \dontrun{
@@ -382,8 +410,11 @@ sitrep_check_deps <- function(quiet = FALSE) {
 }
 
 
-# Suppress R CMD check notes about unused imports
-# (if you have packages in Imports that are only used by ecosystem packages)
+#' Suppress R CMD check notes about unused imports
+#' (if you have packages in Imports that are only used by ecosystem packages)
+#' @return NULL (invisibly), called for side effects
+#' @keywords internal
+#' @noRd
 ignore_unused_imports <- function() {
   # this list is created by running
   # blabla <- sitrep_functions()

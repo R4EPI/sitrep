@@ -48,4 +48,3 @@ Run the templates found in the sitrep package.
 check_sitrep_templates("mortality")
 }
 }
-\keyword{internal}

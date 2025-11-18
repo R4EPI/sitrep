@@ -38,72 +38,81 @@ and plotting
 
 ## Installation
 
-The **{sitrep}** package, is currently stored in a [GitHub
-repository](https://github.com/R4EPI/sitrep). Therefore, the procedure
-to install these packages have one extra step required.
+You can install {sitrep} from CRAN:
 
-To install **sitrep** from GitHub you must first install the **remotes**
-package.
+``` r
+install.packages("sitrep")
+```
+
+<details>
+
+<!--
+NOTE: everything inside the details tag will be collapsed and effectively
+hidden from the user
+-->
+
+<summary style="text-decoration: underline">
+
+Click here for alternative installation options
+</summary>
+
+You can also install the in-development version from GitHub using the
+{remotes} package (but there’s no guarantee that it will be stable):
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("r4epi/sitrep")
+remotes::install_github("R4EPI/sitrep") 
 ```
 
-## Available templates
+</details>
 
-Sitrep has outbreak templates and survey templates available. These
-templates will generate the following:
+     
+    ## Available templates
 
-1.  A word document with the situation report
-2.  A plain text markdown document (for conversion to other formats such
-    as HTML or PDF)
-3.  A directory with all of the figures produced
+    Sitrep has outbreak templates and survey templates available. These templates 
+    will generate the following:
 
-You can access the list of templates in *R Studio* by clicking (see
-example below): file \> New file \> R Markdown… \> From Template
+    1. A word document with the situation report
+    2. A plain text markdown document (for conversion to other formats such as HTML or PDF)
+    3. A directory with all of the figures produced
 
-<figure>
-<img src="../../vignettes/images/opening_template.gif"
-alt="Example of how to open and save the cholera template" />
-<figcaption aria-hidden="true">Example of how to open and save the
-cholera template</figcaption>
-</figure>
+    You can access the list of templates in *R Studio* by clicking (see example below): 
+    file > New file > R Markdown... > From Template
 
-You can generate an example template by using the
-`check_sitrep_templates()` function:
+    You can generate an example template by using the `check_sitrep_templates()`
+    function:
 
-``` r
-library("sitrep")
-output_dir <- file.path(tempdir(), "sitrep_example")
-dir.create(output_dir)
 
-# view the available templates, categorized by type
-available_sitrep_templates(categorise = TRUE)
-#> $outbreak
-#>  [1] "ajs_intersectional_outbreak"        "ajs_outbreak"                      
-#>  [3] "ajs_outbreak_recode"                "cholera_intersectional_outbreak"   
-#>  [5] "cholera_outbreak"                   "cholera_outbreak_recode"           
-#>  [7] "diphtheria_intersectional_outbreak" "intersectional_outbreak_recode"    
-#>  [9] "measles_intersectional_outbreak"    "measles_outbreak"                  
-#> [11] "measles_outbreak_recode"            "meningitis_intersectional_outbreak"
-#> [13] "meningitis_outbreak"                "meningitis_outbreak_recode"        
-#> 
-#> $survey
-#> [1] "ebs"                      "mortality"               
-#> [3] "mortality_recode"         "nutrition"               
-#> [5] "nutrition_recode"         "vaccination_long"        
-#> [7] "vaccination_long_recode"  "vaccination_short"       
-#> [9] "vaccination_short_recode"
+    ``` r
+    library("sitrep")
+    output_dir <- file.path(tempdir(), "sitrep_example")
+    dir.create(output_dir)
 
-# generate the measles outbreak template in the output directory
-check_sitrep_templates("measles_outbreak", path = output_dir)
-#> [1] "C:\\Users\\spina\\AppData\\Local\\Temp\\RtmpGQiM5O/sitrep_example"
+    # view the available templates, categorized by type
+    available_sitrep_templates(categorise = TRUE)
+    #> $outbreak
+    #>  [1] "ajs_intersectional_outbreak"        "ajs_outbreak"                      
+    #>  [3] "ajs_outbreak_recode"                "cholera_intersectional_outbreak"   
+    #>  [5] "cholera_outbreak"                   "cholera_outbreak_recode"           
+    #>  [7] "diphtheria_intersectional_outbreak" "intersectional_outbreak_recode"    
+    #>  [9] "measles_intersectional_outbreak"    "measles_outbreak"                  
+    #> [11] "measles_outbreak_recode"            "meningitis_intersectional_outbreak"
+    #> [13] "meningitis_outbreak"                "meningitis_outbreak_recode"        
+    #> 
+    #> $survey
+    #> [1] "ebs"                      "mortality"               
+    #> [3] "mortality_recode"         "nutrition"               
+    #> [5] "nutrition_recode"         "vaccination_long"        
+    #> [7] "vaccination_long_recode"  "vaccination_short"       
+    #> [9] "vaccination_short_recode"
 
-# view the contents
-list.files(output_dir, recursive = TRUE)
-#> [1] "measles_outbreak.Rmd"
-```
+    # generate the measles outbreak template in the output directory
+    check_sitrep_templates("measles_outbreak", path = output_dir)
+    #> [1] "C:\\Users\\spina\\AppData\\Local\\Temp\\RtmpQ3cj8S/sitrep_example"
+
+    # view the contents
+    list.files(output_dir, recursive = TRUE)
+    #> [1] "measles_outbreak.Rmd"
 
 Please note that the ‘sitrep’ project is released with a [Contributor
 Code of Conduct](.github/CODE_OF_CONDUCT.md). By contributing to this

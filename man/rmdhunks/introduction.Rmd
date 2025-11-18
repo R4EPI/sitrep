@@ -18,14 +18,28 @@ can be found at <https://r4epi.github.io/sitrep>.**
 
 ## Installation
 
-The **{sitrep}** package, is currently stored in a [GitHub repository](https://github.com/R4EPI/sitrep). 
-Therefore, the procedure to install these packages have one extra step required. 
-
-To install **sitrep** from GitHub you must first install the **remotes** package.
+You can install {sitrep} from CRAN:
 
 ``` r
+install.packages("sitrep")
+```
+
+<details>
+<!--
+NOTE: everything inside the details tag will be collapsed and effectively
+hidden from the user
+-->
+<summary style='text-decoration: underline'>Click here for alternative installation options</summary>
+
+You can also install the in-development version from GitHub using the {remotes}
+package (but there's no guarantee that it will be stable):
+
+```{r eval = FALSE}
 # install.packages("remotes")
-remotes::install_github("r4epi/sitrep")
+remotes::install_github("R4EPI/sitrep") 
+```
+
+</details>
 ```
  
 ## Available templates
@@ -39,9 +53,6 @@ will generate the following:
 
 You can access the list of templates in *R Studio* by clicking (see example below): 
 file > New file > R Markdown... > From Template
-
-![Example of how to open and save the cholera template](../../vignettes/images/opening_template.gif)
-
 
 You can generate an example template by using the `check_sitrep_templates()`
 function:

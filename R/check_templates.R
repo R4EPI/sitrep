@@ -19,7 +19,6 @@
 #' @return the path where the templates were built.
 #' @export
 #'
-#' @keywords internal
 #' @examples
 #' \dontrun{
 #' check_sitrep_templates("mortality")
@@ -104,7 +103,32 @@ available_sitrep_templates <- function(categorise = FALSE, ...) {
 
 }
 
-# Draft and build a sitrep template (internal)
+#' Draft and render a sitrep template
+#'
+#' This internal helper function drafts an R Markdown template from the
+#' *sitrep* package into a specified directory and renders it using
+#' **rmarkdown**. It optionally removes previously rendered output before
+#' building.
+#'
+#' @param template A character string giving the name of the sitrep template
+#'   to draft and render. This can be the name of a template included in the
+#'   package, or a path to a user-provided template.
+#' @param path A directory in which the drafted `.Rmd` file and rendered output
+#'   will be saved.
+#' @param progress Logical; if `TRUE`, progress messages from
+#'   [rmarkdown::render()] are shown. Defaults to `FALSE`.
+#' @param output_format A valid output format object to be passed to
+#'   [rmarkdown::render()]. If `NULL` (default), the format defined in the
+#'   template is used.
+#' @param clean Logical; if `TRUE` (default), remove any previously rendered
+#'   output file for this template before rendering.
+#'
+#' @return Returns the result of [rmarkdown::render()] if rendering succeeds.
+#'   If an error occurs during drafting or rendering, the caught error
+#'   condition is returned instead.
+#'
+#' @keywords internal
+#' @noRd
 build_sitrep_template <- function(template, path, progress = FALSE, output_format = NULL, clean = TRUE) {
 
   path_to_template <- file.path(path, sprintf("%s.Rmd", basename(template)))

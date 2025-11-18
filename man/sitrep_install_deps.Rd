@@ -23,6 +23,9 @@ sitrep_install_deps(
 
 \item{force}{Should installation proceed without prompts? Default is FALSE}
 }
+\value{
+Character vector of all dependency package names (invisibly).
+}
 \description{
 This function installs all packages needed for the complete sitrep ecosystem,
 ensuring you have everything needed for working without internet connection.

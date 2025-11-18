@@ -10,7 +10,8 @@ sitrep_check_deps(quiet = FALSE)
 \item{quiet}{Should output be suppressed? Default is FALSE}
 }
 \value{
-Logical vector indicating which packages are available
+Named logical vector indicating which packages are available.
+Names are package names, values are TRUE if available, FALSE otherwise.
 }
 \description{
 Checks if all packages needed for the sitrep ecosystem are installed
