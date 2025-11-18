@@ -761,7 +761,7 @@ study_data_cleaned <- study_data_cleaned %>%
   mutate(
     across(
       .cols = c(gam_whz, mam_whz, sam_whz), # select the indicator variables
-      .fns = ~if_else(!is.na(fwfl) & fwfl == 1, NA, .)) # NA if flagged, else leave as is
+      .fns = ~if_else(!is.na(fwfl) | fwfl == 1, NA, .)) # NA if flagged, else leave as is
     )
     
 
