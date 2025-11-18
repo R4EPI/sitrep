@@ -11,6 +11,7 @@ Authors@R: c(
     person("Kate", "Doyle", role = "aut"),
     person("Chris", "Jarvis", role = "aut"),
     person("Lukas", "Richter", role = "aut"),
+    person("Paula", "Blomquist", role = "aut"),
     person("Annick", "Lenglet", role = "ctb"),
     person("Neale", "Batra", role = "ctb"),
     person("Applied Epi Incorporated", role = "cph"),

@@ -1,3 +1,9 @@
+# sitrep 0.2.3
+
+* restructured to a meta-package for installing sitrep ecosystem packages 
+* adding new intersectional templates 
+
+
 # sitrep 0.2.2 
 
 * hopefully fixing pkgodwn sites
