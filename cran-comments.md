@@ -14,3 +14,6 @@ Ubuntu-latest, R-oldrel-1
 0 errors | 0 warnings | 1 note
 
 * This is a new release.
+
+All URLs and metadata issues noted in the previous submission have been corrected:
+* Spellings are as expected

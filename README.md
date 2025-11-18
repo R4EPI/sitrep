@@ -108,12 +108,8 @@ remotes::install_github("R4EPI/sitrep")
 
     # generate the measles outbreak template in the output directory
     check_sitrep_templates("measles_outbreak", path = output_dir)
-    #> [1] "C:\\Users\\spina\\AppData\\Local\\Temp\\Rtmpa2WEXa/sitrep_example"
+    #> [1] "C:\\Users\\spina\\AppData\\Local\\Temp\\RtmpMfBkNj/sitrep_example"
 
     # view the contents
     list.files(output_dir, recursive = TRUE)
     #> [1] "measles_outbreak.Rmd"
-
-Please note that the ‘sitrep’ project is released with a [Contributor
-Code of Conduct](.github/CODE_OF_CONDUCT.md). By contributing to this
-project, you agree to abide by its terms.
