@@ -16,7 +16,7 @@ navbar:
   components:
     home:
       icon: fas fa-home fa-lg
-      href: https://r4epis.netlify.com
+      href: r4epi.github.io/sitrep/
     reference:
       text: Reference
       href: reference/index.html
@@ -25,5 +25,5 @@ navbar:
       href: news/index.html
     github:
       icon: fab fa-github fa-lg
-      href: https://github.com/R4EPI/sitrep
+      href: https://github.com/R4EPI/sitrep/
 

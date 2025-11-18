@@ -13,7 +13,7 @@ This will produce a word document which can be kept as a log to show how the dat
 was changed. 
 
 - There are sections for reading, reformatting and cleaning data  
-- For a more detailed explanation of this template, please visit https://r4epis.netlify.com/surveys  
+- For a more detailed explanation of this template, please visit https://github.com/R4EPI/sitrep/ 
 - Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)
 
 - Text within <! > will not show in your final document. These comments are used
@@ -37,7 +37,7 @@ field. If you have access to a USB key with these packages, it makes sense to
 copy and paste the packages into your computer's R package library 
 (run the command .libPaths() to see the folder path). 
 
-For help installing packages, please visit https://r4epis.netlify.com/welcome
+For help installing packages, please visit https://github.com/R4EPI/sitrep/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
 
