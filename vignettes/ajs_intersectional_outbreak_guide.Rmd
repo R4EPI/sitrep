@@ -24,7 +24,7 @@ editor_options:
 
 *This guide was written by Applied Epi. Feedback and suggestions are
 welcome at the [GitHub issues
-page](https://github.com/R4EPI/sitrep/issues)*
+page](https://github.com/R4EPI/sitrep/issues/)*
 
 # Introduction
 

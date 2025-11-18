@@ -61,7 +61,7 @@ finalise the project.
 The project has merged the skills and experience of people in coding in R software, field epidemiology, spatial epidemiology, health information systems and public health.
 
 The original R4epis project contributors are listed below in alphabetical order; 
-you can see the the up-to date list of contributors on [github](https://github.com/R4EPI/sitrep/graphs/contributors).
+you can see the the up-to date list of contributors on [github](https://github.com/R4EPI/sitrep/graphs/contributors/).
 
 
 Amrish Baidjoe (1, 2), Elburg van Boetzelaar (3), Raphael Brechard (4), Antonio Isidro Carrión Martín (4), Kate Doyle (5), Christopher Ian Jarvis (1, 6), Thibaut Jombart (1, 6), Zhian Kamvar (1, 2), Patrick Keating (1, 6), Anna Kuehne (4), Annick Lenglet (7), Pete Masters (4), Dirk Schumacher (1), Rosamund Southgate (4), Carolyn Tauro (4), Alex Spina (1, 8), Maria Verdecchia (4), Larissa Vernier (7)

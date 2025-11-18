@@ -15,7 +15,7 @@ Useful links:
 \itemize{
   \item \url{https://github.com/R4EPI/sitrep/}
   \item \url{https://r4epi.github.io/sitrep/}
-  \item Report bugs at \url{https://github.com/R4EPI/sitrep/issues}
+  \item Report bugs at \url{https://github.com/R4EPI/sitrep/issues/}
 }
 
 }

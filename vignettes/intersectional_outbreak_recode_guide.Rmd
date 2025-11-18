@@ -20,7 +20,7 @@ editor_options:
   }
 </style>
 
-_This guide was written by Applied Epi. Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues)_
+_This guide was written by Applied Epi. Feedback and suggestions are welcome at the [GitHub issues page](https://github.com/R4EPI/sitrep/issues/)_
 
 # Introduction
 

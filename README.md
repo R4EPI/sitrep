@@ -23,18 +23,18 @@ they have been setup to be as generic as possible for use by the general
 applied epidemiology community.
 
 **Detailed information about the project, the templates and functions in
-{sitrep} can be found at <https://r4epi.github.io/sitrep>.**
+{sitrep} can be found at <https://r4epi.github.io/sitrep/>.**
 
 {sitrep} includes a number of other *R* packages which facilitate
 specific analysis:  
-[{epitabulate}](https://r4epi.github.io/epitabulate): Tables for
+[{epitabulate}](https://r4epi.github.io/epitabulate/): Tables for
 epidemiological analysis  
-[{epidict}](https://r4epi.github.io/epidict): Epidemiology data
+[{epidict}](https://r4epi.github.io/epidict/): Epidemiology data
 dictionaries and random data generators  
-[{epikit}](https://r4epi.github.io/epikit): Miscellaneous helper tools
+[{epikit}](https://r4epi.github.io/epikit/): Miscellaneous helper tools
 for epidemiologists  
-[{apyramid}](https://r4epi.github.io/apyramid): Age pyramid construction
-and plotting
+[{apyramid}](https://r4epi.github.io/apyramid/): Age pyramid
+construction and plotting
 
 ## Installation
 
@@ -108,7 +108,7 @@ remotes::install_github("R4EPI/sitrep")
 
     # generate the measles outbreak template in the output directory
     check_sitrep_templates("measles_outbreak", path = output_dir)
-    #> [1] "C:\\Users\\spina\\AppData\\Local\\Temp\\RtmpQ3cj8S/sitrep_example"
+    #> [1] "C:\\Users\\spina\\AppData\\Local\\Temp\\Rtmpa2WEXa/sitrep_example"
 
     # view the contents
     list.files(output_dir, recursive = TRUE)
