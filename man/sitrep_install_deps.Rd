@@ -27,16 +27,17 @@ sitrep_install_deps(
 Character vector of all dependency package names (invisibly).
 }
 \description{
-This function installs all packages needed for the complete sitrep ecosystem,
-ensuring you have everything needed for working without internet connection.
+This function provides code to install all packages needed for the complete
+sitrep ecosystem, ensuring you have everything needed for working without
+internet connection.
 }
 \details{
-This function reads the sitrep DESCRIPTION file and installs all packages
-listed in Depends, Imports, and Suggests fields. This ensures complete
-functionality in offline environments.
+This function reads the sitrep DESCRIPTION file and provides code to
+install all packages listed in Depends, Imports, and Suggests fields.
+This ensures complete functionality in offline environments.
 }
 \examples{
-\dontrun{
+\donttest{
 # Install everything for offline field work (with prompts)
 sitrep_install_deps()
 

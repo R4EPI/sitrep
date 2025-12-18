@@ -18,7 +18,7 @@ Checks if all packages needed for the sitrep ecosystem are installed
 and loads properly. Useful for verifying offline readiness.
 }
 \examples{
-\dontrun{
+\donttest{
 # Check what's missing before going offline
 sitrep_check_deps()
 }

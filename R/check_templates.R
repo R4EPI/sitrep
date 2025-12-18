@@ -20,7 +20,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' check_sitrep_templates("mortality")
 #' }
 check_sitrep_templates <- function(templates = available_sitrep_templates(),

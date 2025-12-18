@@ -44,7 +44,7 @@ the path where the templates were built.
 Run the templates found in the sitrep package.
 }
 \examples{
-\dontrun{
+\donttest{
 check_sitrep_templates("mortality")
 }
 }

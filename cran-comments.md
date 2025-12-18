@@ -16,4 +16,6 @@ Ubuntu-latest, R-oldrel-1
 * This is a new release.
 
 All URLs and metadata issues noted in the previous submission have been corrected:
-* Spellings are as expected, as they reference package names
+* Spellings are as expected, as they reference package names - single quotations have been added
+* examples updated to run as appropriate 
+* functions updated to not directly install updates 
