@@ -4,11 +4,11 @@
 \name{sitrep-package}
 \alias{sitrep}
 \alias{sitrep-package}
-\title{sitrep: Report Templates And Helper Functions For Applied Epidemiology}
+\title{sitrep: Report Templates and Helper Functions for Applied Epidemiology}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-A meta-package that loads the complete sitrep ecosystem for applied epidemiology analysis. This package provides report templates and automatically loads companion packages, including epitabulate (for epidemiological tables), epidict (for data dictionaries), epikit (for epidemiological utilities), and apyramid (for age-sex pyramids). Simply load sitrep to access all functions from the ecosystem.
+A meta-package that loads the complete sitrep ecosystem for applied epidemiology analysis. This package provides report templates and automatically loads companion packages, including 'epitabulate' (for epidemiological tables), 'epidict' (for data dictionaries), 'epikit' (for epidemiological utilities), and 'apyramid' (for age-sex pyramids). Simply load 'sitrep' to access all functions from the ecosystem.
 }
 \seealso{
 Useful links:
@@ -29,6 +29,7 @@ Authors:
   \item Kate Doyle
   \item Chris Jarvis
   \item Lukas Richter
+  \item Paula Blomquist
 }
 
 Other contributors:

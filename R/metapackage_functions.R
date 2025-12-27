@@ -206,8 +206,9 @@ sitrep_functions <- function(pattern = NULL) {
 #' Install all sitrep ecosystem dependencies for offline use
 #'
 #' @description
-#' This function installs all packages needed for the complete sitrep ecosystem,
-#' ensuring you have everything needed for working without internet connection.
+#' This function provides code to install all packages needed for the complete
+#' sitrep ecosystem, ensuring you have everything needed for working without
+#' internet connection.
 #'
 #' @param upgrade Should packages be upgraded? Options: "ask", "always", "never". Default is "ask"
 #' @param dependencies Should dependencies be installed? Default is TRUE
@@ -216,14 +217,14 @@ sitrep_functions <- function(pattern = NULL) {
 #' @param force Should installation proceed without prompts? Default is FALSE
 #'
 #' @details
-#' This function reads the sitrep DESCRIPTION file and installs all packages
-#' listed in Depends, Imports, and Suggests fields. This ensures complete
-#' functionality in offline environments.
+#' This function reads the sitrep DESCRIPTION file and provides code to
+#' install all packages listed in Depends, Imports, and Suggests fields.
+#' This ensures complete functionality in offline environments.
 #'
 #' @return Character vector of all dependency package names (invisibly).
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Install everything for offline field work (with prompts)
 #' sitrep_install_deps()
 #'
@@ -317,7 +318,7 @@ sitrep_install_deps <- function(upgrade = "ask", dependencies = TRUE,
     response <- readline()
 
     if (!tolower(trimws(response)) %in% c("y", "yes")) {
-      cat("Installation cancelled.\n")
+      cat("Process cancelled.\n")
       return(invisible(character(0)))
     }
   }
@@ -325,27 +326,35 @@ sitrep_install_deps <- function(upgrade = "ask", dependencies = TRUE,
   # Show what we're about to do
   if (!quiet) {
     if (length(missing) > 0) {
-      cat("Installing", length(missing), "missing packages...\n")
+      cat("The below code will install", length(missing), "missing packages...\n")
     }
     if (length(existing) > 0 && upgrade %in% c("ask", "always")) {
       cat("Checking for updates to", length(existing), "existing packages...\n")
     }
-    cat("This may take several minutes...\n\n")
+    cat("Running the below code may take several minutes...\n\n")
   }
 
   # Install packages
   if (length(all_deps) > 0) {
-    utils::install.packages(
-      all_deps,
-      dependencies = dependencies,
-      repos = repos,
-      upgrade = upgrade,
-      quiet = quiet
+
+    pkg_str <- paste0(shQuote(all_deps), collapse = ", ")
+
+    cat(("\nStart a clean R session then run:\n\n"))
+
+    cat("install.packages(\n",
+        "  c(", pkg_str, "),\n",
+        "  dependencies = ", dependencies, ",\n",
+        "  repos = ", shQuote(repos), ",\n",
+        "  upgrade = ", shQuote(upgrade), ",\n",
+        "  quiet = ", quiet, "\n",
+        ")\n",
+        sep = ""
     )
+
   }
 
   if (!quiet) {
-    cat("\nInstallation complete! sitrep ecosystem is ready for offline use.\n")
+    cat("\nAfter running the install code, sitrep ecosystem is ready for offline use.\n")
     cat("Run sitrep_check_deps() to verify all packages are working.\n")
   }
 
@@ -365,7 +374,7 @@ sitrep_install_deps <- function(upgrade = "ask", dependencies = TRUE,
 #'   Names are package names, values are TRUE if available, FALSE otherwise.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Check what's missing before going offline
 #' sitrep_check_deps()
 #' }
