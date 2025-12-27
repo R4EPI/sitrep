@@ -114,10 +114,16 @@ Names are package names, values are TRUE if available, FALSE otherwise.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="co"># Check what's missing before going offline</span></span></span>
 <span class="r-in"><span><span class="fu">sitrep_check_deps</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>no DISPLAY variable so Tk is not available</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Registered S3 method overwritten by 'tsibble':</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   method               from </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   as_tibble.grouped_df dplyr</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> All 46 sitrep ecosystem packages are available!</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Ready for offline use.</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
