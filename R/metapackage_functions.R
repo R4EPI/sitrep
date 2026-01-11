@@ -239,7 +239,6 @@ sitrep_functions <- function(pattern = NULL) {
 sitrep_install_deps <- function(upgrade = "ask", dependencies = TRUE,
                                 repos = getOption("repos"), quiet = FALSE,
                                 force = FALSE) {
-
   # Get DESCRIPTION file path
   desc_path <- system.file("DESCRIPTION", package = "sitrep")
   if (!file.exists(desc_path)) {
@@ -256,7 +255,9 @@ sitrep_install_deps <- function(upgrade = "ask", dependencies = TRUE,
 
   # Parse package names (remove version requirements and R itself)
   parse_pkg_list <- function(pkg_string) {
-    if (is.na(pkg_string)) return(character(0))
+    if (is.na(pkg_string)) {
+      return(character(0))
+    }
 
     # Split by comma and clean up
     pkgs <- unlist(strsplit(pkg_string, ","))
@@ -336,21 +337,19 @@ sitrep_install_deps <- function(upgrade = "ask", dependencies = TRUE,
 
   # Install packages
   if (length(all_deps) > 0) {
-
     pkg_str <- paste0(shQuote(all_deps), collapse = ", ")
 
     cat(("\nStart a clean R session then run:\n\n"))
 
     cat("install.packages(\n",
-        "  c(", pkg_str, "),\n",
-        "  dependencies = ", dependencies, ",\n",
-        "  repos = ", shQuote(repos), ",\n",
-        "  upgrade = ", shQuote(upgrade), ",\n",
-        "  quiet = ", quiet, "\n",
-        ")\n",
-        sep = ""
+      "  c(", pkg_str, "),\n",
+      "  dependencies = ", dependencies, ",\n",
+      "  repos = ", shQuote(repos), ",\n",
+      "  upgrade = ", shQuote(upgrade), ",\n",
+      "  quiet = ", quiet, "\n",
+      ")\n",
+      sep = ""
     )
-
   }
 
   if (!quiet) {
@@ -386,7 +385,9 @@ sitrep_check_deps <- function(quiet = FALSE) {
   desc <- read.dcf(desc_path)
 
   parse_pkg_list <- function(pkg_string) {
-    if (is.na(pkg_string)) return(character(0))
+    if (is.na(pkg_string)) {
+      return(character(0))
+    }
     pkgs <- unlist(strsplit(pkg_string, ","))
     pkgs <- trimws(pkgs)
     pkgs <- gsub("\\s*\\([^)]+\\)", "", pkgs)
@@ -433,7 +434,7 @@ ignore_unused_imports <- function() {
   epidict::dict_rename_helper
   epidict::gen_data
   epidict::msf_dict
-  # epidict::msf_dict_rename_helper
+  epidict::msf_dict_rename_helper
   epidict::read_dict
   epikit::add_weights_cluster
   epikit::add_weights_strata

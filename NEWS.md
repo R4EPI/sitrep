@@ -1,3 +1,7 @@
+# sitrep 0.3.0
+
+* bump version of epidict package to latest - allowing for msf_dict_rename() helper function
+
 # sitrep 0.2.3
 
 * restructured to a meta-package for installing sitrep ecosystem packages 

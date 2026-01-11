@@ -11,11 +11,6 @@ Ubuntu-latest, R-oldrel-1
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 note
 
-* This is a new release.
-
-All URLs and metadata issues noted in the previous submission have been corrected:
-* Spellings are as expected, as they reference package names - single quotations have been added
-* examples updated to run as appropriate 
-* functions updated to not directly install updates 
+* minor release to include latest version of package dependency 

@@ -1,7 +1,7 @@
 Type: Package
 Package: sitrep
 Title: Report Templates and Helper Functions for Applied Epidemiology
-Version: 0.2.3
+Version: 0.3.0
 Authors@R: c(
     person("Alexander", "Spina", , "aspina@appliedepi.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-8425-1867")),
@@ -30,7 +30,7 @@ Depends:
     R (>= 3.2)
 Imports: 
     apyramid (>= 0.1.0),
-    epidict (>= 0.1.0),
+    epidict (>= 0.2.0),
     epikit,
     epitabulate (>= 0.1.0),
     utils
