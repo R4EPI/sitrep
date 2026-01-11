@@ -30,7 +30,7 @@ Depends:
     R (>= 3.2)
 Imports: 
     apyramid (>= 0.1.0),
-    epidict (>= 0.1.0),
+    epidict (>= 0.2.0),
     epikit,
     epitabulate (>= 0.1.0),
     utils
