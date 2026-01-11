@@ -1,3 +1,5 @@
+# sitrep 0.3.0
+
 # sitrep 0.2.3
 
 * restructured to a meta-package for installing sitrep ecosystem packages 
