@@ -13,4 +13,4 @@ Ubuntu-latest, R-oldrel-1
 
 0 errors | 0 warnings | 0 note
 
-* minor release to include latest version of package dependency 
+* minor release with changes to templates
