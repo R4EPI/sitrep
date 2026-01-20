@@ -1,4 +1,5 @@
 # sitrep 0.4.0
+* minor changes to variables in templates 
 
 # sitrep 0.3.0
 
