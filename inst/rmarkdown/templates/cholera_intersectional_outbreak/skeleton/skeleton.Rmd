@@ -68,9 +68,9 @@ Key definitions: See section 3.2.2 in the cholera outbreak report guide
 
 # Define geographics --------------------------
 
-adm1_residencecurrent_name <- "Province"
-adm2_residencecurrent_name <- "District"
-adm3_residencecurrent_name <- "Area"
+adm1_residencecurent_name <- "Province"
+adm2_residencecurent_name <- "District"
+adm3_residencecurent_name <- "Area"
 
 # Define reporting week ------------------------
 
@@ -135,7 +135,7 @@ Import population data:See section 3.3.1 in the cholera outbreak report guide
 #   groups = c("Village A", "Village B", "Village C", "Village D"),
 #   counts = c(10000, 20000, 15000, 5000),
 #   strata = NULL) |>               # do not stratify
-#   rename(adm2_residencecurrent = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
+#   rename(adm2_residencecurent = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
 #          population = n)
 
 
@@ -154,12 +154,12 @@ population_data_age <- gen_population(total_pop = 5000,
   select(-proportions)
 
 
-## estimate population size by adm2_residencecurrent proportion
+## estimate population size by adm2_residencecurent proportion
 population_data_adm2 <- gen_population(total_pop = 5000, # set the total population
   groups = c("County 1", "County 2", "County 3", "County 4"),  # set the groups
   proportions = c(0.222, 0.175, 0.357, 0.246), # set the proportions for each group
   strata = NULL) |>               # do not stratify
-  rename(adm2_residencecurrent = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
+  rename(adm2_residencecurent = groups,  # rename columns (syntax is NEW NAME = OLD NAME)
          population = n) |> 
   select(-proportions)
 
@@ -239,9 +239,9 @@ linelist_raw |>
          sex_patient,
          age_num,
          age_unit,
-         adm1_residencecurrent,
-         adm2_residencecurrent,
-         adm3_residencecurrent,
+         adm1_residencecurent,
+         adm2_residencecurent,
+         adm3_residencecurent,
          origin,
          visit_date,
          symptoms_date,
@@ -352,14 +352,14 @@ Standardise and correct columns: See section 3.4.3 in the cholera outbreak repor
 linelist_cleaned <- linelist_cleaned |>
   
   # Standardise capitalisation 
-  mutate(adm2_residencecurrent = str_to_title(adm2_residencecurrent)) |>
+  mutate(adm2_residencecurent = str_to_title(adm2_residencecurent)) |>
   
   # Correct typos
-  mutate(adm2_residencecurrent = case_match(
-    adm2_residencecurrent,
+  mutate(adm2_residencecurent = case_match(
+    adm2_residencecurent,
     c("District One", "District Oone")       ~ "District 1",
     "District Two"       ~ "District 2" ,
-    .default = adm2_residencecurrent ))
+    .default = adm2_residencecurent ))
 
 
 ## Change all unknown or spaces to missing
@@ -552,10 +552,10 @@ age_rate_highest <- linelist_cleaned |>
   slice(which.max(attack_rate_result))
   
 # adm2 numbers
-adm2_highest <- tabyl(linelist_cleaned, adm2_residencecurrent) |> slice(which.max(n)) 
+adm2_highest <- tabyl(linelist_cleaned, adm2_residencecurent) |> slice(which.max(n)) 
 
 adm2rate_highest <- linelist_cleaned |> 
-  count(adm2_residencecurrent) |> 
+  count(adm2_residencecurent) |> 
   left_join(population_data_adm2) |> 
   mutate(attack_rate_result = n/population*10000) |> 
   slice(which.max(attack_rate_result))
@@ -570,8 +570,8 @@ As of `r reporting_date` (`r reporting_week`):
 - There have been `r fmt_count(linelist_cleaned, sex_patient == "Female")` females and `r fmt_count(linelist_cleaned, sex_patient == "Male")` males. 
 - The age group with the highest number of cases was `r age_highest |>  pull(age_group)` years, with `r age_highest |> pull(n)` cases.
 - The age group with the highest AR was `r age_rate_highest |> pull(age_group)` years, `r round(age_rate_highest |> pull(attack_rate_result),1)` cases per 10,000 population. 
-- The `r str_to_lower(adm2_residencecurrent_name)` with the highest number of cases was `r adm2_highest |> pull(adm2_residencecurrent)`, with `r adm2_highest|> pull(n)` cases.
-- The `r str_to_lower(adm2_residencecurrent_name)` with the highest AR was `r adm2rate_highest |> pull(adm2_residencecurrent)`, `r round(adm2rate_highest |> pull(attack_rate_result),1)` cases per 10,000 population. 
+- The `r str_to_lower(adm2_residencecurent_name)` with the highest number of cases was `r adm2_highest |> pull(adm2_residencecurent)`, with `r adm2_highest|> pull(n)` cases.
+- The `r str_to_lower(adm2_residencecurent_name)` with the highest AR was `r adm2rate_highest |> pull(adm2_residencecurent)`, `r round(adm2rate_highest |> pull(attack_rate_result),1)` cases per 10,000 population. 
 - The overall CFR was `r round(nrow(linelist_cleaned |> filter(died==T))/nrow(linelist_cleaned)*100,1)`%. 
 
 \newpage
@@ -754,23 +754,23 @@ linelist_cleaned |>
 
 ```
 
-**Case counts, attack rates, and case fatality ratios (CFR), by `r str_to_lower(adm2_residencecurrent_name)`**
+**Case counts, attack rates, and case fatality ratios (CFR), by `r str_to_lower(adm2_residencecurent_name)`**
 ```{r attack_rate_by_adm2, warning = FALSE}
 
 table_ar_adm2 <- linelist_cleaned |> 
   
   # Bind dataframe again with 'total' for age_group to get total calculations
-  bind_rows(linelist_cleaned |> mutate(adm2_residencecurrent = "Total")) |> 
+  bind_rows(linelist_cleaned |> mutate(adm2_residencecurent = "Total")) |> 
   
   # Calculate cases and deaths within groups (including total)
-  group_by(adm2_residencecurrent) |> 
+  group_by(adm2_residencecurent) |> 
   summarise(cases = n(),
             cases_recent = sum(visit_date > reporting_date-14), 
             deaths = sum(died, na.rm=T)) |> 
   
   # Calculate CFR and AR, including linkage of population data
   mutate(CFR = deaths/cases*100) |> 
-  left_join(population_data_adm2 |>  adorn_totals(), by = "adm2_residencecurrent") |> 
+  left_join(population_data_adm2 |>  adorn_totals(), by = "adm2_residencecurent") |> 
   mutate(attack_rate_result = cases/population*10000) 
 
 
@@ -781,7 +781,7 @@ table_ar_adm2 |>
   
   # Change titles
   set_header_labels( 
-    adm2_residencecurrent = paste0(adm2_residencecurrent_name, " of residence"),
+    adm2_residencecurent = paste0(adm2_residencecurent_name, " of residence"),
     cases = "Number of cases",
     cases_recent = paste0("Number of cases notified in past 14 days (since ", reporting_date-14, ")"),
     deaths = "Number of deaths",
@@ -1081,15 +1081,15 @@ linelist_cleaned |>
 Geographic distribution - tables: See section 3.5.8 in the cholera outbreak report guide
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-**Distribution of `r str_to_lower(adm2_residencecurrent_name)` of residence among cases, by age group**   
-_Percentages calculated among cases with non-missing `r str_to_lower(adm2_residencecurrent_name)` information_  
+**Distribution of `r str_to_lower(adm2_residencecurent_name)` of residence among cases, by age group**   
+_Percentages calculated among cases with non-missing `r str_to_lower(adm2_residencecurent_name)` information_  
 ```{r describe_by_adm2, warning = FALSE}
 
 linelist_cleaned |> 
-  select(adm2_residencecurrent, age_group) |> 
+  select(adm2_residencecurent, age_group) |> 
   tbl_summary(percent = "column",
               by = "age_group",
-              label = list(adm2_residencecurrent = paste0(adm2_residencecurrent_name, " of residence")),
+              label = list(adm2_residencecurent = paste0(adm2_residencecurent_name, " of residence")),
               missing_text = "[Missing]") |> 
   add_overall()  |>
   ## make variable names bold 
@@ -1106,8 +1106,8 @@ linelist_cleaned |>
 ```
 
 \newpage
-**Cases by week of onset and `r str_to_lower(adm2_residencecurrent_name)`**  
-_Note `r fmt_count(linelist_cleaned, is.na(date_combined))` of `r nrow(linelist_cleaned)` cases excluded due to missing date. `r fmt_count(linelist_cleaned |> filter(!is.na(adm2_residencecurrent)), date_source  == "Clinic visit date")` of `r nrow(linelist_cleaned |> filter(!is.na(date_combined)))` cases included in this figure used clinic visit date as a substitute for onset date._  
+**Cases by week of onset and `r str_to_lower(adm2_residencecurent_name)`**  
+_Note `r fmt_count(linelist_cleaned, is.na(date_combined))` of `r nrow(linelist_cleaned)` cases excluded due to missing date. `r fmt_count(linelist_cleaned |> filter(!is.na(adm2_residencecurent)), date_source  == "Clinic visit date")` of `r nrow(linelist_cleaned |> filter(!is.na(date_combined)))` cases included in this figure used clinic visit date as a substitute for onset date._  
 ```{r epicurve_by_adm2, message = FALSE, fig.height=8}
 
 linelist_cleaned |>
@@ -1133,7 +1133,7 @@ linelist_cleaned |>
   # use pre-defined theme (design) settings
   epicurve_theme +
   # facet by area
-  facet_wrap(.~adm2_residencecurrent, ncol=2) +
+  facet_wrap(.~adm2_residencecurent, ncol=2) +
   theme(strip.background = element_blank())
 ```
 
@@ -1144,7 +1144,7 @@ linelist_cleaned |>
 ```{r read_shapefiles, message=FALSE}
 
 ## fake map data - DELETE if you are using real data --------------------
-map <- gen_polygon(regions = unique(population_data_adm2$adm2_residencecurrent)) 
+map <- gen_polygon(regions = unique(population_data_adm2$adm2_residencecurent)) 
 
 ## read in shapefile ----------------------------------------------------
 # map <- read_sf(here::here("mapfolder", "region.shp"))
@@ -1164,14 +1164,14 @@ map <- gen_polygon(regions = unique(population_data_adm2$adm2_residencecurrent))
 
 # define maximum
 max_n   <- table_ar_adm2 |> 
-  filter(adm2_residencecurrent!="Total") |> 
+  filter(adm2_residencecurent!="Total") |> 
   slice(which.max(cases)) |> pull(cases)
 
-max_ar <- table_ar_adm2 |> filter(adm2_residencecurrent!="Total") |> 
+max_ar <- table_ar_adm2 |> filter(adm2_residencecurent!="Total") |> 
   slice(which.max(attack_rate_result)) |> pull(attack_rate_result)
 
 max_n_recent   <- table_ar_adm2 |> 
-  filter(adm2_residencecurrent!="Total") |> 
+  filter(adm2_residencecurent!="Total") |> 
   slice(which.max(cases_recent)) |> pull(cases_recent)
 if (max_n_recent == 0) max_n_recent <- 10
 
@@ -1205,10 +1205,10 @@ breakers_n_recent <- as.integer(c(
 ## Combine with shape file and create a categorical variable using the age_categories function 
 ## (we aren't using ages - but it functions the same way!)
 table_ar_adm2_map <- table_ar_adm2 |>  
-  filter(adm2_residencecurrent!="Total")  
+  filter(adm2_residencecurent!="Total")  
 
 table_ar_adm2_map<- map |> 
-  left_join(table_ar_adm2_map, by = c("name" = "adm2_residencecurrent")) |> 
+  left_join(table_ar_adm2_map, by = c("name" = "adm2_residencecurent")) |> 
   mutate(across(where(is.numeric), ~ replace_na(.x, 0))) |> 
   mutate(categories_ar = age_categories(attack_rate_result, 
                                          breakers = breakers_ar),
@@ -1218,8 +1218,8 @@ table_ar_adm2_map<- map |>
                                          breakers = breakers_n_recent))
 ```
 
-**Map of attack rate by `r str_to_lower(adm2_residencecurrent_name)`**  
-_`r fmt_count(linelist_cleaned, is.na(adm2_residencecurrent_name))` of `r nrow(linelist_cleaned)` cases excluded due to missing `r str_to_lower(adm2_residencecurrent_name)`_    
+**Map of attack rate by `r str_to_lower(adm2_residencecurent_name)`**  
+_`r fmt_count(linelist_cleaned, is.na(adm2_residencecurent_name))` of `r nrow(linelist_cleaned)` cases excluded due to missing `r str_to_lower(adm2_residencecurent_name)`_    
 ```{r choropleth_map_ar, message = FALSE, warning = FALSE, fig.height=5}
 ## Plot AR by geography -----------------------------------------------
 
@@ -1246,8 +1246,8 @@ ggplot() +
 
 ```
 
-**Map of total case counts by `r str_to_lower(adm2_residencecurrent_name)`**   
-_`r fmt_count(linelist_cleaned, is.na(adm2_residencecurrent_name))` of `r nrow(linelist_cleaned)` cases excluded due to missing `r str_to_lower(adm2_residencecurrent_name)`_    
+**Map of total case counts by `r str_to_lower(adm2_residencecurent_name)`**   
+_`r fmt_count(linelist_cleaned, is.na(adm2_residencecurent_name))` of `r nrow(linelist_cleaned)` cases excluded due to missing `r str_to_lower(adm2_residencecurent_name)`_    
 ```{r choropleth_map_n, message = FALSE, warning = FALSE, fig.height=5}
 ## Plot AR by geography -----------------------------------------------
 
@@ -1272,8 +1272,8 @@ ggplot() +
 ```
 
 \newpage 
-**Map of case counts in the last 14 days by `r str_to_lower(adm2_residencecurrent_name)`**  
-_`r fmt_count(linelist_cleaned |> filter(visit_date > reporting_date-14), is.na(adm2_residencecurrent_name))` of `r nrow(linelist_cleaned |> filter(visit_date > reporting_date-14))` cases reported in the last 14 days (`r reporting_date-14` to `r  reporting_date`) excluded due to missing `r str_to_lower(adm2_residencecurrent_name)`_  
+**Map of case counts in the last 14 days by `r str_to_lower(adm2_residencecurent_name)`**  
+_`r fmt_count(linelist_cleaned |> filter(visit_date > reporting_date-14), is.na(adm2_residencecurent_name))` of `r nrow(linelist_cleaned |> filter(visit_date > reporting_date-14))` cases reported in the last 14 days (`r reporting_date-14` to `r  reporting_date`) excluded due to missing `r str_to_lower(adm2_residencecurent_name)`_  
 ```{r choropleth_map_n_recent, message = FALSE, warning = FALSE, fig.height=5}
 ## Plot AR by geography -----------------------------------------------
 
@@ -1299,43 +1299,43 @@ ggplot() +
 
 
 \newpage
-# Geographical detail: `r adm2_residencecurrent_name`
+# Geographical detail: `r adm2_residencecurent_name`
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Geographic details: See section 3.5.10 in the cholera outbreak report guide
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-**Cases by `r str_to_lower(adm3_residencecurrent_name)` within `r str_to_lower(adm2_residencecurrent_name)`s**
+**Cases by `r str_to_lower(adm3_residencecurent_name)` within `r str_to_lower(adm2_residencecurent_name)`s**
 ```{r describe_by_adm2_adm3}
 
 linelist_cleaned |> 
   
   # Calculate cases and deaths within groups (including total)
-  group_by(adm2_residencecurrent, adm3_residencecurrent) |> 
+  group_by(adm2_residencecurent, adm3_residencecurent) |> 
   summarise(cases = n(),
             cases_recent = sum(visit_date > reporting_date-14), # Setting this up for maps
             deaths = sum(died, na.rm=T)) |> 
   
   # Calculate CFR and AR, including linkage of population data
   mutate(CFR = deaths/cases*100) |> 
-  mutate(adm3_residencecurrent = if_else(is.na(adm3_residencecurrent), "[Missing]", adm3_residencecurrent)) |> 
+  mutate(adm3_residencecurent = if_else(is.na(adm3_residencecurent), "[Missing]", adm3_residencecurent)) |> 
   
-  # left_join(population_data_adm2 |>  adorn_totals(), by = "adm2_residencecurrent") |> 
+  # left_join(population_data_adm2 |>  adorn_totals(), by = "adm2_residencecurent") |> 
   # mutate(attack_rate_result = cases/population*10000) |> 
   
   # Combine with totals
-  bind_rows(table_ar_adm2 |> mutate(adm3_residencecurrent = " Total") |> select(-population, -attack_rate_result)) |> 
+  bind_rows(table_ar_adm2 |> mutate(adm3_residencecurent = " Total") |> select(-population, -attack_rate_result)) |> 
   
-  # Arrange by adm2_residencecurrent
-  arrange(adm2_residencecurrent, adm3_residencecurrent) |> 
+  # Arrange by adm2_residencecurent
+  arrange(adm2_residencecurent, adm3_residencecurent) |> 
 
   # produce styled output table with auto-adjusted column widths with {flextable}
   qflextable() |> 
   
   # Change titles
   set_header_labels( 
-    adm2_residencecurrent = paste0(adm2_residencecurrent_name, " of residence"),
-    adm3_residencecurrent = adm3_residencecurrent_name,
+    adm2_residencecurent = paste0(adm2_residencecurent_name, " of residence"),
+    adm3_residencecurent = adm3_residencecurent_name,
     cases = "Number of cases",
     cases_recent = paste0("Number of cases notified in past 14 days (since ", reporting_date-14, ")"),
     deaths = "Number of deaths",
@@ -1357,8 +1357,8 @@ linelist_cleaned |>
   colformat_double(digits = 1) |> 
   
     # Format rows with region
-  bg(., j=c(1:6), i= ~ adm3_residencecurrent == " Total", part = "body", bg = "gray90") |> 
-  bold(i = ~ adm3_residencecurrent == " Total", part = "body", bold = TRUE) |> 
+  bg(., j=c(1:6), i= ~ adm3_residencecurent == " Total", part = "body", bg = "gray90") |> 
+  bold(i = ~ adm3_residencecurent == " Total", part = "body", bold = TRUE) |> 
   
   ## fontsize
   fontsize(part = "all", size=9.5)

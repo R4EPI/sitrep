@@ -241,10 +241,10 @@ linelist_raw |>
          adm2_residence,
          adm3_residence,
          status,
-         vacci_hev_dose1_yn, 
-         vacci_hev_dose2_yn,
-         vacci_hev_dose3_yn,
-         hev_rt_result,
+         vacci_HEV_dose1_yn, 
+         vacci_HEV_dose2_yn,
+         vacci_HEV_dose3_yn,
+         HEV_RT_result,
          pregnant_yn,
          post_partum,
          outcome,
@@ -396,27 +396,27 @@ linelist_cleaned <- linelist_cleaned |>
 ## Vaccination columns combined into 1
 linelist_cleaned <- linelist_cleaned |> 
   mutate(
-    vacci_hev_dose1 = str_detect(vacci_hev_dose1_yn, "Yes"),
-    vacci_hev_dose2 = str_detect(vacci_hev_dose2_yn, "Yes"),
-    vacci_hev_dose3 = str_detect(vacci_hev_dose3_yn, "Yes"),
+    vacci_HEV_dose1 = str_detect(vacci_HEV_dose1_yn, "Yes"),
+    vacci_HEV_dose2 = str_detect(vacci_HEV_dose2_yn, "Yes"),
+    vacci_HEV_dose3 = str_detect(vacci_HEV_dose3_yn, "Yes"),
     
-    vacci_hev_doses = case_when(
-      vacci_hev_dose1 & vacci_hev_dose2 & vacci_hev_dose3 ~ "3 doses",
-      vacci_hev_dose1 & vacci_hev_dose2 ~ "2 doses",
-      vacci_hev_dose1 ~ "1 dose",
-      vacci_hev_dose1_yn == "No" & (is.na(vacci_hev_dose2_yn) & is.na(vacci_hev_dose3_yn)) ~ "0 doses",
-      vacci_hev_dose1_yn == "No" & vacci_hev_dose2_yn == "No" & is.na(vacci_hev_dose3_yn) ~ "0 doses",
-      vacci_hev_dose1_yn == "No" & vacci_hev_dose2_yn == "No" & vacci_hev_dose3_yn == "No" ~ "0 doses",
-      is.na(vacci_hev_dose1_yn) & is.na(vacci_hev_dose2_yn) & is.na(vacci_hev_dose3_yn) ~ NA,
+    vacci_HEV_doses = case_when(
+      vacci_HEV_dose1 & vacci_HEV_dose2 & vacci_HEV_dose3 ~ "3 doses",
+      vacci_HEV_dose1 & vacci_HEV_dose2 ~ "2 doses",
+      vacci_HEV_dose1 ~ "1 dose",
+      vacci_HEV_dose1_yn == "No" & (is.na(vacci_HEV_dose2_yn) & is.na(vacci_HEV_dose3_yn)) ~ "0 doses",
+      vacci_HEV_dose1_yn == "No" & vacci_HEV_dose2_yn == "No" & is.na(vacci_HEV_dose3_yn) ~ "0 doses",
+      vacci_HEV_dose1_yn == "No" & vacci_HEV_dose2_yn == "No" & vacci_HEV_dose3_yn == "No" ~ "0 doses",
+      is.na(vacci_HEV_dose1_yn) & is.na(vacci_HEV_dose2_yn) & is.na(vacci_HEV_dose3_yn) ~ NA,
       TRUE ~ "Unclear"  # fallback for any mixed or inconsistent case
     )
   ) |> 
-  select(-vacci_hev_dose1, -vacci_hev_dose2, -vacci_hev_dose3)
+  select(-vacci_HEV_dose1, -vacci_HEV_dose2, -vacci_HEV_dose3)
 
 ##  Test results
 linelist_cleaned <- linelist_cleaned |> 
            
-  mutate(hev_rt_result = factor(hev_rt_result,
+  mutate(HEV_RT_result = factor(HEV_RT_result,
                              levels = c("Positive",
                                         "Negative", 
                                         "Not done"))) |> 
@@ -772,11 +772,11 @@ _Percentages calculated among those with non-missing vaccine or rapid test infor
 ```{r vaccination_test}
 
 linelist_cleaned |> 
-  select(vacci_hev_doses, age_group, hev_rt_result) |> 
+  select(vacci_HEV_doses, age_group, HEV_RT_result) |> 
   tbl_summary(percent = "column",
               by = "age_group",
-              label = list(vacci_hev_doses = "Number of HEV vaccine doses",
-                           hev_rt_result = "HEV Rapid Test results "),
+              label = list(vacci_HEV_doses = "Number of HEV vaccine doses",
+                           HEV_RT_result = "HEV Rapid Test results "),
               missing_text = "[Missing]") |> 
   add_overall()  |>
   ## make variable names bold 
