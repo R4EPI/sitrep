@@ -1,3 +1,5 @@
+# sitrep 0.4.0
+
 # sitrep 0.3.0
 
 * bump version of epidict package to latest - allowing for msf_dict_rename() helper function
