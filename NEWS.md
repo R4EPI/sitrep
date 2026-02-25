@@ -1,3 +1,6 @@
+# sitrep 0.4.1
+* minor typo to variable in template
+
 # sitrep 0.4.0
 * minor changes to variables in templates 
 

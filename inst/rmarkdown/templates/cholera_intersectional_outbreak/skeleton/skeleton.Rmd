@@ -1075,7 +1075,7 @@ linelist_cleaned |>
 \newpage
 
 
-# `r adm2_residencecurrent_name` distribution
+# `r adm2_residencecurent_name` distribution
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Geographic distribution - tables: See section 3.5.8 in the cholera outbreak report guide
